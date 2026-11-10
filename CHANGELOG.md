@@ -22,6 +22,8 @@ games' tip jar, cuttings and badges.
   YouTube video the table sits beside the video and nothing pauses.)
 - Snack Bar, Window Garden and Five Frames always play in their own window on the right; the button that moved them
   into the video's place is gone.
+- With a YouTube video in cinema mode, a game you open no longer lands below the screen: the side panel comes back and
+  the game sits beside the video; turning cinema mode on puts an open game away (as fullscreen does).
 
 ### 0.9.97.113 — 10 Nov
 - Games look right in the video's place: a game you put in the video's place now fills it in proportion, with its

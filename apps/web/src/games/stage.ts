@@ -231,6 +231,8 @@ export function createGameStage(opts: StageOptions) {
    * space right of the video and remembers that, so it stays free back in the room view until I pin it again.
    */
   const shortsView = () => document.documentElement.classList.contains('shorts-view');
+  /** Cinema mode (card 14): the side panel hidden, the video as large as the page allows. */
+  const cinemaOn = () => document.documentElement.classList.contains('cinema-on');
   /** The placement in use now. */
   let mode: Place | 'below' | 'full' = 'stage';
   /**
@@ -267,6 +269,16 @@ export function createGameStage(opts: StageOptions) {
     mode = narrow.matches ? (!youtube && (want === 'stage' || shortsView() || isPhoneLayout()) ? 'full' : 'below') : want;
     // YTG: no room beside the YouTube player for the free window: under it instead.
     if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer()) mode = 'below';
+    // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
+    // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
+    // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
+    if (mode === 'below' && youtube && !narrow.matches && !stage.hidden && cinemaOn()) {
+      const toggle = document.getElementById('side-toggle') as HTMLButtonElement | null;
+      if (toggle && !toggle.hidden) {
+        toggle.click();
+        if (!cinemaOn()) return place();
+      }
+    }
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
@@ -661,7 +673,15 @@ export function createGameStage(opts: StageOptions) {
   let wasFs = inFullscreen();
   let wasYoutube = overYoutube();
   let wasShorts = shortsView();
+  let wasCinema = cinemaOn();
   new MutationObserver(() => {
+    const cinema = cinemaOn();
+    if (cinema !== wasCinema) {
+      wasCinema = cinema;
+      // Cinema mode turned on over YouTube with a game open: the game goes away (a dot on 🎮), as in fullscreen.
+      if (cinema && overYoutube() && !stage.hidden && !narrow.matches) return minimize();
+      if (!stage.hidden) place();
+    }
     const now = shortsView();
     if (now === wasShorts) return;
     wasShorts = now;
