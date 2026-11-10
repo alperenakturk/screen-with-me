@@ -17,8 +17,6 @@ Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and 
 games' tip jar, cuttings and badges.
 
 ### 0.9.97.112 — 10 Nov
-- The tables (Classics, Sea Battle, Draw & Guess, Quiz, Last Heart, Five Frames Duel) always play in the video's place:
-  they are too big to sit beside the video. With a YouTube video they keep beside it, as before.
 - Snack Bar, Window Garden and Five Frames open on the right, over the chat, and never cover the video, when they fit
   there at a readable size; on a smaller screen they open in the video's place. Their switch still moves them.
 - From a game in its own window, 🎮 slides the games hall out of the window's side, so it shows even with the side

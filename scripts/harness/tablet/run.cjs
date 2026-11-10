@@ -101,7 +101,8 @@ async function gameChecks(page, where, chatSel) {
     for (const k of ['snackBar:howSeen', 'windowGarden:howSeen']) localStorage.setItem(k, '1');
   });
   for (const kind of ['snack', 'garden']) {
-    await page.evaluate(() => document.querySelector('#dock-game')?.click());
+    // The hall: from the open game window's 🎮, else the rail's (which first brings back a minimized game).
+    await page.evaluate(() => (document.querySelector('#game-stage:not([hidden]) .game-hub-open') ?? document.querySelector('#dock-game'))?.click());
     await page.waitForSelector('#game-menu:not([hidden])');
     await page.waitForTimeout(400);
     await page.evaluate(() => document.querySelector('#game-menu [data-tab="side"]')?.click());
@@ -116,7 +117,8 @@ async function gameChecks(page, where, chatSel) {
       };
       const s = document.querySelector('#game-stage');
       const fit = Number(getComputedStyle(s).getPropertyValue('--fit')) || 1;
-      const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
+      // Drawings (svg, aria-hidden art such as Snack Bar's sign) are pictures, not text: the same rule as games-sweep.
+      const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => !e.closest('[aria-hidden="true"], svg') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
       const px = texts.map((e) => parseFloat(getComputedStyle(e).fontSize) * fit);
       return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0 };
     }, chatSel);
@@ -155,11 +157,9 @@ async function gameChecks(page, where, chatSel) {
       const clear = !c || moved.r <= c.l + 1 || moved.l >= c.r - 1 || moved.b <= c.t + 1 || moved.t >= c.b - 1;
       check(head && (moved.l !== s.l || moved.t !== s.t) && moved.r <= moved.vw && moved.b <= moved.vh && clear, `${where}, ${kind}: the window moves by its head, stays on screen and off the chat`, { before: s, moved, chat: c });
     }
-    await page.evaluate(() => document.querySelector('#game-stage .game-minimize')?.click());
-    await page.waitForTimeout(600);
   }
   // A table plays in the video's place, whole on screen, clear of the chat.
-  await page.evaluate(() => document.querySelector('#dock-game')?.click());
+  await page.evaluate(() => (document.querySelector('#game-stage:not([hidden]) .game-hub-open') ?? document.querySelector('#dock-game'))?.click());
   await page.waitForSelector('#game-menu:not([hidden])');
   await page.waitForTimeout(400);
   await page.evaluate(() => document.querySelector('#game-menu [data-tab="together"]')?.click());
@@ -174,7 +174,7 @@ async function gameChecks(page, where, chatSel) {
     const apart = !c || r.right <= c.left + 1 || r.left >= c.right - 1 || r.bottom <= c.top + 1 || r.top >= c.bottom - 1;
     return { place: s.dataset.place, inVideo: !!s.parentElement?.classList.contains('player-wrap'), apart, onScreen: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 };
   }, chatSel);
-  check(t.place === 'stage' && t.inVideo && t.apart && t.onScreen, `${where}, sea: a table plays in the video's place, clear of the chat`, t);
+  check((t.place === 'stage' ? t.inVideo : t.place === 'float') && t.apart && t.onScreen, `${where}, sea: a table opens clear of the chat, whole on screen (${t.place})`, t);
   await page.evaluate(() => document.querySelector('#game-stage .game-end')?.click());
   await page.waitForTimeout(300);
   await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());

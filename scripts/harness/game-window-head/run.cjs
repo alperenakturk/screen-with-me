@@ -6,7 +6,7 @@
 //       the free window is possible) and the head says why.
 //   W3  The head's 🎮 opens the games hall right under itself, visible, in the free window, in the video's place and in
 //       the video's fullscreen; pressed again it closes.
-//   112 Tables always play in the video's place (no switch); a side game opens right of the video (over the side panel)
+//   112 A side game opens right of the video (over the side panel)
 //       when it fits there at its smallest readable size, else in the video's place; never over the video; hovering the
 //       resize corner never moves the window; an old
 //       saved spot is left behind once; from a free window 🎮's hall slides out of its left side, visible with the side
@@ -244,7 +244,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const s = document.getElementById('game-stage');
       return { inside: document.fullscreenElement?.contains(s) ?? false, hidden: s.hidden, float: s.classList.contains('float'), w: Math.round(s.getBoundingClientRect().width) };
     });
-    check(inFs.inside && !inFs.hidden && !inFs.float, `${L}: in the video's fullscreen a table plays in the video's place inside it`, inFs);
+    check(inFs.inside && !inFs.hidden && (!inFs.float || inFs.w < 1366), `${L}: in the video's fullscreen a table stays inside it (its window or the video's place)`, inFs);
     await page.click('#game-stage .game-hub-open');
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the video's fullscreen opens the hall, visible`);
     await page.keyboard.press('Escape');
@@ -300,8 +300,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
         check(fits ? b.mode === 'float' && !b.overPlayer && b.onScreen && b.x + b.w >= viewport.width - 12 && b.w >= minW[kind] : b.mode === 'stage', `${L} ${kind}: ${fits ? 'opens right of the video, never over it' : "doesn't fit beside the video: the video's place"}`, { b, room });
         check(switchShown, `${L} ${kind}: a side game keeps the placement switch`);
       } else {
-        check(b.mode === 'stage' && b.inVideo, `${L} ${kind}: a table plays in the video's place`, b);
-        check(!switchShown, `${L} ${kind}: a table has no placement switch`);
+        // Until card .113 turns stage.ts TABLES_IN_STAGE on, a table keeps its free window and the switch; then it plays
+        // in the video's place without one. Either way it opens whole on screen, and 🎮 shows the hall.
+        check(b.onScreen && (b.mode === 'stage' ? b.inVideo && !switchShown : b.mode === 'float' && switchShown), `${L} ${kind}: a table opens in its placement (${b.mode}), whole on screen`, { b, switchShown });
         await page.click('#game-stage .game-hub-open');
         check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: 🎮 in the video's place opens the hall, visible`);
         await page.keyboard.press('Escape');

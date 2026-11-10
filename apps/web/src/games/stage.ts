@@ -58,7 +58,12 @@ const SEEN_KEY = 'opt:gamesSeen';
 
 type Place = 'float' | 'stage';
 const PLACES: readonly Place[] = ['float', 'stage'];
-/** The placement I picked for a side game with the switch (null: none yet). */
+/**
+ * The owner's decision (0.9.97.112): the tables always play in the video's place, without the switch. Off until the
+ * tables' layouts read well in the video's place on a laptop (card .113: games-sweep's 13 px rule there).
+ */
+const TABLES_IN_STAGE = false;
+/** The placement I picked for a game with the switch (null: none yet). */
 const savedPlace = (kind: Kind): Place | null => {
   const saved = load(`gamePlace:${kind}`);
   // "side" (0.9.91.8–0.9.91.9) became the free window.
@@ -267,7 +272,7 @@ export function createGameStage(opts: StageOptions) {
     // Bug W2: over a YouTube video only the free window is possible (YTG), so the switch has nothing to switch: it goes,
     // and the head says in plain words why the window keeps beside the video.
     // 0.9.97.112 (owner): the tables always play in the video's place, so only the side games have the switch.
-    placeSwitch.hidden = youtube || !kind || !isSoloKind(kind);
+    placeSwitch.hidden = youtube || !kind || (TABLES_IN_STAGE && !isSoloKind(kind));
     head.title = youtube && mode === 'float' ? t('game.besideYoutube') : '';
     placeButtons.forEach((b, i) => {
       const p = PLACES[i]!;
@@ -414,13 +419,14 @@ export function createGameStage(opts: StageOptions) {
     return Math.min(most, Math.max(low, wanted));
   }
   /**
-   * 0.9.97.112 (owner): where a game plays when I haven't picked. The tables (big, shared) always play in the video's
-   * place (over YouTube, where nothing may cover the player, beside it). A side game opens as the free window in its home
+   * 0.9.97.112 (owner): where a game plays when I haven't picked. The tables (big, shared) will always play in the video's
+   * place, with no switch (over YouTube, where nothing may cover the player, beside it), once their layouts read well
+   * there (Game Studio's card .113 turns `TABLES_IN_STAGE` on); until then they keep the catalog's free window and the switch. A side game opens as the free window in its home
    * right of the video when it fits there at its smallest readable size (`homeBox`), else in the video's place; my own
    * pick with the switch wins. Tablets and the video's fullscreen keep the catalog's default.
    */
   function placeOf(kind: Kind): Place {
-    if (!isSoloKind(kind)) return 'stage';
+    if (!isSoloKind(kind)) return TABLES_IN_STAGE ? 'stage' : (savedPlace(kind) ?? catalogOf(kind).place);
     const saved = savedPlace(kind);
     if (saved) return saved;
     if (isTablet() || inFullscreen() || isPhoneLayout()) return catalogOf(kind).place;
