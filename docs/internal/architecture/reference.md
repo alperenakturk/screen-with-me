@@ -711,7 +711,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   moving what is needed only after a press, or only in the shell, into lazy chunks: `ui/voice-ext.ts` (loaded by
   `renderRoom` before the room starts, only in the shell, passed to `createVoice` as `Ext`; `isExt(client)` replaces
   `instanceof ExtVoice`), the pre-join check `ui/voice-check.ts` (its small device helpers live in `ui/voice-devices.ts`,
-  still in the room chunk), `ui/ip-notice.ts`, the stream engine `ui/live-engine.ts` (live-p2p + live-float +
+  still in the room chunk), the stream engine `ui/live-engine.ts` (live-p2p + live-float +
   live-compose; `live.ts` makes it on `ensure()`: someone streams, a hover / focus / touch on Share or Watch, a press,
   a signal; until then "not streaming, not watching"), the TikTok / Vimeo / sync-test players, the sound recipes
   (`@swm/shared/sounds`, loaded on the first press; a sound whose recipes come > 300 ms late is dropped, as before),
@@ -723,8 +723,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `navigator.onLine` is true, see the Live line):** `reloadForNewVersion` does nothing while `navigator.onLine` is false (a reload then showed the browser's
   offline page and threw the room away after a Wi-Fi blip); chunks missed offline are fetched again on `online` and the
   page reloads only if one still fails (in Chrome always: it keeps a failed module import for the page's life); harness
-  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. The IP notice fails closed (no voice,
-  stream or watching without it; harness `scripts/harness/lazy-gates/run.cjs` in CI blocks its chunk). Measure a module's share of the
+  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. Voice, streams and watching fail closed when
+  their chunks can't load (harness `scripts/harness/lazy-gates/run.cjs` in CI blocks `voice-check` and `live-engine`;
+  the IP notice chunk it used to block was removed by card SIMP1). Measure a module's share of the
   room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).
 - **Accessibility (card A11y, 0.9.96.13, Design's `docs/internal/design/a11y-1.md`):** `#skip-link` is the first Tab stop
   (index.html; in the room `room.ts` turns it into "Skip to the video" → `#theater`). A Tab press wakes the resting
@@ -863,9 +864,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   is `welcome.voiceMode`: **p2p** (default, no card/account): each person has a separate WebRTC connection with
   everyone in voice (the smaller id makes the offer), the server relays `{t:'signal'}` only if both sides are in voice
   (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (6), STUN Cloudflare only (every STUN server
-  sees each user's IP). **IP notice (0.9.86, `ui/ip-notice.ts`):** before joining voice in p2p mode (lists who is in
-  voice), starting a stream or watching one, a dialog says the others can see your IP; "Bunu bir daha gösterme" per
-  action (`opt:ipNotice:voice|stream|watch`); "🔒 Seste olanlar IP adresini görebilir · Neden?" under the voice row.
+  sees each user's IP). **No IP notice (card SIMP1, owner, 10 Nov 2026):** the 0.9.86 dialog before voice / a stream /
+  watching and the "🔒 People in voice can see your IP · Why?" line are gone (`ui/ip-notice.ts` deleted; old
+  `opt:ipNotice:*` keys are harmless leftovers). The legal place is `privacy.html#voice` (EN) / `#voice-tr` (TR), linked
+  from Settings → Sound & camera ("Who sees what", `data-privacy-link="voice"`; `translate` adds the anchor, `-tr` in
+  Turkish). Nothing starts before the press: the microphone only after "Join voice" (then the pre-join check), a
+  stream after Share → Screen / Camera, watching after "Watch".
   Hiding IPs (TURN relay / SFU for voice + camera + streams) is a Phase 2 goal, needs the card. **sfu**: if the
   Worker has `REALTIME_APP_ID`/`REALTIME_APP_SECRET`, Cloudflare Realtime (`apps/server/src/realtime.ts`, `{t:'rtc'}`
   requests, session on the server, `VOICE_MAX` 10). Cloudflare requires a card and has no spending cap, so p2p for now
@@ -1253,7 +1257,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   ends now; elsewhere `lab_off`). Lab commands: `classics.position.<name>`, `quiz.skip`, `draw.skip` (registered by the
   table pieces while mounted), `games.tipjar`. e2e `lab-server.mjs`: with `LAB_SERVER=1` (CI's local run) they work;
   in the live run after every deploy every one is refused and nothing changes.
-- **Move to another device (0.9.96.4, card "Move my things to another device"):** profile menu → 📲 (`#profile-move`)
+- **Move to another device (0.9.96.4, card "Move my things to another device"):** Settings → Me → 📲 Move
+  (`#settings-move`; card SIMP1 took it out of the profile menu)
   or the other device's QR (`/#move=<code>`, `app.ts` `openMoveFromHash`, also on `hashchange`) → `ui/move-device.ts`
   (lazy chunk + `move-device.css`, own texts). Shared `move.ts`: `MOVE_KEYS` (snackBar, windowGarden, fiveFrames,
   savedRooms, stickerCollection, name, avatar; nothing else ever moves), `packMove` (emoji images dropped oldest
@@ -1320,7 +1325,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   4:3 strip on the right (`.cam-grid.spotlight`, `--cam-others`, set in `cam-float.ts` `markTiles`); the old
   "full width + span 2" pushed the others out of a sized window. The share menu lifts the side panel over the
   floating cameras while it is open (`.side:has(.live-menu:not([hidden]))`).
-  **0.9.90.6 pre-join check (`ui/voice-check.ts`):** "Sese katıl" (after the IP notice, not in the shell) opens a
+  **0.9.90.6 pre-join check (`ui/voice-check.ts`):** "Sese katıl" (not in the shell) opens a
   small window: camera preview (only when "Kameram açık girsin" is ticked), my voice level, mic / camera / speaker
   selects (`enumerateDevices`; speaker only where `setSinkId` exists), "Mikrofonum kapalı girsin", "Kameram açık
   girsin", "Sese katılmadan önce bunu sor". Saved in `opt:micDevice` / `opt:camDevice` / `opt:speakerDevice` /
@@ -1461,9 +1466,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   list (games (phones), film time (host), save, recap, shortcuts (computer), sync test (dimmed while something plays),
   rules; R9, 0.9.97.16: nothing else, Help · Feedback · Privacy are one small line at the foot of the profile menu,
   `.profile-links`, and the profile has no ⟳ Reconnect),
-  shown by the computer's `#room-more` menu and the phone's ⋯ sheet in the same order; `settingsDialog.open(section,
-  solo)` opens one section alone (⚙️ = `view`; since 0.9.93.18, card 6b, `#settings-dialog.solo` is one column, as tall as its
-  content: the two-column grid had put it in the hidden list's 210 px column); ⋯ → Games goes through the invisible `#more-game` anchor (games
+  shown by the computer's `#room-more` menu and the phone's ⋯ sheet in the same order; `settingsDialog.open(section)`
+  opens Settings at that category (⚙️ = `view`, ⋯ → Save = `room`), the category list always beside it (card SIMP1
+  ended card 6b's "solo" sections); ⋯ → Games goes through the invisible `#more-game` anchor (games
   `extraButtons`). `.room.fresh` until the first item: on a computer no queue / people tabs or sync-test button (Share stays since
   0.9.96.23: the owner missed screen share in an empty room; it needs no video). Test: `scripts/harness/room-more/run.cjs`.
 - **Tabs:** 💬 Chat, 🎵 Queue, 👥 People (equal widths); 👤 Profile is not a tab: the button at the top right (my
@@ -1474,12 +1479,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Chat bubbles** (`ui/chat.ts`): mine on the right in the accent color (no avatar), others on the left with avatar
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
-  - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with sections on
-    the left: Ekranım (My screen) / Oda kuralları (Room rules) / Odayı kaydet (Save room) / Film saati (Film time; host
-    only). Rows are title + short description + toggle (`.set-row`, `input.switch`, `role=switch`). Non-
-    hosts don't see the toggles; they see `#rules-summary` (✓/– summary, "X sets the rules"). The dialog is always in
-    the page (hidden): selectors for open dialogs are `.dialog-backdrop:not([hidden])` (closes the hole in the shell,
-    swallows shortcuts). On phones the sections are horizontal at the top.
+  - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
+    categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
+    📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count
+    `#settings-room-name` / `#settings-room-count`, filled by `drawRoomTitle`; save / rename / unsave, the old `save`
+    section; `open('save')` still lands here) · 👑 Room rules (`rules`) · ⏰ Film time (`schedule`, host only) · 🔊 Sound
+    & camera (`sound`: sounds, volume, ducking on the film page, 🎛 microphone and camera = `voice.devices()`, "Check
+    before joining voice" = `opt:voiceCheck`, the "Who sees what (privacy)" link) · ℹ️ About (`about`: the version read
+    from `.footer-version`, Help, Feedback, Privacy, Terms, Extension, Thanks, Licenses). `createSettingsDialog`'s
+    `onShow(section)` fills Room / About / the voice switch when shown. The window is as tall as its longest category
+    (`height: auto`, ≥ 540 px, ≤ the window) so none scrolls on a computer; on ≤ 640 px the categories are a wrapping
+    row of chips; a phone shows it full screen. Room rules come in two groups, ▶️ Playback (wait, host-only, lock
+    queue, countdown) / 🏠 In the room (knock, emojis, streams, clear emojis, emoji rate): `.rules-groups` chips set
+    `.rules-box[data-show]`, rows carry `data-group` (Planner's pick C: nine switches scrolled on a phone). Rows are title + short
+    description + toggle (`.set-row`, `input.switch`, `role=switch`). Non-hosts don't see the rule toggles; they see
+    `#rules-summary` (✓/– summary, "X sets the rules"). The dialog is always in the page (hidden): selectors for open
+    dialogs are `.dialog-backdrop:not([hidden])` (closes the hole in the shell, swallows shortcuts). Test Lab: 🖥️ Screen
+    → "Settings: <category>" (`settings.<section>`). Harness `scripts/harness/settings/run.cjs` (CI site job): phone,
+    tablet, laptop, desktop × EN, TR.
   - **Under the video** (`ui/reactions.ts` `.tray-bar`): "😀 Tepki ▴" tray (Ready-made / Mine, 8 slots, ‹ 1/3 ›,
     🖼️ Add; pressing inside doesn't close it, outside/Esc closes) + the three most recent emojis next to it
     (`localStorage` `recentReactions`); on the right labelled buttons 🎮 Game · 📌 Pin · 🔄 Sync · ⏩ 1× (opens
@@ -1497,8 +1514,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Who-paused notice (0.9.68):** when someone else plays/pauses/seeks/changes rate, top-left of the video for 2.6 s:
   avatar + "Ali durdurdu" (`#action-notice`, an island inside the hole; not for my own actions or `SYSTEM`); can be
   turned off in Settings (`opt:actionNotice`).
-- **Room layout "Cinema Rail" (0.9.76, user's choice; design canvas A):** the top bar shows the room name (saved room:
-  its name, otherwise "Oda <code>") + "· N kişi" (`.room-title`) and "🔗 Davet et" (`#invite-btn`: copies the link,
+- **Room layout "Cinema Rail" (0.9.76, user's choice; design canvas A):** the top bar shows the connection dot
+  (`.room-title`; card SIMP1: the room name and "· N people" stay in the page for screen readers and harnesses but are
+  not shown, they live in Settings → Room; the room has no footer line, `html.in-room .footer` hidden, its links and
+  the version in Settings → About; the join screen hides the footer too and puts privacy / terms / help behind the join
+  card's ⓘ, `.join-info`) and "🔗 Davet et" (`#invite-btn`: copies the link,
   share sheet on phones; `prompt` if the clipboard is blocked); the right rail (320 px) has the "Birlikte" card
   (`#together`: title + "Seste 2/6 · 📷 0/4", avatars and names of people in the room (at most 8, "+N"; one person's two
   tabs count once), voice buttons (`#voice-card` is now a row inside the card), below it the stream section

@@ -1,21 +1,27 @@
 import { t, type I18nKey } from '../i18n.ts';
 
-type Section = 'view' | 'rules' | 'save' | 'schedule';
+/** `save` is the old name of the room's section (its save form now sits in "Room"). */
+export type SettingsSection = 'me' | 'view' | 'room' | 'rules' | 'schedule' | 'sound' | 'about' | 'save';
+type Section = Exclude<SettingsSection, 'save'>;
 
 const TITLES: Record<Section, I18nKey> = {
+  me: 'settings.secMe',
   view: 'settings.secView',
+  room: 'settings.secRoom',
   rules: 'settings.secRules',
-  save: 'settings.secSave',
   schedule: 'settings.secSchedule',
+  sound: 'settings.secSound',
+  about: 'settings.secAbout',
 };
 
 /**
- * Ayarlar penceresi (⚙️): sağ panelde sekme değil, ekranın ortasında solda bölümleri olan pencere (avatar seçici
- * gibi). Bölümler: Ekranım (sadece bende), Oda kuralları (yöneticiye anahtarlar, diğerlerine özet), Odayı kaydet,
- * Planlı başlangıç (sadece yönetici). Anahtarların kendisi room.ts'te bağlanır; burası sadece açar/kapar ve gezinir.
- * Pencere hep sayfada durur (gizli): kabukta açıkken delik kapanır (`.dialog-backdrop:not([hidden])`).
+ * The settings window (⚙️): centred, its categories in a list on the left (a row of chips on a phone), the same order
+ * everywhere (card SIMP1): Me · My screen · Room · Room rules · Film time (host only) · Sound & camera · About. The
+ * switches themselves are wired in room.ts; this only opens, closes and moves between categories. The window always
+ * stays in the page (hidden): on the film page an open one closes the hole (`.dialog-backdrop:not([hidden])`).
+ * `onShow` runs when a category is shown (the Room and About categories fill in their facts then).
  */
-export function createSettingsDialog(root: HTMLElement, isHost: () => boolean) {
+export function createSettingsDialog(root: HTMLElement, isHost: () => boolean, onShow: (section: Section) => void = () => {}) {
   const backdrop = root.querySelector<HTMLElement>('#settings-dialog')!;
   const title = backdrop.querySelector<HTMLElement>('#settings-title')!;
   const close = backdrop.querySelector<HTMLButtonElement>('#settings-close')!;
@@ -24,13 +30,15 @@ export function createSettingsDialog(root: HTMLElement, isHost: () => boolean) {
   let active: Section = 'view';
   let opener: HTMLElement | null = null;
 
-  function show(section: Section): void {
-    // Planlı başlangıç sadece yöneticiye.
+  function show(asked: SettingsSection): void {
+    let section: Section = asked === 'save' ? 'room' : asked;
+    // Film time is the host's only.
     if (section === 'schedule' && !isHost()) section = 'rules';
     active = section;
     title.textContent = t(TITLES[section]);
     for (const button of navButtons) button.setAttribute('aria-current', String(button.dataset.sec === section));
     for (const sec of sections) sec.hidden = sec.dataset.sec !== section;
+    onShow(section);
   }
 
   function render(): void {
@@ -40,14 +48,10 @@ export function createSettingsDialog(root: HTMLElement, isHost: () => boolean) {
     show(active);
   }
 
-  /**
-   * `solo` (card 6, owner's pick C): only that section, no list of sections beside it. ⚙️ opens "My screen" so; the
-   * room's other sections open from "⋯ More".
-   */
-  function open(section?: Section, solo = false): void {
+  /** Opens at a category (⚙️: My screen; "⋯ More" items: theirs), the list of categories always beside it. */
+  function open(section?: SettingsSection): void {
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     backdrop.hidden = false;
-    backdrop.classList.toggle('solo', solo);
     render();
     if (section) show(section);
     close.focus();

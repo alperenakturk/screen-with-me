@@ -1087,8 +1087,27 @@ const en = {
   'tvtest.photo': 'When done, take a photo of this screen and send it, with the “Remote keys” part visible.',
   'settings.secView': 'My screen',
   'settings.secRules': 'Room rules',
-  'settings.secSave': 'Save the room',
   'settings.secSchedule': 'Film time',
+  'settings.secMe': 'Me',
+  'settings.secRoom': 'Room',
+  'settings.secSound': 'Sound & camera',
+  'settings.secAbout': 'About',
+  'settings.rulesPlay': 'Playback',
+  'settings.rulesRoom': 'In the room',
+  'settings.me': 'Only about you, in this browser.',
+  'settings.profile.d': 'Your name, picture and theme.',
+  'settings.profile.btn': 'Open profile',
+  'settings.move.d': 'Take your name, picture and rooms to a phone or another computer.',
+  'settings.move.btn': 'Move',
+  'settings.devices': 'Microphone and camera',
+  'settings.devices.d': 'Choose which ones to use and try them.',
+  'settings.devices.btn': 'Choose',
+  'settings.voiceAsk': 'Check before joining voice',
+  'settings.voiceAsk.d': 'Shows your microphone and camera before you join.',
+  'settings.voiceOnPress': 'Your microphone and camera turn on only when you press "Join voice".',
+  'settings.whoSees': 'Who sees what (privacy)',
+  'settings.about': 'Free, no account. Help, privacy and the small print:',
+  joinInfo: 'Privacy, terms and help',
   'settings.rulesBy': 'The room host {name} sets these rules.',
   'settings.on': 'on',
   'settings.off': 'off',
@@ -1114,22 +1133,6 @@ const en = {
   'reactTray.ready': 'Emojis',
   'reactTray.mine': 'In this room',
   'reactTray.hint': 'Emojis (keys 1–8 work too)',
-  'ipNotice.voiceTitle': 'Before you join voice',
-  'ipNotice.voice': "Your voice doesn't go through our server; it goes straight to the people in voice. That's why everyone in voice (including people who join later) can see your internet address (IP). It shows roughly your city and internet provider, not your home address.",
-  'ipNotice.voiceYes': 'Got it, join voice',
-  'ipNotice.streamTitle': 'Before you go live',
-  'ipNotice.stream': "Your stream doesn't go through our server; it goes straight to the people watching. People who watch can see your internet address (IP), and you can see theirs. It shows roughly a city and internet provider, not a home address.",
-  'ipNotice.streamYes': 'Got it, continue',
-  'ipNotice.watchTitle': 'Before you watch the stream',
-  'ipNotice.watch': "The stream doesn't go through our server; it comes straight from the person streaming. That's why they can see your internet address (IP). It shows roughly your city and internet provider, not your home address.",
-  'ipNotice.watchYes': 'Got it, watch',
-  'ipNotice.inVoice': 'In voice now: {names}',
-  'ipNotice.nobody': 'Nobody is in voice yet.',
-  'ipNotice.advice': "If there are people in the room you don't know, it's better not to.",
-  'ipNotice.again': "Don't show this again",
-  'ipNotice.line': 'People in voice can see your IP',
-  'ipNotice.why': 'Why?',
-  'ipNotice.whyText': "Voice and video don't go through our server; they go straight to the people in voice. For a direct connection, browsers have to know each other's internet address (IP): it shows roughly a city and internet provider, not a home address. People who haven't joined voice can't see it.",
   'stickers.collection': 'My collection',
   'stickers.roomEmpty': 'No custom emojis in this room yet. Use the Add button below to add a GIF or photo.',
   'stickers.collectionHint': 'Kept only in this browser. Tap one to add it to this room.',
@@ -1266,7 +1269,11 @@ export function helpHref(section?: string): string {
 /** data-i18n="anahtar" ve data-i18n-placeholder="anahtar" olan öğelerin metnini günceller. */
 export function translate(root: ParentNode = document): void {
   // Gizlilik sayfası sitenin o anki dilinde açılsın.
-  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) link.href = `/privacy.html?lang=${current}`;
+  // A section (card SIMP1: `data-privacy-link="voice"`) keeps its anchor; the Turkish block's ids end in `-tr`.
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-privacy-link]')) {
+    const section = link.dataset.privacyLink;
+    link.href = `/privacy.html?lang=${current}${section ? `#${section}${current === 'tr' ? '-tr' : ''}` : ''}`;
+  }
   // The terms of use too (card TOS).
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[data-terms-link]')) link.href = `/terms.html?lang=${current}`;
   // The help page too (card 7), keeping a section anchor such as #connection.
