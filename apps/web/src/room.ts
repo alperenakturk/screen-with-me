@@ -3042,8 +3042,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const badge = el('span', { class: 'badge cinema-badge' });
     $('#dock-chat').append(badge);
     const edge = el('div', { id: 'cinema-edge', class: 'cinema-edge', 'aria-hidden': 'true' });
+    // YT5 batch: a visible way out for a mouse or a touch, besides T / Esc (only shown in cinema mode, `room.css`).
+    const exit = el('button', { id: 'cinema-exit', class: 'cinema-exit', type: 'button', hidden: '' });
     const topbar = document.querySelector<HTMLElement>('.topbar');
-    document.body.append(edge);
+    document.body.append(edge, exit);
     let unread = 0;
     let peekTimer = 0;
     button.hidden = isShell;
@@ -3060,6 +3062,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       badge.hidden = !on || unread === 0;
       badge.textContent = unread > 9 ? '9+' : String(unread);
       $('#dock-more-side').textContent = label;
+      exit.textContent = `✕ ${t('sideShow')}`;
+      exit.hidden = !on;
       // Card MB: cinema mode needs a mouse (its edges): a touch-only tablet doesn't offer it.
       $('#dock-more-side').closest<HTMLElement>('.dock-more-item')!.hidden = !cinemaOk() && !on;
     };
@@ -3079,6 +3083,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
     };
     button.addEventListener('click', () => set(!sideHidden));
+    exit.addEventListener('click', () => set(false));
     $('#dock-chat').addEventListener('click', () => {
       unread = 0;
       render();

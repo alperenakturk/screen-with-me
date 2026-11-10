@@ -10683,20 +10683,18 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   display: none;
 }
 
-/* WhatsApp's own glyph and green (card 4, brand colour #25D366); dark text keeps it readable. */
+/* WhatsApp's own glyph in its own green (card 4, brand colour #25D366) on the theme's plain button: still WhatsApp at
+   a glance, but no longer the loudest thing in a light theme (YT5 batch, first-look review). */
 .btn.invite-wa {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #25d366;
-  border-color: #25d366;
-  color: #052e16;
   font-weight: 700;
 }
 
-.btn.invite-wa:hover {
-  background: #2ee072;
+.btn.invite-wa .wa-glyph {
+  color: #25d366;
 }
 
 .wa-glyph {
@@ -11493,8 +11491,14 @@ html.ph-room .room .empty {
   gap: 6px;
 }
 
+/* YT5 batch: a small Stub in the box's bottom-right corner (the computer shows him above the title), placed over the
+   corner so the card needs no extra height. */
 html.ph-room .room .empty .theme-mascot {
-  display: none;
+  --mascot-size: 46px;
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  margin: 0;
 }
 
 html.ph-room .room .empty h2 {
@@ -13015,3 +13019,37 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   font-size: inherit;
 }
 
+
+/* YT5 batch: cinema mode's way out for a mouse or a touch, in the page's empty bottom-left corner (never over the
+   video; chat lines come in under the video on the right); quiet until the mouse is on it. `hidden` outside cinema. */
+.cinema-exit {
+  position: fixed;
+  left: 16px;
+  bottom: 10px;
+  z-index: 31;
+  min-height: 32px;
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cinema-exit:is(:hover, :focus-visible) {
+  color: var(--text);
+}
+
+/* First-look review: the invite window's "Ask before letting people in" row lines up with the rows under it. */
+.invite-dialog .set-row.invite-door {
+  padding-inline: 0;
+}
+
+/* First-look review: "Run a sync test" alone in the room (.alone) read as broken at 50 %: full opacity in the muted
+   text colour (≥ 4.5:1 on the room's surfaces); pressing it still explains that it needs a friend. */
+#sync-test.alone {
+  opacity: 1;
+  color: var(--muted);
+}
