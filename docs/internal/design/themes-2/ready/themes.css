@@ -1,0 +1,74 @@
+/* THEME2 ready set (docs/internal/design/themes-2.md). Paste after the other theme blocks in styles.css.
+   --field-border is new (inputs, selects, a toggle's off state; ≥ 3:1 on --surface): add it to :root as
+   color-mix(in srgb, var(--muted) 60%, var(--surface)) and use it there, or keep these values only for the new themes. */
+/* Matinee: the first light theme. Warm paper, ink text, rust accent; no picture, a faint paper grain and one soft window light. */
+:root[data-theme='matinee'] {
+  color-scheme: light;
+  --bg: #f4ede1;
+  --surface: #fffaf1;
+  --surface-2: #efe5d4;
+  --border: #d6c8b2;
+  --field-border: #8a7a64;
+  --text: #1f1a14;
+  --muted: #5c5244;
+  --accent: #b03f1c;
+  --accent-hover: #c24a24;
+  --on-accent: #ffffff;
+  --danger: #b3261e;
+  --ok: #1d7a4f;
+  --warn: #8a5a00;
+  --glow: none;
+  --art: radial-gradient(ellipse 60% 50% at 85% 0%, rgb(255 214 150 / 0.35), transparent 70%),
+    radial-gradient(1px 1px at 20px 30px, rgb(120 90 50 / 0.12) 99%, transparent),
+    radial-gradient(1px 1px at 70px 90px, rgb(120 90 50 / 0.1) 99%, transparent),
+    linear-gradient(#f7f1e6, #f1e8d9);
+  --art-size: 100% 100%, 97px 103px, 131px 127px, 100% 100%;
+  --mascot: url('/themes/matinee-maskot.svg');
+}
+/* Graphite: neutral grey and the brand gold; no glows, no stars, no aura. For people who want no decoration. */
+:root[data-theme='graphite'] {
+  --bg: #111113;
+  --surface: #1b1b1f;
+  --surface-2: #25252a;
+  --border: #33333a;
+  --field-border: #76767f;
+  --text: #f2f2f4;
+  --muted: #a8a8b3;
+  --accent: #ffc65a;
+  --accent-hover: #ffd27a;
+  --on-accent: #1d1405;
+  --glow: none;
+  --art: linear-gradient(#17171a, #111113);
+  --art-size: 100% 100%;
+  --aura: none;
+  --mascot: url('/themes/graphite-maskot.svg');
+}
+/* Pine Woods: a forest at night, a sheet screen between two pines and a campfire; deep green, amber accent. */
+:root[data-theme='pine'] {
+  --bg: #0b1611;
+  --surface: rgb(18 35 27 / 0.88);
+  --surface-2: rgb(26 48 37 / 0.93);
+  --border: #2f4d3e;
+  --field-border: #6f8c7b;
+  --text: #ecf3ec;
+  --muted: #a2bcab;
+  --accent: #f0b85a;
+  --accent-hover: #f6ca7c;
+  --on-accent: #1f1504;
+  --ok: #5fd39a;
+  --radius: 10px;
+  --art: linear-gradient(#08120e, #10251b 60%, #0b1611);
+  --art-size: 100% 100%;
+  --scene: url('/themes/pine.svg');
+  --mascot: url('/themes/pine-maskot.svg');
+}
+/* themes.ts: add to THEMES
+  { id: 'matinee', swatch: ['#f4ede1', '#b03f1c'] },
+  { id: 'graphite', swatch: ['#1b1b1f', '#ffc65a'] },
+  { id: 'pine', swatch: ['#12231b', '#f0b85a'] },
+   and 'matinee', 'graphite' to PLAIN_THEMES (phones get them).
+   i18n.ts / i18n-tr.ts:
+  'theme.matinee': 'Matinee',   /  'theme.matinee': 'Matine',
+  'theme.graphite': 'Graphite',   /  'theme.graphite': 'Grafit',
+  'theme.pine': 'Pine Woods',   /  'theme.pine': 'Çam Ormanı',
+   theme-art.mjs: copy pine.svg as public/themes/pine.svg, glowbeam-<id>.svg as public/themes/<id>-maskot.svg. */

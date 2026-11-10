@@ -688,7 +688,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fullscreen (4B):** on a phone in landscape the dock is a slim column (52 px + safe area) beside the video, never on it
   (`.player` / `.fs-catcher` end at its edge, so the player's own bar stays free), always visible, only 💬 😀 🎙 📷 and
   exit (🖥️ only while someone streams: `data-idle` on `#dock-live`); its windows open left of it (`overflow: visible`).
-  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` and sets `html.ph-game` (not in
+  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
   the Shorts view); phone.css shrinks the theater itself (CSS only, the player is never reloaded) to a 92×52 preview
   at the left of the game's head; `::after` over it catches the tap, `phone-room.ts` turns it into the head's
   `.game-minimize`; the strip's `#strip-voice` moves into the head while `ph-game` (only 🎙 shows there) and back
@@ -1025,11 +1025,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   voice while I am). **🍿 Snack Bar** (`games/snack-bar.ts` + `snack-bar.css`, a lazy chunk; art copied from
   `docs/internal/design/side-games/snack-bar/` to `games/art/snack-bar/`, inlined with unique ids): ticks once a
   second, saves every 5 s / on close / `pagehide`; income only while playing, +10 % per other person, +5 % per one in
-  voice with me, 5 stands with ×2 milestones, prestige "new
-  cinema" from 1M earned (stars +5 % each); no "while you were away" pay since 0.9.97.31; a tap on the scene serves; one tab at a time (`snackBar:tab` heartbeat,
+  voice with me; no "while you were away" pay since 0.9.97.31; a tap on the scene serves. **Economy v2 (card SB3,
+  `SNACK_VERSION = 2`, design + balance tables `docs/internal/design/games/snack-bar-3.md`):** 8 stands (popcorn …
+  second counter, hot dog, ice cream, arcade), each with its own price growth 1.08–1.15 (`costOf`, bulk = geometric
+  sum); ×2 milestones at 10/25/50/100/200/300/400; 3 recipes per stand (×2 each, `RECIPE_STEPS`, `buyRecipe`);
+  the menu +10 % per stand at level ≥ 25 (`menuFactor`); staff kept over cinemas (`hire`: tip box, usher serves after
+  `USHER_DELAY_S`, long line halves the wait, manager); today's special ×2 (`specialOf(dayNumber())`, passed as
+  `ctx.special`); new cinema from `PRESTIGE_MIN` 100 B, stars ⌊∛(earned / 6.4 M)⌋, +2 % each; places cycle lobby,
+  drive-in, rooftop, art house, seaside (customers ×2), planetarium (+25 % alone). `loadSnack` migrates v1 (stars ×2.5
+  rounded up, nothing earns less; unit test). The page: buy bar ×1 / ×10 / Max (`snackBar:buyMode`), "📋 Upgrades"
+  panel (recipes + staff, dot when affordable), rows = open stands + the next locked one, as many as fit (`fitRows`,
+  real pixels × the window's `--fit`; the rest "+N more"). Balance: `scripts/snack-sim.mjs --check` (CI `checks` job);
+  harness `scripts/harness/snack-bar-3/run.cjs` (CI `games` job). One tab at a time (`snackBar:tab` heartbeat,
   "Play here" takes over); its buttons never keep the focus (`mousedown` preventDefault), no key handlers; sounds
-  `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). Below 380 px of game height three
-  upgrade rows show (+ "N more"). Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
+  `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). At least three rows always show. Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
   JS budget (`scripts/size-budget.mjs`) is nearly full.
   **Tip jar and cuttings (side games 2, picks 5 + 8):** the room's only side-game messages. `{t:'tip'}` (Snack Bar's serve
   and customer serve, `SoloRoom.tip`) counts only while an item plays and not paused, ≤ 1 per 2 s per person
@@ -1155,7 +1164,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   commands (`games.open.<kind>` for every table and side game, `games.speed` ×10 side-game time (each tick runs `labTicks()`
   times, still capped like a real second), `games.playing` "pretend the film plays" (`labRoom` gives the side games an
   hour-long `lab-film`, nothing is sent), `games.restore`); each side game registers its own while its window is open
-  (`registerSideLab`): Snack Bar `snackBar.coins` / `.customer` / `.receipt` / `.badges` / `.place`, Window Garden
+  (`registerSideLab`): Snack Bar `snackBar.coins` / `.customer` / `.receipt` / `.badges` / `.place` / `.upgrades` (open recipes + all staff) / `.levels` (every stand to 30), Window Garden
   `garden.grow` / `.bloom` / `.seeds` / `.hybrid` / `.sky` / `.rain` / `.visitor`, Five Frames `fiveFrames.answer` / `.day`.
   **Sandbox:** before a game's first cheat its real save is copied to `lab:real:<key>` (localStorage only, never synced);
   `games.restore` writes every copy back through `save` and fires `swm-lab-restore`, which the open games reload from.
@@ -1292,7 +1301,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the screen's frames drive it and a background tab doesn't freeze it; hidden where unsupported); quality changes go
   to the real screen track; the browser's "Stop sharing" ends the composed track too. `LiveKind` 'camera' stays in the
   protocol for old clients. Test: `voice/live.mjs` (19 checks).
-  **0.9.91.15 free stream window (owner: "free like the cameras", `ui/live-float.ts`):** `#live-window` sits in the
+  **0.9.91.15 free stream window (owner: "free like the cameras", `ui/live-float.ts`):** (LAYOUT1: the in-video default is the top right, `y: 0.04`, clear of the player's own bar; at least 150 px wide on a phone, `PHONE_MIN_WIDTH`, 200 elsewhere) `#live-window` sits in the
   video (default) or floats on the page (⧉ / ⤓, `opt:livePlace`; not under 700 px); drag anywhere, corner grip resizes
   (16:9 kept), double click resets; places as shares of the container in `liveSpot:video` / `liveSpot:free` /
   `liveSpot:fs`; in fullscreen (real or `.fake-fs`) it always lives inside the video; ⤢ covers the video (a free window

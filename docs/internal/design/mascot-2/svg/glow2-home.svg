@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380"><defs><linearGradient id="glow2-bgh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22174f"/><stop offset="1" stop-color="#08061a"/></linearGradient></defs><rect width="640" height="380" rx="18" fill="url(#glow2-bgh)"/>
+  <defs>
+    <linearGradient id="glow2-hm-beam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffd27a" stop-opacity=".7"/><stop offset="1" stop-color="#ffc65a" stop-opacity=".05"/></linearGradient>
+    <linearGradient id="glow2-hm-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb070"/><stop offset="1" stop-color="#ff7a5a"/></linearGradient>
+    <radialGradient id="glow2-hm-halo" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffc65a" stop-opacity=".45"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient>
+    <symbol id="glow2-hm-pic" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice">
+      <rect width="160" height="100" fill="url(#glow2-hm-sky)"/>
+      <circle cx="86" cy="38" r="15" fill="#fff3d6" opacity=".88"/>
+      <path d="M0 74 Q40 54 82 70 T160 64 V100 H0Z" fill="#4b2f8f"/>
+      <path d="M0 84 Q56 70 106 86 T160 80 V100 H0Z" fill="#2c1c63"/>
+    </symbol>
+    <clipPath id="glow2-hm-clip-l"><rect x="12" y="12" width="266" height="156" rx="8"/></clipPath>
+    <clipPath id="glow2-hm-clip-t"><rect x="9" y="11" width="102" height="140" rx="7"/></clipPath>
+    <clipPath id="glow2-hm-clip-p"><rect x="6" y="12" width="52" height="96" rx="7"/></clipPath>
+    <clipPath id="glow2-hm-face"><circle r="15"/></clipPath>
+  </defs>
+  <path class="hm-beam" d="M118 190 L640 20 L640 370 Z" fill="url(#glow2-hm-beam)"/>
+  <!-- laptop (behind, centre) -->
+  <g transform="translate(214 46)">
+    <rect width="290" height="180" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
+    <use href="#glow2-hm-pic" x="12" y="12" width="266" height="156" clip-path="url(#glow2-hm-clip-l)"/>
+    <rect x="28" y="150" width="234" height="5" rx="2.5" fill="#ffffff2e"/>
+    <rect class="hm-prog" x="28" y="150" width="234" height="5" rx="2.5" fill="#ffc65a"/>
+    <rect x="22" y="22" width="132" height="24" rx="12" fill="#0f5a3c"/>
+    <text font-family="'Segoe UI', Helvetica, Arial, sans-serif" x="88" y="38.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="#c9ffe6" data-art="artSync">In sync · 30 ms</text>
+    <path d="M-18 180 H308 L298 192 H-8Z" fill="#2a2450"/>
+  </g>
+  <!-- tablet (right, upright) -->
+  <g transform="translate(486 104)">
+    <rect width="120" height="162" rx="14" fill="#140f30" stroke="#ffffff24" stroke-width="2"/>
+    <use href="#glow2-hm-pic" x="9" y="11" width="102" height="140" clip-path="url(#glow2-hm-clip-t)"/>
+    <rect x="18" y="138" width="84" height="4" rx="2" fill="#ffffff2e"/>
+    <rect class="hm-prog" x="18" y="138" width="84" height="4" rx="2" fill="#ffc65a"/>
+  </g>
+  <!-- phone (front, between) -->
+  <g transform="translate(426 186)">
+    <rect width="64" height="120" rx="13" fill="#140f30" stroke="#ffffff30" stroke-width="2"/>
+    <use href="#glow2-hm-pic" x="6" y="12" width="52" height="96" clip-path="url(#glow2-hm-clip-p)"/>
+    <rect x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffffff2e"/>
+    <rect class="hm-prog" x="12" y="98" width="40" height="3.5" rx="1.75" fill="#ffc65a"/>
+    <rect x="25" y="5" width="14" height="3" rx="1.5" fill="#ffffff26"/>
+  </g>
+  <!-- chat bubble -->
+  <g transform="translate(470 326)">
+    <rect width="156" height="40" rx="20" fill="#6a4cf2"/>
+    <text font-family="'Segoe UI', Helvetica, Arial, sans-serif" x="78" y="25.5" text-anchor="middle" font-size="14" font-weight="600" fill="#fff" data-art="artChat">this part! 😄</text>
+  </g>
+  <!-- faces: three themed avatars, the first two in voice -->
+  <g transform="translate(200 300)">
+    <g transform="translate(16 18)"><image class="hm-face" href="" x="-15" y="-15" width="30" height="30" clip-path="url(#glow2-hm-face)"/><circle r="16" fill="none" stroke="#3ee08f" stroke-width="3"/></g>
+    <g transform="translate(52 18)"><image class="hm-face" href="" x="-15" y="-15" width="30" height="30" clip-path="url(#glow2-hm-face)"/><circle r="16" fill="none" stroke="#3ee08f" stroke-width="3"/></g>
+    <g transform="translate(88 18)"><image class="hm-face" href="" x="-15" y="-15" width="30" height="30" clip-path="url(#glow2-hm-face)"/><circle r="16" fill="none" stroke="#ffffff26" stroke-width="2"/></g>
+    <text font-family="'Segoe UI', Helvetica, Arial, sans-serif" x="112" y="23" font-size="14" fill="#c9c0ea" data-art="artPeople">3 watching · 2 in voice</text>
+  </g>
+  <circle cx="100" cy="190" r="92" fill="url(#glow2-hm-halo)"/>
+<use href="#glow" x="22" y="112" width="156" height="156"/><svg x="22" y="112" width="156" height="156" viewBox="0 0 64 64"><defs><linearGradient id="glow2m-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d6"/><stop offset=".5" stop-color="#ffc65a"/><stop offset="1" stop-color="#ff9440"/></linearGradient><radialGradient id="glow2m-glow"><stop offset="0" stop-color="#ffc65a" stop-opacity=".55"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></radialGradient><linearGradient id="glow2m-tail" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffc65a" stop-opacity=".8"/><stop offset="1" stop-color="#ffc65a" stop-opacity="0"/></linearGradient></defs>
+<circle cx="30" cy="34" r="26" fill="url(#glow2m-glow)"/>
+<path d="M40 26 L63 14 L63 50 L40 40Z" fill="url(#glow2m-tail)"/>
+<path d="M30 6 Q36 16 44 24 Q50 32 48 41 Q45 55 30 55 Q15 55 12 41 Q10 32 16 24 Q24 16 30 6Z" fill="url(#glow2m-gold)" stroke="#1a1036" stroke-width="2" stroke-linejoin="round"/>
+<path d="M20 26 Q24 20 28 18" stroke="#fffaf0" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".9"/>
+<path d="M13 40 Q7 43 7 49" stroke="#1a1036" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M47 40 Q53 43 53 49" stroke="#1a1036" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+<ellipse cx="24.5" cy="36" rx="3" ry="4.2" fill="#1a1036"/><circle cx="23.54" cy="34.32" r="0.90" fill="#fff" opacity=".92"/><ellipse cx="35.5" cy="36" rx="3" ry="4.2" fill="#1a1036"/><circle cx="34.54" cy="34.32" r="0.90" fill="#fff" opacity=".92"/><path d="M27.4 43 Q30 45.34 32.6 43" stroke="#1a1036" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<ellipse cx="19" cy="42" rx="2.4" ry="1.44" fill="#ff8f6a" opacity=".45"/><ellipse cx="41" cy="42" rx="2.4" ry="1.44" fill="#ff8f6a" opacity=".45"/></svg></svg>

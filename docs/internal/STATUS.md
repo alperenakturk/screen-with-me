@@ -388,6 +388,14 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.96 (LAYOUT1, layout audit; fold into the next round).** Report: `docs/internal/layout-audit.md`.
+- [ ] L1. Phone held sideways (best a big Android phone): open a game from ⋯ → it fills the whole screen, not a small
+  window over the video.
+- [ ] L2. Phone: share your screen (or watch a friend's stream): the small picture sits top right of the video and the
+  video's own play / time bar under it stays free.
+- [ ] L3. Big monitor (1920 or wider): open Snack Bar from 🎮 → "On the side": the window is bigger than on the laptop and
+  its text easy to read; drag its corner smaller, reload: it keeps your size.
+
 **0.9.97.95 (QUOTA2 + ERR1; fold into the next round).** Only with a network where the room uses its backup connection.
 - [ ] Q5. On your phone hotspot (or with the Test Lab's "Use the backup connection"), stay in a room for 10 minutes: no
   "reconnecting", the video stays in step, chat arrives at once.
@@ -459,6 +467,9 @@ with the same friend:
   nothing in their top rows ends in "…".
 - [ ] G10. The friend turns the phone's data off for 2 minutes during a Quiz: after about 1.5 min they show offline,
   20 s later the game goes back to the lobby; data back on brings them back.
+- [ ] G11. Snack Bar 3: your old Snack Bar is still there (levels, coins, decorations, stars a bit higher). Play a
+  film: try ×10 and Max, open "📋 Upgrades" and buy a recipe (that stand earns twice), hire the usher (customers get
+  served without a tap). One stand says "⭐ ×2 today". Does buying feel like a choice now, not "always the top one"?
 - [ ] G12. Five Frames Duel with a friend: open it from 🎮 "Together", both press Ready, race to the word. You see
   their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
   your phone too: your board, their strip of marks and the letters all fit.

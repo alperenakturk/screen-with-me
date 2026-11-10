@@ -104,6 +104,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.99',
+    kinds: ['duel'],
+    badge: 'new',
+    tr: 'Yeni: ⚔️ Beş Kare Düellosu. Aynı beş harfli kelimeyi bir arkadaşından önce bul: onun işaretlerini görürsün, harflerini asla.',
+    en: 'New: ⚔️ Five Frames Duel. Race a friend to the same five-letter word: you see their marks, never their letters.',
+  },
+  {
     v: '0.9.97.65',
     kinds: ['classics'],
     badge: 'updated',

@@ -1,7 +1,7 @@
 // Side games polish (card GP, Design's `docs/internal/design/side-games-polish.md`): Snack Bar, Window Garden and
 // Five Frames open at their ideal size, with readable text, a full window title, "How to play" cards and (Five Frames)
 // ticket-mark cells (solid ✓ / dashed • / faded ×) with a legend and a row that turns over cell by cell.
-// Checks per game at 1366×768 and 1920×1080: the scale (`--fit`) is 1 when it opens, no visible text in the game below
+// Checks per game at 1366×768 and 1920×1080: the scale (`--fit`) when it opens is 1 at 1366×768 and grows with the screen (LAYOUT1), no visible text in the game below
 // 13 px after the scale, the window head shows the full title; on a phone (iPhone 13) nothing scrolls inside.
 // "How to play": shows on the first open, not on the second, "?" brings it back, Esc closes it, Snack Bar keeps
 // saving behind it. Five Frames: after Enter the cells get their colour one by one, ≈ 540 ms in all, the tray after
@@ -81,7 +81,10 @@ const measure = (page) =>
       const page = await enter(ctx);
       await open(page, kind);
       const m = await measure(page);
-      check(m.scale === 1, `${GAMES[kind]} at ${w}×${h}: opens at scale 1`, String(m.scale));
+      // LAYOUT1 (the Planner's B2): a free window grows with the screen until resized, min(w / 1366, h / 768), at most
+      // the game's largest size (1.5): scale 1 on a laptop, ≈ 1.41 at 1920 × 1080.
+      const want = Math.min(1.5, Math.max(1, Math.min(w / 1366, h / 768)));
+      check(Math.abs(m.scale - want) < 0.02, `${GAMES[kind]} at ${w}×${h}: opens at scale ${want.toFixed(2)}`, String(m.scale));
       check(m.min >= 13, `${GAMES[kind]} at ${w}×${h}: no text below 13 px`, `${m.min.toFixed(1)} px ${m.where}`);
       check(m.title === GAMES[kind] && !m.cut, `${GAMES[kind]} at ${w}×${h}: the window head shows the full title`, `${m.title} cut=${m.cut}`);
       await ctx.close();
