@@ -90,6 +90,8 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
     layer.hidden = true;
     save(key, '1');
     if (layer.contains(document.activeElement)) layer.blur();
+    // BUG6: a word game takes the keys back when the cards close.
+    layer.dispatchEvent(new Event('htp-close', { bubbles: true }));
   }
   function go(step: number): void {
     const all = cards().length;

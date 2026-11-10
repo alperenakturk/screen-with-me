@@ -533,6 +533,10 @@ with the same friend:
   games hall: each table has a drawn badge, the same as on its lobby card. With "reduce motion" on in your phone's
   settings, nothing slides.
 
+- [ ] G17. Word games and the keyboard (BUG6): open Five Frames and type at once, no click: the letters go into the
+  word. Click the chat box and type: the word stays as it is. Press Esc (or click the game): typing goes to the word
+  again. In the Duel, press Ready; when the race starts, type without a click. Try Turkish letters (ğ, ü, ş) too.
+
 ### Test round with the Lab: games (🎮, card LAB2, Game Studio)
 For the Planner's step-by-step guide. In a room with the lab open (🐞 → "🎮 Oyunlar"), each line: what to press (the
 exact Turkish names, in quotes) and what the owner should see. On the live site the commands marked "local test server
