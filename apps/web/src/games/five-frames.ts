@@ -1,7 +1,7 @@
 // 🎟️ Five Frames (TR "Beş Kare"), the daily word game played on the side (CARDS.md "Daily word game"; look: the
 // owner's board A "ticket row", `docs/internal/design/side-games/README.md`; research `research/word-game.md`). The
-// rules are `@swm/shared/games/five-frames`; the word lists are their own chunks per language (`./words/en.ts`,
-// `./words/tr.ts`, credits in /third-party-notices.txt). One guess = one ticket: a numbered stub, a tear line, five
+// rules are `@swm/shared/games/five-frames`; the word lists are their own chunks per language (`@swm/shared/games/words/en`,
+// `…/tr`, credits in /third-party-notices.txt). One guess = one ticket: a numbered stub, a tear line, five
 // cells (IP audit, owner's "make it ours": a solid gold frame ✓ = right place, a dashed one • = in the word, a faded × = not in it, with a legend
 // until the first guess; a scored row turns over cell by cell). The letter tray is alphabetical, never
 // a keyboard strip under the board. The room's keys stay the room's: the physical keyboard types here only while the
@@ -9,7 +9,7 @@
 
 import './five-frames.css';
 import {
-  ALPHABET, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, dayNumber, finished, liveStreak, guess, letters, loadFrames, normalize,
+  ALPHABET, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, dayNumber, decodeWords, finished, liveStreak, guess, letters, loadFrames, normalize,
   record, saveFrames, score, shareLine, solved, today, trayMarks, upper, type FramesSave, type Lang, type Mark,
 } from '@swm/shared/games/five-frames';
 import { el } from '../dom.ts';
@@ -105,13 +105,7 @@ const lists = new Map<Lang, Promise<List>>();
 function wordList(lang: Lang): Promise<List> {
   let list = lists.get(lang);
   if (!list) {
-    list = (lang === 'tr' ? import('./words/tr.ts') : import('./words/en.ts')).then(({ WORDS, ANSWERS }) => {
-      const chars = Array.from(WORDS);
-      const words: string[] = [];
-      for (let i = 0; i + WORD_LENGTH <= chars.length; i += WORD_LENGTH) words.push(chars.slice(i, i + WORD_LENGTH).join(''));
-      const answers = ANSWERS.split(',').map((n) => words[parseInt(n, 36)]!).filter(Boolean);
-      return { allowed: new Set(words), answers };
-    });
+    list = (lang === 'tr' ? import('@swm/shared/games/words/tr') : import('@swm/shared/games/words/en')).then(({ WORDS, ANSWERS }) => decodeWords(WORDS, ANSWERS));
     lists.set(lang, list);
   }
   return list;

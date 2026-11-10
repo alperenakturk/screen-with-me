@@ -25,7 +25,7 @@ import { lang, t } from '../i18n.ts';
 import { load } from '../storage.ts';
 import { icon } from '../ui/icons.ts';
 
-const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, classics, sea, snack, garden, word };
+const COVERS: Record<string, string> = { xox, four, draw, quiz, poker, classics, sea, duel: word, snack, garden, word };
 /** Tic-tac-toe and Four in a Row live inside 🎲 Classics now (old tables of theirs still open). */
 const HALL_KINDS = ROOM_GAME_KINDS.filter((kind) => kind !== 'xox' && kind !== 'four');
 

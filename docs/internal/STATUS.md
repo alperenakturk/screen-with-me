@@ -476,6 +476,9 @@ with the same friend:
 - [ ] G11. Snack Bar 3: your old Snack Bar is still there (levels, coins, decorations, stars a bit higher). Play a
   film: try ×10 and Max, open "📋 Upgrades" and buy a recipe (that stand earns twice), hire the usher (customers get
   served without a tap). One stand says "⭐ ×2 today". Does buying feel like a choice now, not "always the top one"?
+- [ ] G12. Five Frames Duel with a friend: open it from 🎮 "Together", both press Ready, race to the word. You see
+  their marks (✓ • ×) but never their letters; the first to find it wins, "Play again" brings a practice word. Try it on
+  your phone too: your board, their strip of marks and the letters all fit.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

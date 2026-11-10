@@ -14,7 +14,7 @@ const path = require('path');
 const SITE = process.argv[2] || 'http://localhost:5173';
 const ALL_BOARDS = ['xox', 'four', 'dama', 'chess', 'backgammon', 'reversi'];
 const BOARDS = process.env.BOARDS ? process.env.BOARDS.split(',') : ALL_BOARDS;
-const TABLES = process.env.TABLES ? process.env.TABLES.split(',') : ['sea', 'poker', 'quiz', 'draw'];
+const TABLES = process.env.TABLES ? process.env.TABLES.split(',') : ['sea', 'duel', 'poker', 'quiz', 'draw'];
 const DROP_MS = 8000;
 let fails = 0;
 const problems = [];
@@ -40,7 +40,7 @@ async function person(browser, room, name, avatar) {
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
   await ctx.addInitScript(([name, avatar]) => {
     for (const [k, v] of Object.entries({ lang: 'en', name, avatar, 'opt:autoInvite': '0', tipsSeen: '1', 'opt:leaveWarn': '1' })) localStorage.setItem(k, v);
-    for (const k of ['sea:howSeen', 'quiz:howSeen', 'draw:howSeen', 'poker:howSeen', 'classics:xox:howSeen', 'classics:four:howSeen', 'classics:dama:howSeen', 'classics:chess:howSeen', 'classics:backgammon:howSeen', 'classics:reversi:howSeen']) localStorage.setItem(k, '1');
+    for (const k of ['sea:howSeen', 'duel:howSeen', 'quiz:howSeen', 'draw:howSeen', 'poker:howSeen', 'classics:xox:howSeen', 'classics:four:howSeen', 'classics:dama:howSeen', 'classics:chess:howSeen', 'classics:backgammon:howSeen', 'classics:reversi:howSeen']) localStorage.setItem(k, '1');
   }, [name, avatar]);
   const page = await ctx.newPage();
   const errors = [];
@@ -244,6 +244,50 @@ async function sea(browser) {
   await sam.ctx.close();
 }
 
+// ---- Five Frames Duel ----
+async function duel(browser) {
+  const room = 'gp' + Math.random().toString(36).slice(2, 8);
+  const alex = await person(browser, room, 'Alex', 'wizard');
+  const sam = await person(browser, room, 'Sam', 'pirate');
+  await run(alex.page, 'games.open.duel');
+  await until(() => alex.page.evaluate(() => !!document.querySelector('#game-stage .duel')));
+  check(await join(sam), 'duel: Sam gets the invite card');
+  for (let i = 0; i < 20; i++) {
+    for (const p of [alex, sam]) await p.page.evaluate(() => document.querySelector('#game-stage .duel-ready.primary')?.click());
+    if (await alex.page.evaluate(() => document.querySelector('#game-stage .duel')?.dataset.phase === 'play')) break;
+    await wait(400);
+  }
+  const race = await until(() => sam.page.evaluate(() => document.querySelector('#game-stage .duel')?.dataset.phase === 'play'), 10000);
+  check(!!race, 'duel: both ready, the race starts');
+  /** Types a word on the letter tray and presses Enter. */
+  const type = (p, word) => p.page.evaluate((w) => {
+    for (const k of [...Array.from(w), 'Enter']) document.querySelector(`#game-stage .ff-key[data-key="${k}"]`)?.click();
+  }, word);
+  const myRows = (p) => p.page.evaluate(() => [...document.querySelectorAll('#game-stage .duel-board .ff-row.done')].map((r) => r.textContent.replace(/\d/g, '')).join(','));
+  const theirRows = (p) => p.page.evaluate(() => [...document.querySelectorAll('#game-stage .duel-mini:not([hidden]) .duel-mini-row')].filter((r) => r.querySelector('.hit, .near, .miss')).length);
+  // One word at a time: the typed letters clear when the server counts the guess.
+  const count = async (p) => (await myRows(p)).split(',').filter(Boolean).length;
+  for (const w of ['slate', 'pious']) {
+    const n = await count(sam);
+    await type(sam, w);
+    await until(async () => (await count(sam)) > n, 5000);
+  }
+  check(!!(await until(async () => (await theirRows(alex)) === 2)), "duel: Alex sees two rows of Sam's marks");
+  check(!(await alex.page.evaluate(() => /SLATE|PIOUS/i.test(document.querySelector('#game-stage .duel-mini')?.parentElement?.textContent ?? ''))), "duel: … without Sam's letters");
+  const before = await myRows(sam);
+  await sam.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
+  check(await backAtTable(sam, '.duel'), 'duel: after a reload Sam is back at the table');
+  check(!!(await until(async () => (await myRows(sam)) === before && before.length > 0)), '… with his two words on his board', `${await myRows(sam)} vs ${before}`);
+  await drop(sam);
+  await wait(3000);
+  await type(sam, 'mound');
+  check(!!(await until(async () => (await theirRows(alex)) === 3, 10000)), `duel: after an ${DROP_MS / 1000} s network drop a guess reaches the other board`);
+  const errs = [...alex.errors, ...sam.errors];
+  check(!errs.length, 'duel: no page errors', errs.slice(0, 2).join(' | '));
+  await alex.ctx.close();
+  await sam.ctx.close();
+}
+
 // ---- Last Heart ----
 async function poker(browser) {
   const room = 'gp' + Math.random().toString(36).slice(2, 8);
@@ -343,6 +387,7 @@ async function offlineChunk(browser) {
   if (!process.env.BOARDS && !process.env.TABLES || process.env.OFFLINE_CHUNK) await offlineChunk(browser);
   for (const board of BOARDS) await classics(browser, board);
   if (TABLES.includes('sea')) await sea(browser);
+  if (TABLES.includes('duel')) await duel(browser);
   if (TABLES.includes('poker')) await poker(browser);
   for (const kind of ['quiz', 'draw']) if (TABLES.includes(kind)) await points(browser, kind);
   await browser.close();
