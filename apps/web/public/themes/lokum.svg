@@ -67,7 +67,10 @@
 <path d="M-12 -4 L-18 -20 M8 -4 L14 -18" stroke="#14101c" stroke-width="3"/><circle cx="-18" cy="-24" r="5" fill="#14101c"/><circle cx="14" cy="-22" r="5" fill="#14101c"/>
 <path d="M44 -6 V-30" stroke="#14101c" stroke-width="2"/><rect x="38" y="-40" width="12" height="13" rx="3" fill="#ffc870" filter="url(#gl)"/>
 </g>
-<!-- Sol: çini pano, mermer sütun ve kemer, kemerden sarkan kandil -->
+<!-- Card NP3 (MASCOT3's scene notes): the tile panel, marble column, arch and kandil moved to the right edge (the
+     left group mirrored: panel x 1470…1610, column 1420…1478, the arch sweeping left to ~1040), so the home text column
+     keeps only the moonlit water and sky. -->
+<g transform="translate(1600 0) scale(-1 1)">
 <g filter="url(#br2)">
   <rect x="-10" y="0" width="140" height="840" fill="url(#tile)"/>
   <rect x="-10" y="0" width="140" height="840" fill="#05040e" opacity=".45"/>
@@ -85,11 +88,11 @@
   <ellipse cy="36" rx="7" ry="10" fill="#fff4c8" filter="url(#gl)"/>
   <path d="M-16 52 Q0 62 16 52 L8 62 H-8Z" fill="#c99a45"/><circle cy="68" r="3" fill="#c99a45"/>
 </g>
-<!-- Sağ: servi ve fener -->
-<g filter="url(#br)">
+</g>
+<!-- One cypress in front of the tile panel (the second one is gone, NP3) -->
+<g filter="url(#br)" transform="translate(80 0)">
   <path d="M1460 840 C1410 640 1418 420 1462 220 C1504 420 1514 640 1468 840Z" fill="#0b1712"/>
   <path d="M1462 220 C1430 420 1424 600 1446 760" stroke="#2c4a3c" stroke-width="10" fill="none" opacity=".7"/>
-  <path d="M1556 840 C1526 700 1530 540 1558 400 C1588 540 1592 700 1562 840Z" fill="#0a1410"/>
 </g>
 <rect width="1600" height="900" fill="url(#lamp)"/>
 <!-- Taş korkuluk ve döşeme -->

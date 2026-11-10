@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.105 — 10 Nov
+- Meet **Stub**, Sidelit's new mascot: a cinema ticket that came along to the show. Stub lights the way on the home page
+  with an usher's torch, wears each theme's costume, waits in the empty room, sits on the Help page and on the
+  extension's "Start watching" card. (The games get their Stub in a release of their own.)
+- **Neon** has a new look: one warm neon sign on a dark brick wall, coral and amber instead of magenta and cyan.
+- The home page's pictures in Moonlit Nights, Drive-In and Night Express moved their landmarks to the right, so nothing
+  busy sits behind the title any more.
+
 ### 0.9.97.102 — 10 Nov
 - A new theme, **Matinee**: the first light theme, warm paper with ink-dark text and a rust accent, for watching in
   daylight. The video's own place stays black.

@@ -388,6 +388,13 @@ where a screen must fit). It found the Thanks page scrolling on a sideways phone
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**0.9.97.105 (NP3, Stub the mascot, Neon's new look, scene landmarks moved right; fold into the next round).**
+- [ ] S1. The home page in Night, Matinee and two scene themes: Stub wears the theme's costume and its torch is where
+  the light starts; the light covers the laptop, tablet and phone.
+- [ ] S2. 🎨 → Neon: the new coral and amber look reads well on the home page and in the room.
+- [ ] S3. Moonlit Nights, Drive-In and Night Express at full screen: the title and buttons have only sky behind them.
+- [ ] S4. The empty room, the Help page and (with the extension) the "Start watching" card show Stub.
+
 **0.9.97.102 (NP1, the owner's night picks: themes, home colours, default font, camera window; fold into the next round).**
 - [ ] N1. 🎨 → Matinee by day: home, the room, settings and the games hall read well; the video's place stays black and
   the empty room's words on it are light.
