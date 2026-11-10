@@ -15,7 +15,7 @@ mapping: `docs/internal/docs-sprawl.md` §2.2.
 Release notes go to `CHANGELOG.md`, never here as "since 0.9.x" narration.
 
 **Not yet here:** some facts lived only in the old `CLAUDE.md` "Live:" line (Last Heart / poker, `GameSocket`,
-`ghost.ts` / `GHOST_MS`, `room.css`, `i18n-tr.ts` / `loadLang`, the uptime cron, `zoomRange` / `.game-full`,
+`ghost.ts` / `GHOST_MS`, `room.css`, `i18n-tr.ts` / `loadLang`, the uptime cron, `zoomRange`,
 `STATS_SAVE_MS`, `FEED_MAX_ITEMS`, `SEEK_STEP`, `.yt-notices-shorts`, `resultCard` / `showPointsResult`, `tableHowTo`,
 `gameHint`, `overYoutube` / `clearOfChat`, `SIDE_TOP`, `markHit`, `tvOn`, `quiesce`, `aimAt`, `setGameLive`,
 `introOver` / `removedHere` / `swm-joined`, `sendBans` …; full list: `docs/internal/docs-sprawl.md` §1.3). Until they
@@ -922,6 +922,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `container-type: size`, `min(23cqw, 48cqh)`), the Classics shelf in one row, the lobbies full width. The window
   head's "in the video's place" icon (`place-stage`) is a frame filled by the game, distinct from ⛶. The Last Heart
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
+  **Game window head and free window (lane W, bugs W1–W5, owner 10 Nov 2026):** the head is (placement switch) · 🎮 ·
+  ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own slot (`.game-head-slot`:
+  "?" How to play, Classics' shelf). 🎮 opens the games hall **under itself** (`hubFromHead`: the menu moves into a fixed
+  `.head-game-wrap`, inside `document.fullscreenElement` while there is one); it used to open beside the toolbar's 🎮,
+  which a computer hides. No game has its own full screen any more (owner, 10 Nov 2026: card GW's ⛶ and its whole-tab
+  `.game-max` view were removed): two placements only, the video's place and the free window, which lives inside the
+  video's fullscreen while there is one. Over a YouTube video (`overYoutube`, YTG) the placement switch is hidden (only the
+  free window is possible; it used to show a disabled "in the video's place") and the head's tooltip
+  (`game.besideYoutube`) says why. The free window is positioned in `posRoom` (the page, or the fullscreen view; tablets
+  clear of the chat) and only its size is limited by `area` (the strip beside a YouTube player); over YouTube
+  `clearOfPlayer` settles it just beside the player on the nearest side that fits, keeping its side while dragged
+  (`SIDE_STICK`) so it never jumps (the drag used to be locked inside the one strip beside the player). Over a video
+  file or the film page nothing pushes it away. Each game remembers its spot (`gameFloat:spot:<kind>`, falling back to
+  the old shared `gameFloat:spot`) and zoom (`gameFloat:zoom:<kind>`); a drag follows the mouse once per frame; a double
+  click on the head (or the Test Lab's `gameWindow.reset`) puts it back at its own size on the right edge. Test Lab:
+  `gameWindow.reset`, `gameWindow.hall` and a 📊 status line (`stage.ts`). Harness: `scripts/harness/game-window-head`
+  (CI `games-more`).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code

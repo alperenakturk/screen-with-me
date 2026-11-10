@@ -6,8 +6,8 @@
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-sweep/run.cjs [site]
 //   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room.
-//   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window; GW_LANGS=tr runs
-//   that pass in Turkish only, GW_LANGS=none skips it.
+//   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window (and has no ⛶:
+//   W1); GW_LANGS=tr runs those passes in Turkish only, GW_LANGS=none skips them.
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -199,7 +199,7 @@ const stageBox = (page) => page.evaluate(() => {
 });
 /**
  * Card GW: the free window shrunk to its smallest and grown to its largest by its corner (never past the catalog's
- * limits, or the screen). (The game's own fullscreen ⛶ is gone: owner's decision, 10 Nov 2026.)
+ * limits, or the screen); and no ⛶ in its head (W1: no game has its own fullscreen any more).
  */
 async function windowPasses(page, label, g, phone) {
   const lim = catalogEntry(g);
@@ -227,6 +227,8 @@ async function windowPasses(page, label, g, phone) {
     await page.evaluate(() => document.querySelector('#game-stage .game-stage-title')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
     await wait(400);
   }
+  // W1 (owner, 10 Nov 2026): no game has its own full screen any more: no ⛶ in any head.
+  check(!(await page.$('#game-stage .game-full')), `${label}: no ⛶ in the game's head`);
 }
 
 (async () => {
