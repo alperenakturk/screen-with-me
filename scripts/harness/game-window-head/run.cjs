@@ -48,7 +48,17 @@ async function room(browser, viewport, { phone = false } = {}) {
 }
 const openGame = async (page, kind) => {
   await page.evaluate((k) => window.__swmLab.run(`games.open.${k}`), kind);
-  await until(() => page.evaluate(() => !document.getElementById('game-stage').hidden && !document.querySelector('#game-stage .game-stage-loading')));
+  // A table opens after the server lists it (a round trip): wait until the window shows that game, not the previous one.
+  const solo = ['snack', 'garden', 'word'].includes(kind);
+  const shown = await until(
+    () =>
+      page.evaluate((isSolo) => {
+        const s = document.getElementById('game-stage');
+        return !s.hidden && !s.querySelector('.game-stage-loading') && s.classList.contains('solo-game') === isSolo;
+      }, solo),
+    12000,
+  );
+  if (!shown) check(false, `${kind} opens`);
   await page.evaluate(() => document.querySelector('#game-stage .htp:not([hidden]) .htp-skip')?.click());
   await wait(500);
 };
