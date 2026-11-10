@@ -19,21 +19,24 @@ has a new size `side` (iPhone 13 landscape) for this.
 | Last Heart lobby | Plain text on the dark window, unlike the Quiz and Draw & Guess lobbies | The same tinted card with a ♥ badge |
 | Quiz / Draw & Guess / Last Heart lobbies, sideways phone | Narrow card, big badge, long rules | Full width, no badge, rules in two or three lines (the "?" has them all) |
 
-Checked: `games-sweep` passes for every game on laptop and iPhone (EN + TR, with the window passes), and for every
-game but three lobbies on a sideways phone.
+Checked: `games-sweep` passes for every game on laptop, iPhone and a sideways iPhone (EN + TR; the window passes on
+the laptop).
+
+## One lobby look (Planner's pick 1)
+
+Every table that has a lobby opens with the same tinted card: Quiz (blue, ❓), Draw & Guess (amber, 🎨), Last Heart
+(pink, ♥) and the Five Frames Duel's waiting screen (gold, once the Duel is on main). Classics and Sea Battle have no
+lobby on purpose: the board is the first thing you see (owner, CL2); the side games have none either. On a sideways
+phone the lobbies are two columns (rules and faces left, settings and Start right). The Draw lobby's white paper no
+longer shows in the card's corners.
 
 ## Still open (smaller)
 
-- **Sideways phone, lobbies:** Draw & Guess (about 75 %) and Last Heart (about 85 %) lobbies are still scaled a little
-  below 13 px text; Quiz is just under. A two-column lobby (rules and faces left, settings and Start right) would fix
-  all three.
 - The Snack Bar footer's cinema line (`🎬 #1 · ★ 0`) is cut to "1…" on a sideways phone in Turkish.
 
 ## Bigger redesign ideas (owner's pick)
 
-1. **One look for all lobbies** (recommended): the Classics, Sea Battle, Five Frames Duel and side games open with the
-   same tinted card as Quiz / Draw & Guess / Last Heart, each with its own badge colour, so the hall feels like one
-   product.
+1. ~~One look for all lobbies~~: done (above).
 2. **Own covers and badges for every table**: the Duel uses the Five Frames cover; Last Heart and Quiz use an emoji
    badge. Drawn badges in the Glowbeam style (Design session).
 3. **A sideways phone "game mode"**: when a phone turns sideways with a game open, hide the room's top bar (Mute / 🎮 /

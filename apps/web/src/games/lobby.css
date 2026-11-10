@@ -42,3 +42,21 @@ html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before {
 html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; max-width: none;
 }
+/* Draw & Guess's lobby on a sideways phone: the title, rules, faces and the note on the left, the settings and Start on
+   the right (one column did not fit the low screen). */
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { height: 100%; aspect-ratio: auto; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: center; align-items: center;
+  column-gap: 16px; row-gap: 6px; padding: 8px 12px;
+}
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3 { grid-area: 1 / 1; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .draw-rules { grid-area: 2 / 1; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .lobby-players { grid-area: 3 / 1; justify-self: center; margin: 4px 0 0; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > p.muted { grid-area: 4 / 1; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .game-settings { grid-area: 1 / 2 / 4 / 3; width: 100%; margin: 0; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .btn.primary { grid-area: 4 / 2; justify-self: center; }
+/* Quiz's lobby is two columns already: less padding so it fits the low screen. */
+html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-main { padding: 6px 10px; }
+html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-block: 4px; gap: 2px; }
+/* GPRO: in the lobby the white drawing paper behind the card showed in its rounded corners. */
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { background: transparent; border: 0; border-radius: 20px; }
