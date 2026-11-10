@@ -1855,8 +1855,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   window never over the video unless dragged; once per size, every head button visibly changes something (a real mouse
   click at its middle; the placement already in use is skipped) and, on a computer, hover / drag by the head / resize
   from the corner (in proportion) / double click back home. Three states at a time; ≈ 2.5 min headful under
-  `HEADFUL=1 xvfb-run -a`. Not in CI until its first findings are fixed (stage.ts: YouTube + cinema puts the head
-  below the screen; a picked free window with no room beside the video covers it; games: "?" right after a table opens).
+  `HEADFUL=1 xvfb-run -a`. W's allowed placements are notes, not failures (1366 side panel open ≤ 48 px over the
+  video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Not in CI until its last finding is
+  fixed: the room's intro (`.swm-intro`, over `.player-wrap`) takes the first click on a game opened in its first
+  seconds ("?" of the first table does nothing).
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose

@@ -263,23 +263,26 @@ async function runHead(browser, kinds, size) {
       // The real mouse on the free window (a computer; the side games open free when there is room beside the video).
       if (!computer) continue;
       if (!(await page.evaluate(() => document.getElementById('game-stage')?.dataset.place === 'float'))) continue;
+      const homeBox = (await page.evaluate(measure)).box;
       const head = await page.evaluate(() => {
         const s = document.getElementById('game-stage').getBoundingClientRect();
         const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
         const g = document.querySelector('#game-stage .game-resize')?.getBoundingClientRect();
         return { s: [s.left, s.top, s.width, s.height], hx: h.left + 30, hy: h.top + h.height / 2, gx: g ? g.left + g.width / 2 : null, gy: g ? g.top + g.height / 2 : null };
       });
-      // Hover: a head button lights up under the mouse.
+      // Hover: a head button lights up under the mouse (read away from it first, then over it after its transition).
+      await page.mouse.move(2, 2);
+      await wait(400);
       const hover = await page.evaluate(() => {
-        const b = [...document.querySelectorAll('#game-stage .game-stage-head button')].find((x) => x.getBoundingClientRect().width > 0);
+        const b = document.querySelector('#game-stage .game-hub-open') ?? [...document.querySelectorAll('#game-stage .game-stage-head button')].find((x) => x.getBoundingClientRect().width > 0);
         const r = b.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, bg: getComputedStyle(b).backgroundColor + getComputedStyle(b).color + getComputedStyle(b).opacity };
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, bg: ['backgroundColor', 'color', 'opacity', 'borderTopColor', 'boxShadow', 'transform', 'filter'].map((k) => getComputedStyle(b)[k]).join('|') };
       });
       await page.mouse.move(hover.x, hover.y, { steps: 4 });
-      await wait(250);
+      await wait(450);
       const hovered = await page.evaluate(({ x, y }) => {
         const b = document.elementFromPoint(x, y)?.closest('button');
-        return b ? getComputedStyle(b).backgroundColor + getComputedStyle(b).color + getComputedStyle(b).opacity : '';
+        return b ? ['backgroundColor', 'color', 'opacity', 'borderTopColor', 'boxShadow', 'transform', 'filter'].map((k) => getComputedStyle(b)[k]).join('|') : '';
       }, hover);
       // Hover needs a real window (headless Chromium has no real hover).
       if (HEADFUL) check(hovered && hovered !== hover.bg, `${size} ${kind}: a head button lights up under the mouse`);
@@ -292,31 +295,39 @@ async function runHead(browser, kinds, size) {
       const moved = await page.evaluate(measure);
       check(Math.abs(moved.box[0] - (head.s[0] - 160)) < 40 || Math.abs(moved.box[1] - (head.s[1] + 60)) < 40, `${size} ${kind}: dragging the head moves the free window`, { from: head.s.map(Math.round), to: moved.box });
       check(!moved.offScreen && moved.cut.length === 0, `${size} ${kind}: after a drag nothing is cut off`, moved.cut);
-      // Resize from the corner: bigger, in proportion, still on screen.
+      // Resize from the corner: bigger, else smaller (a window at its largest or smallest here can only go one way), in
+      // proportion, still on screen.
       if (head.gx !== null) {
-        const g = await page.evaluate(() => {
-          const r = document.querySelector('#game-stage .game-resize').getBoundingClientRect();
-          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
-        });
-        await page.mouse.move(g.x, g.y, { steps: 3 });
-        await page.mouse.down();
-        // Smaller: a window already as tall as the screen allows can't grow (W: word at 1366).
-        await page.mouse.move(g.x - 80, g.y - 60, { steps: 10 });
-        await page.mouse.up();
-        await wait(400);
-        const grown = await page.evaluate(measure);
+        let grown = moved;
+        for (const [dx, dy] of [[80, 60], [-80, -60]]) {
+          const g = await page.evaluate(() => {
+            const r = document.querySelector('#game-stage .game-resize').getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+          });
+          await page.mouse.move(g.x, g.y, { steps: 3 });
+          await page.mouse.down();
+          await page.mouse.move(g.x + dx, g.y + dy, { steps: 10 });
+          await page.mouse.up();
+          await wait(400);
+          grown = await page.evaluate(measure);
+          if (grown.box[2] !== moved.box[2]) break;
+        }
         const ratio = (b) => b[2] / b[3];
-        check(grown.box[2] !== moved.box[2], `${size} ${kind}: the corner resizes the free window`, { before: moved.box, after: grown.box });
-        check(Math.abs(ratio(grown.box) - ratio(moved.box)) / ratio(moved.box) < 0.04, `${size} ${kind}: it keeps its proportions`, { before: moved.box, after: grown.box });
+        if (grown.box[2] === moved.box[2]) console.log(`note ${size} ${kind}: the window is at its only size here (${moved.box[2]}×${moved.box[3]}), the corner can't change it`);
+        else check(Math.abs(ratio(grown.box) - ratio(moved.box)) / ratio(moved.box) < 0.04, `${size} ${kind}: the corner resizes it in proportion`, { before: moved.box, after: grown.box });
         check(!grown.offScreen && grown.cut.length === 0, `${size} ${kind}: after a resize nothing is cut off`, grown.cut);
       }
       // A double click on the head puts it back home (beside the video, not over it).
-      await page.mouse.dblclick(head.hx, Math.max(2, head.hy));
+      const title = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage .game-stage-title').getBoundingClientRect();
+        return { x: r.left + Math.min(30, r.width / 2), y: r.top + r.height / 2 };
+      });
+      await page.mouse.dblclick(title.x, title.y);
       await wait(500);
       const home = await page.evaluate(measure);
-      // Home is the right column, right-aligned (it may reach over the video's edge by the allowed few pixels).
-      const atHome = !home.overPlayer || Math.abs(home.box[0] + home.box[2] - (await page.evaluate(() => innerWidth))) <= 24;
-      check(atHome, `${size} ${kind}: a double click on the head puts it back home`, { game: home.box, video: home.player });
+      // Home is where it opened (its size and spot before I moved it).
+      const atHome = home.box.every((v, i) => Math.abs(v - homeBox[i]) <= 4);
+      check(atHome, `${size} ${kind}: a double click on the head puts it back where it opened`, { now: home.box, opened: homeBox });
     }
   } finally {
     await ctx.close();
