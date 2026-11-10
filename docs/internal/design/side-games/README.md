@@ -4,7 +4,7 @@ _Design session, 3 Nov 2026. These are the owner's picks on the side-games page
 (https://claude.ai/artifact/WSxxSneo6NT5Y5JcVKXxLi): **Snack Bar A "counter scene"**, **Window Garden A "window
 sill"**, **word game board A "ticket row"**; the word game is named **Five Frames** (TR "Beş Kare"). The 🎮 games gallery covers and its
 window layout are on https://claude.ai/artifact/XsUvwg9YL6KugDVP6VggMR (layout pick pending). Brand rules (colours,
-Glowbeam shapes): `../logo-sidelit.md`._
+logo shapes): `../logo-sidelit.md`; the mascot is Stub since 10 Nov 2026: `../mascot-3.md`._
 
 All files are hand-written SVG, no fonts embedded except the "SNACK BAR" sign and ticket letters (they ask for
 `Bricolage Grotesque` and fall back to sans-serif; the game can draw that text in HTML instead). Every id inside a file
@@ -23,7 +23,7 @@ is local; when you inline several copies in one page, prefix the ids (as `logo.t
 ## Snack Bar (`snack-bar/`)
 - `counter-scene.svg` (340 × 110): the scene at the top of the game. Every part is a named group so the game shows
   only what the player owns: `#wall`, `#side-light`, `#sign`, `#popcorn-machine`, `#soda`, `#nachos`, `#candy`,
-  `#cashier` (Glowbeam with a cap), `#counter-top`. Hide a group with `display:none` until its upgrade is bought; the
+  `#cashier` (Stub with a soda-fountain cap), `#counter-top`. Hide a group with `display:none` until its upgrade is bought; the
   window shows the scene 56 px tall (`preserveAspectRatio="xMidYMid slice"`), the phone 108 px.
 - `items/*.svg` (64 × 64): upgrade icons, also used in the list rows (30 px) and the gallery cover: `popcorn`,
   `soda`, `nachos`, `candy`, `second-counter`, `popcorn-machine`, `coin` (the currency; also as a 14 px inline icon).
@@ -33,10 +33,16 @@ is local; when you inline several copies in one page, prefix the ids (as `logo.t
   ("Cinema #1 · ★ 0" + outlined "🎬 Open a new cinema"). The small window shows the 3 most useful upgrades and
   "+2 more when bigger"; the phone shows all 5.
 
-## Glowbeam poses (`mascot/`, 64 × 64)
-`glowbeam-default`, `-happy` (a purchase, a plant found, the word solved), `-waiting` (the film is paused, so no
-income), `-wow` (a new cinema, a rare seed), `-watching` (eyes to the left, while the film plays), `-cashier` (default
-+ a coral cap, the Snack Bar's cashier). Only eyes and mouth change between poses; the body never does.
+## Stub poses (`mascot/`, 64 × 64)
+These are copies of `../mascot-3/svg/` (10 Nov 2026; they were Glowbeam before):
+- `stub-default`;
+- `-happy`: a purchase, a plant found, the word solved;
+- `-waiting`: the film is paused, so no income;
+- `-wow`: a new cinema, a rare seed;
+- `-watching`: eyes up and right, while the film plays;
+- `-cashier`: a paper soda-fountain cap and a bow tie, the Snack Bar's cashier.
+
+The face, the arms and the tilt change between poses; the ticket never does.
 
 ## Window Garden (`garden/`)
 - `window-sill.svg` (340 × 226): the scene. Groups `#room`, `#window`, `#moon`, `#city-lights`, `#side-light`, `#sill`,
@@ -62,7 +68,7 @@ In HTML this is easiest as CSS (the mock used a grid `26px repeat(5, 1fr)`, heig
 
 ## Game covers (`covers/*.svg`, 320 × 200, shown at 160 × 100 and down to 96 × 60)
 `xox`, `four`, `draw`, `quiz`, `poker` (Last Heart, green felt), `snack-bar`, `garden`, `word` (Five Frames / Beş Kare). Same world: night gradient, warm light from the left,
-Glowbeam in most of them. Titles and the "Together · 2 players" / "On the side · just you" line are HTML under the
+Stub in most of them (swapped from Glowbeam on 10 Nov 2026). Titles and the "Together · 2 players" / "On the side · just you" line are HTML under the
 cover, never inside the image (so they translate). Use them in the 🎮 gallery window once the owner picks its layout.
 
 ## How to play cards (card GP)
