@@ -3,6 +3,8 @@ import {
   BADGES, BUCKET_MIN, BUCKET_SECONDS, CUSTOMER_MIN, CUSTOMER_SECONDS, MAX_TICK_S, RECEIPT_MIN_S, PRESTIGE_MIN, SNACK_VERSION, STANDS,
   affordable, badgeFactor, baseRate, buy, checkBadges, collectReceipt, costOf, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate, loadSnack,
   ROOFTOP_BONUS, buyDecor, placeCost, placeOf, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick, togetherFactor, unlocked,
+  STAR_BONUS, STAR_UNIT, MENU_BONUS, MENU_LEVEL, RECIPE_IDS, STAFF, SPECIAL_FACTOR, PLANETARIUM_BONUS, SEASIDE_CUSTOMERS, V1_STAR_RATIO,
+  buyRecipe, hire, menuFactor, recipeInfo, recipesOpen, specialOf, standIncome, STAND_IDS,
 } from './snack-bar.ts';
 
 const alone = { playing: true, others: 0, voiceOthers: 0 };
@@ -62,13 +64,14 @@ describe('Snack Bar economy', () => {
     expect(tick(save, 1, alone)).toBeCloseTo(0.5);
   });
 
-  it('prices grow 15 % a level; bulk cost and what the coins afford agree', () => {
+  it('prices grow by each stand\'s own step (popcorn 8 %); bulk cost and what the coins afford agree', () => {
     expect(costOf('popcorn', 0)).toBeCloseTo(10);
-    expect(costOf('popcorn', 1)).toBeCloseTo(11.5);
-    expect(costOf('popcorn', 1, 2)).toBeCloseTo(11.5 + 13.225);
+    expect(costOf('popcorn', 1)).toBeCloseTo(10.8);
+    expect(costOf('popcorn', 1, 2)).toBeCloseTo(10.8 + 11.664);
     expect(costOf('popcorn', 1, 0)).toBe(0);
+    expect(costOf('arcade', 1)).toBeCloseTo(6e10 * 1.15);
     const save = freshSnack();
-    save.coins = 11.5 + 13.225 + 1;
+    save.coins = 10.8 + 11.664 + 1;
     expect(affordable(save, 'popcorn')).toBe(2);
     save.coins = costOf('popcorn', 1, 5);
     expect(affordable(save, 'popcorn')).toBe(5);
@@ -82,10 +85,10 @@ describe('Snack Bar economy', () => {
     expect(unlocked(save, 'soda')).toBe(true);
     expect(unlocked(save, 'nachos')).toBe(false);
     expect(buy(save, 'soda')).toBe(false);
-    save.coins = 200;
+    save.coins = 300;
     expect(buy(save, 'soda')).toBe(true);
     expect(save.levels.soda).toBe(1);
-    expect(save.coins).toBeCloseTo(80);
+    expect(save.coins).toBeCloseTo(50);
     expect(unlocked(save, 'nachos')).toBe(true);
     expect(buy(save, 'nachos')).toBe(false);
     expect(buy(save, 'popcorn', 0)).toBe(false);
@@ -99,20 +102,25 @@ describe('Snack Bar economy', () => {
     expect(milestoneFactor(9)).toBe(1);
     expect(milestoneFactor(10)).toBe(2);
     expect(milestoneFactor(25)).toBe(4);
-    expect(milestoneFactor(1000)).toBe(32);
+    expect(milestoneFactor(1000)).toBe(128);
     expect(nextMilestone(0)).toBe(10);
     expect(nextMilestone(10)).toBe(25);
-    expect(nextMilestone(200)).toBeNull();
+    expect(nextMilestone(200)).toBe(300);
+    expect(nextMilestone(400)).toBeNull();
     const save = freshSnack();
     save.levels.popcorn = 10;
     expect(baseRate(save)).toBe(0.5 * 10 * 2);
   });
 
-  it('every stand is a step up from the last', () => {
+  it('every stand is a step up from the last; cheaper stands grow slower', () => {
+    expect(STANDS).toHaveLength(8);
     STANDS.slice(1).forEach((stand, i) => {
       const before = STANDS[i]!;
-      expect(stand.cost).toBeGreaterThan(before.cost * 5);
+      expect(stand.cost).toBeGreaterThan(before.cost * 10);
       expect(stand.rate / stand.cost).toBeLessThan(before.rate / before.cost);
+      expect(stand.growth).toBeGreaterThan(before.growth);
+      expect(stand.growth).toBeGreaterThanOrEqual(1.07);
+      expect(stand.growth).toBeLessThanOrEqual(1.15);
     });
   });
 
@@ -121,16 +129,21 @@ describe('Snack Bar economy', () => {
     save.earned = PRESTIGE_MIN - 1;
     expect(starsFor(save)).toBe(0);
     expect(newCinema(save)).toBe(false);
-    save.earned = 4_000_000;
-    save.lifetime = 5_000_000;
+    // Stars = cube root of earned / STAR_UNIT: 8× the coins for twice the stars.
+    save.earned = STAR_UNIT * 27_000;
+    expect(starsFor(save)).toBe(30);
+    save.earned = STAR_UNIT * 8 * 27_000;
+    expect(starsFor(save)).toBe(60);
+    save.lifetime = 5e12;
     save.coins = 123;
     save.levels.soda = 40;
-    expect(starsFor(save)).toBe(6);
+    save.recipes = ['popcorn:1'];
+    save.staff = ['usher'];
     expect(newCinema(save)).toBe(true);
-    expect(save).toMatchObject({ coins: 0, earned: 0, lifetime: 5_000_000, stars: 6, cinemas: 1 });
+    expect(save).toMatchObject({ coins: 0, earned: 0, lifetime: 5e12, stars: 60, cinemas: 1, recipes: [], staff: ['usher'] });
     expect(save.levels.soda).toBe(0);
     expect(save.levels.popcorn).toBe(1);
-    expect(baseRate(save)).toBeCloseTo(0.5 * 1.3);
+    expect(baseRate(save, 12)).toBeCloseTo(0.5 * (1 + 60 * STAR_BONUS));
   });
 });
 
@@ -147,7 +160,7 @@ describe('Snack Bar save', () => {
   });
 
   it('broken, missing or unknown versions start a fresh game', () => {
-    for (const raw of [null, undefined, '', '{', 'null', 42, [], { v: 999, coins: 5 }, { coins: 5 }]) {
+    for (const raw of [null, undefined, '', '{', 'null', 42, [], { v: 999, coins: 5 }, { v: 0, coins: 5 }, { coins: 5 }]) {
       expect(loadSnack(raw)).toEqual(freshSnack());
     }
   });
@@ -169,7 +182,7 @@ describe('Snack Bar save', () => {
     expect(save.earned).toBe(0);
     expect(save.lifetime).toBe(10);
     expect(save.watched).toBe(0);
-    expect(save.levels).toEqual({ popcorn: 1, soda: 2, nachos: 0, candy: 0, 'second-counter': 0 });
+    expect(save.levels).toEqual({ popcorn: 1, soda: 2, nachos: 0, candy: 0, 'second-counter': 0, hotdog: 0, 'ice-cream': 0, arcade: 0 });
     expect(save.stars).toBe(1);
     expect(save.cinemas).toBe(0);
     expect(save.seen).toBe(1234);
@@ -239,8 +252,8 @@ describe('Snack Bar: customers, receipts, badges (side games 2)', () => {
     save.badges.push('tap-happy');
     expect(badgeFactor(save)).toBeCloseTo(1.01);
     expect(baseRate(save)).toBeCloseTo(0.5 * 1.01);
-    expect(BADGES).toHaveLength(30);
-    expect(new Set(BADGES.map((b) => b.id)).size).toBe(30);
+    expect(BADGES).toHaveLength(37);
+    expect(new Set(BADGES.map((b) => b.id)).size).toBe(37);
   });
 
   it('round-trips the new fields; unknown badges and broken records are dropped', () => {
@@ -276,7 +289,7 @@ describe('Snack Bar: coin amounts', () => {
 describe('Snack Bar: places and decorations (side games 2)', () => {
   it('each new cinema is a different place with its own twist', () => {
     const save = freshSnack();
-    save.levels = { popcorn: 1, soda: 1, nachos: 0, candy: 1, 'second-counter': 0 };
+    save.levels = { popcorn: 1, soda: 1, nachos: 0, candy: 1, 'second-counter': 0, hotdog: 0, 'ice-cream': 0, arcade: 0 };
     expect(placeOf(save)).toBe('lobby');
     const lobby = baseRate(save, 12);
     save.cinemas = 1;
@@ -289,11 +302,15 @@ describe('Snack Bar: places and decorations (side games 2)', () => {
     expect(baseRate(save, 3)).toBeCloseTo(lobby * (1 + ROOFTOP_BONUS));
     save.cinemas = 3;
     expect(placeOf(save)).toBe('art-house');
-    expect(baseRate(save, 12)).toBeCloseTo(lobby + 2 * 220); // candy ×3
+    expect(baseRate(save, 12)).toBeCloseTo(lobby + 2 * 250); // candy ×3
     expect(placeCost(save, 'candy')).toBe(2);
     save.coins = costOf('candy', 1) * 1.5;
     expect(buy(save, 'candy')).toBe(false); // twice the price here
     save.cinemas = 4;
+    expect(placeOf(save)).toBe('seaside');
+    save.cinemas = 5;
+    expect(placeOf(save)).toBe('planetarium');
+    save.cinemas = 6;
     expect(placeOf(save)).toBe('drive-in');
   });
 
@@ -307,7 +324,7 @@ describe('Snack Bar: places and decorations (side games 2)', () => {
     expect(buyDecor(save, 'marquee')).toBe(false);
     expect(baseRate(save, 12)).toBe(rate);
     save.earned = PRESTIGE_MIN;
-    newCinema(save);
+    expect(newCinema(save)).toBe(true);
     expect(save.decor).toEqual(['marquee']);
     expect(loadSnack({ ...JSON.parse(saveSnack(save)), decor: ['marquee', 'marquee', 'castle'] }).decor).toEqual(['marquee']);
   });
@@ -320,5 +337,92 @@ describe('the room\'s tip jar (side games 2, pick 5)', () => {
     const plain = incomeRate(save, alone);
     expect(incomeRate(save, { ...alone, boost: true })).toBeCloseTo(plain * (1 + TIP_BOOST));
     expect(incomeRate(save, { ...alone, playing: false, boost: true })).toBe(0);
+  });
+});
+
+describe('Snack Bar v2 (SB3): recipes, staff, the menu bonus, the special, the new places', () => {
+  it('a recipe opens at the stand\'s level, in steps, and doubles the stand', () => {
+    const save = freshSnack();
+    expect(recipesOpen(save)).toEqual([]);
+    save.levels.popcorn = 5;
+    expect(recipesOpen(save)).toEqual(['popcorn:1']);
+    const { price } = recipeInfo(save, 'popcorn:1');
+    expect(buyRecipe(save, 'popcorn:1')).toBe(false); // no coins
+    save.coins = price;
+    const before = standIncome(save, 'popcorn');
+    expect(buyRecipe(save, 'popcorn:1')).toBe(true);
+    expect(save.coins).toBeCloseTo(0);
+    expect(standIncome(save, 'popcorn')).toBeCloseTo(before * 2);
+    expect(buyRecipe(save, 'popcorn:1')).toBe(false); // once
+    expect(recipesOpen(save)).toEqual([]); // step 2 needs level 25
+    save.levels.popcorn = 25;
+    expect(recipesOpen(save)).toEqual(['popcorn:2']);
+    expect(RECIPE_IDS).toHaveLength(24);
+  });
+
+  it('staff are hired once and do their job: tip box, manager', () => {
+    const save = freshSnack();
+    save.levels.popcorn = 100; // plenty of income, so the seconds show
+    const ctx = { playing: true, others: 0, voiceOthers: 0 };
+    const tap = serve(save, ctx);
+    const customer = serveCustomer(save, ctx);
+    save.coins = 1e12;
+    for (const m of STAFF) expect(hire(save, m.id)).toBe(true);
+    expect(hire(save, 'usher')).toBe(false);
+    expect(serve(save, ctx)).toBeCloseTo(tap * 2);
+    expect(serveCustomer(save, ctx)).toBeCloseTo(customer * 2);
+  });
+
+  it('the menu bonus: +10 % for every stand at level 25', () => {
+    const save = freshSnack();
+    expect(menuFactor(save)).toBe(1);
+    save.levels.popcorn = MENU_LEVEL;
+    save.levels.soda = MENU_LEVEL;
+    expect(menuFactor(save)).toBeCloseTo(1 + 2 * MENU_BONUS);
+  });
+
+  it('the daily special: one stand ×2, the same for everyone on a day, all stands over the days', () => {
+    const save = freshSnack();
+    save.levels.soda = 3;
+    const plain = incomeRate(save, alone);
+    expect(incomeRate(save, { ...alone, special: 'soda' })).toBeCloseTo(plain + standIncome(save, 'soda') * (SPECIAL_FACTOR - 1));
+    expect(specialOf(20_000)).toBe(specialOf(20_000));
+    const seen = new Set(Array.from({ length: 200 }, (_, d) => specialOf(20_000 + d)));
+    expect(seen.size).toBe(STAND_IDS.length);
+  });
+
+  it('the seaside pays customers ×2; the planetarium +25 % alone', () => {
+    const save = freshSnack();
+    save.levels.popcorn = 100;
+    const ctx = { playing: true, others: 0, voiceOthers: 0 };
+    const lobby = serveCustomer(save, ctx);
+    save.cinemas = 4;
+    expect(serveCustomer(save, ctx)).toBeCloseTo(lobby * SEASIDE_CUSTOMERS);
+    save.cinemas = 5;
+    const income = incomeRate(save, ctx);
+    expect(income).toBeCloseTo(baseRate(save) * (1 + PLANETARIUM_BONUS));
+    expect(incomeRate(save, { ...ctx, others: 1 })).toBeCloseTo(baseRate(save) * 1.1);
+  });
+
+  it('migrates a version 1 save: every level, coin and decoration kept, stars keep their bonus, no stand earns less', () => {
+    const v1 = {
+      v: 1, coins: 1234.5, earned: 5e6, lifetime: 9e6, watched: 3600, stars: 3, cinemas: 2, seen: 1,
+      levels: { popcorn: 60, soda: 30, nachos: 12, candy: 3, 'second-counter': 1 },
+      stats: { served: 10, customers: 2, together: 0, voiceServed: 0, films: 1, watched: 3600 },
+      badges: ['first-sale'], film: null, receipts: [], decor: ['marquee'],
+    };
+    const save = loadSnack(v1);
+    expect(save.v).toBe(SNACK_VERSION);
+    expect(save).toMatchObject({ coins: 1234.5, earned: 5e6, lifetime: 9e6, cinemas: 2, decor: ['marquee'], badges: ['first-sale'], recipes: [], staff: [] });
+    expect(save.levels).toMatchObject(v1.levels);
+    expect(save.levels.hotdog).toBe(0);
+    expect(save.stars).toBe(Math.ceil(3 * V1_STAR_RATIO));
+    expect(1 + save.stars * STAR_BONUS).toBeGreaterThanOrEqual(1 + 3 * 0.05);
+    // v1 income per stand: rate × level × 2 per milestone among 10, 25, 50, 100, 200.
+    const v1Rate: Record<string, number> = { popcorn: 0.5, soda: 4, nachos: 30, candy: 220, 'second-counter': 1600 };
+    const v1Milestones = (l: number) => 2 ** [10, 25, 50, 100, 200].filter((m) => l >= m).length;
+    for (const [id, level] of Object.entries(v1.levels)) {
+      expect(standIncome(save, id as never)).toBeGreaterThanOrEqual(v1Rate[id]! * level * v1Milestones(level));
+    }
   });
 });

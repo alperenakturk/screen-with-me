@@ -23,6 +23,14 @@ games' tip jar, cuttings and badges.
 - The plain themes are calmer: the drifting colour clouds and the corner glows are gone.
 - Night theme: your own chat messages and the games hall's counts are easier to read.
 
+### 0.9.97.97 — 10 Nov
+- Games: Snack Bar grows into a proper snack-bar game. Eight stands (new: a hot dog grill, an ice cream cart and an
+  arcade), each with its own price, recipes that double a stand, a menu bonus for keeping many stands busy, four staff
+  to hire (one serves customers for you), a "special of the day" and two new places (by the sea, a planetarium). Buy
+  ×1, ×10 or as many as you can afford. Your saved Snack Bar comes along: levels, coins and decorations stay, and your
+  stars are converted so their bonus never drops.
+- Games: a fresh look for the counter, the new stands and more kinds of customers.
+
 ### 0.9.97.96 — 10 Nov
 - Phones: every game fills the whole screen when the phone is held sideways too (on big phones it used to open as a
   small window over the video).
