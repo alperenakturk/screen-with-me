@@ -1059,7 +1059,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   rounded up, nothing earns less; unit test). The page: buy bar ×1 / ×10 / Max (`snackBar:buyMode`), "📋 Upgrades"
   panel (recipes + staff, dot when affordable), rows = open stands + the next locked one, as many as fit (`fitRows`,
   real pixels × the window's `--fit`; the rest "+N more"). Balance: `scripts/snack-sim.mjs --check` (CI `checks` job);
-  harness `scripts/harness/snack-bar-3/run.cjs` (CI `games` job). One tab at a time (`snackBar:tab` heartbeat,
+  harness `scripts/harness/snack-bar-3/run.cjs` (CI `games-more` job). One tab at a time (`snackBar:tab` heartbeat,
   "Play here" takes over); its buttons never keep the focus (`mousedown` preventDefault), no key handlers; sounds
   `snackServe` / `snackBuy` / `snackMilestone` / `snackCinema` (game family B). At least three rows always show. Its texts live in the chunk (`TEXT` in `snack-bar.ts`, EN + TR), not in `i18n.ts`: the room page's
   JS budget (`scripts/size-budget.mjs`) is nearly full.
@@ -1074,7 +1074,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "Best stand"). Milestone sounds per stand (`STAND_SOUND`: `snackPop`, `snackFizz`, `snackCrunch`, `snackCandy`,
   `snackBell`, `snackSizzle`, `snackScoop`, `snackArcade`). Lab commands `snackBar.report`, `snackBar.season` (moves
   the week on, `labWeeks`). Tests: `snack-bar.test.ts` NG2 block, harness `scripts/harness/snack-bar-ng2/run.cjs`
-  (CI `games` job).
+  (CI `games-more` job).
   **Tip jar and cuttings (side games 2, picks 5 + 8):** the room's only side-game messages. `{t:'tip'}` (Snack Bar's serve
   and customer serve, `SoloRoom.tip`) counts only while an item plays and not paused, ≤ 1 per 2 s per person
   (`tipLimit`); the room object keeps `tipJar {fill, boost}` in memory (`TIP_JAR_SIZE` 60), broadcasts `{t:'tipjar',
@@ -1112,7 +1112,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fit transform stays), `slidePiece` (chess / dama: a copy of the moved piece slides from the old square inside the
   board, `.dama-board` is the cells' offset parent; the real one waits as `.arriving`; chess sends `from`, dama finds
   the mover's emptied square), `flipIn` (Last Heart: a card that turns face up flips, 70 ms stagger, once per hand).
-  Harness `scripts/harness/motion/run.cjs` (CI `games` job): the window animates, both chess moves slide and leave no
+  Harness `scripts/harness/motion/run.cjs` (CI `games-more` job): the window animates, both chess moves slide and leave no
   copy, nothing animates under reduced motion.
   **🌱 Window Garden (0.9.95.4, the owner's look A "window sill"):** `games/garden.ts` + `garden.css` (lazy chunk, own
   `TEXT`, art from `docs/internal/design/side-games/garden/` in `games/art/garden/`). The scene's `#pot-1..3` groups are
@@ -1707,7 +1707,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `wrangler.jsonc` or live) and e2e runs with `SWM_E2E_UNPACED=1` (no waits between files: local e2e 463 s → ≈ 205 s);
   Playwright's browser is cached. **Card CI2: parallel jobs.** `checks` (typecheck, texts, unit tests, build, size
   budget; push + PR), and on a PR only `e2e` (local e2e + the help harness), `site` (the site's browser harnesses) and
-  `games` (games quality); each starts with the composite action `.github/actions/prepare` (Node, `npm ci`, build,
+  `games` + `games-more` (games quality, split in 0.9.97.106 when one job passed its 20 minutes on a slow runner:
+  `games` = the sweep and the tables' harnesses, `games-more` = YouTube, tablets, Snack Bar and motion); each starts with the composite action `.github/actions/prepare` (Node, `npm ci`, build,
   `server: 'true'` = the local server, `playwright: 'true'` = axe + Playwright + Chromium). The job named `test` (the
   ruleset's required check, `if: always()`) fails when any of them failed or was cancelled; `deploy` needs it. A new
   harness goes into the job of its kind (`e2e` when it needs no `web` change, else `site` / `games`); move a step to

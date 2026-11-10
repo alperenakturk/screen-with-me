@@ -264,12 +264,25 @@ jobs:
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
           OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,duel,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
-          # Card SB3: Snack Bar's economy (migration, buy modes, upgrades, staff, eight stands, new places).
-          node scripts/harness/snack-bar-3/run.cjs http://localhost:8787
-          # Card NG2: place colours, the seasonal stand, the manager's report, a stand's own milestone sound.
-          node scripts/harness/snack-bar-ng2/run.cjs http://localhost:8787
-          # Card NG3: the window slides in, chess pieces slide, nothing moves under "reduce motion".
-          node scripts/harness/motion/run.cjs http://localhost:8787
+
+      - name: Server log (on failure)
+        if: failure()
+        run: tail -n 150 wrangler.log || true
+
+  # The second half of the games (0.9.97.106: one job passed its 20 minutes on a slow runner): games beside a YouTube
+  # video, the tablets, Snack Bar and motion. Same gate as `games`; the two stay about equal.
+  games-more:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/prepare
+        with:
+          server: 'true'
+          playwright: 'true'
 
       # Card YTG: over a YouTube video a game's window stays clear of the player (three sizes, a drag, fullscreen).
       - name: Games beside a YouTube video
@@ -284,6 +297,15 @@ jobs:
           sleep 1
           node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
+      - name: Snack Bar and motion
+        run: |
+          # Card SB3: Snack Bar's economy (migration, buy modes, upgrades, staff, eight stands, new places).
+          node scripts/harness/snack-bar-3/run.cjs http://localhost:8787
+          # Card NG2: place colours, the seasonal stand, the manager's report, a stand's own milestone sound.
+          node scripts/harness/snack-bar-ng2/run.cjs http://localhost:8787
+          # Card NG3: the window slides in, chess pieces slide, nothing moves under "reduce motion".
+          node scripts/harness/motion/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
@@ -292,7 +314,7 @@ jobs:
   # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
   # a failed job can never make this one "skipped" (which a required check would count as success).
   test:
-    needs: [changes, checks, e2e, site, games]
+    needs: [changes, checks, e2e, site, games, games-more]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -300,9 +322,9 @@ jobs:
       - name: All test jobs passed
         env:
           CHANGES: ${{ needs.changes.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.games.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.games.result }} ${{ needs.games-more.result }}
         run: |
-          echo "changes: $CHANGES · checks, e2e, site, games: $RESULTS"
+          echo "changes: $CHANGES · checks, e2e, site, games, games-more: $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
