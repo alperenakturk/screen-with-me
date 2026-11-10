@@ -16,6 +16,18 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.102 — 10 Nov
+- A new theme, **Matinee**: the first light theme, warm paper with ink-dark text and a rust accent, for watching in
+  daylight. The video's own place stays black.
+- The Ocean Liner theme is gone. If you had picked it, you now see Night; nothing else changes.
+- The home page now takes its colours from your theme (the slogan, the main button, the steps and the little chat bubble
+  in the picture), like the room already did. Night keeps the gold of the logo.
+- Sunset's glow moved to the right, so "How it works" on the home page is easy to read again.
+- New default font: Sidelit (Bricolage Grotesque titles with Figtree text). If you prefer your device's own font, pick
+  it in ⚙️ → My screen → Font.
+- On a computer or a tablet, the camera window now starts at the bottom left of the video, like Meet, just above the
+  video's own controls. Moving it keeps your place as before; double-clicking its bar brings it back there.
+
 ### 0.9.97.101 — 10 Nov
 - Games on a phone held sideways: chess, dama, backgammon, Reversi and the others show the board at the full height
   with the players and buttons beside it; Sea Battle shows one sea at a time, big; Five Frames, the Five Frames Duel,

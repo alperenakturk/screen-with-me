@@ -18,8 +18,8 @@ fs.mkdirSync(OUT, { recursive: true });
 const pick = (env, all) => (process.env[env] ? process.env[env].split(',') : all);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const ALL_THEMES = ['gece', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'gemi', 'tren'];
-const PLAIN = ['gece', 'okyanus', 'gunbatimi', 'neon'];
+const ALL_THEMES = ['gece', 'matinee', 'okyanus', 'gunbatimi', 'neon', 'lokum', 'binbirgece', 'sinema', 'acikhava', 'tren'];
+const PLAIN = ['gece', 'matinee', 'okyanus', 'gunbatimi', 'neon'];
 const THEMES = pick('THEMES', ALL_THEMES);
 const PAGES = pick('PAGES', ['home', 'help', 'join', 'room', 'settings', 'games']);
 const DEVICES = {
@@ -28,8 +28,8 @@ const DEVICES = {
   desktop: { viewport: { width: 1920, height: 1080 } },
   phone: devices['Pixel 7'],
 };
-/** Pages per device: the 1920 run is for the home page's scene only. */
-const DEVICE_PAGES = { desktop: ['home'] };
+/** Pages per device: the 1920 run is for the home page's scene and the room (card NP1). */
+const DEVICE_PAGES = { desktop: ['home', 'room'] };
 
 /** Visible text runs in the viewport: one entry per element with its own text. */
 function collect() {
@@ -73,41 +73,44 @@ function collect() {
     if (hidden || opacity < 0.05) continue;
     const range = document.createRange();
     range.selectNodeContents(n);
-    const r = range.getBoundingClientRect();
-    if (r.width < 4 || r.height < 6) continue;
-    if (r.right < 0 || r.bottom < 0 || r.left > vw || r.top > vh) continue;
-    // Clipped away by an overflow ancestor?
-    let clipped = false;
-    for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) {
-      const cs = getComputedStyle(e);
-      if (/(hidden|auto|scroll|clip)/.test(cs.overflow + cs.overflowX + cs.overflowY)) {
-        const b = e.getBoundingClientRect();
-        if (r.bottom <= b.top + 1 || r.top >= b.bottom - 1 || r.right <= b.left + 1 || r.left >= b.right - 1) clipped = true;
-      }
-    }
-    if (clipped) continue;
-    // Covered by something on top (a dialog's backdrop, a window), even in part: not what the person reads now. Five
-    // points along the line (a window may cover only its end, then its background pixels would be the window's).
-    const y = Math.min(vh - 1, (r.top + r.bottom) / 2);
-    const covered = [0.05, 0.25, 0.5, 0.75, 0.95].some((f) => {
-      const hit = document.elementFromPoint(Math.min(vw - 1, Math.max(0, r.left + (r.right - r.left) * f)), y);
-      return hit && hit !== el && !el.contains(hit) && !hit.contains(el);
-    });
-    if (covered) continue;
+    // One run per line (NP1): a wrapped title's bounding box would take in what sits beside its short last line (a
+    // "New" badge), which is not behind the text.
+    const lines = [...range.getClientRects()].filter((r) => r.width >= 4 && r.height >= 6);
     const color = parse(s.webkitTextFillColor && s.webkitTextFillColor !== s.color && !/rgba\(0, 0, 0, 0\)/.test(s.webkitTextFillColor) ? s.webkitTextFillColor : s.color);
     if (!color) continue;
-    seen.add(el);
     const size = parseFloat(s.fontSize);
     const bold = Number(s.fontWeight) >= 700;
-    out.push({
-      label: label(el),
-      text: text.slice(0, 40),
-      color,
-      opacity,
-      size,
-      large: size >= 24 || (size >= 18.66 && bold),
-      box: { x: Math.max(0, Math.floor(r.left)), y: Math.max(0, Math.floor(r.top)), w: Math.ceil(Math.min(r.right, vw) - Math.max(0, r.left)), h: Math.ceil(Math.min(r.bottom, vh) - Math.max(0, r.top)) },
-    });
+    for (const r of lines) {
+      if (r.right < 0 || r.bottom < 0 || r.left > vw || r.top > vh) continue;
+      // Clipped away by an overflow ancestor?
+      let clipped = false;
+      for (let e = el.parentElement; e && e !== document.body; e = e.parentElement) {
+        const cs = getComputedStyle(e);
+        if (/(hidden|auto|scroll|clip)/.test(cs.overflow + cs.overflowX + cs.overflowY)) {
+          const b = e.getBoundingClientRect();
+          if (r.bottom <= b.top + 1 || r.top >= b.bottom - 1 || r.right <= b.left + 1 || r.left >= b.right - 1) clipped = true;
+        }
+      }
+      if (clipped) continue;
+      // Covered by something on top (a dialog's backdrop, a window), even in part: not what the person reads now. Five
+      // points along the line (a window may cover only its end, then its background pixels would be the window's).
+      const y = Math.min(vh - 1, (r.top + r.bottom) / 2);
+      const covered = [0.05, 0.25, 0.5, 0.75, 0.95].some((f) => {
+        const hit = document.elementFromPoint(Math.min(vw - 1, Math.max(0, r.left + (r.right - r.left) * f)), y);
+        return hit && hit !== el && !el.contains(hit) && !hit.contains(el);
+      });
+      if (covered) continue;
+      seen.add(el);
+      out.push({
+        label: label(el),
+        text: text.slice(0, 40),
+        color,
+        opacity,
+        size,
+        large: size >= 24 || (size >= 18.66 && bold),
+        box: { x: Math.max(0, Math.floor(r.left)), y: Math.max(0, Math.floor(r.top)), w: Math.ceil(Math.min(r.right, vw) - Math.max(0, r.left)), h: Math.ceil(Math.min(r.bottom, vh) - Math.max(0, r.top)) },
+      });
+    }
   }
   return out;
 }

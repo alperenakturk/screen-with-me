@@ -5690,7 +5690,8 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   margin-left: 6px;
   padding: 1px 5px;
   border-radius: 4px;
-  background: var(--warn);
+  /* The bright amber in every theme (Matinee's --warn is a dark amber for text on cream, card NP1). */
+  background: #f5b94a;
   color: #2a1d00;
   font-size: 9px;
   font-weight: 800;
@@ -10648,8 +10649,10 @@ html.shell .theater.side-rail.rail-edge-mode.dock-mode.dock-idle .rail-edge {
   font-size: 22px;
 }
 
-/* The games hall opens left of the rail. */
+/* The games hall opens left of the rail. The rail's own text is white (it is dark in every theme); the hall is a
+   theme card, so it takes the theme's text colour back (card NP1: white on Matinee's cream before). */
 .fs-dock .game-menu {
+  color: var(--text);
   right: calc(100% + 10px);
   bottom: auto;
   top: 50%;
@@ -13070,4 +13073,16 @@ html.phone .rotate-row {
 html.ph-game .game-stage .xox-page:not(.draw-page) {
   height: 100%;
   align-content: center;
+}
+
+/* Card NP1: Matinee is the only light theme, but the video's place stays black (the letterbox). The empty room's words
+   on it take a dark palette of their own, so they read on the black like in every other theme. */
+:root[data-theme='matinee'] .player-wrap > .empty {
+  --text: #f4ede1;
+  --muted: #c9bda9;
+  --surface: #2a241d;
+  --surface-2: #383027;
+  --border: #4d4336;
+  --field-border: #8f8170;
+  color: var(--text);
 }

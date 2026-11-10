@@ -480,7 +480,7 @@ export const tr: Record<I18nKey, string> = {
   'theme.binbirgece': 'Binbir Gece',
   'theme.sinema': 'Sinema Sarayı',
   'theme.acikhava': 'Açık Hava Sineması',
-  'theme.gemi': 'Transatlantik',
+  'theme.matinee': 'Matine',
   'theme.tren': 'Gece Ekspresi',
   pickAvatar: 'Bir avatar seç',
   myRoom: 'Benim odam',

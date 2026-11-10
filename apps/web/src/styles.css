@@ -40,7 +40,7 @@
   --hero-scrim: none;
 }
 
-:root:is([data-theme='lokum'], [data-theme='binbirgece'], [data-theme='sinema'], [data-theme='acikhava'], [data-theme='gemi'], [data-theme='tren']) {
+:root:is([data-theme='lokum'], [data-theme='binbirgece'], [data-theme='sinema'], [data-theme='acikhava'], [data-theme='tren']) {
   --hero-scrim: color-mix(in srgb, var(--bg) 88%, transparent);
 }
 
@@ -80,11 +80,12 @@
   --accent: #ff7a4d;
   --accent-hover: #ff9670;
   --on-accent: #2a0d05;
-  /* Alacakaranlık: üstte mor gök, ufukta turuncu-pembe parıltı ve batmakta olan güneşin hâlesi */
+  /* Dusk: a violet sky, an orange-pink glow on the horizon and the setting sun's halo, low on the right (card NP1: in the
+     middle it sat behind the home's "How it works" link, 1.6:1). */
   --art:
     radial-gradient(1px 1px at 60px 50px, rgb(255 230 240 / 0.5) 99%, transparent),
-    radial-gradient(circle at 50% 104%, rgb(255 190 120 / 0.35) 0 7%, rgb(255 140 90 / 0.14) 13%, transparent 30%),
-    radial-gradient(ellipse 75% 38% at 50% 102%, rgb(255 120 80 / 0.3), transparent 70%),
+    radial-gradient(circle at 82% 104%, rgb(255 190 120 / 0.35) 0 7%, rgb(255 140 90 / 0.14) 13%, transparent 30%),
+    radial-gradient(ellipse 60% 38% at 82% 102%, rgb(255 120 80 / 0.3), transparent 70%),
     radial-gradient(ellipse 60% 45% at 85% 0%, rgb(170 80 200 / 0.18), transparent 70%),
     linear-gradient(#2b1442, #3b1736 38%, #2a1020 72%, #1a0b14);
   --art-size: 233px 197px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
@@ -114,6 +115,31 @@
   --art-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
   --mascot: url('/themes/neon-maskot.svg');
   --on-accent: #2a0524;
+}
+
+/* Matinee: the first light theme. Warm paper, ink text, rust accent; no picture, a faint paper grain and one soft window light. */
+:root[data-theme='matinee'] {
+  color-scheme: light;
+  --bg: #f4ede1;
+  --surface: #fffaf1;
+  --surface-2: #efe5d4;
+  --border: #d6c8b2;
+  --field-border: #8a7a64;
+  --text: #1f1a14;
+  --muted: #5c5244;
+  --accent: #b03f1c;
+  --accent-hover: #c24a24;
+  --on-accent: #ffffff;
+  --danger: #b3261e;
+  --ok: #1d7a4f;
+  --warn: #8a5a00;
+  --glow: none;
+  --art: radial-gradient(ellipse 60% 50% at 85% 0%, rgb(255 214 150 / 0.35), transparent 70%),
+    radial-gradient(1px 1px at 20px 30px, rgb(120 90 50 / 0.12) 99%, transparent),
+    radial-gradient(1px 1px at 70px 90px, rgb(120 90 50 / 0.1) 99%, transparent),
+    linear-gradient(#f7f1e6, #f1e8d9);
+  --art-size: 100% 100%, 97px 103px, 131px 127px, 100% 100%;
+  --mascot: url('/themes/matinee-maskot.svg');
 }
 /* ---- Çizimli temalar. Üç katman:
    --art       sayfanın kendi arka planı (yıldız, desen, ışık; CSS degradeleri)
@@ -204,23 +230,6 @@
   --mascot: url('/themes/acikhava-maskot.svg');
 }
 
-/* Transatlantik: şafakta okyanus ve dev gemi; aydınlık sahne, koyu lacivert kartlar, baca kırmızısı vurgu. */
-:root[data-theme='gemi'] {
-  --bg: #0d1e2a;
-  --surface: rgb(14 30 42 / 0.86);
-  --surface-2: rgb(22 44 60 / 0.92);
-  --border: #36607a;
-  --text: #f6efe3;
-  --muted: #b7c0bf;
-  --accent: #ec6a5a;
-  --accent-hover: #f4887a;
-  --on-accent: #200806;
-  --art: linear-gradient(#24425e, #0d1e2a);
-  --art-size: 100% 100%;
-  --scene: url('/themes/gemi.svg');
-  --mascot: url('/themes/gemi-maskot.svg');
-}
-
 /* Gece Ekspresi: gece treni ve deco saat kulesi; sinyal yeşili vurgu. */
 :root[data-theme='tren'] {
   --bg: #070a16;
@@ -236,14 +245,6 @@
   --art-size: 100% 100%;
   --scene: url('/themes/tren.svg');
   --mascot: url('/themes/tren-maskot.svg');
-}
-
-/* Gemi sahnesi aydınlık: kartsız, doğrudan gökyüzünün üstündeki yazılar gölgeyle okunur kalsın. */
-:root[data-theme='gemi'] :is(.hero h1, .tagline, .hm-slogan, .hm-sub, .hm-save, .hm-how > h2) {
-  color: var(--text);
-  text-shadow:
-    0 1px 2px rgb(0 0 0 / 0.6),
-    0 0 16px rgb(8 20 32 / 0.55);
 }
 
 /* Card FONT1 (Design's docs/internal/design/fonts.md): self-hosted SIL OFL variable fonts (public/fonts, licences beside
@@ -395,7 +396,9 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* The device font is the default until the owner picks (fonts.md Q1); titles already use the wordmark's family. */
+/* Card NP1 (owner's pick A): Sidelit (Bricolage Grotesque titles + Figtree text) is the default (fonts.ts sets
+   data-font='sidelit' before the page is drawn); "the device's font" (data-font='device') stays a choice and downloads
+   nothing for the text, so a page without data-font must not ask for Figtree either. */
 :root {
   --font-device: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-title: 'Sidelit Title', var(--font, var(--font-device));

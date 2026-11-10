@@ -1,35 +1,33 @@
+import { THEME_IDS, resolveTheme, type ThemeId } from '@swm/shared/themes';
 import { isPhone } from './device.ts';
+import { debugHooks, type LabCommand } from './debug-lab.ts';
 import { el } from './dom.ts';
 import { t, type I18nKey } from './i18n.ts';
 import { load, save } from './storage.ts';
 
+export type { ThemeId };
+
 /**
- * Hepsi koyu; renkleri ve çizimli arka planları styles.css'teki [data-theme]
- * blokları belirler. Neon'dan sonrakiler resimli ve maskotlu (public/themes/*.svg).
- * Kaldırılan bir temayı seçmiş olan (eski 'uzay', 'siber'; 'opera' since 0.9.97.34, owner) currentTheme'de 'gece'ye düşer.
+ * Colours and pictures come from styles.css's [data-theme] blocks; the ids (and the fallback for a removed theme:
+ * 'uzay', 'siber', 'opera', 'gemi' become Night) live in @swm/shared/themes. Matinee (card NP1) is the only light
+ * theme; the ones after Neon have a drawn scene and a costumed mascot (public/themes/*.svg).
  */
-export const THEMES = [
-  { id: 'gece', swatch: ['#141936', '#8b6cff'] },
-  { id: 'okyanus', swatch: ['#0b2a45', '#2ec5e8'] },
-  { id: 'gunbatimi', swatch: ['#3a1530', '#ff7a4d'] },
-  { id: 'neon', swatch: ['#050508', '#ff2bd6'] },
-  { id: 'lokum', swatch: ['#18224a', '#e0a84a'] },
-  { id: 'binbirgece', swatch: ['#141236', '#e8c27a'] },
-  { id: 'sinema', swatch: ['#0d1020', '#e9b949'] },
-  { id: 'acikhava', swatch: ['#1a1340', '#ff8a6b'] },
-  { id: 'gemi', swatch: ['#24425e', '#ec6a5a'] },
-  { id: 'tren', swatch: ['#0e1428', '#6fd6a8'] },
-] as const;
-
-export type ThemeId = (typeof THEMES)[number]['id'];
-
-function isTheme(x: unknown): x is ThemeId {
-  return THEMES.some((theme) => theme.id === x);
-}
+const SWATCHES: Record<ThemeId, readonly [string, string]> = {
+  gece: ['#141936', '#8b6cff'],
+  matinee: ['#f4ede1', '#b03f1c'],
+  okyanus: ['#0b2a45', '#2ec5e8'],
+  gunbatimi: ['#3a1530', '#ff7a4d'],
+  neon: ['#050508', '#ff2bd6'],
+  lokum: ['#18224a', '#e0a84a'],
+  binbirgece: ['#141236', '#e8c27a'],
+  sinema: ['#0d1020', '#e9b949'],
+  acikhava: ['#1a1340', '#ff8a6b'],
+  tren: ['#0e1428', '#6fd6a8'],
+};
+export const THEMES = THEME_IDS.map((id) => ({ id, swatch: SWATCHES[id] }));
 
 export function currentTheme(): ThemeId {
-  const saved = load('theme');
-  return isTheme(saved) ? saved : 'gece';
+  return resolveTheme(load('theme'));
 }
 
 /**
@@ -37,7 +35,7 @@ export function currentTheme(): ThemeId {
  * don't fit a phone screen); tablets and computers keep all. A scene theme chosen on a computer stays saved (the
  * settings are shared with the extension) and shows as Gece on a phone.
  */
-const PLAIN_THEMES: readonly ThemeId[] = ['gece', 'okyanus', 'gunbatimi', 'neon'];
+const PLAIN_THEMES: readonly ThemeId[] = ['gece', 'matinee', 'okyanus', 'gunbatimi', 'neon'];
 const offered = () => (isPhone() ? THEMES.filter((theme) => PLAIN_THEMES.includes(theme.id)) : THEMES);
 /** The theme this screen shows for a choice. */
 function shown(id: ThemeId): ThemeId {
@@ -47,7 +45,7 @@ function shown(id: ThemeId): ThemeId {
 /** Sahnesi (public/themes/<tema>.svg) olan temalar; diğerlerinin sadece maskotu var. */
 const SCENE_THEMES: readonly ThemeId[] = [
   'lokum', 'binbirgece',
-  'sinema', 'acikhava', 'gemi', 'tren',
+  'sinema', 'acikhava', 'tren',
 ];
 
 /** Ana sayfa şeridinde kaç tema görünsün (kaydırma çubuğu çıkmasın). */
@@ -79,8 +77,8 @@ let applying = 0;
  * değişir (yoksa önce yıldızlar, sonra gezegen gelir; tuhaf duruyordu). İlk açılışta
  * beklenmez: renkler hemen gelsin. Arka arkaya tıklanırsa sadece sonuncusu uygulanır.
  */
-export function applyTheme(id: ThemeId, { wait = true } = {}): void {
-  save('theme', id);
+export function applyTheme(id: ThemeId, { wait = true, remember = true } = {}): void {
+  if (remember) save('theme', id);
   const ticket = ++applying;
   const set = () => {
     if (ticket !== applying) return;
@@ -224,12 +222,12 @@ export function warmThemePreviews(): void {
 /** Ayarlarda: şu anki tema küçük önizlemeyle + "Temayı değiştir" (büyük pencere açar). */
 export function renderThemeSetting(container: HTMLElement): void {
   const draw = () => {
-    const theme = THEMES.find((x) => x.id === shown(currentTheme())) ?? THEMES[0];
+    const id = shown(currentTheme());
     const button = el('button', { type: 'button', class: 'btn' }, t('changeTheme'));
     button.addEventListener('click', openThemeDialog);
     for (const type of ['pointerenter', 'focus', 'pointerdown'] as const) button.addEventListener(type, warmThemePreviews, { once: true });
     container.replaceChildren(
-      el('span', { class: 'theme-now' }, el('img', { src: `/themes/${theme.id}-maskot.svg`, alt: '' }), el('b', {}, t(`theme.${theme.id}` as I18nKey))),
+      el('span', { class: 'theme-now' }, el('img', { src: `/themes/${id}-maskot.svg`, alt: '' }), el('b', {}, t(`theme.${id}` as I18nKey))),
       button,
     );
   };
@@ -246,3 +244,48 @@ export function renderThemeSetting(container: HTMLElement): void {
     seen.observe(container);
   }
 }
+
+/**
+ * 🐞 Test Lab (card NP1): "themes.next" shows the next theme on this page only (the saved one stays, Undo puts it
+ * back), "themes.<id>" one theme; the status line names the theme shown.
+ */
+export function registerThemeLab(): void {
+  const shownTheme = (): ThemeId => resolveTheme(document.documentElement.dataset.theme);
+  const show = (id: ThemeId) => applyTheme(id, { wait: false, remember: false });
+  const back = () => show(currentTheme());
+  debugHooks.register('themes', () => ({
+    commands: [
+      {
+        id: 'themes.next',
+        title: { en: 'Theme: show the next one', tr: 'Tema: sıradakini göster' },
+        help: { en: 'This page only, your saved theme stays; run again for the next', tr: 'Yalnızca bu sayfada, kayıtlı teman değişmez; tekrar çalıştır, bir sonraki gelsin' },
+        tab: 'screen',
+        run: () => show(THEME_IDS[(THEME_IDS.indexOf(shownTheme()) + 1) % THEME_IDS.length]!),
+        undo: back,
+      },
+      ...THEME_IDS.map((id): LabCommand => ({
+        id: `themes.${id}`,
+        title: { en: `Theme: ${LAB_NAMES[id].en}`, tr: `Tema: ${LAB_NAMES[id].tr}` },
+        help: { en: 'This page only, your saved theme stays', tr: 'Yalnızca bu sayfada, kayıtlı teman değişmez' },
+        tab: 'screen',
+        run: () => show(id),
+        undo: back,
+      })),
+    ],
+    status: () => [[{ en: 'Theme shown', tr: 'Gösterilen tema' }, LAB_NAMES[shownTheme()]]],
+  }));
+}
+
+/** The lab's theme names in both languages (the UI names live in i18n.ts / i18n-tr.ts). */
+const LAB_NAMES: Record<ThemeId, { en: string; tr: string }> = {
+  gece: { en: 'Night', tr: 'Gece' },
+  matinee: { en: 'Matinee', tr: 'Matine' },
+  okyanus: { en: 'Ocean', tr: 'Okyanus' },
+  gunbatimi: { en: 'Sunset', tr: 'Gün batımı' },
+  neon: { en: 'Neon', tr: 'Neon' },
+  lokum: { en: 'Moonlit Nights', tr: 'Mehtaplı Geceler' },
+  binbirgece: { en: 'Arabian Nights', tr: 'Binbir Gece' },
+  sinema: { en: 'Picture Palace', tr: 'Sinema Sarayı' },
+  acikhava: { en: 'Drive-In', tr: 'Açık Hava Sineması' },
+  tren: { en: 'Night Express', tr: 'Gece Ekspresi' },
+};

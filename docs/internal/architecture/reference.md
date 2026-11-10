@@ -630,7 +630,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `isIOS`, `isStandalone`, `isApp`, `canElementFullscreen`, `canShareSheet`, `lockLandscape`, `onTurn`; `<html>`
   classes `is-touch` / `is-ios` / `is-standalone` / `is-app`; `isPhone()` = touch + ≤ 700 px wide or ≤ 500 px tall, not
   tablets): ask there, never sniff in feature code. **Themes on phones (0.9.91.7, owner):** only the plain ones
-  (gece / okyanus / gunbatimi / neon) are offered; a saved scene theme shows as Gece there and stays saved
+  (gece / matinee / okyanus / gunbatimi / neon, Matinee since card NP1) are offered; a saved scene theme shows as Gece there and stays saved
   (`themes.ts` `shown`, `offered`). Store-app path
   (Google Play TWA, App Store shell, what Apple requires: report / block for user content, push, universal links):
   `docs/internal/apps.md`. At ≤ 700 px
@@ -1246,6 +1246,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   **0.9.93.3 (owner):** the one window is at least wide enough for its cameras side by side (`ROW_TILE_W` 150 px each,
   up to three, at most `ROW_MAX_SHARE` half of its container) and the fullscreen default is 26 % wide (it was 15 %:
   in fullscreen the cameras stacked in a narrow column). Test: `scripts/harness/cam-fs/run.cjs`.
+  **Card NP1 (owner's C2, like Meet):** the one window starts at the video's bottom-left corner (the page: `.player-wrap`'s
+  box; fullscreen: the video), `PLAYER_BAR` (72 px) above the video's bottom edge so the player's own bar stays free,
+  on a computer and a tablet (phones have the camera row). A spot that was never moved is not saved (`camFloat:spot` /
+  `camFloat:fsSpot` absent or `'null'`), so the default follows the video's size; double-clicking the bar brings it
+  back there. Layout harness: "camera: starts at the video's bottom left, above its bar".
   **0.9.91.16 spotlight:** in the one-window (group) layout a pinned camera fills the left and the others sit in a
   4:3 strip on the right (`.cam-grid.spotlight`, `--cam-others`, set in `cam-float.ts` `markTiles`); the old
   "full width + span 2" pushed the others out of a sized window. The share menu lifts the side panel over the
@@ -1449,20 +1454,33 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
   scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
   the second section's heading and help line get the same block). The footer shows the site version (`index.html`
-  `.footer-version`, bump on every release). Plain themes (gece/okyanus/gunbatimi/neon) have one layered `--art`
+  `.footer-version`, bump on every release). Plain themes (gece/matinee/okyanus/gunbatimi/neon) have one layered `--art`
   (gradient + star dust or a pattern; THEME1 removed the corner glows and the drifting `--aura`). **Theme tokens
   (THEME1, Design's `docs/internal/design/themes-2.md`):** `--field-border` (inputs, selects, the switch's off edge;
   `--muted` 62 % into `--surface`, ≥ 3:1) and `--hero-scrim` (`--bg` at 88 % on the six scene themes, `none` on plain
   ones) are worked out in `styles.css` from each theme's own colours; my chat bubble and primary buttons use
-  `--accent-btn` (Gece `#6a4cf2`, white text ≥ 4.5:1). The home's accent lives in `home.css` `.hm-first` (`--hm-accent`,
-  `--hm-accent-fill`, `--hm-accent-ink`: the brand gold today; the owner's Q2 "home follows the theme" sets them to
-  `--accent` / `--accent-btn` / `--on-accent`); its soft text is `--hm-soft` (from `--text` and `--muted`). Harness
+  `--accent-btn` (Gece `#6a4cf2`, white text ≥ 4.5:1). **The home follows the theme (card NP1, owner's 3A):**
+  `home.css` `html.in-home` sets `--hm-accent` / `--hm-accent-fill` / `--hm-accent-ink` to `--accent` /
+  `--accent-btn` / `--on-accent` (slogan, pill, "Create room", the step numbers, the help link, the art's progress bars
+  and chat bubble); Night (`gece`, or no theme) keeps the brand gold; its soft text is `--hm-soft` (from `--text` and
+  `--muted`); the home's thin edges and fills are `--text` mixed with transparent (not fixed white), so they show on a
+  light theme too. **Themes (card NP1, owner's 2B):** ids in `@swm/shared/themes` (`THEME_IDS`, ten: gece, matinee,
+  okyanus, gunbatimi, neon, lokum, binbirgece, sinema, acikhava, tren; `resolveTheme` turns a removed one
+  (`REMOVED_THEMES`: uzay, siber, opera, gemi) or anything unknown into Night; unit test `themes.test.ts`); swatches
+  and pictures in `themes.ts`. **Matinee** (`matinee`, Design's `docs/internal/design/themes-2/ready/themes.css`) is the
+  only light theme (`color-scheme: light`, its own `--field-border` / `--danger` / `--ok` / `--warn`); the video's place
+  stays black, so the empty room's words there get a dark palette of their own (`room.css`
+  `:root[data-theme='matinee'] .player-wrap > .empty`), the games hall inside the rail takes `--text` back (the rail's
+  text is white), and the hall's "New" badge keeps the bright amber. Ocean Liner (`gemi`) is gone (scene, mascot,
+  i18n). Sunset's sun glow sits at 82 % (it was behind "How it works"). Test Lab `themes.next`, `themes.<id>` (this page
+  only, `applyTheme(id, { remember: false })`) and a status line (`registerThemeLab`). Harness
   `scripts/harness/contrast/run.cjs` (CI, `site` job): every theme's text against the real pixels behind it (WCAG AA,
-  4.5:1 or 3:1 for large text; the worst 15 % of the background counts) on home at 1366 and 1920, help, join, room,
-  settings and the games hall, and the plain themes on a Pixel 7; `REPORT_ONLY=1` for audits. **Font (card FONT1, Design's
+  4.5:1 or 3:1 for large text; the worst 15 % of the background counts; one run per line of a wrapped text) on home and
+  the room at 1366 and 1920, help, join, settings and the games hall at 1366, and the plain themes on a Pixel 7;
+  `REPORT_ONLY=1` for audits. **Font (card FONT1, Design's
   `docs/internal/design/fonts.md`):** `fonts.ts` (`FONTS` device / sidelit (Bricolage + Figtree) / poster (Fraunces +
-  Manrope) / polished (Bricolage + Plus Jakarta Sans) / readable / rounded / easy, `DEFAULT_FONT` device until the owner
-  picks (his Q1 A / B / C / D = sidelit / poster / polished / device, one line), `localStorage` `font`, `applyFont` sets `data-font` on `<html>` from `app.ts` before the
+  Manrope) / polished (Bricolage + Plus Jakarta Sans) / readable / rounded / easy, `DEFAULT_FONT` sidelit (card NP1,
+  owner's pick A; a page without `data-font` asks for no text font, so the device-font choice downloads nothing), `localStorage` `font`, `applyFont` sets `data-font` on `<html>` (`device` too) from `app.ts` before the
   page is drawn, `fontchange` event); styles.css has one `@font-face` pair per family (latin + latin-ext by
   `unicode-range`, self-hosted OFL variable cuts in `public/fonts/` with their licences, also in
   `third-party-notices.txt`; never a font CDN) and maps `data-font` to `--font` / `--font-title`, so only the picked
