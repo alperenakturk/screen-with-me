@@ -3873,54 +3873,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.8);
 }
 
-/* ---- PlayWithMe: oda içi oyunlar ---- */
-.pwm-logo {
-  position: relative;
-  width: 116px;
-  height: 116px;
-  margin: 0 auto 30px;
-}
-
-.pwm-logo > svg:first-child {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 10px 30px rgb(139 108 255 / 0.35));
-}
-
-/* Oyun kolu logonun altında, eğik tutuluyor gibi */
-.pwm-logo .pwm-pad {
-  position: absolute;
-  width: 82px;
-  left: 17px;
-  bottom: -40px;
-  transform: rotate(-8deg);
-  filter: drop-shadow(0 6px 12px rgb(0 0 0 / 0.45));
-  animation: pwm-wiggle 3.2s ease-in-out infinite;
-}
-
-.pwm-logo.small {
-  width: 34px;
-  height: 34px;
-  margin: 0;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.pwm-logo.small .pwm-pad {
-  width: 24px;
-  left: 5px;
-  bottom: -12px;
-}
-
-@keyframes pwm-wiggle {
-  0%,
-  100% {
-    transform: rotate(-8deg);
-  }
-  50% {
-    transform: rotate(-3deg) translateY(-2px);
-  }
-}
 
 /* XOX maç sayfası */
 .xox-page {
@@ -4455,7 +4407,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pwm-logo .pwm-pad,
   .xox-cell.placed,
   .xox-cell.win {
     animation: none;
@@ -5439,48 +5390,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   display: none;
 }
 
-.game-menu-title {
-  margin: 2px 6px 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.game-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.game-menu-item:hover,
-.game-menu-item:focus-visible {
-  background: var(--surface-2);
-}
-
-.game-menu-item small {
-  display: block;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.game-menu-icon {
-  flex: none;
-  width: 44px;
-  font-size: 20px;
-  text-align: center;
-}
-
 /* ---- Games hub (0.9.91.8): what's new, the room's tables, new table ---- */
 .game-menu {
   width: min(360px, calc(100vw - 32px));
@@ -5923,11 +5832,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   }
 }
 
-/* Sweep-2 #7: the play-logo with its 🎮 badge hung out of the head; the title already names the game. */
-.game-stage .pwm-logo {
-  display: none;
-}
-
 .game-stage-head {
   display: flex;
   align-items: center;
@@ -6258,8 +6162,7 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   overflow: hidden;
 }
 
-.game-stage.float .game-head-text,
-.game-stage.float .pwm-logo {
+.game-stage.float .game-head-text {
   display: none;
 }
 
@@ -6325,8 +6228,7 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.game-stage.below .game-head-text,
-.game-stage.below .pwm-logo {
+.game-stage.below .game-head-text {
   display: none;
 }
 
@@ -12957,16 +12859,66 @@ html.ph-game .game-stage .xox-page:not(.draw-page) {
   align-content: center;
 }
 
-/* Card NP1: Matinee is the only light theme, but the video's place stays black (the letterbox). The empty room's words
-   on it take a dark palette of their own, so they read on the black like in every other theme. */
-:root[data-theme='matinee'] .player-wrap > .empty {
-  --text: #f4ede1;
-  --muted: #c9bda9;
-  --surface: #2a241d;
-  --surface-2: #383027;
-  --border: #4d4336;
+/* MATINEE2 (Design, 10 Nov 2026; replaces card NP1's block): Matinee's video's place is a framed screen on a mat, not a
+   black slab on light paper (docs/internal/design/themes-2/matinee2/README.md). */
+/* Never in the extension overlay (html.shell-film): there the video's place is the hole the film page shows through and
+   must stay transparent (room.css `html.shell-film .player-wrap`); these rules would outrank it, hence :not(.shell-film). */
+/* The card around the video becomes a mat, a step darker than the paper, so the eye goes paper → mat → frame → screen
+   instead of paper → black. */
+:root[data-theme='matinee']:not(.shell-film, .cinema-on) .theater:not(:fullscreen, .fake-fs) {
+  background: var(--mat);
+  border-color: color-mix(in srgb, var(--bezel) 22%, var(--mat));
+  box-shadow: inset 0 1px 0 rgb(255 250 240 / 0.5);
+}
+/* The screen: a warm umber, lit a little in the middle, a dark frame line and a soft shadow under it. The inner
+   vignette sits under the video (an inset shadow paints below children), so it only shows on the empty screen and in the
+   letterbox, never over a film. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap {
+  background: radial-gradient(ellipse 70% 75% at 50% 42%, var(--screen-lit), var(--screen) 80%);
+  border: 2px solid var(--bezel);
+  /* Two soft rings bridge the mat and the frame, then a low shadow; inside, a gentle vignette. */
+  box-shadow:
+    0 0 0 4px rgb(74 61 48 / 0.16),
+    0 0 0 9px rgb(74 61 48 / 0.07),
+    0 14px 30px -14px rgb(58 40 22 / 0.55),
+    inset 0 0 60px rgb(10 6 2 / 0.4);
+}
+/* #player paints its own #000 over the frame (room.css .player): let the screen tone through. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap > .player {
+  background: transparent;
+}
+/* A film playing: the letterbox is the screen tone (near-black, warm), the picture's own blacks stay black. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap.filming,
+:root[data-theme='matinee']:not(.shell-film) .player-wrap:has(video, iframe) {
+  background: var(--screen);
+}
+/* Fullscreen keeps true black: nothing light around it there. */
+:root[data-theme='matinee']:not(.shell-film) .theater:is(:fullscreen, .fake-fs) .player-wrap {
+  background: #000;
+  border: 0;
+  box-shadow: none;
+}
+/* The empty room's words on the screen: a dark palette of their own (was card NP1's block, now on the umber). */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap > .empty {
+  --text: #f1e8d8;
+  --muted: #cbbfa9;
+  --surface: #2e271f;
+  --surface-2: #3a3128;
+  --border: #54483a;
   --field-border: #8f8170;
   color: var(--text);
+}
+/* A phone (first-look review): the video runs edge to edge, so no mat, side frame or drop shadow (that read as a grey
+   smudge under it); one dark frame line closes the screen against the paper. Cinema mode keeps its own dark page. */
+:root[data-theme='matinee'].phone:not(.shell-film) .player-wrap {
+  border-width: 0 0 2px;
+}
+:root[data-theme='matinee']:is(.phone, .cinema-on):not(.shell-film) .player-wrap {
+  box-shadow: inset 0 0 60px rgb(10 6 2 / 0.4);
+}
+/* "Run a sync test" alone in the room is dimmed (.alone, 50 %); on the lit umber that fell under AA (4.2): a lighter dim. */
+:root[data-theme='matinee']:not(.shell-film) .player-wrap > .empty .alone {
+  opacity: 0.7;
 }
 
 /* ==== Card SIMP1: a calmer room screen ==== */

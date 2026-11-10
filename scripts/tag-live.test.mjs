@@ -1,7 +1,7 @@
 // node --test scripts/tag-live.test.mjs — which versions the `tag` job tags (card TAG1, scripts/tag-live.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { planTags, ownerSteps, versionAtLeast } from './tag-live.mjs';
+import { planTags, ownerSteps, versionAtLeast, wentLive } from './tag-live.mjs';
 
 const commits = [
   { sha: 'z1', version: '0.9.97.69' }, // before tags began: never tagged
@@ -62,4 +62,13 @@ test('versions compare part by part', () => {
   assert.ok(versionAtLeast('0.9.98', '0.9.97.70'));
   assert.ok(!versionAtLeast('0.9.97.69', '0.9.97.70'));
   assert.ok(!versionAtLeast('0.9.96.25', '0.9.97.70'));
+});
+
+test('a run went live when its deploy and every live e2e shard passed (QA1 part 1b); older runs had no shards', () => {
+  const job = (name, conclusion) => ({ name, conclusion });
+  assert.equal(wentLive([job('deploy', 'success')]), true, 'before the split the e2e lived inside deploy');
+  assert.equal(wentLive([job('deploy', 'success'), job('live-e2e (1)', 'success'), job('live-e2e (2)', 'success')]), true);
+  assert.equal(wentLive([job('deploy', 'success'), job('live-e2e (1)', 'success'), job('live-e2e (2)', 'failure')]), false);
+  assert.equal(wentLive([job('deploy', 'failure'), job('live-e2e (1)', 'skipped')]), false);
+  assert.equal(wentLive([job('deploy', 'success'), job('live-e2e (1)', 'cancelled')]), false);
 });

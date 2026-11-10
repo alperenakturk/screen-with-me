@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.116 — 10 Nov
+- The Matinee theme is calmer: warmer, softer paper instead of near-white cards, and the video sits in a framed screen
+  (a darker mat, a thin dark frame, a warm deep-brown screen) instead of a black slab on light paper. Fullscreen stays
+  black.
+- Opening a game right after you enter a room no longer swallows your first click on the game's buttons.
+
 ### 0.9.97.115 — 10 Nov
 - Snack Bar, Window Garden and Five Frames fit the narrow column beside the video on a laptop (down to about 320 px
   wide), so on a 1366 × 768 or 1440 × 900 screen their window sits next to the film instead of over the video's edge.
