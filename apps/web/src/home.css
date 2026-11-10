@@ -7,15 +7,23 @@ html.in-home main {
   padding: 0;
 }
 
-.hm-first {
-  --hm-gold: #ffc65a;
-  /* THEME1: the home's colours in one place. Today the accent is the brand gold in every theme; the owner's Q2 "the
-     home follows the theme" is these three lines set to var(--accent), var(--accent-btn, var(--accent)) and
-     var(--on-accent). Soft text comes from the theme's own text and muted colours. */
-  --hm-accent: var(--hm-gold);
+/* Card NP1 (owner's 3A "the home follows the theme"): the home's accent, its main button and the ink on it come from
+   the theme, as in the room. Night, the brand theme, keeps the brand gold (the logo's colour). Soft text comes from the
+   theme's own text and muted colours. */
+html.in-home {
+  --hm-accent: var(--accent);
+  --hm-accent-fill: var(--accent-btn, var(--accent));
+  --hm-accent-ink: var(--on-accent);
+  --hm-soft: color-mix(in srgb, var(--text) 74%, var(--muted));
+}
+
+html.in-home:is(:not([data-theme]), [data-theme='gece']) {
+  --hm-accent: #ffc65a;
   --hm-accent-fill: linear-gradient(180deg, #ffd27a, #ffb347);
   --hm-accent-ink: #1a1036;
-  --hm-soft: color-mix(in srgb, var(--text) 74%, var(--muted));
+}
+
+.hm-first {
   min-height: calc(100dvh - var(--hm-top, 64px));
   display: flex;
   flex-direction: column;
@@ -69,8 +77,8 @@ html.in-home main {
   font-weight: 600;
   padding: 5px 12px;
   border-radius: 999px;
-  background: rgb(255 198 90 / 0.09);
-  border: 1px solid rgb(255 198 90 / 0.27);
+  background: color-mix(in srgb, var(--hm-accent) 9%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--hm-accent) 27%, transparent);
   color: var(--hm-accent);
 }
 
@@ -119,7 +127,7 @@ html.in-home main {
   border: 0;
   background: var(--hm-accent-fill);
   color: var(--hm-accent-ink);
-  box-shadow: 0 8px 24px rgb(255 179 71 / 0.2);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--hm-accent) 20%, transparent);
 }
 
 .hm-btn.primary:hover {
@@ -127,14 +135,14 @@ html.in-home main {
 }
 
 .hm-btn.secondary {
-  border: 1px solid rgb(255 255 255 / 0.18);
-  background: rgb(255 255 255 / 0.04);
+  border: 1px solid color-mix(in srgb, var(--text) 18%, transparent);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
   color: var(--text);
 }
 
 .hm-btn.secondary:hover,
 .hm-btn.secondary[aria-expanded='true'] {
-  background: rgb(255 255 255 / 0.09);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
 }
 
 .hm-btn:focus-visible {
@@ -180,10 +188,10 @@ html.in-home main {
   gap: 12px;
   width: min(100%, 460px);
   padding: 10px 14px;
-  border: 1px solid rgb(255 255 255 / 0.14);
+  border: 1px solid color-mix(in srgb, var(--text) 14%, transparent);
   border-radius: 14px;
   /* THEME1: an opaque card, so the scene behind never shows through its text. */
-  background: linear-gradient(rgb(255 255 255 / 0.04), rgb(255 255 255 / 0.04)), color-mix(in srgb, var(--bg) 90%, transparent);
+  background: linear-gradient(color-mix(in srgb, var(--text) 4%, transparent), color-mix(in srgb, var(--text) 4%, transparent)), color-mix(in srgb, var(--bg) 90%, transparent);
   color: var(--text);
   font: inherit;
   text-align: start;
@@ -192,7 +200,7 @@ html.in-home main {
 }
 
 .hm-door:hover {
-  background: rgb(255 255 255 / 0.09);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
 }
 
 .hm-door:focus-visible {
@@ -287,9 +295,9 @@ html.in-home main {
   align-items: center;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgb(255 255 255 / 0.09);
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
   /* Opaque enough over a scene theme's picture (the white-3 % of the reference sits on its own art there). */
-  background: linear-gradient(rgb(255 255 255 / 0.03), rgb(255 255 255 / 0.03)), color-mix(in srgb, var(--bg) 88%, transparent);
+  background: linear-gradient(color-mix(in srgb, var(--text) 3%, transparent), color-mix(in srgb, var(--text) 3%, transparent)), color-mix(in srgb, var(--bg) 88%, transparent);
   font-size: 14px;
   color: var(--hm-soft);
 }
@@ -356,7 +364,7 @@ html.in-home main {
   align-items: flex-start;
   padding: 18px;
   border-radius: 16px;
-  border: 1px solid rgb(255 255 255 / 0.09);
+  border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
   background: linear-gradient(var(--surface), var(--surface)), var(--bg);
 }
 
@@ -367,8 +375,8 @@ html.in-home main {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgb(255 198 90 / 0.14);
-  color: #ffc65a;
+  background: color-mix(in srgb, var(--hm-accent) 14%, transparent);
+  color: var(--hm-accent);
   font-size: 17px;
 }
 
@@ -408,7 +416,7 @@ html.in-home main {
 }
 
 .hm-help a {
-  color: var(--accent-hover);
+  color: var(--hm-accent);
   font-weight: 600;
 }
 
@@ -556,6 +564,23 @@ html.phone .hm-main {
   align-items: stretch;
   gap: 16px;
   padding: 8px 20px;
+}
+
+/* The art's chat bubble and its line of faces take the theme's colours too (card NP1). */
+.hm-bubble rect {
+  fill: var(--accent-btn, var(--accent));
+}
+
+.hm-bubble text {
+  fill: var(--on-accent);
+}
+
+.hm-faces text {
+  fill: var(--hm-soft);
+}
+
+.hm-scene .hm-prog {
+  fill: var(--hm-accent);
 }
 
 /* 15c: at a phone's 300 px the art's words would be ~6 px: the picture stays, its texts go. */

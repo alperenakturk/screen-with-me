@@ -2,7 +2,7 @@
 import { createLogo } from '@swm/shared/logo';
 import { ROOM_ID_PATTERN } from '@swm/shared/protocol';
 import { lang, setLang, translate, warmLang, type Lang } from './i18n.ts';
-import { applyTheme, currentTheme, openThemeDialog, warmThemePreviews } from './themes.ts';
+import { applyTheme, currentTheme, openThemeDialog, registerThemeLab, warmThemePreviews } from './themes.ts';
 import { applyFont, currentFont, registerFontLab } from './fonts.ts';
 import { readTvLabSwitch, tvLab } from './tv-lab.ts';
 import { checkExtensionVersion } from './ext-update.ts';
@@ -17,6 +17,7 @@ replaceRemovedAvatars();
 applyTheme(currentTheme(), { wait: false });
 applyFont(currentFont(), { remember: false });
 registerFontLab();
+registerThemeLab();
 
 // Geri tuşuyla dönülünce tarayıcı sayfayı önbellekten "donmuş" haliyle getirebilir (bağlantı
 // kapalı, "Sayfaya gidiliyor…" yazısı takılı kalır). Öyleyse sayfayı tazele.
