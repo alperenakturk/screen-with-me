@@ -76,9 +76,10 @@ Rules for all:
   only page. Every preference or design question is asked **in the Planner's chat** with clickable choices (the
   recommended one first, a short preview of each). Other sessions send the Planner the question as text: question,
   2–4 options (one marked recommended), a short preview each. They never publish Artifacts for the owner.
-- **Sessions and messages (owner, 9 Nov 2026):** at most **two building sessions** run at once, and only while there
-  is work for both: one Developer for the site, server, players and extension (lane A; lane B work goes there too) and
-  Game Studio for the games. No work = one or none. The Planner tells the owner something **only when he is needed**
+- **Sessions and messages (owner, 9–10 Nov 2026):** building sessions run only while there is work for them: one
+  Developer for the site, server, players and extension (lane A) and Game Studio for the games; the Planner may wake
+  more (e.g. B2) when the queue is big, splitting work by files so no two sessions touch the same lines (owner, 10 Nov:
+  "more than two is fine"). No work = one or none. The Planner tells the owner something **only when he is needed**
   (a decision, a test, a secret) and otherwise sends **one short summary when a group of work is finished**, never a
   message per release. The owner will name product changes himself; until then nothing in the product is reworked for
   "tidiness" unless it is clearly broken.

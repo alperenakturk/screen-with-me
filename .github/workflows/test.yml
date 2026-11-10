@@ -197,10 +197,14 @@ jobs:
           node scripts/harness/lab-games/run.cjs http://localhost:8787
           LAB_LANG=tr node scripts/harness/lab-games/run.cjs http://localhost:8787
 
-      # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and the IP notice
-      # (a privacy gate) fails closed when its chunk can't load: no voice, stream or watching goes out.
+      # Card SZ: the room's lazy chunks are not downloaded with the room but warmed once it settles, and voice, streams
+      # and watching fail closed when their chunks can't load (card SIMP1: no IP notice before them any more).
       - name: Lazy chunks and their gates
         run: node scripts/harness/lazy-gates/run.cjs http://localhost:8787
+
+      # Card SIMP1: Settings in categories (phone, tablet, laptop, desktop; EN + TR), the calmer room and join screens.
+      - name: Settings categories and a calmer room
+        run: node scripts/harness/settings/run.cjs http://localhost:8787
 
       # Card PERF1a: only the page's language is downloaded (Turkish is its own chunk, in before the first frame).
       - name: One language per page

@@ -3,7 +3,6 @@ import type { LiveP2p, LiveQuality } from '@swm/shared/live-p2p';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
-import type { IpNoticeKind } from './ip-notice.ts';
 import type { Composed } from './live-compose.ts';
 import { setIcon } from './icons.ts';
 import { openCam } from './voice-devices.ts';
@@ -11,13 +10,6 @@ import { debugHooks, labPeer, labText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
 
 type Engine = typeof import('./live-engine.ts');
-/** The IP notice is a privacy gate: if its chunk can't load the answer is "no" (fail closed) and the person is told. */
-async function ipNotice(kind: IpNoticeKind, anchor: HTMLElement): Promise<boolean> {
-  const m = await loadChunk(() => import('./ip-notice.ts'));
-  if (m) return m.confirmIpNotice(kind, []);
-  flashHint(anchor, t('live.startFailed'), 6000);
-  return false;
-}
 /** Can the browser draw my camera into the screen's corner (`live-compose.ts`; checked here so the card needs no chunk)? */
 const scope = globalThis as { MediaStreamTrackProcessor?: unknown; MediaStreamTrackGenerator?: unknown };
 const composeSupported = typeof scope.MediaStreamTrackProcessor === 'function' && typeof scope.MediaStreamTrackGenerator === 'function' && typeof OffscreenCanvas === 'function';
@@ -253,8 +245,6 @@ export function createLive(
       flashHint(button, t('live.hostOnly'), 6000);
       return;
     }
-    // Streams are always peer-to-peer: viewers and the streamer see each other's IP (security review 1).
-    if (!(await ipNotice('stream', button))) return;
     button.disabled = true;
     try {
       await (await ensure()).start(kind, quality());
@@ -301,10 +291,11 @@ export function createLive(
       flashHint(watchButton, t('live.fullHint', { n: viewers, max: LIVE_MAX_VIEWERS }), 7000);
       return;
     }
-    void ipNotice('watch', watchButton)
-      .then(async (yes) => {
-        if (!yes) return;
-        (await ensure()).watch();
+    // Nothing starts before this press (card SIMP1 removed the IP notice; the privacy policy's "Voice" section says
+    // who sees what).
+    void ensure()
+      .then((p2p) => {
+        p2p.watch();
         render();
       })
       .catch(() => flashHint(watchButton, t('live.startFailed'), 6000));

@@ -70,6 +70,62 @@ Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CL
 
 ## Ready
 
+### SIMP1. A calmer room screen: fewer things on it, a tidy Settings (owner, 10 Nov 2026; lane A, after LAB2)
+- Why: owner: "let's simplify the general design and take out things that aren't necessary, so they don't tire the
+  user's eyes." His examples, all moved, nothing a user needs is lost:
+  1. The room name and the people count at the top left go off the room screen (the name lives in Settings → Room, the
+     count in the people list / the faces strip that already shows who is here).
+  2. The footer line (privacy, terms, version …) leaves the room screen; it goes to Settings → About (privacy policy and
+     terms one click away in both languages, the version number there; the extension page / store copy that reads the
+     footer version is updated). The home page keeps a small privacy / terms link (KVKK / GDPR: the notice must stay easy
+     to reach before you use the site).
+  3. "Move to another device" leaves the profile popover and goes into Settings (few people use it).
+  4. Settings get categories (e.g. Me · My screen · Room · Sound & camera · About), each a short list, no scrolling where
+     it can be avoided (CLAUDE.md "No scrolling inside a view"), the same order on a computer and a phone.
+  5. (owner, same day) **The voice / stream IP notice goes**: no dialog before joining voice, starting or watching a stream,
+     and no "🔒 Those in voice can see your IP · Why?" line under the voice row ("nobody uses it; put it officially where it
+     has to be, no warnings"). The fact stays where the law needs it: `privacy.html` #voice already says it in both
+     languages (check the wording still matches: others in voice / a stream can see your public IP); Settings → Sound &
+     camera gets a quiet "Who sees what (privacy)" link to that section. `ui/ip-notice.ts` and its `opt:ipNotice:*` keys
+     go (old keys are harmless); the Planner updates CLAUDE.md's "fails closed (the IP notice)" line after it ships.
+  6. (owner, same day) The room's **join screen** (name / avatar before entering) loses its privacy / terms footer
+     line too; the links live in a small ⓘ / ⚙️ on that screen (an invited person never sees the home page, so the notice
+     must stay one tap away there) and in Settings → About.
+- Done when: the room screen shows only what you need while watching; every moved item is reachable in ≤ 2 clicks from
+  Settings; nothing is removed from the product; EN + TR texts; `store/src/room.html` copy updated; the screenshot /
+  layout harnesses at phone, tablet, laptop and desktop sizes are updated; the Test Lab steps that named the old places
+  are updated; a hand test on the board.
+- Tests: layout + settings harnesses, help / privacy harness (links still reachable in both languages), unit tests where
+  logic moves.
+- Owner's pick: done (his request). Anything else the developer wants to remove goes to the Planner as a question first.
+
+
+### LAB2. The Test Lab ready for the owner's test round (owner, 10 Nov 2026; lane A 0.9.97.107, Game Studio 0.9.97.108)
+- Why: the owner starts his 0.9.98 test round now (his pick) and will run it **through the Test Lab**: "make the debug
+  part really solid, fix what is broken there; nothing may fail in the part we test with". Afterwards the Planner gives
+  him a very basic step-by-step guide, easy to hard ("open this, unlock the lab, press this, tell me what you see").
+- Done when:
+  - **Lane A (the lab itself, 0.9.97.107):** every lab command in every tab (📊 👥 🎬 🧪 🖥 📜, command box, 🐞 This is a
+    bug) is run once on a computer and on a phone (bottom sheet), in EN and TR, on a live-like host (`lab-lock`'s
+    `lab.test`): no red line except `lab.selfTest`, every help line says what really happens, every Undo works. Every
+    bug found is fixed. Unlocking with `?debug=<code>` works on a phone and on a computer and survives a reload.
+    **🧪 Test round:** one scenario per test on the owner's board (STATUS "Owner's hand tests" N1–N4, S1–S4, F1–F2 and
+    the 0.9.98 round items) that sets the stage where the lab can (e.g. cycle the themes, add a fake friend who plays /
+    pauses / writes, drop my connection), with a one-line TR + EN help that says what to look at. Tests that need a
+    real second person or device say so in their help line.
+  - **Game Studio (the 🎮 tab, 0.9.97.108):** every games command (Duel match / hard mode, Sea zoom, Snack Bar coins /
+    season / report, bot games, motion, Stub states …) runs without error in EN and TR on a computer and a phone; every
+    game test on the board (G1–G16) can be set up from the 🎮 tab (add what is missing, e.g. a fake friend at a table,
+    jump to the result card, skip to the Snack Bar's next milestone). Every bug found is fixed. Game Studio adds
+    hooks in games code only; the lab chunk is lane A's.
+  - **Both:** a list for the Planner, one line per board test: the lab steps with the exact Turkish button / command
+    names and what the owner should see (written to STATUS "Test round with the Lab", English with the TR labels
+    quoted). The Planner turns it into the owner's Turkish guide.
+- Tests: `test-lab` + `lab-friends` + `lab-lock` harnesses (extend them for every fixed bug and every new scenario),
+  `LAB_LANG=tr`, the games harnesses; live e2e green.
+- Owner's pick: none needed.
+
+
 ## Owner's night picks (10 Nov 2026): cards
 The owner answered the overnight question page: mascot **C Stub**, themes **B**, home colours **A**, default font
 **A**, game window on a computer **A1**, camera window **C2**, Sea Battle phone zoom **B**, Snack Bar extras **1–4**,
