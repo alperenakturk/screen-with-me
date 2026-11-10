@@ -1,0 +1,17 @@
+/* The games hall's own styles (games/gallery.ts, a lazy chunk), moved out of room.css (its budget is full). */
+.hub-badge {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--warn);
+  color: #2a1d00;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  vertical-align: 2px;
+}
+.hub-badge.updated { background: #6fd3ff; color: #00233a; }
+.hub-badge.soon { background: var(--surface-2); color: var(--muted); }
+/* On a cover card the badge has its own line under the title: next to a long title ("Five Frames Duel UPDATED") it
+   wrapped under the title's own text, and a bright badge inside the title's line hurts its contrast. */
+.hub-card .hub-game-text .hub-badge { display: table; margin: 2px 0 0; }

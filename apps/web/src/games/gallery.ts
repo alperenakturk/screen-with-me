@@ -15,6 +15,7 @@ import duel from './art/covers/duel.svg?raw';
 import poker from './art/covers/poker.svg?raw';
 import sea from './art/covers/sea.svg?raw';
 import classics from './art/covers/classics.svg?raw';
+import './gallery.css';
 import { GAME_CATALOG, type SoloKind } from '@swm/shared/games/catalog';
 import { formatCoins } from '@swm/shared/games/snack-bar';
 import { PLANT_IDS } from '@swm/shared/games/garden';
