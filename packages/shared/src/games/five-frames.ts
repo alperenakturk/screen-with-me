@@ -250,4 +250,16 @@ export function loadFrames(raw: unknown): FramesSave {
   return save;
 }
 
+/**
+ * Unpacks a word list module (`./words/<lang>.ts`): every allowed guess, and the answers (base-36 positions in the
+ * guesses). Used by the page and by the Five Frames Duel table's server.
+ */
+export function decodeWords(packed: string, answerIndex: string): { allowed: Set<string>; answers: string[] } {
+  const chars = Array.from(packed);
+  const words: string[] = [];
+  for (let i = 0; i + WORD_LENGTH <= chars.length; i += WORD_LENGTH) words.push(chars.slice(i, i + WORD_LENGTH).join(''));
+  const answers = answerIndex.split(',').map((n) => words[parseInt(n, 36)]!).filter(Boolean);
+  return { allowed: new Set(words), answers };
+}
+
 export const saveFrames = (save: FramesSave): string => JSON.stringify(save);

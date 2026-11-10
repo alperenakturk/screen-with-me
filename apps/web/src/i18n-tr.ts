@@ -143,6 +143,8 @@ export const tr: Record<I18nKey, string> = {
   'games.poker.title': 'Son Kalp',
   'games.sea.title': 'Amiral Battı',
   'games.sea.text': 'Filonu gizle, sırayla atış yap, onunkini önce batır. 2 kişi ya da Glowbeam’e karşı.',
+  'games.duel.title': 'Beş Kare Düellosu',
+  'games.duel.text': 'Aynı beş harfli kelimeyi bir arkadaşından önce bul: onun işaretlerini görürsün, harflerini asla. 2 kişi.',
   'games.poker.text': 'Kalpli poker: para yerine can koyulur, herkes %100 canla başlar, son kalan kazanır. Özel hamleler, jokerli ya da jokersiz. 2–6 kişi.',
   'quiz.jokerBy': '½ {name} 50:50 jokerini kullandı',
   'poker.howto': 'Nasıl oynanır?',

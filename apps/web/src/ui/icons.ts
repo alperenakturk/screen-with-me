@@ -25,6 +25,7 @@ export type IconName =
   | 'game-quiz'
   | 'game-poker'
   | 'game-sea'
+  | 'game-duel'
   | 'place-float'
   | 'place-stage'
   | 'place-below'
@@ -146,6 +147,16 @@ const ICONS: Record<IconName, Shape[]> = {
     ['path', { d: 'M5 13h14l-2.5 4h-9z' }],
     ['path', { d: 'M12 5v8M12 6l4 5h-4' }],
     ['path', { d: 'M3 20c1.5 0 1.5-1 3-1s1.5 1 3 1 1.5-1 3-1 1.5 1 3 1 1.5-1 3-1 1.5 1 3 1' }],
+  ],
+  // Five Frames Duel: two rows of letter frames facing each other.
+  'game-duel': [
+    ['rect', { x: 3, y: 4, width: 5, height: 5, rx: 1 }],
+    ['rect', { x: 9.5, y: 4, width: 5, height: 5, rx: 1 }],
+    ['rect', { x: 16, y: 4, width: 5, height: 5, rx: 1 }],
+    ['rect', { x: 3, y: 15, width: 5, height: 5, rx: 1 }],
+    ['rect', { x: 9.5, y: 15, width: 5, height: 5, rx: 1 }],
+    ['rect', { x: 16, y: 15, width: 5, height: 5, rx: 1 }],
+    ['path', { d: 'M8 12h8M14 10l2 2-2 2' }],
   ],
 };
 

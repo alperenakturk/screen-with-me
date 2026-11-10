@@ -21,6 +21,11 @@ games' tip jar, cuttings and badges.
   Readable, Rounded or Easy reading. Only the font you pick is downloaded, and every Turkish letter is in each.
 - The home page's big title now really uses the logo's typeface (it fell back to the device's font before).
 
+### 0.9.97.99 — 10 Nov
+- Games: new table, ⚔️ Five Frames Duel. Race a friend to the same five-letter word, in English or Turkish: you see
+  their marks as they guess, never their letters, and the first to find the word wins. The first game is the word of
+  the day, "Play again" brings a practice word. If neither finds it in seven tries, it is a draw.
+
 ### 0.9.97.98 — 10 Nov
 - Easier to read in every theme: on the picture themes the home page's text now sits on a calm, darker area, so the
   picture behind it never hides a word (the Ocean Liner theme's light sky was the worst).

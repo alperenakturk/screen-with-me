@@ -263,7 +263,7 @@ jobs:
           # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
-          OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
+          OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,duel,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
           # Card SB3: Snack Bar's economy (migration, buy modes, upgrades, staff, eight stands, new places).
           node scripts/harness/snack-bar-3/run.cjs http://localhost:8787
 
