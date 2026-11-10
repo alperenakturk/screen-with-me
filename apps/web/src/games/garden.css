@@ -156,8 +156,8 @@ html.phone .wg-scene { min-height: 260px; }
 @media (prefers-reduced-motion: reduce) { .wg-bulbs circle, .wg-lantern-glow, .wg-moth, .wg-firefly { animation: none; } }
 /* GPRO (layout audit): a sideways phone gets two columns, the window sill on the left, the pot's line, the album and
    the note on the right, so nothing is pushed into a tiny scale. */
-html.sideways .wg { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; column-gap: 10px; }
-html.sideways .wg-bar { grid-column: 1 / -1; }
-html.sideways .wg-scene { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
-html.sideways .wg-action, html.sideways .wg-album, html.sideways .wg-note, html.sideways .wg-elsewhere { grid-column: 2; }
-html.sideways .wg-album { align-self: start; }
+html.phone.sideways .wg { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; column-gap: 10px; }
+html.phone.sideways .wg-bar { grid-column: 1 / -1; }
+html.phone.sideways .wg-scene { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
+html.phone.sideways .wg-action, html.phone.sideways .wg-album, html.phone.sideways .wg-note, html.phone.sideways .wg-elsewhere { grid-column: 2; }
+html.phone.sideways .wg-album { align-self: start; }

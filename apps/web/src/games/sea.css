@@ -141,15 +141,15 @@
 
 /* GPRO (layout audit): a sideways phone shows one sea at a time at the full height on the left (the switch picks
    which), the bar, the switch, Glowbeam's line and the buttons in a column on its right. */
-html.sideways #game-stage .sea {
+html.phone.sideways #game-stage .sea {
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas: 'seas bar' 'seas switch' 'seas ref' 'seas actions'; gap: 6px 12px; padding: 6px 10px;
 }
-html.sideways #game-stage .sea-bar { grid-area: bar; }
-html.sideways #game-stage .sea-switch { grid-area: switch; }
-html.sideways #game-stage .sea-ref { grid-area: ref; align-self: center; flex-wrap: wrap; }
-html.sideways #game-stage .sea-actions { grid-area: actions; }
-html.sideways #game-stage .sea-seas { grid-area: seas; height: 100%; aspect-ratio: 0.92; grid-template-columns: minmax(0, 1fr); }
-html.sideways #game-stage .sea:not([data-phase='place']) .sea-switch, html.sideways #game-stage .sea.watching .sea-switch { display: flex; }
-html.sideways #game-stage .sea[data-view='mine'] .sea-theirs, html.sideways #game-stage .sea[data-view='theirs'] .sea-mine { display: none; }
-html.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-mine { display: flex; }
+html.phone.sideways #game-stage .sea-bar { grid-area: bar; }
+html.phone.sideways #game-stage .sea-switch { grid-area: switch; }
+html.phone.sideways #game-stage .sea-ref { grid-area: ref; align-self: center; flex-wrap: wrap; }
+html.phone.sideways #game-stage .sea-actions { grid-area: actions; }
+html.phone.sideways #game-stage .sea-seas { grid-area: seas; height: 100%; aspect-ratio: 0.92; grid-template-columns: minmax(0, 1fr); }
+html.phone.sideways #game-stage .sea:not([data-phase='place']) .sea-switch, html.phone.sideways #game-stage .sea.watching .sea-switch { display: flex; }
+html.phone.sideways #game-stage .sea[data-view='mine'] .sea-theirs, html.phone.sideways #game-stage .sea[data-view='theirs'] .sea-mine { display: none; }
+html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-mine { display: flex; }
