@@ -70,12 +70,13 @@ ${arms(armsOpt)}${legs ? LEGS : ''}${over}`;
 }
 const svg64 = (body) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">${body}</svg>\n`;
 
-// The ≤ 32 px cut: the ticket fills the box, thick outline, big eyes without glints, the perforation kept.
-const small = (p) => `<defs>${GRAD(p)}</defs>
-<path d="M6 12 H58 Q60 12 60 14 V26 A6 6 0 0 0 60 38 V50 Q60 52 58 52 H6 Q4 52 4 50 V38 A6 6 0 0 0 4 26 V14 Q4 12 6 12Z" fill="url(#${p}-gold)" stroke="${C.line}" stroke-width="2.6"/>
-<path d="M46 15.5 V48.5" stroke="${C.line}" stroke-width="2.6" stroke-dasharray="3.4 3"/>
-${eye(18.5, 31, 3.9, 5.4, false)}${eye(33.5, 31, 3.9, 5.4, false)}`;
-
+// The ≤ 32 px cut (ART-S: redrawn after the Sea lobby showed it muddy brown at 22 px): a flat, bright gold card (the
+// gradient's amber end and a thick dark outline turned brown when small), a thin outline, the perforation as three cream
+// dots, big ink eyes without glints. Reads on dark panels and on Matinee's paper.
+const small = (p) => `<defs><linearGradient id="${p}-sm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe09a"/><stop offset="1" stop-color="#ffc24f"/></linearGradient></defs>
+<path d="M7 12 H57 Q60 12 60 15 V26 A6 6 0 0 0 60 38 V49 Q60 52 57 52 H7 Q4 52 4 49 V38 A6 6 0 0 0 4 26 V15 Q4 12 7 12Z" fill="url(#${p}-sm)" stroke="#8a4a14" stroke-width="2"/>
+<circle cx="46" cy="20" r="2.4" fill="#fff6e0"/><circle cx="46" cy="32" r="2.4" fill="#fff6e0"/><circle cx="46" cy="44" r="2.4" fill="#fff6e0"/>
+${eye(18.5, 31, 4.4, 6, false)}${eye(33.5, 31, 4.4, 6, false)}`;
 // Referee: a striped cap and a whistle on a cord.
 const refCap = `<g transform="translate(${FX} 16)"><path d="M-9.4 0 Q-9 -6.2 0 -6.6 Q9 -6.2 9.4 0Z" fill="#f4f4f6"/>${[-5.6, -1.6, 2.4, 6.2].map((x) => `<path d="M${x - 1} -6.2 L${x - 1.2} 0 H${x + 0.8} L${x + 1} -6.4Z" fill="#1b1b22"/>`).join('')}<path d="M-9.4 0 Q-9 -6.2 0 -6.6 Q9 -6.2 9.4 0" fill="none" stroke="#1b1b22" stroke-width=".8"/><path d="M-2 0 H16 Q16.4 2.2 12.6 2.2 H-2Z" fill="#1b1b22"/><circle cx="0" cy="-6.6" r="1.1" fill="#1b1b22"/></g>`;
 const whistle = `<path d="M15 44 Q20 49 25 45" stroke="#2c6fd6" stroke-width="1" fill="none"/><g transform="translate(4 41)"><rect x="-1" y="-1.6" width="7" height="4.4" rx="2.2" fill="#c7ccd8" stroke="#5a6070" stroke-width=".7"/><circle cx="1.4" cy=".6" r="1" fill="#5a6070"/></g>`;
