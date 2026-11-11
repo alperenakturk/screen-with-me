@@ -1,0 +1,50 @@
+--- a/scripts/theme-art.mjs
++++ b/scripts/theme-art.mjs
+@@ -504,9 +504,11 @@
+     s += `<path d="M0 150 H230 V170 H210 V190 H0Z" fill="#1c2238"/><path d="M0 150 H230" stroke="#d4a23e" stroke-opacity=".5" stroke-width="2"/>`;
+     // Yelpaze aplik
+     // ART-S: the fan sconce sits low on the wall (y 600–690), below the home hero and its "this part!" bubble.
+-    s += `<ellipse cx="130" cy="640" rx="80" ry="90" fill="url(#sconce)" opacity=".3"/>`;
+-    s += rays(130, 670, 56, 9, ['#ffd27a', '#d4a23e'], { from: 200, to: 340, fill: 0.6, opacity: 0.9 });
+-    s += `<path d="M110 670 H150 L141 688 H119Z" fill="url(#gold)"/>`;
++    // 11 Nov: a little smaller and moved in to x ~184–268, so a tablet's cropped scene never shows half a fan in the
++    // room's side gutters (they cover scene x < ~176 there).
++    s += `<ellipse cx="226" cy="640" rx="64" ry="76" fill="url(#sconce)" opacity=".3"/>`;
++    s += rays(226, 670, 42, 9, ['#ffd27a', '#d4a23e'], { from: 200, to: 340, fill: 0.6, opacity: 0.9 });
++    s += `<path d="M211 670 H241 L234 684 H218Z" fill="url(#gold)"/>`;
+     return s;
+   };
+ 
+@@ -520,21 +522,9 @@
+     dust += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(0.6 + r() * 1.3)}" fill="#fff6dc" opacity="${f(0.15 + r() * 0.4)}"/>`;
+   }
+ 
+-  // Film makarası (ART-S): on the floor at the bottom right (y 790–900), below the room's panels and right of the home's
+-  // feature cards, with a short ribbon running into the aisle. It used to hang on the right wall behind the hero art.
+-  const RX = 1532, RY = 842, RR = 54;
+-  let holes = '';
+-  for (let i = 0; i < 5; i++) {
+-    const a = rad(i * 72 - 90);
+-    holes += `<circle cx="${f(RX + Math.cos(a) * RR * 0.54)}" cy="${f(RY + Math.sin(a) * RR * 0.54)}" r="${f(RR * 0.24)}" fill="#0b0e1c"/>`;
+-  }
+-  const filmPath = `M${RX - 40} ${RY + 34} C${RX - 90} ${RY + 50} ${RX - 120} ${RY + 30} ${RX - 170} ${RY + 64}`;
+-  const reel = `
+-<path d="${filmPath}" stroke="#141826" stroke-width="22" fill="none"/>
+-<path d="${filmPath}" stroke="#d4a23e" stroke-opacity=".7" stroke-width="16" stroke-dasharray="3 6" fill="none"/>
+-<path d="${filmPath}" stroke="#1d2236" stroke-width="8" fill="none"/>
+-<circle cx="${RX}" cy="${RY}" r="${RR}" fill="#1c2238" stroke="url(#gold)" stroke-width="6"/>
+-${holes}<circle cx="${RX}" cy="${RY}" r="9" fill="url(#gold)"/>`;
++  // Film makarası: removed (11 Nov 2026). The room's panels now reach almost to the bottom of the screen, so a reel on
++  // the floor peeked out beside the side panel and the send button; with no free strip left, the scene carries the
++  // cinema in the seats, the sconces and the projector's light only.
+ 
+   // Koltuk sıraları: arkadan öne büyür; birkaç başta perdeden gelen ışık
+   const rows = [
+@@ -567,7 +557,6 @@
+ ${S.cone(-60, 78, 1600, 40, 26, '#fffbe8', 0.2, 0)}
+ ${dust}
+ ${seats}
+-${reel}
+ ${aisle}
+ ${grain(0.24)}
+ `);

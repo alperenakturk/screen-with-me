@@ -56,3 +56,19 @@ ART-L's own table (`../games/art-l/tint.mjs` and `matinee-art.css`) is corrected
 - `garden-matinee.css`: Game Studio's garden block.
 - `shots.cjs`: the reproduction, re-runnable with `PLAN=`, the theme list and an optional CSS file.
 - The before/after images listed above.
+
+## Follow-up: the reel is gone (11 Nov 2026, after 0.9.97.122)
+Lane A noticed that in Picture Palace at 1366 the reel peeked out at the bottom right, behind the side panel and the send button. Since ART-S the room's panels reach almost to the bottom of the screen, so the floor strip the reel stood in is gone.
+
+`reel-trim.patch` (for `scripts/theme-art.mjs` on main at 8e4a0363; it applies cleanly):
+- **The film reel and its ribbon are removed.** There is no free strip left anywhere in the room for a discrete object, and the cinema still reads from the seats, the sconces and the projector's light.
+- **The two fan sconces are a little smaller and move inward** (centre x 226 and its mirror at 1374, rays r 42). On a tablet the scene is cropped and the room's gutters show scene x < ~176 and > ~1424. The sconces sat there and showed as half fans at the screen edges; now they stay behind the panels.
+
+Checked:
+- room at 1366, 1920, tablet landscape and tablet portrait;
+- home at 1366, 1920 and both tablets;
+- join at 1366.
+
+`scenes/sinema.svg` is the result. Before/after: `reel-trim-room-1366.jpg`, `reel-trim-room-tablet.jpg`.
+
+Apply with `git apply docs/internal/design/art-s/reel-trim.patch && node scripts/theme-art.mjs`.
