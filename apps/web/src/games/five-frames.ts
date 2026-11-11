@@ -1,4 +1,4 @@
-// 🎟️ Five Frames (TR "Beş Kare"), the daily word game played on the side (CARDS.md "Daily word game"; look: the
+// 🎟️ Five Frames (TR "Beş Kare"), the daily word game played on the side (docs/internal/archive/cards-done.md "Daily word game"; look: the
 // owner's board A "ticket row", `docs/internal/design/side-games/README.md`; research `research/word-game.md`). The
 // rules are `@swm/shared/games/five-frames`; the word lists are their own chunks per language (`@swm/shared/games/words/en`,
 // `…/tr`, credits in /third-party-notices.txt). One guess = one ticket: a numbered stub, a tear line, five

@@ -1,4 +1,4 @@
-// 🍿 Snack Bar, the solo side game (CARDS.md "Snack Bar"; look: the owner's pick A "counter scene", art in
+// 🍿 Snack Bar, the solo side game (docs/internal/archive/cards-done.md "Snack Bar"; look: the owner's pick A "counter scene", art in
 // `./art/snack-bar/` from `docs/internal/design/side-games/snack-bar/`). The rules are `@swm/shared/games/snack-bar`;
 // this file draws them and ticks them once a second with the room's state (`room()`). A lazy chunk with its own
 // stylesheet, loaded only when the game opens. It never takes the room's keys or the focus: its buttons don't keep
