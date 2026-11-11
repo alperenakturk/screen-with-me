@@ -51,6 +51,7 @@ const TEXT = {
     matchTied: 'The match ends {wa}–{wb}: a tie.',
     nextGame: 'Next game',
     lobbyWaiting: 'Waiting…',
+    you: 'you',
     practice: 'Practice word',
     langTitle: 'Word language (both play in it)',
     waiting: 'Waiting for a second player…',
@@ -119,6 +120,7 @@ const TEXT = {
     matchTied: 'Maç {wa}–{wb} bitti: berabere.',
     nextGame: 'Sonraki oyun',
     lobbyWaiting: 'Bekleniyor…',
+    you: 'sen',
     practice: 'Alıştırma kelimesi',
     langTitle: 'Kelime dili (ikiniz de bu dilde oynarsınız)',
     waiting: 'İkinci oyuncu bekleniyor…',
@@ -501,7 +503,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         if (!p) return el('li', { class: 'duel-face duel-face-free' }, el('span', { class: 'duel-face-q', 'aria-hidden': 'true' }, '?'), el('span', {}, tx('lobbyWaiting')));
         const face = avatarNode(p.avatar, p.name);
         face.classList.add('duel-avatar');
-        return el('li', { class: `duel-face${i === mySeat() ? ' me' : ''}${p.ready ? ' ready' : ''}` }, face, el('span', {}, `${p.name}${p.ready ? ' ✓' : ''}`));
+        return el('li', { class: `duel-face${i === mySeat() ? ' me' : ''}${p.ready ? ' ready' : ''}` }, face, el('span', {}, `${p.name}${i === mySeat() ? ` (${tx('you')})` : ''}${p.ready ? ' ✓' : ''}`));
       }),
     );
   }

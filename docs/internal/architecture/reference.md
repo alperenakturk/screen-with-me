@@ -1276,6 +1276,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `art/covers/` read `var(--alc-…)`, set only in Matinee (end of gallery.css). Checks: snack-bar (sign clear,
     cinema line, sideways stands), table-how (hall title, bullets), five-frames, side-games-polish (scale 1 since
     .121).
+  - QA3 (0.9.97.125):
+    - one lobby look: Last Heart's lobby uses `lobbyPlayers` (`ui.ts`: 👑 host, "(you)", the empty chair; harnesses
+      count `.pk-lobby .lobby-player:not(.lobby-free)`); the Duel's waiting card stands on the window
+      (`.ff.duel[data-phase='wait']` has no night panel) and its faces say "(you)";
+    - a disabled lobby Start (`#game-stage :is(.pk-lobby, .draw-lobby) .btn.primary:disabled`) is muted text on
+      `--surface-2` with a dashed edge, full opacity;
+    - Matinee: `.ff` (Five Frames and the Duel) and `.sb` take the room's tokens (end of five-frames.css / snack-bar.css);
+    - Window Garden: `@container game (min-aspect-ratio: 3 / 2) and (min-width: 600px)` takes the sideways phone's two
+      columns; a sideways phone's album is `repeat(4, …)` with 44 px cells. Checks: garden ("wide, low window",
+      "sideways phone: the album stays inside the window").
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the

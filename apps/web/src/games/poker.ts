@@ -32,7 +32,7 @@ import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
-import { settingsPanel } from './ui.ts';
+import { lobbyPlayers, settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 import { tableHowTo } from './how-to-play.ts';
@@ -501,7 +501,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
         ],
         s.host === me || !host ? null : host.name,
       ),
-      el('ul', { class: 'pk-lobby-seats' }, ...s.players.map((p) => el('li', { class: p.online ? '' : 'away' }, avatarNode(p.avatar, 'pk-avatar'), el('span', {}, p.id === me ? `${p.name} (${t('games.you')})` : p.name)))),
+      // QA3 (one lobby look): the same faces row as Quiz / Draw & Guess: the host's crown, "(you)", an empty chair.
+      lobbyPlayers(s.players, me, s.host),
     );
     if (!myPlayer && s.players.length < POKER_MAX_PLAYERS) {
       const sit = el('button', { type: 'button', class: 'btn' }, t('games.sit'));

@@ -193,3 +193,32 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
 
 /* QA2 (14): on a computer or tablet the game window's head already says "Five Frames" (a phone's head does not). */
 html:not(.phone) #game-stage .ff:not(.duel) .ff-title { display: none; }
+
+/* Card (b) after QA2: Five Frames (and the Duel, which shares `.ff`) in Matinee take the room's tokens, like Window Garden;
+   the ticket marks stay told apart by line and sign. Dark themes keep the game's own night colours above. */
+:root[data-theme='matinee'] .ff {
+  --ff-night: var(--surface-2);
+  --ff-panel: var(--surface);
+  --ff-cream: var(--text);
+  --ff-gold: var(--accent);
+  --ff-ink: var(--on-accent);
+  --ff-muted: var(--muted);
+  --ff-mark: var(--accent);
+  --ff-miss-text: rgb(38 32 26 / 0.45);
+  --ff-fill: rgb(38 32 26 / 0.06);
+  --ff-line: rgb(38 32 26 / 0.2);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+:root[data-theme='matinee'] .ff :is(.ff-lang, .ff-row, .ff-key) { background: var(--ff-fill); }
+:root[data-theme='matinee'] .ff .ff-cell { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--ff-line); }
+:root[data-theme='matinee'] .ff .ff-cell.typed { background: var(--surface); box-shadow: inset 0 0 0 2px var(--muted); }
+:root[data-theme='matinee'] .ff .ff-cell.hit,
+:root[data-theme='matinee'] .ff .ff-key.hit { background: rgb(154 53 23 / 0.08); }
+:root[data-theme='matinee'] .ff .ff-cell.near { background: transparent; box-shadow: none; }
+:root[data-theme='matinee'] .ff :is(.ff-cell.miss, .ff-key.miss) { background: transparent; box-shadow: none; }
+:root[data-theme='matinee'] .ff .ff-row.current { box-shadow: inset 0 0 0 1.5px var(--muted); }
+:root[data-theme='matinee'] .ff .ff-stub { border-right-color: var(--ff-line); }
+:root[data-theme='matinee'] .ff .ff-key.enter { background: var(--accent-btn, var(--accent)); color: var(--on-accent); }
+:root[data-theme='matinee'] .ff .ff-lang.on, :root[data-theme='matinee'] .ff .ff-lang[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+:root[data-theme='matinee'] .ff .ff-board:focus-visible,
+:root[data-theme='matinee'] .ff .ff-board:focus { box-shadow: 0 0 0 1.5px var(--accent); }

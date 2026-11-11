@@ -16,6 +16,6 @@
    the note on the right. */
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .pk-lobby { width: min(100%, 820px); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: dense; align-items: center; align-content: center; column-gap: 28px; }
-  #game-stage .pk-lobby > :is(h3, .pk-rules, .pk-champion) { grid-column: 1; }
-  #game-stage .pk-lobby > :not(h3, .pk-rules, .pk-champion) { grid-column: 2; }
+  #game-stage .pk-lobby > :is(h3, .pk-rules, .pk-champion, .lobby-players) { grid-column: 1; }
+  #game-stage .pk-lobby > :not(h3, .pk-rules, .pk-champion, .lobby-players) { grid-column: 2; }
 }

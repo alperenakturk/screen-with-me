@@ -84,7 +84,7 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) {
 }
 html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > h3 { grid-area: 1 / 1; }
 html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .pk-rules { grid-area: 2 / 1; display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; font-size: 14px; line-height: 1.3; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .pk-lobby-seats { grid-area: 3 / 1; }
+html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .lobby-players { grid-area: 3 / 1; }
 /* QA2 (14): "You need at least 2 players" sits under Start, which it explains. */
 html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > p.muted { grid-area: 4 / 2; }
 html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .game-settings { grid-area: 1 / 2 / 3 / 3; width: 100%; }
@@ -113,3 +113,9 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary {
 /* QA2 (14): lobby rules and card lines never leave one word alone on the last line ("join.", "hands."). */
 #game-stage :is(.draw-rules, .quiz-rules, .pk-rules, .duel-lobby-rules) { text-wrap: pretty; }
 #game-stage :is(.pk-lobby, .draw-lobby) p.muted { text-wrap: balance; }
+
+/* QA3 (c): Start before a second player is here reads as "not yet", not as a faded purple button: full-strength muted
+   text on the card's grey with a dashed edge (the 40 % opacity of other disabled buttons fell below 4.5:1). */
+#game-stage :is(.pk-lobby, .draw-lobby) .btn.primary:disabled {
+  opacity: 1; background: var(--surface-2); color: var(--muted); border: 1px dashed var(--border); box-shadow: none;
+}

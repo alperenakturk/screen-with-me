@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.125 — 11 Nov
+- One lobby look for the tables: Last Heart's waiting card shows the faces like Quiz (the host's 👑, "(you)", an empty
+  chair), and the Duel's card no longer sits inside a second frame.
+- "Start the game" before a second player arrives reads as "not yet" instead of a faded button.
+- In Matinee, Five Frames, the Duel and Snack Bar take the theme's light colours like Window Garden.
+- Window Garden: in a wide, low window (an upright tablet's panel under the video) the window sill stands beside the
+  album instead of shrinking to a strip; on a sideways phone the album is two rows of four, inside the window.
+
 ### 0.9.97.123 — 11 Nov
 - Games read better on phones and in other languages:
   - Tic-tac-toe and Four in a Row: the "Waiting for an opponent" line wraps in full.

@@ -318,3 +318,27 @@ html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
 html.phone:not(.sideways) #game-stage .sb-foot { flex-wrap: wrap; row-gap: 4px; }
 html.phone:not(.sideways) #game-stage .sb-cinema { order: 2; flex: 1 0 100%; }
 html.phone:not(.sideways) #game-stage .sb-foot > :not(.sb-cinema):last-child { margin-left: auto; }
+
+/* Card (b) after QA2: Snack Bar's body in Matinee takes the room's tokens, like Window Garden; the counter scene keeps its
+   drawn place colours. Dark themes keep the game's own night colours above. */
+:root[data-theme='matinee'] .sb,
+:root[data-theme='matinee'] .sb[data-place] {
+  --sb-night: var(--surface-2);
+  --sb-panel: var(--surface);
+  --sb-line: var(--border);
+  --sb-cream: var(--text);
+  --sb-gold: var(--accent);
+  --sb-ink: var(--on-accent);
+  --sb-muted: var(--muted);
+  --sb-fill: rgb(38 32 26 / 0.06);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+:root[data-theme='matinee'] .sb :is(.sb-pill:not(.on, .sb-together), .sb-row, .sb-bar, .sb-modes, .sb-upgrades-open, .sb-up, .sb-decor-item, .sb-badge,
+  .sb-badge-glyph, .sb-panel-close) { background: var(--sb-fill); }
+:root[data-theme='matinee'] .sb :is(.sb-price, .sb-up-buy, .sb-decor-buy):disabled { background: var(--surface-2); color: var(--muted); }
+:root[data-theme='matinee'] .sb :is(.sb-rest, .sb-elsewhere, .sb-panel) { background: rgb(241 234 221 / 0.96); box-shadow: 0 0 0 1px var(--border); }
+:root[data-theme='matinee'] .sb .sb-row.special,
+:root[data-theme='matinee'] .sb .sb-up.sb-season,
+:root[data-theme='matinee'] .sb .sb-upgrades-open.ready { background: rgb(154 53 23 / 0.08); box-shadow: inset 0 0 0 1px var(--accent); }
+:root[data-theme='matinee'] .sb :is(.sb-prestige, .sb-badges-open) { border-color: var(--border); }
+:root[data-theme='matinee'] .sb .sb-badge.got .sb-badge-glyph { color: #26201a; }

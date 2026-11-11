@@ -167,6 +167,19 @@ html.phone.sideways .wg-bar { grid-column: 1 / -1; }
 html.phone.sideways .wg-scene { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
 html.phone.sideways .wg-action, html.phone.sideways .wg-album, html.phone.sideways .wg-note, html.phone.sideways .wg-elsewhere { grid-column: 2; }
 html.phone.sideways .wg-album { align-self: start; }
+/* QA3 (d): eight 44 px touch targets did not fit the column (the last two ran past the window's edge): two rows of four,
+   each cell 44 px high with the plant drawn centred in it. */
+html.phone.sideways #game-stage .wg-album { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+html.phone.sideways #game-stage .wg-album-cell { aspect-ratio: auto; height: 44px; min-width: 0; }
+/* QA3 (d): any wide, low window (an upright tablet's panel under the video, about 796 × 460) takes the same two columns:
+   one column squeezed the window sill into a strip with the shelf above the pots and blew the album up. */
+@container game (min-aspect-ratio: 3 / 2) and (min-width: 600px) {
+  #game-stage .wg { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; column-gap: 12px; }
+  #game-stage .wg-bar { grid-column: 1 / -1; }
+  #game-stage .wg-scene { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
+  #game-stage :is(.wg-action, .wg-album, .wg-note, .wg-elsewhere) { grid-column: 2; }
+  #game-stage .wg-album { align-self: start; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 /* The album chip's short form shows only in the narrow column. */
 .wg-album-short { display: none; }
 /* SIDE340 (0.9.97.115): the narrow column beside the video: the top bar's chips and buttons a little closer. */

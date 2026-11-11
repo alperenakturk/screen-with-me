@@ -75,10 +75,13 @@ html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
   /* QA2 (3, 7): the card never shrinks below what it holds (the title and the waiting line sat on its border). */
   flex: 0 0 auto; box-sizing: border-box; width: min(100%, 560px); margin: auto; padding: 18px 16px 20px;
   display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 8px; text-align: center;
-  border-radius: 20px; border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, transparent);
-  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 14%, transparent), transparent 70%);
+  border-radius: 20px; border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, var(--border));
+  background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 16%, var(--surface)), var(--surface) 70%);
 }
 .duel-lobby[hidden] { display: none; }
+/* QA3 (one lobby look): while the table waits the card stands on the window like Quiz's, with no night panel around it
+   (two frames, one inside the other). */
+#game-stage .ff.duel[data-phase='wait'] { background: transparent; box-shadow: none; color: var(--text); --ff-muted: var(--muted); }
 .duel-lobby h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 22px; }
 .duel-lobby h3::before {
   content: ''; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; rotate: -6deg;
@@ -86,11 +89,11 @@ html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
 }
 .duel-lobby-rules { max-width: 46ch; margin: 0; font-size: 14px; line-height: 1.4; color: var(--ff-muted); }
 .duel-lobby-faces { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 2px 0; padding: 0; list-style: none; }
-.duel-face { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: rgba(255, 255, 255, 0.07); font-size: 14px; }
+.duel-face { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--surface-2); font-size: 14px; }
 .duel-face.me { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--lobby-tint) 60%, transparent); }
 .duel-face.ready { color: var(--ff-gold); }
 .duel-face.duel-face-free { color: var(--ff-muted); }
-.duel-face-q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed rgba(255, 255, 255, 0.25); font-weight: 800; box-sizing: border-box; }
+.duel-face-q { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px dashed var(--border); font-weight: 800; box-sizing: border-box; }
 .duel-face .duel-avatar { width: 28px; height: 28px; }
 .duel-lobby-lang { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .duel-lobby-label { font-size: 13px; font-weight: 700; color: var(--ff-muted); }
