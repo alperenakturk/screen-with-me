@@ -101,6 +101,15 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   check(await alex.evaluate(() => document.querySelector('.sb-panel').hidden), 'the receipt goes away after Collect');
   const rest = await alex.evaluate(() => { const n = document.querySelector('.sb-rest'); return n && !n.hidden ? n.textContent : null; });
   check(!!rest && /Closed until the film plays/.test(rest) && /away/.test(rest), 'the scene says it is closed until the film plays', String(rest));
+  // 0.9.97.12x (QA2): the closed note sits clear of the SNACK BAR sign.
+  const signClear = await alex.evaluate((() => {
+    const sb = document.querySelector('.sb-rest'), art = document.querySelector('.sb-scene-art');
+    const sign = art && art.querySelector(`#${art.dataset.prefix ?? ''}sign`);
+    if (!sb || sb.hidden || !sign) return null;
+    const a = sb.getBoundingClientRect(), b = sign.getBoundingClientRect();
+    return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top) ? 'overlaps' : 'clear';
+  }));
+  check(signClear === 'clear', 'the "closed" note does not cover the SNACK BAR sign', String(signClear));
   const place = await alex.evaluate(() => document.getElementById('game-stage').className);
   check(/float/.test(place), 'it opens as a free window', place);
   check((await fits(alex)).length === 0, 'fits without scrollbars at its own size', (await fits(alex)).join('; '));
@@ -264,7 +273,31 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   const phoneRows = await pam.evaluate(() => [...document.querySelectorAll('.sb-row')].filter((r) => !r.hidden).length);
   // SB3: the open stands and the next locked one (a stand two steps away stays out of sight).
   check(phoneRows === 3, 'phone: a fresh game shows its two open stands and the next one', String(phoneRows));
+  const phoneSign = await pam.evaluate((() => {
+    const sb = document.querySelector('.sb-rest'), art = document.querySelector('.sb-scene-art');
+    const sign = art && art.querySelector(`#${art.dataset.prefix ?? ''}sign`);
+    if (!sb || sb.hidden || !sign) return null;
+    const a = sb.getBoundingClientRect(), b = sign.getBoundingClientRect();
+    return !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top) ? 'overlaps' : 'clear';
+  }));
+  check(phoneSign === 'clear', 'phone: the "closed" note does not cover the SNACK BAR sign', String(phoneSign));
+  const cinemaCut = await pam.evaluate(() => { const c = document.querySelector('.sb-cinema'); return c ? c.scrollWidth - c.clientWidth : -1; });
+  check(cinemaCut === 0, 'phone: the cinema line ("Cinema 1 · ★ 0") is not cut off', String(cinemaCut));
   await pam.screenshot({ path: __dirname + '/snack-phone.png' });
+
+  // QA2 (5): a sideways phone keeps the open stands in sight (the locked one gives way first, the list uses its height).
+  const land = await browser.newContext({ ...devices['iPhone 13 landscape'] });
+  const lan = await person(land, 'Lan', 'elf');
+  await lan.evaluate(async () => {
+    document.getElementById('game-btn').click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.querySelector('#game-menu [data-solo="snack"]')?.click();
+    for (let i = 0; i < 50 && !document.querySelector('#game-stage .sb'); i++) await new Promise((r) => setTimeout(r, 100));
+  });
+  await wait(800);
+  const landRows = await lan.evaluate(() => [...document.querySelectorAll('.sb-row')].filter((r) => !r.hidden).map((r) => r.querySelector('.sb-name')?.textContent));
+  check(landRows.some((n) => /Popcorn/.test(n ?? '')), 'sideways phone: the popcorn machine (open, affordable) is in the list', JSON.stringify(landRows));
+  check((await fits(lan)).length === 0, 'sideways phone: fits without scrollbars', (await fits(lan)).join('; '));
 
   await browser.close();
   console.log(failed ? `\n✗ ${failed} checks failed` : '\n✓ Snack Bar harness passed');

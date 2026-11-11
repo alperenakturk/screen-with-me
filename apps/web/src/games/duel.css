@@ -40,7 +40,7 @@
 .duel-ref { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 30px; min-width: 0; }
 .duel-glow { flex: none; width: 28px; height: 28px; display: block; transition: transform 0.3s; }
 .duel-glow svg { width: 100%; height: 100%; display: block; }
-.duel-glow.wait { opacity: 0.6; transform: rotate(-10deg); }
+.duel-glow.wait { opacity: 0.9; transform: rotate(-10deg); }
 .duel-glow.cheer { animation: duel-cheer 0.6s ease-in-out 3; }
 @keyframes duel-cheer { 50% { transform: translateY(-6px) rotate(8deg); } }
 .duel-status { margin: 0; min-width: 0; text-align: center; font-size: 15px; font-weight: 600; }
@@ -72,8 +72,9 @@ html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
 /* GPRO (one lobby look): while the table waits, the same tinted card as Quiz / Draw & Guess / Last Heart, in gold. */
 .duel-lobby {
   --lobby-tint: #ffc65a;
-  flex: 0 1 auto; min-height: 0; box-sizing: border-box; width: min(100%, 560px); margin: auto; padding: 18px 16px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+  /* QA2 (3, 7): the card never shrinks below what it holds (the title and the waiting line sat on its border). */
+  flex: 0 0 auto; box-sizing: border-box; width: min(100%, 560px); margin: auto; padding: 18px 16px 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: safe center; gap: 8px; text-align: center;
   border-radius: 20px; border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, transparent);
   background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 14%, transparent), transparent 70%);
 }
@@ -101,8 +102,8 @@ html.phone.sideways .duel-lobby-settings { flex-direction: row; flex-wrap: wrap;
 html.phone .duel-lobby .game-chip { min-height: 44px; }
 /* A sideways phone: no badge, the rules in two lines. */
 html.phone.sideways .duel-lobby h3::before { display: none; }
-html.phone.sideways .duel-lobby { padding: 6px 12px; gap: 4px; }
-html.phone.sideways .duel-lobby-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+html.phone.sideways .duel-lobby { padding: 8px 14px 10px; gap: 4px; width: min(100%, 760px); }
+html.phone.sideways .duel-lobby-rules { font-size: 14px; line-height: 1.3; }
 /* GPRO: a sideways phone during a game: my tickets at the full height on the left; the bar, their marks, Stub's
    line, the buttons and the letters on the right. */
 html.phone.sideways #game-stage .ff.duel:not([data-phase='wait']) {
@@ -137,4 +138,8 @@ html.phone.sideways #game-stage .ff.duel .ff-tray { gap: 3px; }
   #game-stage .ff.duel .duel-actions { grid-area: actions; }
   #game-stage .ff.duel .ff-tray { grid-area: tray; margin-top: 0; }
   #game-stage .ff.duel .ff-key { min-height: 46px; font-size: 18px; }
+  /* QA2 (7): the lobby in the wide, low box: the settings in one row and a smaller badge, so the card fits whole. */
+  #game-stage .duel-lobby { width: min(100%, 760px); padding: 12px 16px 14px; gap: 6px; }
+  #game-stage .duel-lobby h3::before { width: 34px; height: 34px; }
+  #game-stage .duel-lobby-settings { flex-direction: row; flex-wrap: wrap; justify-content: center; column-gap: 18px; row-gap: 4px; }
 }

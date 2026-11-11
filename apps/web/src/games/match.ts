@@ -87,16 +87,17 @@ const TEXT = {
     backgammonTitle: 'Backgammon',
     backgammonText: 'Roll, race your checkers round to your home and bear them off. A lone checker can be hit and starts again; two hold a point.',
     pickTitle: 'Pick a game',
-    pickLine: 'Two players, or one against Stub',
+    pickLine: 'Two players, or one against Stub (our bot)',
     change: 'Change game',
     changeTitle: 'Back to the games',
-    players: '2 players · or vs Stub',
+    players: '2 players · or against\u00a0Stub',
     xoxLine: 'Three in a row: quick and playful',
     fourLine: 'Drop discs, connect four',
     damaLine: 'Turkish draughts: jump and crown',
     chessLine: 'The classic, with every rule',
     backgammonLine: 'Roll the dice and race home',
     watchers: 'Watching: {n}',
+    watchShort: '👁 {n} watching',
     wins: '{n} won',
     offCount: '{n}/15 home',
     offTray: 'Checkers borne off',
@@ -170,16 +171,17 @@ const TEXT = {
     backgammonTitle: 'Tavla',
     backgammonText: 'Zar at, pullarını yol boyunca evine götür ve topla. Tek duran pul vurulur ve baştan girer; iki pul bir haneyi kapatır.',
     pickTitle: 'Bir oyun seç',
-    pickLine: 'İki kişi ya da Stub’a karşı tek kişi',
+    pickLine: 'İki kişi ya da Stub’a (bota) karşı tek kişi',
     change: 'Oyunu değiştir',
     changeTitle: 'Oyunlara dön',
-    players: '2 oyuncu · ya da Stub’a karşı',
+    players: '2 oyuncu · ya da Stub’a\u00a0karşı',
     xoxLine: 'Üçünü yan yana diz: hızlı ve eğlenceli',
     fourLine: 'Pulları bırak, dördünü birleştir',
     damaLine: 'Türk daması: atla ve dama ol',
     chessLine: 'Klasik satranç, bütün kurallarıyla',
     backgammonLine: 'Zarları at, eve ilk sen var',
     watchers: 'İzleyen: {n}',
+    watchShort: '👁 {n} izliyor',
     wins: '{n} galibiyet',
     offCount: '{n}/15 toplandı',
     offTray: 'Toplanan pullar',
@@ -787,7 +789,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
         }, 450);
       page.dispatchEvent(new Event('swm-game-size', { bubbles: true }));
     }
-    watchOpen.textContent = `👁 ${watchers.length}`;
+    // QA2 (12): the chip says what the eye counts (people watching, not playing).
+    watchOpen.textContent = tc('watchShort', { n: watchers.length });
     watchOpen.title = tc('watchers', { n: watchers.length });
     watchOpen.setAttribute('aria-label', watchOpen.title);
     const list = app.querySelector<HTMLElement>('#xox-watchers')!;
@@ -930,7 +933,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       ...Object.values(LAB_POSITIONS).flat().map((position) => ({
         id: `classics.position.${position}`,
         title: { en: `Classics: set the "${position}" position`, tr: `Klasikler: "${position}" dizilişini kur` },
-        help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel lab sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
+        help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel test sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
         tab: 'games' as const,
         where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
         // LAB2: the server sets the position (and switches to its board) only for a seated player.

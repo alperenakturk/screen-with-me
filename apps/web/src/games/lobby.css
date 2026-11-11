@@ -40,9 +40,8 @@ html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left
 html.phone.sideways #game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex-basis: 100%; width: 100%; max-width: none; }
 html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before,
 html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { display: none; }
-html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) {
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; max-width: none;
-}
+/* QA2 (2): the rules are not cut ("…streak bonus.…" lost the 50:50 sentence): they wrap in full, a step smaller. */
+html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: none; font-size: 14px; line-height: 1.3; }
 /* Draw & Guess's lobby on a sideways phone: the title, rules, faces and the note on the left, the settings and Start on
    the right (one column did not fit the low screen). */
 html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { height: 100%; aspect-ratio: auto; }
@@ -84,11 +83,12 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; align-content: center; column-gap: 16px;
 }
 html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > h3 { grid-area: 1 / 1; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .pk-rules { grid-area: 2 / 1; -webkit-line-clamp: 3; line-clamp: 3; }
+html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .pk-rules { grid-area: 2 / 1; display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; font-size: 14px; line-height: 1.3; }
 html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .pk-lobby-seats { grid-area: 3 / 1; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > p.muted { grid-area: 4 / 1; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .game-settings { grid-area: 1 / 2 / 4 / 3; width: 100%; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary { grid-area: 4 / 2; }
+/* QA2 (14): "You need at least 2 players" sits under Start, which it explains. */
+html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > p.muted { grid-area: 4 / 2; }
+html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .game-settings { grid-area: 1 / 2 / 3 / 3; width: 100%; }
+html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary { grid-area: 3 / 2; }
 
 /* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the Draw & Guess
    lobby card goes in two columns like the Quiz's: the badge, rules and faces on the left, the settings, Start and the
@@ -109,3 +109,7 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary {
   /* The canvas is shorter here: Stub's line goes to its top corner, clear of the word buttons in its middle. */
   #game-stage .draw-canvas-wrap > .rf { top: 10px; bottom: auto; align-items: flex-start; }
 }
+
+/* QA2 (14): lobby rules and card lines never leave one word alone on the last line ("join.", "hands."). */
+#game-stage :is(.draw-rules, .quiz-rules, .pk-rules, .duel-lobby-rules) { text-wrap: pretty; }
+#game-stage :is(.pk-lobby, .draw-lobby) p.muted { text-wrap: balance; }

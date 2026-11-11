@@ -81,9 +81,9 @@ const measure = (page) =>
       const page = await enter(ctx);
       await open(page, kind);
       const m = await measure(page);
-      // LAYOUT1 (the Planner's B2): a free window grows with the screen until resized, min(w / 1366, h / 768), at most
-      // the game's largest size (1.5): scale 1 on a laptop, ≈ 1.41 at 1920 × 1080.
-      const want = Math.min(1.5, Math.max(1, Math.min(w / 1366, h / 768)));
+      // Since 0.9.97.121 (W) a side game opens lined up with the chat column at its own size: scale 1 on every computer
+      // screen (it used to grow to ≈ 1.41 at 1920 × 1080).
+      const want = 1;
       check(Math.abs(m.scale - want) < 0.02, `${GAMES[kind]} at ${w}×${h}: opens at scale ${want.toFixed(2)}`, String(m.scale));
       check(m.min >= 13, `${GAMES[kind]} at ${w}×${h}: no text below 13 px`, `${m.min.toFixed(1)} px ${m.where}`);
       check(m.title === GAMES[kind] && !m.cut, `${GAMES[kind]} at ${w}×${h}: the window head shows the full title`, `${m.title} cut=${m.cut}`);

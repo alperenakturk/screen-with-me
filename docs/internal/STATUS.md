@@ -42,6 +42,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
+- [ ] 16. [QA2, 0.9.97.123] Games on phones: sideways Quiz / Last Heart rules read in full, the Duel card fits; XOX
+  shows "Stub'a (bota) karşı oyna" with Kolay / Orta and "👁 0 izliyor"; Snack Bar sideways lists the popcorn machine; in
+  Turkish Snack Bar numbers read 0,5 / 6 B; Matinee: the games hall covers are warm posters.
 - [ ] 16a. [M1–M3, Q1–Q5, 0.9.97.122] On a laptop and a big screen the room reaches the window's foot, and the
   Queue / People tabs are there before any video. A table under a YouTube video, or in the video's place, stays whole.
   On a phone held sideways: no tip over "Watch fullscreen"; on an iPhone SE the empty room fits; Invite (WhatsApp
@@ -49,39 +52,39 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   is for computers. Turkish: a nameless room gets a Turkish name; Settings → Sound shows "%70"; the Test Lab says
   "Test Panosu". Sinema / Lokum: the chosen invite tab and Settings category are lit, and the new scene art stays
   clear of the text.
-- [ ] 16. [W121, 0.9.97.121] Snack Bar on a laptop and a big screen: its window covers the chat column from the top to
+- [ ] 17. [W121, 0.9.97.121] Snack Bar on a laptop and a big screen: its window covers the chat column from the top to
   just above the message box and you can still type; drag, resize, double-click the top bar: back to the column.
-- [ ] 17. [L1–L2, 0.9.97.120] Test Lab on a phone: no floating 🐞 upright (⋯ has the Test Lab tile); sideways a small
+- [ ] 18. [L1–L2, 0.9.97.120] Test Lab on a phone: no floating 🐞 upright (⋯ has the Test Lab tile); sideways a small
   🐞 bottom right, never over the video; none in fullscreen.
-- [ ] 18. [Y1–Y7, 0.9.97.118] Plain 🎙 / 📷 before voice (red only when muted in voice); ➤ inside the chat box on a
+- [ ] 19. [Y1–Y7, 0.9.97.118] Plain 🎙 / 📷 before voice (red only when muted in voice); ➤ inside the chat box on a
   tablet; T cinema mode with its "✕ Leave cinema mode · T" button; the Matinee WhatsApp button; a readable greyed
   "Next ⏭"; Stub in the phone's empty room; the tablet's Queue / People tabs.
-- [ ] 19. [M1–M4, 0.9.97.116] Matinee: calm paper, the video in a framed screen (fullscreen black), edge to edge on a
+- [ ] 20. [M1–M4, 0.9.97.116] Matinee: calm paper, the video in a framed screen (fullscreen black), edge to edge on a
   phone, the film page unpainted; a table's "?" works on the first click right after entering.
-- [ ] 20. [Q1–Q2, 0.9.97.114; P2–P4, 0.9.97.112; W1–W5, 0.9.97.111] Game windows: a side game keeps the video playing,
+- [ ] 21. [Q1–Q2, 0.9.97.114; P2–P4, 0.9.97.112; W1–W5, 0.9.97.111] Game windows: a side game keeps the video playing,
   a table pauses it for everyone with a note; side games open as a window on the right; the hall slides out of the
   window's left; hovering the corner moves nothing; drag, resize, reopen and reload keep each game's spot; no ⛶.
-- [ ] 21. [LAB1, 0.9.97.109] `?debug=<your code>` on phone and computer: 🐞 stays after a reload; 🧪 "Test turu" rows run and undo.
-- [ ] 22. [C1–C5, 0.9.97.107] A calmer room screen; ⚙️ categories without scrolling (phone chips too); About, Move,
+- [ ] 22. [LAB1, 0.9.97.109] `?debug=<your code>` on phone and computer: 🐞 stays after a reload; 🧪 "Test turu" rows run and undo.
+- [ ] 23. [C1–C5, 0.9.97.107] A calmer room screen; ⚙️ categories without scrolling (phone chips too); About, Move,
   the mic check without the IP window; the join card's ⓘ.
-- [ ] 23. [S1–S4, 0.9.97.105; N1–N4, 0.9.97.102] Stub in each theme's costume, Neon's new look, scene themes' sky behind
+- [ ] 24. [S1–S4, 0.9.97.105; N1–N4, 0.9.97.102] Stub in each theme's costume, Neon's new look, scene themes' sky behind
   the title, Matinee by day, the theme colours on the home page, the Sidelit font, the camera window's spot.
-- [ ] 24. [F1–F2, 0.9.97.100; T1–T2, 0.9.97.98] The seven fonts (Turkish letters, kept after reload); picture themes'
+- [ ] 25. [F1–F2, 0.9.97.100; T1–T2, 0.9.97.98] The seven fonts (Turkish letters, kept after reload); picture themes'
   text readable; the search and chat boxes visible in each theme.
-- [ ] 25. [L1–L3, 0.9.97.96] Phone sideways: a game fills the screen; a stream's small picture top right; a big
+- [ ] 26. [L1–L3, 0.9.97.96] Phone sideways: a game fills the screen; a stream's small picture top right; a big
   monitor's bigger Snack Bar keeps its size.
-- [ ] 26. [Q1–Q6, 0.9.97.93 and .95] On a hotspot or the backup connection, and with a background tab, an idle table and
+- [ ] 27. [Q1–Q6, 0.9.97.93 and .95] On a hotspot or the backup connection, and with a background tab, an idle table and
   five tabs of one room for 10 minutes: no "reconnecting", nothing "too many connections".
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
-- [ ] 27. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
+- [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
   film page and voice there, fullscreen, sounds; Brave Shields + "Disable non-proxied UDP" shows the "blocks direct
   connections" note; Edge "Strict" tracking prevention; Opera's ad blocker, VPN and GX limits; write down each version.
-- [ ] 28. The site without the extension in Firefox, Safari (Mac) and on an iPhone: room, YouTube, chat, a game, voice +
+- [ ] 29. The site without the extension in Firefox, Safari (Mac) and on an iPhone: room, YouTube, chat, a game, voice +
   camera, screen share (Firefox: picture only), fullscreen, "Add to Home Screen".
-- [ ] 29. On your own phone: the 20 no-code release tests of `is-akislari/yayina-hazirlik.md` part C (in the owner's
+- [ ] 30. On your own phone: the 20 no-code release tests of `is-akislari/yayina-hazirlik.md` part C (in the owner's
   guide repo); Claude turns them into a Sidelit list when asked.
-- [ ] 30. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
+- [ ] 31. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
   bar; `?measure=1` switch times with a friend (then decide on a hidden preload player); TikTok links play and loop;
   a fresh invite opens on one screen; the extension's install card turns into "Go to the film" by itself.
 

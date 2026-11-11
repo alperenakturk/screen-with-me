@@ -71,7 +71,10 @@
   display: flex; align-items: center; gap: 10px; min-height: 64px; box-sizing: border-box; padding: 6px 8px 6px 10px; border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
 }
-.wg-action-words { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+/* QA2 (6): in a narrow window the buttons go under the words instead of cutting them to "about 18 watched…". */
+.wg-action { flex-wrap: wrap; }
+.wg-action-words { flex: 1 1 150px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wg-action-buttons { margin-left: auto; }
 .wg-action-title { font-size: 15px; font-weight: 700; line-height: 1.25; }
 .wg-action-text { font-size: 13px; line-height: 1.3; color: var(--wg-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .wg-action-buttons { display: flex; gap: 5px; flex-wrap: nowrap; }
@@ -92,7 +95,8 @@
 .wg-dot.on.wg-dot-gold { background: #ffc65a; } .wg-dot.on.wg-dot-rose { background: #ff8fb8; }
 .wg-dot.on.wg-dot-sky { background: #7fc4ff; } .wg-dot.on.wg-dot-violet { background: #b892ff; }
 .wg-album-art, .wg-album-art svg { display: block; width: 100%; height: 100%; }
-.wg-album-cell:not(.found) .wg-album-art { opacity: 0.35; filter: grayscale(1) brightness(0.6); }
+/* QA2 (15): the plants still to find read as silhouettes on every dark theme (they nearly vanished on the scene ones). */
+.wg-album-cell:not(.found) .wg-album-art { opacity: 0.5; filter: grayscale(1) brightness(0.85); }
 
 .wg-elsewhere {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -195,9 +199,20 @@ html.phone.sideways .wg-album { align-self: start; }
 :root[data-theme='matinee'] .wg button.htp-open { background: var(--wg-fill); color: var(--text); box-shadow: inset 0 0 0 1px var(--wg-line); }
 :root[data-theme='matinee'] .wg button.htp-open:hover { background: var(--surface-2); }
 :root[data-theme='matinee'] .wg-pill.wg-state.on { background: var(--ok); color: #fff; box-shadow: none; }
-:root[data-theme='matinee'] .wg-scene { background: var(--al-120e27, #e4d9c6); box-shadow: inset 0 0 0 1px var(--border); }
-/* The disc that cuts the moon into a crescent takes the Matinee sky's colour at the moon's height (else a pale disc shows). */
-:root[data-theme='matinee'] .wg-scene-art { --al-1d2353: #d9c3ad; }
+/* ART-S #5: Window Garden in Matinee (for apps/web/src/games/garden.css, Game Studio). The window read washed out: the
+   wall was almost the panel's cream, the frame faint, the dusk sky upside down (ART-L's sill values put the peach on top)
+   and the moon, cream at an opacity, had been turned into ink by ART-L's "faint marks" rule. Scoped to the garden scene,
+   so the tutorial pictures keep their own values. */
+:root[data-theme='matinee'] .wg-scene { background: #d6c6aa; }
+:root[data-theme='matinee'] .wg-scene-art {
+  --al-120e27: #d6c6aa; /* the wall: a warm wainscot, one clear step below the panel */
+  --al-3a2e57: #7a6550; /* the window frame and its bar: dark wood */
+  --als-1a2150: #5f7fb3; /* the sky, top: dusk blue */
+  --als-2a2257: #f0c08e; /* the sky, bottom: the warm horizon */
+  --al-1d2353: #7388ae; /* the disc that cuts the moon into a crescent = the sky's colour at the moon's height */
+  --alg-fff3d6: #fff3d6; /* the moon stays cream */
+}
+:root[data-theme='matinee'] .wg-scene { box-shadow: inset 0 0 0 1px var(--border); }
 :root[data-theme='matinee'] .wg-idle .wg-scene-art { filter: saturate(0.7) brightness(0.94); }
 :root[data-theme='matinee'] .wg-rest,
 :root[data-theme='matinee'] .wg-elsewhere { background: rgb(241 234 221 / 0.94); box-shadow: 0 0 0 1px var(--border); }

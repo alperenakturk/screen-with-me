@@ -151,6 +151,13 @@ async function person(browser, opts, lang = 'en', more = {}) {
       return getComputedStyle(b).backgroundColor;
     });
     check(!!badge && !/111,\s*211,\s*255/.test(badge), 'Matinee: the hall\'s UPDATED badge is not the old light blue', badge);
+    // QA2 (16): the hall's title follows the glossary and What's new is short bullet lines.
+    const hall = await page.evaluate(() => ({
+      title: document.querySelector('#game-menu .hub-head b')?.textContent ?? '',
+      bullets: [...document.querySelectorAll('#game-menu .hub-news-line li')].map((li) => li.textContent ?? ''),
+    }));
+    check(hall.title === 'Games hall', 'the hall is called "Games hall"', hall.title);
+    check(hall.bullets.length >= 1 && hall.bullets.every((b) => b.length <= 80), 'What\'s new is short bullet lines', JSON.stringify(hall.bullets));
     await ctx.close();
   }
   const { ctx, page, run } = await person(browser, { viewport: { width: 1366, height: 768 } }, 'tr');
