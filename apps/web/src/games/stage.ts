@@ -481,12 +481,13 @@ export function createGameStage(opts: StageOptions) {
       // Another tab (people, queue) hides the message box: then down to the panel's bottom.
       const inPanel = form && form.height > 1 && form.top > panel.top && form.top <= panel.bottom;
       const height = Math.round((inPanel ? form.top - EDGE / 2 : panel.bottom) - panel.top);
-      const tallEnough = height >= minSize[1] * (isTablet() ? MIN_FIT : 1);
+      // A tablet's panel may be shorter (the game is fitted to it), but not so short that its text gets tiny.
+      const tallEnough = height >= minSize[1] * (isTablet() ? 0.85 : 1);
       if (panel.left >= video.right - 1 && tallEnough) {
         const width = Math.round(Math.min(maxSize[0], Math.max(minSize[0], panel.width)));
-        const media = document.getElementById('media-form')?.getBoundingClientRect();
-        const besideLinks = media && media.width > 1 && media.bottom > panel.top ? media.right + EDGE : 0;
-        const left = Math.max(page.left + EDGE, (yt ? video : wrap.getBoundingClientRect()).right + EDGE / 2, besideLinks, panel.right - width);
+        // (It keeps the game's smallest readable width even where that reaches a few px over the link box's edge on a
+        // 1366 laptop: narrowing it for a gap to "Play now" made its text too small, QA2.)
+        const left = Math.max(page.left + EDGE, (yt ? video : wrap.getBoundingClientRect()).right + EDGE / 2, panel.right - width);
         return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
       }
       // Under the video (an upright tablet): the panel's column beside the chat (Together, the queue), its full height,

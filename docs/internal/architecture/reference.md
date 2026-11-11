@@ -942,7 +942,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fullscreen use `SPOT_HOME`. QA2 (owner's rule "never over the video", 0.9.97.124): tablets line up with the side panel
   too (sideways: the right column like a computer; upright: the panel's column beside `.chat-panel` under the video, its
   full height, so the chat stays whole and the game keeps a tall readable shape (CI's `tablet` harness); the whole
-  panel only without that column); beside the video the window keeps `EDGE` from `#media-form` ("Play now"); a window at
+  panel only without that column; on a tablet the panel may be 15 % shorter than `minSize`, the game fitted to it); a 1366
+  laptop's window keeps its `minSize` width even where that reaches ≈ 4 px over `#media-form`'s edge (a gap to "Play now"
+  would shrink its text below 13 px; the Planner's call); a window at
   its home follows the theater's size (a `ResizeObserver`: the first frame grows the player). A side game leaves cinema
   mode like a YouTube table (T puts it away again). Over YouTube in cinema mode (`cinemaOn`: the player fills the page, "under it" would be
   below the screen) a game brought up leaves cinema mode (`#side-toggle`), and turning cinema on with a game open puts

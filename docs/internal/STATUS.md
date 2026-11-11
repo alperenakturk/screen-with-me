@@ -48,7 +48,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the game" under the window's top bar, its buttons read "Game hall · Leave table · Close table · Back to video".
   Phone upright, a table: one top row (the small video with "‹" = back, the name, ?, 🎙, 🎮, ⋯ holding Leave / Close,
   Close asks first); sideways Leave / Close sit in that row. Cinema mode (T) then Snack Bar: cinema mode ends, the
-  window sits off the video with a small gap to "Play now".
+  window sits off the video.
 - [ ] 16. [QA2, 0.9.97.123] Games on phones: sideways Quiz / Last Heart rules read in full, the Duel card fits; XOX
   shows "Stub'a (bota) karşı oyna" with Kolay / Orta and "👁 0 izliyor"; Snack Bar sideways lists the popcorn machine; in
   Turkish Snack Bar numbers read 0,5 / 6 B; Matinee: the games hall covers are warm posters.

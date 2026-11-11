@@ -25,7 +25,6 @@ games' tip jar, cuttings and badges.
   their names ("Game hall", "Leave table", "Close table", "Back to video") whenever there is room.
 - On a phone the game's top bar is one tidy row: the small video (tap it to go back), the game's name, ?, the
   microphone, 🎮 and ⋯, which holds "Leave table" and "Close table". Every table's "?" is up there now.
-- On a laptop a side game's window keeps a small gap to "Play now".
 ### 0.9.97.123 — 11 Nov
 - Games read better on phones and in other languages:
   - Tic-tac-toe and Four in a Row: the "Waiting for an opponent" line wraps in full.
