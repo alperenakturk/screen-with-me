@@ -12049,6 +12049,7 @@ html.ph-game .game-stage-title-name {
   text-overflow: ellipsis;
 }
 html.ph-game .game-stage-title-by,
+html.ph-game:not(.sideways) .game-stage-title-icon,
 html.ph-game:has(.room.has-item) .game-stage .game-minimize {
   display: none;
 }

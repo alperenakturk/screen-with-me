@@ -754,7 +754,8 @@ export function createGameStage(opts: StageOptions) {
   function fitHeadLabels(): void {
     stage.classList.add('head-labels');
     const name = titleText.querySelector<HTMLElement>('.game-stage-title-name') ?? titleText;
-    if (isPhoneLayout() || head.scrollWidth > head.clientWidth + 1 || name.scrollWidth > name.clientWidth + 1) stage.classList.remove('head-labels');
+    // An upright phone's head is icons only (pick 1); held sideways it has room for "Leave table" / "Close table".
+    if ((isPhoneLayout() && !isSideways()) || head.scrollWidth > head.clientWidth + 1 || name.scrollWidth > name.clientWidth + 1) stage.classList.remove('head-labels');
   }
   function refit(): void {
     const kind = shownKind();
