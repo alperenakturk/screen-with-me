@@ -254,7 +254,9 @@ html.phone.sideways #game-stage .sb-scene { height: 96px; }
 html.phone.sideways #game-stage .sb-buybar { grid-area: buy; }
 html.phone.sideways #game-stage .sb-rows { grid-area: rows; overflow: hidden; contain: size; }
 html.phone.sideways #game-stage .sb-more { grid-area: more; align-self: center; }
-html.phone.sideways #game-stage .sb-foot { grid-area: foot; flex-wrap: wrap; }
+html.phone.sideways #game-stage .sb-foot { grid-area: foot; flex-wrap: wrap; row-gap: 4px; }
+/* QA2 review: the cinema line takes its own row under the buttons here too (it showed "Cinema…"). */
+html.phone.sideways #game-stage .sb-cinema { order: 2; flex: 1 0 100%; }
 html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
 
 /* NG2 (owner's pick 8.1): each place has its own shop-front colours: the panel, the back wall, the shelf, the counter

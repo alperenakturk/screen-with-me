@@ -112,3 +112,4 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary {
 
 /* QA2 (14): lobby rules and card lines never leave one word alone on the last line ("join.", "hands."). */
 #game-stage :is(.draw-rules, .quiz-rules, .pk-rules, .duel-lobby-rules) { text-wrap: pretty; }
+#game-stage :is(.pk-lobby, .draw-lobby) p.muted { text-wrap: balance; }

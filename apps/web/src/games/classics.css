@@ -198,7 +198,14 @@ html.phone.sideways #game-stage .xox-page.mt > .mt-table {
 }
 html.phone.sideways #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
 /* QA2 (12): the label stays on phones ("Easy" / "Medium" need it); the chips wrap under it when short of room. */
-html.phone.sideways #game-stage .mt .cl-bot { flex-wrap: wrap; }
+/* QA2 review: on a sideways phone the bar runs across the full width in one line, so "Play against Stub (our bot)" and
+   its levels fit beside the score (the label was dropped and "Medium" slid under the players). */
+html.phone.sideways #game-stage .xox-page.mt > .mt-table {
+  grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'bar bar' 'board top' 'board bottom' 'board tray' 'board .' 'board .' 'board status' 'board actions';
+}
+html.phone.sideways #game-stage .mt .mt-bar { flex-wrap: nowrap; }
+html.phone.sideways #game-stage .mt .cl-bot { flex-wrap: nowrap; }
 #game-stage .mt .cl-bot-label { white-space: nowrap; }
 html.phone:not(.sideways) #game-stage .mt .mt-bar { flex-wrap: wrap; row-gap: 6px; }
 html.phone:not(.sideways) #game-stage .mt .cl-bot { order: 3; flex-basis: 100%; justify-content: flex-start; flex-wrap: wrap; }
@@ -294,6 +301,7 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
 }
 /* QA2 (14): only a mouse lifts a card; a touch screen keeps :hover after a tap, which left one card ringed and raised. */
 @media (hover: hover) { #game-stage .mt .cl-card:not(:disabled):hover { transform: translateY(-2px); border-color: var(--accent); } }
+@media (hover: none) { #game-stage .mt .cl-card:not(.on):hover { transform: none; } }
 #game-stage .mt .cl-card.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
 #game-stage .mt .cl-card:disabled { opacity: 0.5; cursor: default; }
 #game-stage .mt .cl-card-art { display: block; width: 100%; }

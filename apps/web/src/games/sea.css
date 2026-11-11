@@ -182,3 +182,8 @@ html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-min
   #game-stage .sea-status { text-align: left; }
   #game-stage .sea-actions { grid-area: actions; justify-content: flex-start; }
 }
+
+/* QA2 review: on a phone the bot label and its levels share one line, so the bar stays low and the sea keeps its size
+   ("Benim denizim" had wrapped in a narrowed head). */
+html.phone .sea-bot-label { flex-basis: auto; }
+.sea-head :is(b, small, span) { white-space: nowrap; }
