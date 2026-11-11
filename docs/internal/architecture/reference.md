@@ -1794,6 +1794,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   not while a dialog is open). **Unread in the tab title:** chat from others while `document.hidden` → "(n) title",
   cleared on `visibilitychange` (`drawTabTitle`, `baseTitle` from `renderSaved`). Test: `scripts/harness/invite/run.cjs`
   (22 checks).
+- **QA2-A (B2's full sweep, room / site; Planner's decisions 6, 7, 8, 10, 11, 13, 14):** the computer room fills the
+  window's height (`room.css` "QA2-A #8": `main` is a flex column, `.room` / `.theater` / `.player-wrap` grow; the
+  card's 16:9 width uses `100dvh − 212px`, the real overhead now that the footer is hidden; when the width limits, the
+  video's box grows taller and the picture sits in it). The Queue / People tabs show from the start (the fresh room hides
+  only `#sync-test`); cinema mode has one leave hint (the pill, `cinemaHint` gone). The invite window's styles live in
+  `ui/invite.css` (loaded with its lazy chunk, out of the room's 38 kB budget); on `html.phone.sideways` it is a two-column
+  grid (head, tabs, door | link pane). Settings on a phone: the fade at the list's foot is `.settings-main::after`
+  (sticky, also the list's bottom padding); sideways the category column is tighter and scrolls as the last resort;
+  upright the "⚙️ Settings" title shows. Settings categories share plain buttons (no `primary`), the host line
+  (`settings.youAreHost`) in Room (`#room-host-line`) and Film time, "Feedback" styled as a link, and the room-name
+  placeholder `roomNameExample` ("e.g. {name}"). Generated names follow the page language (`friendlyRoomName(id,
+  lang())`, 32 × 32 Turkish words); `percent()` in `i18n.ts` writes "%70" in Turkish. Phones never show the top bar's
+  🧩 Extension link (`styles.css`); the extension page shows a "for computers" note and a quiet download on
+  `(hover: none) and (pointer: coarse)`. The Test Lab drawer lies over the room on a touch screen without a mouse (no
+  `padding-right` on `body`). The join card on a short screen keeps the room's name and hint. "Fullscreen when turned
+  sideways" stays hidden on phones on purpose: a browser needs a tap for fullscreen, so a sideways phone offers "Watch
+  fullscreen" instead. Tests: `phone-sideways` (invite and Settings fit, iPhone SE + Galaxy S9+), `room-more` (the
+  room reaches the window's foot at 1366 / 1920 / 2560 wide, with and without a video), `test-lab` (sideways tablet).
 - **🎞 Cinema mode (card 14, 0.9.96.7; `room.ts` `side`, CSS `html.cinema-on` in `room.css`, harness `cinema`):** T, the
   rail's ⋯ or `#side-toggle` (the old "hide the side panel") turns the page around the video dark and gives the video the
   largest 16:9 beside the rail; the top bar comes back at the top edge (`#cinema-edge`, `cinema-peek`), chat lines come in
