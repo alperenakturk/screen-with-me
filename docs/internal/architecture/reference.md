@@ -1862,8 +1862,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the full e2e against live after every deploy; CI's local server runs `wrangler dev --var SWM_LOCAL_UNPACED:1` (the
   Worker skips the per-IP connection limit only with that flag and a localhost address; never set it in
   `wrangler.jsonc` or live) and e2e runs with `SWM_E2E_UNPACED=1` (no waits between files: local e2e 463 s → ≈ 205 s);
-  Playwright's browser is cached. Its system part (apt) gets at most 60 s with no retries
-  (`scripts/ci-playwright.sh`, via the prepare action). On an unreachable Ubuntu mirror the job goes on with the runner
+  Playwright's browser is cached. Its system part (apt) gets 3 tries of at most 45 s, 30 s apart, with short apt timeouts
+  (`scripts/ci-playwright.sh`, via the prepare action and the e2e job's help step). On an unreachable Ubuntu mirror the job goes on with the runner
   image's own libraries (it skips only the extra CJK / Thai fallback fonts) after checking Chromium's libraries (`ldd`)
   and the emoji and Latin fonts; if anything is missing it fails with a clear error. **Card CI2: parallel jobs.** `checks` (typecheck, texts, unit tests, build, size
   budget; push + PR), and on a PR only `e2e` (local e2e + the help harness), `site` (the site's browser harnesses) and

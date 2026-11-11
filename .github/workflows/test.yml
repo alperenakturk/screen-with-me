@@ -144,7 +144,7 @@ jobs:
       - name: Help page and policy numbers
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0
-          npx playwright install --with-deps chromium
+          bash scripts/ci-playwright.sh
           node scripts/harness/help/run.cjs http://localhost:8787
 
       # Only its end: the whole log of every run buried the failing step's own output.
