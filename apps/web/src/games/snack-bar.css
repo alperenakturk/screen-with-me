@@ -82,8 +82,10 @@
 @keyframes sb-bought { 0% { background: rgba(255, 198, 90, 0.35); } 100% { background: rgba(255, 255, 255, 0.05); } }
 .sb-icon { width: 32px; height: 32px; display: block; }
 .sb-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.sb-name { font-size: 15px; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sb-level { color: var(--sb-muted); font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* QA2 (6): a long name or line ("Patlamış mısır makinesi", "Opens with the Soda fountain") wraps to a second line
+   instead of ending in "…". */
+.sb-name { font-size: 15px; font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.sb-level { color: var(--sb-muted); font-size: 13px; line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .sb-bar { display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
 .sb-bar-fill { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--sb-cream), var(--sb-gold)); transition: width 0.3s; }
 .sb-price {

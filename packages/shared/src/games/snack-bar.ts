@@ -742,19 +742,24 @@ export function newCinema(save: SnackSave): boolean {
 }
 
 const UNITS = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+/** QA2 (13): Turkish short units (bin, milyon, milyar, trilyon …), written after a space ("6 B", "1,2 Mn"). */
+const UNITS_TR = ['', ' B', ' Mn', ' Mr', ' Tn', ' Ktn', ' Kent', ' Sek', ' Sep', ' Ok', ' Non', ' Des'];
 
-/** Short coin amounts: 999, 1.2K, 34.5M, 120B … (the same in every language). */
-export function formatCoins(value: number): string {
+/** Short coin amounts: 999, 1.2K, 34.5M, 120B … In Turkish (`lang` 'tr'): 0,5, 6 B, 1,2 Mn (a decimal comma). */
+export function formatCoins(value: number, lang = 'en'): string {
+  const tr = lang === 'tr';
+  const units = tr ? UNITS_TR : UNITS;
+  const comma = (text: string) => (tr ? text.replace('.', ',') : text);
   if (!Number.isFinite(value) || value <= 0) return '0';
-  if (value < 1000) return value < 10 && value % 1 ? value.toFixed(1).replace(/\.0$/, '') : String(Math.floor(value));
+  if (value < 1000) return comma(value < 10 && value % 1 ? value.toFixed(1).replace(/\.0$/, '') : String(Math.floor(value)));
   let unit = 0;
   let scaled = value;
-  while (scaled >= 1000 && unit < UNITS.length - 1) {
+  while (scaled >= 1000 && unit < units.length - 1) {
     scaled /= 1000;
     unit++;
   }
-  if (scaled >= 1000) return value.toExponential(2).replace('+', '');
+  if (scaled >= 1000) return comma(value.toExponential(2).replace('+', ''));
   const digits = scaled < 10 ? 2 : scaled < 100 ? 1 : 0;
   const text = (Math.floor(scaled * 10 ** digits) / 10 ** digits).toFixed(digits).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
-  return `${text}${UNITS[unit]}`;
+  return `${comma(text)}${units[unit]}`;
 }

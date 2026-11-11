@@ -9,7 +9,7 @@ import { gameHint } from './hint.ts';
 import {
   BADGES, BADGE_BONUS, DECOR, MENU_BONUS, MENU_LEVEL, MILESTONES, RECIPE_IDS, STAFF, USHER_DELAY_S, buyDecor, buyRecipe, dayNumber, globalFactor, hire, menuFactor,
   placeOf, placeCost, recipeInfo, recipesOpen, specialOf, standIncome, type DecorId, type PlaceId, type RecipeId, type StaffId, SNACK_KEY, STANDS, STAR_BONUS,
-  PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins, freshSnack, incomeRate,
+  PRESTIGE_MIN, affordable, buy, checkBadges, collectReceipt, costOf, customerMood, receiptFor, serveCustomer, formatCoins as formatCoinsIn, freshSnack, incomeRate,
   RECEIPT_MIN_S, loadSnack, milestoneFactor, newCinema, nextMilestone, saveSnack, serve, starsFor, tick,
   togetherFactor, unlocked, type CustomerMood, type Receipt, type SnackSave, type StandId,
   SEASON_BADGE_LEVEL, SEASON_BONUS, SEASON_GLYPH, SEASON_LEVELS, buySeason, managerReport, rollSeason, seasonCost, seasonDaysLeft, seasonLevel,
@@ -132,7 +132,7 @@ const TEXT = {
     'milestone': 'Lv {n}: income ×2',
     'more': '+{n} more when the window is bigger',
     'cinema': 'Cinema #{n} · ★ {stars}',
-    cinemaShort: '{icon} #{n} · ★ {stars}',
+    cinemaShort: '{icon} Cinema {n} · ★ {stars}',
     'place.lobby': 'The lobby',
     'place.drive-in': 'Drive-in',
     'place.rooftop': 'Rooftop cinema',
@@ -297,14 +297,14 @@ const TEXT = {
     'recipe.arcade:1': 'Pençe makinesi',
     'recipe.arcade:2': 'Rekor tablosu',
     'recipe.arcade:3': 'Ödül duvarı',
-    'level': 'Sv {n} · +{rate}/sn',
+    'level': 'Sev. {n} · +{rate}/sn',
     'new': 'Yeni · +{rate}/sn',
     'locked': '🔒 {name} ile açılır',
     'buy': '{price} karşılığında al',
-    'milestone': 'Sv {n}: gelir ×2',
+    'milestone': 'Sev. {n}: gelir ×2',
     'more': 'Pencere büyüyünce +{n} tane daha',
     'cinema': '{n}. sinema · ★ {stars}',
-    cinemaShort: '{icon} {n}. · ★ {stars}',
+    cinemaShort: '{icon} {n}. sinema · ★ {stars}',
     'place.lobby': 'Lobi',
     'place.drive-in': 'Arabalı sinema',
     'place.rooftop': 'Çatı sineması',
@@ -373,7 +373,7 @@ const TEXT = {
     'season.caramel-apple': 'Karamelli elma',
     seasonTitle: 'Bu haftanın standı',
     seasonLine: 'Her seviye hafta bitene kadar bütün gelirine %{bonus} ekler. {badge}. seviye rozetini kazandırır.',
-    seasonLevel: 'Sv {n}/{max}: gelir +%{bonus}',
+    seasonLevel: 'Sev. {n}/{max}: gelir +%{bonus}',
     seasonNew: 'Bu hafta yeni',
     seasonDays: '{n} gün kaldı',
     seasonLastDay: 'son gün',
@@ -572,6 +572,8 @@ const STAND_SOUND: Record<StandId, SoundId> = {
   'second-counter': 'snackBell', hotdog: 'snackSizzle', 'ice-cream': 'snackScoop', arcade: 'snackArcade',
 };
 
+/** QA2 (13): coin amounts in the page's language (Turkish: 0,5 · 6 B · 1,2 Mn). */
+const formatCoins = (value: number) => formatCoinsIn(value, lang());
 const fmtRate = (rate: number) => formatCoins(rate < 10 ? Math.round(rate * 10) / 10 : rate);
 
 export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () => void {
@@ -1068,9 +1070,13 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
    */
   function shownRows(room: number): Set<StandId> {
     const firstLocked = STANDS.findIndex((s) => !unlocked(game, s.id));
-    const end = firstLocked < 0 ? STANDS.length - 1 : firstLocked;
-    const start = Math.max(0, end - (room - 1));
-    return new Set(STANDS.slice(start, end + 1).map((s) => s.id));
+    const openEnd = firstLocked < 0 ? STANDS.length : firstLocked;
+    // QA2 (5): when rows are short, the locked "next" stand gives way first, then the oldest open ones (a sideways
+    // phone hid the only stand I could buy and kept the locked one).
+    const openShown = Math.min(openEnd, Math.max(1, room));
+    const ids = STANDS.slice(openEnd - openShown, openEnd).map((s) => s.id);
+    if (firstLocked >= 0 && room > openShown) ids.push(STANDS[firstLocked]!.id);
+    return new Set(ids);
   }
 
   let compact = false;
@@ -1276,7 +1282,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     // GPRO: a sideways phone has the rows in their own column (snack-bar.css): as many as its height holds.
     if (document.documentElement.classList.contains('phone') && document.documentElement.classList.contains('sideways')) {
       // In real pixels, like below: a scaled-down window has a taller list, which would hold one row too many.
-      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((list.clientHeight * scale + gap) / rowH)));
+      // QA2 (5): the room is the column's height below the list's top (the list itself only ever holds the rows it
+      // shows, so its own height never let a third row in), minus the "+N more" line's reserve.
+      const avail = root.getBoundingClientRect().bottom - list.getBoundingClientRect().top - MORE_RESERVE * scale;
+      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((avail + gap * scale) / (rowH * scale))));
       if (fit !== rowRoom) {
         rowRoom = fit;
         draw();

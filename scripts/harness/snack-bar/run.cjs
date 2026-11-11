@@ -282,8 +282,22 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   }));
   check(phoneSign === 'clear', 'phone: the "closed" note does not cover the SNACK BAR sign', String(phoneSign));
   const cinemaCut = await pam.evaluate(() => { const c = document.querySelector('.sb-cinema'); return c ? c.scrollWidth - c.clientWidth : -1; });
-  check(cinemaCut === 0, 'phone: the cinema line ("#1 · ★ 0") is not cut off', String(cinemaCut));
+  check(cinemaCut === 0, 'phone: the cinema line ("Cinema 1 · ★ 0") is not cut off', String(cinemaCut));
   await pam.screenshot({ path: __dirname + '/snack-phone.png' });
+
+  // QA2 (5): a sideways phone keeps the open stands in sight (the locked one gives way first, the list uses its height).
+  const land = await browser.newContext({ ...devices['iPhone 13 landscape'] });
+  const lan = await person(land, 'Lan', 'elf');
+  await lan.evaluate(async () => {
+    document.getElementById('game-btn').click();
+    await new Promise((r) => setTimeout(r, 200));
+    document.querySelector('#game-menu [data-solo="snack"]')?.click();
+    for (let i = 0; i < 50 && !document.querySelector('#game-stage .sb'); i++) await new Promise((r) => setTimeout(r, 100));
+  });
+  await wait(800);
+  const landRows = await lan.evaluate(() => [...document.querySelectorAll('.sb-row')].filter((r) => !r.hidden).map((r) => r.querySelector('.sb-name')?.textContent));
+  check(landRows.some((n) => /Popcorn/.test(n ?? '')), 'sideways phone: the popcorn machine (open, affordable) is in the list', JSON.stringify(landRows));
+  check((await fits(lan)).length === 0, 'sideways phone: fits without scrollbars', (await fits(lan)).join('; '));
 
   await browser.close();
   console.log(failed ? `\n✗ ${failed} checks failed` : '\n✓ Snack Bar harness passed');

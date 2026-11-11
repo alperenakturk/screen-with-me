@@ -128,7 +128,7 @@ function progressOf(kind: SideKind): string | null {
   try {
     const saved = JSON.parse(load('snackBar') || 'null') as { coins?: unknown; cinemas?: unknown } | null;
     if (!saved || typeof saved.coins !== 'number') return null;
-    return `🪙 ${formatCoins(saved.coins)}${typeof saved.cinemas === 'number' && saved.cinemas > 0 ? ` · 🎬 ${saved.cinemas + 1}` : ''}`;
+    return `🪙 ${formatCoins(saved.coins, lang())}${typeof saved.cinemas === 'number' && saved.cinemas > 0 ? ` · 🎬 ${saved.cinemas + 1}` : ''}`;
   } catch {
     return null;
   }
