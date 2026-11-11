@@ -42,7 +42,8 @@
 .ff-board:focus-visible, .ff-board:focus { box-shadow: 0 0 0 1.5px rgba(255, 198, 90, 0.55); }
 /* One guess = one ticket: a stub, a dashed tear line with two notches, five letter cells. */
 .ff-row {
-  position: relative; display: grid; grid-template-columns: 30px 1fr; height: 43px; border-radius: 8px;
+  /* QA2 (8): an empty column on the right as wide as the stub, so the five cells sit in the ticket's middle. */
+  position: relative; display: grid; grid-template-columns: 30px 1fr 30px; height: 43px; border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
 }
 .ff-row::before, .ff-row::after {
@@ -84,7 +85,11 @@
 .ff-row.hop .ff-cell { animation: ff-hop 0.12s ease-out both; animation-delay: calc(var(--i, 0) * 60ms); }
 @keyframes ff-hop { 50% { transform: translateY(-6px); } }
 
-.ff-result { flex: none; display: flex; align-items: center; gap: 8px; min-height: 30px; }
+.ff-result { flex: none; display: flex; align-items: center; gap: 4px 8px; min-height: 30px; }
+/* QA2: in the narrow window beside the video the Copy button goes under the result instead of squeezing "2/7 denemede
+   buldun! 🎉" onto two lines. */
+.ff-result { flex-wrap: wrap; justify-content: flex-end; }
+.ff-result > .ff-message { flex: 1 1 210px; }
 .ff-message { flex: 1; margin: 0; font-size: 15px; font-weight: 700; color: var(--ff-cream); line-height: 1.25; }
 .ff-message:empty { display: none; }
 .ff-message.flash { color: var(--ff-gold); }
@@ -112,8 +117,10 @@
 .ff-key.hit { background: rgba(255, 198, 90, 0.12); box-shadow: inset 0 0 0 2.5px var(--ff-mark); color: var(--ff-cream); }
 .ff-key.near { background: transparent; outline: 2px dashed var(--ff-mark); outline-offset: -3px; color: var(--ff-mark); }
 .ff-key.miss { background: transparent; color: var(--ff-miss-text); text-decoration: line-through; }
-.ff-key.back { grid-column: span 2; font-size: 15px; font-weight: 800; }
-.ff-key.enter { grid-column: span 2; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; }
+/* QA2 (6): Enter takes three columns, ⌫ one (an icon), so "Tamam" no longer fills its key edge to edge. */
+.ff-key.back { grid-column: span 1; font-size: 15px; font-weight: 800; }
+.ff-key.enter { grid-column: span 3; background: var(--ff-gold); color: var(--ff-ink); font-weight: 800; font-size: 15px; padding-inline: 6px; }
+
 @media (prefers-reduced-motion: reduce) {
   .ff-row.shake, .ff-cell.pop, .ff-cell.turn, .ff-row.hop .ff-cell { animation: none; }
   .ff-cell, .ff-key { transition: background-color 0.15s, color 0.15s; }
