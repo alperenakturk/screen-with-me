@@ -609,7 +609,7 @@ const en = {
   namePlaceholder: 'e.g. Alex',
   enterRoom: 'Enter room',
   nameHint: 'Your name is saved in this browser for next time.',
-  joinHint: 'Tap your avatar to change it. Your name and avatar are saved in this browser.',
+  joinHint: 'Press your avatar to change it. Your name and avatar are saved in this browser.',
   joinWaitingOne: '🍿 {name} is waiting for you',
   joinWaitingMany: '🍿 {name} and {n} more are waiting for you',
   joinPlaying: 'Now playing: {title}',
@@ -1097,15 +1097,15 @@ const en = {
   'settings.rulesPlay': 'Playback',
   'settings.rulesRoom': 'In the room',
   'settings.me': 'Only about you, in this browser.',
-  'settings.profile.d': 'Your name, picture and theme.',
+  'settings.profile.d': 'Your name, picture and theme',
   'settings.profile.btn': 'Open profile',
-  'settings.move.d': 'Take your name, picture and rooms to a phone or another computer.',
+  'settings.move.d': 'Take your name, picture and rooms to a phone or another computer',
   'settings.move.btn': 'Move',
   'settings.devices': 'Microphone and camera',
-  'settings.devices.d': 'Choose which ones to use and try them.',
+  'settings.devices.d': 'Choose which ones to use and try them',
   'settings.devices.btn': 'Choose',
   'settings.voiceAsk': 'Check before joining voice',
-  'settings.voiceAsk.d': 'Shows your microphone and camera before you join.',
+  'settings.voiceAsk.d': 'Shows your microphone and camera before you join',
   'settings.voiceOnPress': 'Your microphone and camera turn on only when you press "Join voice".',
   'settings.whoSees': 'Who sees what (privacy)',
   'settings.about': 'Free, no account. Help, privacy and the small print:',
@@ -1114,7 +1114,7 @@ const en = {
   'settings.on': 'on',
   'settings.off': 'off',
   'settings.showReactions.d': 'Reactions rise from the bottom of the video',
-  'settings.railPin.d': 'The buttons beside the video always stay. When off, they open as the mouse reaches the video\'s right edge.',
+  'settings.railPin.d': 'The buttons beside the video always stay; when off, they open as the mouse reaches the video\'s right edge',
   'settings.actionNotice.d': 'A short note on the video when someone pauses or seeks',
   'settings.sounds.d': 'Short, soft sounds for voice joins, games, new messages and more',
   'settings.soundVolume.d': 'Room sounds play at half volume while the film plays',
@@ -1149,7 +1149,7 @@ const en = {
   'stickers.note': "Your custom emojis are no longer added to every room automatically. They're in \"My collection\"; you add them to a room when you want.",
   'stickers.noteOk': 'OK',
   'settings.clearStickers': 'Remove all custom emojis',
-  'settings.clearStickers.d': 'Every image and GIF added to this room is deleted.',
+  'settings.clearStickers.d': 'Every image and GIF added to this room is deleted',
   'settings.clearStickers.btn': 'Remove all',
   'settings.clearStickers.confirm': 'Delete every custom emoji in this room for everyone?',
   'live.share': 'Share',
@@ -1251,6 +1251,11 @@ export function warmLang(next: Lang): void {
 
 export function lang(): Lang {
   return current;
+}
+
+/** A percentage in the page's language: "70%" in English, "%70" in Turkish (QA2-A). */
+export function percent(n: number | string): string {
+  return lang() === 'tr' ? `%${n}` : `${n}%`;
 }
 
 export function t(key: Key, params: Record<string, string | number> = {}): string {

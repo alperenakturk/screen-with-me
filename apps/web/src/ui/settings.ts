@@ -1,7 +1,7 @@
 import { cleanName, type Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { avatarNode, openAvatarDialog } from './avatar.ts';
-import { t } from '../i18n.ts';
+import { percent, t } from '../i18n.ts';
 import { renderThemeSetting } from '../themes.ts';
 import { load, save } from '../storage.ts';
 import { RAIL_PIN_EVENT } from './fullscreen.ts';
@@ -114,7 +114,7 @@ export function createSettingsPanel(
     sounds.checked = soundsOn();
     volume.value = String(soundVolume());
     volume.disabled = !sounds.checked;
-    volumeText.textContent = `${volume.value}%`;
+    volumeText.textContent = percent(volume.value);
   };
   drawSound();
   sounds.addEventListener('change', () => {
@@ -124,7 +124,7 @@ export function createSettingsPanel(
   });
   volume.addEventListener('input', () => {
     setSoundVolume(Number(volume.value));
-    volumeText.textContent = `${volume.value}%`;
+    volumeText.textContent = percent(volume.value);
   });
   volume.addEventListener('change', previewSound);
 

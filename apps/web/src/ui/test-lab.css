@@ -250,10 +250,16 @@ html.phone .lab-drawer {
   text-decoration: none;
 }
 
+/* QA2-A NIT: the heading's own margins pushed it off the line of "Clear": the row carries the gap, both centred. */
 .debug-errors-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin: 10px 0 4px;
+}
+
+.debug-body .debug-errors-head > h4 {
+  margin: 0;
 }
 
 .debug-errors {

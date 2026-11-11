@@ -128,7 +128,8 @@
 /* Sweep-1 small things: the invite window's line wraps without leaving one word alone. */
 
 .invite-sub {
-  text-wrap: pretty;
+  /* QA2-A NIT: balanced lines, so "account needed." no longer sits alone on the second line. */
+  text-wrap: balance;
 }
 
 /* First-look review: the invite window's "Ask before letting people in" row lines up with the rows under it. */
