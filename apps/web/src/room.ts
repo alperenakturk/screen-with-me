@@ -215,7 +215,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   let roomName: string | null = null;
   let info: { people?: string[]; count?: number; playing?: string | null } | null = null;
   const renderCode = () => {
-    roomCode.textContent = roomName ? `💾 ${roomName}` : friendlyRoomName(roomId);
+    roomCode.textContent = roomName ? `💾 ${roomName}` : friendlyRoomName(roomId, lang());
     const people = (info?.people ?? []).filter(Boolean);
     const count = info?.count ?? 0;
     app.querySelector<HTMLElement>('#join-invite')!.hidden = count === 0;
@@ -899,7 +899,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   function drawRoomTitle(): void {
     // An unsaved room shows its friendly name (0.9.93.2; the same for everyone, worked out from the id).
-    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId);
+    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId, lang());
     // People, not connections: the same person's site tab + film tab count once; two people with the same name and
     // avatar count twice (R11: the server's person key).
     const people = new Set(members.map(personOf)).size;
@@ -3636,9 +3636,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#save-submit').textContent = saved ? t('rename') : t('saveRoom');
     const input = $<HTMLInputElement>('#save-name');
     if (document.activeElement !== input) input.value = name;
-    input.placeholder = friendlyRoomName(roomId);
+    input.placeholder = friendlyRoomName(roomId, lang());
     drawRoomTitle();
-    baseTitle = `${saved && name ? name : friendlyRoomName(roomId)} · Sidelit`;
+    baseTitle = `${saved && name ? name : friendlyRoomName(roomId, lang())} · Sidelit`;
     drawTabTitle();
     // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
     // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince

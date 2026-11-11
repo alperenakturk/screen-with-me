@@ -45,13 +45,28 @@ const NAME_SECOND = [
   'Matinee', 'Club', 'Porch', 'Courtyard', 'Igloo', 'Tent', 'Library', 'Station',
 ];
 
-/** "Velvet Lounge": the same id always gives the same name. */
-export function friendlyRoomName(id: string): string {
+// QA2-A (Planner): a Turkish page shows Turkish names (adjective + place), the same 32 × 32 picks from the same hash.
+const NAME_FIRST_TR = [
+  'Rahat', 'Kadife', 'Gece Yarısı', 'Altın', 'Güneşli', 'Yıldızlı', 'Neon', 'Mehtaplı',
+  'Tembel', 'Patlamış Mısırlı', 'Gümüş', 'Kozmik', 'Yumuşak', 'Kızıl', 'Esintili', 'Alacakaranlık',
+  'Sıcacık', 'Şanslı', 'Kehribar', 'Elektrikli', 'Hayalperest', 'Yağmurlu', 'Uykulu', 'Neşeli',
+  'Keyifli', 'Cumartesi', 'Retro', 'Cep', 'Gizli', 'Küçük', 'Sessiz', 'Şen',
+];
+const NAME_SECOND_TR = [
+  'Kanepe', 'Salon', 'Sinema', 'İn', 'Balkon', 'Tiyatro', 'Sığınak', 'Köşe',
+  'Stüdyo', 'Köşebaşı', 'Çatı Katı', 'Teras', 'Kulübe', 'Liman', 'Bahçe', 'Loca',
+  'Misafir Odası', 'Asma Kat', 'Veranda', 'Fener', 'Ağaç Ev', 'Mekân', 'Divan', 'Perde',
+  'Matine', 'Kulüp', 'Sundurma', 'Avlu', 'İglo', 'Çadır', 'Kütüphane', 'İstasyon',
+];
+
+/** "Velvet Lounge" ("Kadife Salon" in Turkish): the same id always gives the same name in a language. */
+export function friendlyRoomName(id: string, lang: 'en' | 'tr' = 'en'): string {
   // FNV-1a over the id's characters.
   let hash = 0x811c9dc5;
   for (let i = 0; i < id.length; i++) {
     hash ^= id.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  return `${NAME_FIRST[hash % NAME_FIRST.length]!} ${NAME_SECOND[(hash >>> 5) % NAME_SECOND.length]!}`;
+  const [first, second] = lang === 'tr' ? [NAME_FIRST_TR, NAME_SECOND_TR] : [NAME_FIRST, NAME_SECOND];
+  return `${first[hash % first.length]!} ${second[(hash >>> 5) % second.length]!}`;
 }
