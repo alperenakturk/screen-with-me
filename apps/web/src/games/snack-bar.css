@@ -289,6 +289,9 @@ html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
 }
 @container game (max-width: 360px) and (max-height: 460px) {
   #game-stage .sb-scene { height: 80px; }
+  /* QA2: in the smallest window the stand names and lines stay on one line (two lines made the rows taller and the
+     window then scaled the game's text below 13 px). */
+  #game-stage :is(.sb-name, .sb-level) { display: block; white-space: nowrap; text-overflow: ellipsis; }
   #game-stage .sb-row { min-height: 40px; gap: 8px; padding-block: 2px; }
   #game-stage .sb-price { min-height: 34px; min-width: 64px; padding-inline: 8px; }
   #game-stage .sb-panel { inset: 4px; padding: 10px 12px; gap: 4px; }
