@@ -37,6 +37,15 @@ describe('page invites', () => {
   });
 });
 
+describe('friendlyRoomName in Turkish (QA2-A)', () => {
+  it('gives a Turkish name from the same id, stable and different from the English one', () => {
+    const tr = friendlyRoomName('swky86r2ab', 'tr');
+    expect(tr).toBe(friendlyRoomName('swky86r2ab', 'tr'));
+    expect(tr).not.toBe(friendlyRoomName('swky86r2ab'));
+    expect(tr.split(' ').length).toBeGreaterThanOrEqual(2);
+  });
+});
+
 describe('friendlyRoomName', () => {
   it('gives every id one stable two-word name', () => {
     const name = friendlyRoomName('swky86r2ab');

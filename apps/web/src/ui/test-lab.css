@@ -57,7 +57,9 @@
   box-shadow: -8px 0 30px rgb(0 0 0 / 40%);
 }
 
-html.lab-open:not(.phone, .tablet-up) body {
+/* QA2-A #3 (B2's sweep): a sideways tablet (touch, no mouse) is not pushed aside either: the room keeps its full width
+   and the drawer lies over its right side, like the bottom sheet on an upright tablet. */
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) body {
   padding-right: var(--lab-w);
 }
 
@@ -207,7 +209,8 @@ html.phone .lab-drawer {
 
 .debug-facts {
   display: grid;
-  grid-template-columns: auto 1fr;
+  /* LAB3: a long name ("Clock difference (my clock against the server's)") wraps instead of squeezing the values. */
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
   gap: 2px 10px;
   margin: 0;
 }
@@ -247,10 +250,16 @@ html.phone .lab-drawer {
   text-decoration: none;
 }
 
+/* QA2-A NIT: the heading's own margins pushed it off the line of "Clear": the row carries the gap, both centred. */
 .debug-errors-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin: 10px 0 4px;
+}
+
+.debug-body .debug-errors-head > h4 {
+  margin: 0;
 }
 
 .debug-errors {
@@ -494,15 +503,15 @@ html.phone .lab-drawer {
 
 /* The room's windows pinned to the window's right edge move left of the open drawer (the page itself makes room with
    its padding; fixed things don't follow padding). */
-html.lab-open:not(.phone, .tablet-up) .knock-cards {
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) .knock-cards {
   right: calc(var(--lab-w) + 16px);
 }
 
-html.lab-open:not(.phone, .tablet-up) .profile-pop {
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) .profile-pop {
   right: calc(var(--lab-w) + 12px);
 }
 
-html.lab-open:not(.phone, .tablet-up) .recap-invite {
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) .recap-invite {
   right: calc(var(--lab-w) + 16px);
 }
 

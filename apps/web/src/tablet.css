@@ -182,9 +182,3 @@ html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .media-form > .btn {
   flex: none;
 }
 
-/* First-look review: a fresh room on a computer hides the Queue / People tabs until the first video, but the upright
-   tablet always shows the Queue panel beside the chat, which was left without a heading: keep its tabs there. (`#no-such-id`
-   matches nothing; it gives the rule the ID weight of room.css's `:is(…, #sync-test)` so it wins.) */
-html.tablet-up.in-room:not(.shorts-view, .shell, .tv-mode) .room.fresh .side .tabs :is(.tab[data-tab='queue'], .tab[data-tab='people'], #no-such-id) {
-  display: flex !important;
-}

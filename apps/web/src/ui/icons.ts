@@ -13,6 +13,7 @@ export type IconName =
   | 'screen-stop'
   | 'screen-watch'
   | 'leave'
+  | 'link'
   | 'chat'
   | 'smile'
   | 'pin'
@@ -101,6 +102,8 @@ const ICONS: Record<IconName, Shape[]> = {
     ['line', { x1: 19.5, y1: 2.5, x2: 19.5, y2: 8.5 }],
     ['line', { x1: 16.5, y1: 5.5, x2: 22.5, y2: 5.5 }],
   ],
+  // QA2-A #12: the Invite button's chain, in the button's text colour (the 🔗 emoji washed out on a gold button).
+  link: [['path', { d: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1' }], ['path', { d: 'M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1' }]],
   leave: [['path', { d: 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3' }], ['path', { d: 'M10 17l-5-5 5-5' }], ['line', { x1: 5, y1: 12, x2: 15, y2: 12 }]],
   // The games hub (0.9.91.8): the pad and one icon per game.
   gamepad: [

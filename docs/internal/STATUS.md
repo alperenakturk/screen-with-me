@@ -8,12 +8,6 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] **Lane A, after 0.9.97.120 (stopped 10 Nov for the usage limit; continue from here).** Pre-existing items the
-  LABFAB first look found (not fixed, need cards from the Planner): (1) phone sideways with a video: the first-time tip
-  bubble covers "Watch fullscreen" (iPhone SE: fully); (2) iPhone SE sideways, empty room: "No video yet" and "Run a sync
-  test" cut off (fit rule); (3) the Test Lab drawer on a phone: the "Font shown" value cut off at the right, "⌘ Ctrl+K"
-  shown on touch screens, the drawer says "Test Lab" in Turkish while the glossary says "Test Panosu" (the ⋯ tile follows
-  the drawer); (4) shots.cjs's phone room shot catches the intro mid-fade.
 - [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
   phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
@@ -48,6 +42,13 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
+- [ ] 16a. [M1–M3, Q1–Q5, 0.9.97.122] On a laptop and a big screen the room reaches the window's foot, and the
+  Queue / People tabs are there before any video. A table under a YouTube video, or in the video's place, stays whole.
+  On a phone held sideways: no tip over "Watch fullscreen"; on an iPhone SE the empty room fits; Invite (WhatsApp
+  included) and every Settings category fit. On a phone there is no 🧩 in the top bar, and the extension page says it
+  is for computers. Turkish: a nameless room gets a Turkish name; Settings → Sound shows "%70"; the Test Lab says
+  "Test Panosu". Sinema / Lokum: the chosen invite tab and Settings category are lit, and the new scene art stays
+  clear of the text.
 - [ ] 16. [W121, 0.9.97.121] Snack Bar on a laptop and a big screen: its window covers the chat column from the top to
   just above the message box and you can still type; drag, resize, double-click the top bar: back to the column.
 - [ ] 17. [L1–L2, 0.9.97.120] Test Lab on a phone: no floating 🐞 upright (⋯ has the Test Lab tile); sideways a small

@@ -49,6 +49,11 @@ export function showFirstTips(): void {
   let anchor: HTMLElement | null = null;
   function place(): void {
     if (!bubble || !anchor) return;
+    // LAB3: a phone held sideways shows the video and one big "Watch fullscreen" (or a cramped room): the tip waits
+    // hidden until the phone is upright again, where its anchors are.
+    const sideways = document.documentElement.classList.contains('phone') && document.documentElement.classList.contains('sideways');
+    bubble.style.display = sideways ? 'none' : '';
+    if (sideways) return;
     const r = anchor.getBoundingClientRect();
     const b = bubble.getBoundingClientRect();
     const below = r.bottom + 12 + b.height < innerHeight;
@@ -66,6 +71,8 @@ export function showFirstTips(): void {
     if (step === 0 && !bubble && waiting) return void setTimeout(show, 700);
     const tips = shown();
     if (step >= tips.length) return finish();
+    // LAB3: held sideways on a phone the tips' anchors are hidden or cramped; start once it is upright.
+    if (!bubble && document.documentElement.classList.contains('phone') && document.documentElement.classList.contains('sideways')) return void setTimeout(show, 700);
     const tip = tips[step]!;
     anchor = tip.anchors.map((sel) => document.querySelector(sel)).find(visible) ?? null;
     if (!anchor) return finish();
