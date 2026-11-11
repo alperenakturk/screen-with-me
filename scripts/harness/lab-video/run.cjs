@@ -136,7 +136,7 @@ const until = async (fn, ms = 8000) => {
   // ---- Slow network: a ping waits ----
   await until(async () => (await transport()) === 'ws');
   await run('net.slow', '700');
-  const slowLine = L('Lab slowness', 'Lab yavaşlığı');
+  const slowLine = L('Lab slowness', 'Pano yavaşlığı');
   check(/^🟡 .*700/.test(String(await statusLine(slowLine))), '📊 shows the lab slowness (🟡, 700 ms)', String(await statusLine(slowLine)));
   const pingAt = Date.now();
   await page.evaluate(() => document.getElementById('chat-input') && (document.getElementById('chat-input').value = 'slow hello'));

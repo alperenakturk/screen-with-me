@@ -207,7 +207,8 @@ html.phone .lab-drawer {
 
 .debug-facts {
   display: grid;
-  grid-template-columns: auto 1fr;
+  /* LAB3: a long name ("Clock difference (my clock against the server's)") wraps instead of squeezing the values. */
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
   gap: 2px 10px;
   margin: 0;
 }

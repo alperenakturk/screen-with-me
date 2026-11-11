@@ -12764,6 +12764,11 @@ html.sideways.ph-room .room.has-item :is(.together-strip, .ph-cams, [data-panel=
 html.sideways.ph-room .room:not(.has-item) {
   grid-template-columns: minmax(0, 1fr) min(46%, 380px);
 }
+/* LAB3: the empty box takes the column's full height (a 16:9 box cut its steps off on an iPhone SE). */
+html.sideways.ph-room .room:not(.has-item) .player-wrap {
+  aspect-ratio: auto;
+  height: 100dvh;
+}
 
 html.sideways.ph-room .room.has-item .ph-turn {
   grid-column: 2;

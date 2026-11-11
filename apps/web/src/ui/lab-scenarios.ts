@@ -290,7 +290,7 @@ const SCENARIOS: Scenario[] = [
   },
   {
     id: 'selfTest',
-    title: { en: 'Lab self-test: a scenario that fails on purpose', tr: 'Lab kendini dener: bilerek bozulan senaryo' },
+    title: { en: 'Lab self-test: a scenario that fails on purpose', tr: 'Pano kendini dener: bilerek bozulan senaryo' },
     help: {
       en: 'Its second step fails on purpose: it must show ✗ with the reason and skip the rest (–), and the room keeps working.',
       tr: 'İkinci adımı bilerek bozulur: nedeniyle birlikte ✗ göstermeli, kalanları atlamalı (–) ve oda çalışmaya devam etmeli.',

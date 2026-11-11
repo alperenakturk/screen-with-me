@@ -231,6 +231,10 @@ jobs:
       - name: Phone cameras
         run: node scripts/harness/cam-phone/run.cjs http://localhost:8787
 
+      # Card LAB3: a phone held sideways (the first-time tips wait, an iPhone SE's empty room fits).
+      - name: Phone held sideways
+        run: node scripts/harness/phone-sideways/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true

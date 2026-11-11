@@ -485,6 +485,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   are already visible to anyone in the room), the avatar is a button next to the name (`openAvatarDialog`), one
   "Odaya gir". The first time in any room (`localStorage` `tipsSeen`) `ui/first-tips.ts` shows 3 bubbles: 🔗 Davet et
   → the link box (＋ on phones) → 🎙 Sese katıl ("Sonraki" / "Anladım", ✕ / Esc end them; not in the shell / TV).
+  LAB3: on a phone held sideways (`html.phone.sideways`) a tip waits hidden (and the first one waits to start) until the
+  phone is upright again, so it never covers "Watch fullscreen"; the sideways empty room's box takes the column's full
+  height (`.player-wrap` `aspect-ratio: auto`, `100dvh`), so an iPhone SE fits it. Harness `phone-sideways` (site job).
   Extension install while the "Filme git" card waits: the extension has the `scripting` permission and on
   `onInstalled` (`install`) injects `site-bridge.js` into open site tabs; the site watches `data-swm-extension` and
   redraws the card ("✓ Eklenti kuruldu!"). Store-time follow-up: a one-click store link on that card.
@@ -1272,7 +1275,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   upright there is no floating 🐞, ⋯ More / the Shorts ⋯ has a `.ph-lab-tile` that clicks it and ⋯ is ringed red on
   errors; held sideways with a video a 34 px 🐞 sits bottom right beside the video, none in fullscreen (the rail's foot is full on an
   iPhone SE); the tile reads "Test Lab · errors" while there are errors; rules in
-  `test-lab.css`, `labTile` in `phone-room.ts`, checks in the test-lab harness) or
+  `test-lab.css`, `labTile` in `phone-room.ts`, checks in the test-lab harness; LAB3: in Turkish the lab is "Test Panosu"
+  everywhere (drawer, tile, "Pano: …" commands; the glossary's name), the facts' name column is `fit-content(45%)` so long
+  names wrap, and a touch screen without a mouse shows "🔎 Commands" instead of "⌘ Ctrl+K") or
   Ctrl+Shift+D opens a drawer on the right (`--lab-w`, the page makes room with `html.lab-open` so it never covers the
   rail; in real fullscreen it moves into the fullscreen element on the left; on a phone a bottom sheet); tabs 📊 Status
   (card 12's facts + hook lines + a 60 s drift graph + switches + errors), 👥 🎬 🎮 🧪 🖥 (the commands registered for

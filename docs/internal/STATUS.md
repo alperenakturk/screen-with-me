@@ -366,7 +366,7 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
   phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
-- [ ] **Lane A, after 0.9.97.120 (stopped 10 Nov for the usage limit; continue from here).** Pre-existing items the
+- [x] **Lane A, after 0.9.97.120 (done in LAB3, 11 Nov; the games' own "yerel lab sunucusu" lines are Game Studio's).** Pre-existing items the
   LABFAB first look found (not fixed, need cards from the Planner): (1) phone sideways with a video: the first-time tip
   bubble covers "Watch fullscreen" (iPhone SE: fully); (2) iPhone SE sideways, empty room: "No video yet" and "Run a sync
   test" cut off (fit rule); (3) the Test Lab drawer on a phone: the "Font shown" value cut off at the right, "⌘ Ctrl+K"
@@ -504,6 +504,13 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
 - [ ] W121. Laptop (1366 and a big screen): open Snack Bar from 🎮. Its window covers the chat column from the top
   down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
   top bar, resize it from the corner, then double-click the top bar: it goes back to the column.
+
+**LAB3 (lane A: a phone held sideways, the Test Panosu name).**
+- [ ] M1. Phone (new browser or Test Lab "start as a first-time visitor"): enter a room, a tip shows; turn the phone
+  sideways with a video playing: no tip over "Watch fullscreen"; upright again: the tip is back.
+- [ ] M2. Small phone (iPhone SE size) sideways in an empty room: "No video yet", both steps and "Run a sync test" fit.
+- [ ] M3. Turkish, Test Lab on a phone: it says "Test Panosu" (⋯ tile and the drawer), the facts list's values have
+  room, and the top button says "🔎 Komutlar".
 
 **0.9.97.120 (lane A: Test Lab 🐞 on phones; with the Lab on).**
 - [ ] L1. Phone upright in a room: no floating 🐞 anywhere. Open ⋯: a "🐞 Test Lab / Test Panosu" tile opens the Lab.
