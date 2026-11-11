@@ -112,6 +112,13 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.123',
+    kinds: ['classics', 'sea', 'duel'],
+    badge: 'updated',
+    tr: 'Telefonda daha düzenli lobiler ve masalar\n“Stub’a (bota) karşı oyna”: Stub kim, artık yazıyor\nDüello kelimeleri sayfanın dilinde başlıyor',
+    en: 'Tidier lobbies and tables on phones\n“Play against Stub (our bot)” says who Stub is\nDuel words start in your page’s language',
+  },
+  {
     v: '0.9.97.117',
     kinds: ['classics'],
     badge: 'updated',

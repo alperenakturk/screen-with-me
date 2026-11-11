@@ -16,6 +16,25 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.123 — 11 Nov
+- Games read better on phones and in other languages:
+  - Tic-tac-toe and Four in a Row: the "Waiting for an opponent" line wraps in full.
+  - Sideways phone: the Quiz and Last Heart rules show in full, and the Duel's lobby card no longer runs over its edge.
+  - Upright phone: the Classics shelf ends above the bottom edge.
+- Snack Bar:
+  - The stand you can buy stays in the list on a sideways phone.
+  - Long names wrap instead of ending in "…", and the cinema line reads "Cinema 1 · ★ 0".
+  - The "Closed until the film plays" note no longer covers the SNACK BAR sign.
+  - Turkish numbers use Turkish formats (0,5 · 6 B · 1,2 Mn).
+- "Play against Stub (our bot)" says who Stub is, and stays on phones; the eye chip says "👁 2 watching".
+- The Duel's words start in your page's language. Five Frames' letter boxes sit in the middle of each ticket, with a
+  wider Enter key.
+- The Four in a Row stand sits right under its board.
+- On a big screen, the column beside a Classics board is centred.
+- Plants still to find, empty letter boxes and the waiting Stub are easier to see on the picture themes.
+- Window Garden in Matinee has a dusk sky and a wooden window frame.
+- The Games hall's "What's new" is a few short lines.
+
 ### 0.9.97.121 — 10 Nov
 - On a computer, Snack Bar, Window Garden and Five Frames open in a window that lines up with the chat column: from its
   top down to just above the message box, so no cut-off strip of chat shows around it and you can still type.

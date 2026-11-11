@@ -1244,6 +1244,32 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Night stays dark and Matinee is light). Sea Battle's "Whole sea" lives in their board's `.sea-head` (re-added after
   `seatHead()` redraws it; the sea harness checks it sits outside the zoomed grid). Backgammon: dice 44 px, `.bg-die.used`
   struck through, `.bg-off-o` gets a light rim, the chosen `.cl-bot-level.on` is filled.
+  **QA2 games (0.9.97.123):**
+  - Classics:
+    - `.xox-status` clamps at two lines;
+    - the Four in a Row stand is `.four-board::after`;
+    - the wide layout centres its column with `1fr` rows at both ends;
+    - the picker's hover lift applies only under `(hover: hover)`;
+    - an upright phone's `.mt-bar` wraps, giving `.cl-bot` its own row.
+  - Lobby rules are no longer clamped on a sideways phone (lobby.css). `.duel-lobby` is `flex: 0 0 auto` with `safe
+    center`.
+  - Snack Bar:
+    - `shownRows` drops the locked "next" stand before an open one;
+    - `fitRows` on a sideways phone measures from the list's top to the window's bottom;
+    - `formatCoins(value, lang)` uses Turkish units and a decimal comma for `tr` (unit test);
+    - `.sb-rest` sits at the scene's bottom.
+  - Five Frames:
+    - `.ff-row` is `30px 1fr 30px`;
+    - Enter spans 3 keys and ⌫ spans 1;
+    - `.ff-result` wraps;
+    - `.ff-title` is hidden except on phones.
+  - The Duel sends `lang` = the page language once, when I sit alone at a fresh table.
+  - Texts: `classics.bot` / sea `bot` say "Stub (our bot)"; watchers show as `watchShort` "👁 {n} watching"; `hub.title`
+    reads "Games hall".
+  - What's new: each `\n` in a GAME_NEWS note is one bullet (a phone shows two).
+  - ART-S: `art/stub/small.svg` and the garden scene's Matinee variables (garden.css). Checks: snack-bar (sign clear,
+    cinema line, sideways stands), table-how (hall title, bullets), five-frames, side-games-polish (scale 1 since
+    .121).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the

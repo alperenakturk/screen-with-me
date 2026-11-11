@@ -732,6 +732,10 @@ these into a Sidelit-specific list.
 
 **Before the 1.0 store submission: the extension in Edge, Brave and Opera** (zip from the site, a friend in Chrome, a
 legal demo player page such as a Video.js or Plyr demo for the film page). For each browser:
+- [ ] G22. Games on phones (0.9.97.123): on a sideways phone open Quiz and Last Heart: the rules read in full. Open the
+  Duel: its card fits. On an upright phone open Classics: the six cards end above the bottom. XOX: "Stub’a (bota) karşı
+  oyna" shows with Kolay / Orta, and "👁 0 izliyor". Snack Bar sideways: the popcorn machine is in the list; in Turkish the
+  numbers read 0,5 / 6 B. Duel in Turkish: "Kelime dili" starts at Türkçe.
 - [ ] Edge · [ ] Brave · [ ] Opera — 1. install: Developer mode → Load unpacked (`edge://extensions`,
   `brave://extensions`, `opera://extensions`); the icon and popup appear.
 - [ ] 2. room on the site: friend joins; YouTube plays; play / pause / seek stay in sync both ways.
