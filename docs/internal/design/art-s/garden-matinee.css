@@ -1,0 +1,13 @@
+/* ART-S #5: Window Garden in Matinee (for apps/web/src/games/garden.css, Game Studio). The window read washed out: the
+   wall was almost the panel's cream, the frame faint, the dusk sky upside down (ART-L's sill values put the peach on top)
+   and the moon, cream at an opacity, had been turned into ink by ART-L's "faint marks" rule. Scoped to the garden scene,
+   so the tutorial pictures keep their own values. */
+:root[data-theme='matinee'] .wg-scene { background: #d6c6aa; }
+:root[data-theme='matinee'] .wg-scene-art {
+  --al-120e27: #d6c6aa; /* the wall: a warm wainscot, one clear step below the panel */
+  --al-3a2e57: #7a6550; /* the window frame and its bar: dark wood */
+  --als-1a2150: #5f7fb3; /* the sky, top: dusk blue */
+  --als-2a2257: #f0c08e; /* the sky, bottom: the warm horizon */
+  --al-1d2353: #7388ae; /* the disc that cuts the moon into a crescent = the sky's colour at the moon's height */
+  --alg-fff3d6: #fff3d6; /* the moon stays cream */
+}
