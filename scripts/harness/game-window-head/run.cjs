@@ -460,12 +460,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.waitForFunction(() => !!window.__swmLab && !!document.querySelector('#media-input'), null, { timeout: 20000 });
     await wait(1200);
     await load(page, WEBM);
-    await openGame(page, 'snack');
-    const b = await box(page);
-    const pf = await panelFit(page);
-    check(b.mode === 'float' && !b.overVideo && pf.top && pf.aboveInput, `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf });
-    await page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
-    await wait(300);
+    await wait(1500);
     await page.evaluate(() => document.querySelector('.fs-dock #dock-game, .fs-dock .game-btn')?.click());
     const hall = await until(() => page.evaluate(() => {
       const m = document.getElementById('game-menu');
@@ -474,6 +469,12 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       return { whole: r.top >= 0 && r.bottom <= innerHeight + 1 && m.scrollHeight <= m.clientHeight + 1, r: [r.top, r.bottom].map(Math.round) };
     }), 3000);
     check(!!hall && hall.whole, `${L} QA2: the rail's 🎮 hall shows whole`, hall);
+    await page.keyboard.press('Escape');
+    await wait(300);
+    await openGame(page, 'snack');
+    const b = await box(page);
+    const pf = await panelFit(page);
+    check(b.mode === 'float' && !b.overVideo && pf.top && pf.aboveInput, `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf });
     await ctx.close();
   }
   // A computer: labels in a table's head where they fit, the paused note under the head (not over its buttons), the gap
@@ -481,7 +482,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
   {
     const { ctx, page, errors } = await room(browser, { width: 1366, height: 768 });
     await load(page, WEBM);
-    await page.evaluate(() => document.querySelector('#theater video')?.play());
+    await page.evaluate(() => void document.querySelector('#theater video')?.play().catch(() => {}));
     await openGame(page, 'snack');
     const gap = await page.evaluate(() => Math.round(document.getElementById('game-stage').getBoundingClientRect().left - document.getElementById('media-form').getBoundingClientRect().right));
     check(gap >= 8, '1366 QA2: a side game keeps a gap to "Play now"', { gap });

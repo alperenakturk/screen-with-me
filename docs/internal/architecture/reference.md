@@ -934,14 +934,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   sliver of chat shows and the message box stays free (0.9.97.117, Game Studio's review); otherwise the column right of the theater, under the top bar, over the side panel,
   right-aligned at its top, as big as the column allows up to `maxSize` and never below `minSize` (a column narrower
   than that: the window sticks out over the video's edge by the difference); over YouTube it shrinks to the column (or
-  the largest strip beside the player, `largestClear`) so it never covers the player; tablets, phones and the video's
-  fullscreen use `SPOT_HOME`. Over YouTube in cinema mode (`cinemaOn`: the player fills the page, "under it" would be
+  the largest strip beside the player, `largestClear`) so it never covers the player; phones and the video's
+  fullscreen use `SPOT_HOME`. QA2 (owner's rule "never over the video", 0.9.97.122): tablets line up with the side panel
+  too (sideways: the right column like a computer; upright: the whole panel under the video, down to the message box,
+  the game fitted to `MIN_FIT`); beside the video the window keeps `EDGE` from `#media-form` ("Play now"); a window at
+  its home follows the theater's size (a `ResizeObserver`: the first frame grows the player). A side game leaves cinema
+  mode like a YouTube table (T puts it away again). Over YouTube in cinema mode (`cinemaOn`: the player fills the page, "under it" would be
   below the screen) a game brought up leaves cinema mode (`#side-toggle`), and turning cinema on with a game open puts
   the game away, as fullscreen does (YTG). Opening any game ends the room's intro (`endIntro`: `.swm-intro` over the video took the first
   click on a game's head; room.ts's observer sees it leave). **A table pauses the video** (`autoPause`, 0.9.97.114): opening a table (not coming back
   to it after a reload) in the video's place while the video plays calls the room's `pauseVideo` (`room.ts`: the player's
   own pause, which the sync engine sends to everyone; nothing in a host-only room for a guest), once, with the note
-  `game.pausedForGame` by the head's 🎮; closing the table doesn't play it again.
+  `game.pausedForGame` under the head (`flashHint(…, below)`, QA2: by the 🎮 it covered ?, 🎮 and Leave); closing the
+  table doesn't play it again. **The head's words** (`fitHeadLabels`, QA2): `.head-labels` on the stage shows each
+  button's words whenever they fit beside the game's name (else icons only; never on a phone). **A phone's head** (QA2,
+  Planner's pick 1): one row, the video thumbnail is "back" (a "‹" on it; "‹ Back to video" only with no video), the
+  game's name with "…", the "?" (`tableHowTo` puts it in `.game-head-slot` on phones too), 🎙, 🎮 and, upright with a
+  table, ⋯ (`game-more`): Leave / Close move into a `.live-menu` sheet (`phoneHead`, `tightHead`); sideways they sit in
+  the head.
   `#game-stage[data-place]` mirrors the mode for the games' CSS. **The free window:** positioned in `posRoom` (the page,
   or the fullscreen view; tablets clear of the chat), its size limited by `area` (the strip beside a YouTube player);
   over YouTube `clearOfPlayer` settles it beside the player on the nearest side that fits, keeping its side while dragged
@@ -955,8 +965,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   click on the head (or `gameWindow.reset`) forgets the spot. **🎮 in the head** (`hubFromHead`): the hall moves into a
   fixed `.head-game-wrap` (inside `document.fullscreenElement` while there is one); from a free window it slides out of
   the window's left side, level with its top (its right side when there is no room), elsewhere it hangs under the 🎮
-  (`data-side` on the wrap); a drag closes it. Test Lab: `gameWindow.reset`, `gameWindow.hall`, `gameWindow.autoPause` and a 📊 status line
-  (placement, home, where the hall opened, the last automatic pause). Harness: `scripts/harness/game-window-head` (CI `games-more`).
+  (`data-side` on the wrap); a drag closes it. On a tablet the rail's 🎮 hangs the hall from the same fixed wrap left of
+  the button, moved up to show whole (`hubBeside`, QA2: in the video's frame its second row was cut); a sideways phone's
+  hall sheet takes the full height with six cards a row. Test Lab: `gameWindow.reset`, `gameWindow.hall`,
+  `gameWindow.autoPause`, `gameWindow.more` (the phone head's ⋯) and a 📊 status line (placement, home, where the hall
+  opened, head words, the last automatic pause). Harness: `scripts/harness/game-window-head` (CI `games-more`).
   Game engines: kind `xox` | `four` (`games/match.ts`). Two-player board games share a shape (`games/board.ts`
   `BoardState`, rules `GAME_RULES`: `xox.ts`, `four.ts`: 7×6, pieces drop into a column, four in a row wins;
   `move.cell` is the column in Connect Four). The first arrival sets the kind; another kind cannot join that code

@@ -685,6 +685,11 @@ export function createGameStage(opts: StageOptions) {
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
   });
+  // QA2: a window still at its home follows the page when the video box changes size (a video's first frame grows the
+  // player; on an upright tablet the side panel under it moves down), so it never ends up over the video.
+  new ResizeObserver(() => {
+    if (mode === 'float' && !spot && !stage.hidden && !drag) placeFloat();
+  }).observe(theater);
   // Fullscreen without the Fullscreen API (iPhone, the film page) is a class on the theater.
   new MutationObserver(() => {
     const fs = inFullscreen();
