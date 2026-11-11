@@ -27,8 +27,10 @@ export const TEXT = { '#fff3d6': '#26201a', '#fff8ea': '#26201a', '#cfc8ea': '#5
 // Solid cream shapes are objects (popcorn, cards, dice, pieces) and stay; a solid cream outline becomes a muted line.
 export const GHOST = { '#fff3d6': '#3a2f25', '#fff4d6': '#3a2f25', '#fffaf0': '#3a2f25', '#cfc8ea': '#3a2f25', '#c9cbe0': '#3a2f25' };
 export const LINE = { '#fff3d6': '#564b3e' };
-// Window Garden's window: a soft dusk instead of the night navy (the moon still shows).
-export const SILL = { '#2a2257': '#9fb2cc', '#1a2150': '#e6c7a6' };
+// Window Garden's window: a dusk instead of the night navy. The garden's own Matinee block (art-s/garden-matinee.css)
+// also darkens the wall and frame and keeps the moon cream; these values are the defaults the tutorials share.
+// ART-S fix: the gradient's top stop is #1a2150, the bottom #2a2257, so blue goes on top and the warm horizon below.
+export const SILL = { '#1a2150': '#5f7fb3', '#2a2257': '#f0c08e' };
 
 const v = (prefix, hex) => `--${prefix}-${hex.slice(1).toLowerCase()}`;
 function tint(svg, sill = false) {
