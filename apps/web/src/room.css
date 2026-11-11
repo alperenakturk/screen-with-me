@@ -6638,7 +6638,8 @@ html.in-room .topbar-right > .lang {
   grid-template-columns: 210px minmax(0, 1fr);
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: var(--surface);
+  /* QA2-A #12: a see-through --surface (scene themes) let the room show through behind the settings. */
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
   box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
   overflow: hidden;
   animation: r-in 0.18s ease-out;
@@ -6677,9 +6678,11 @@ html.in-room .topbar-right > .lang {
   background: var(--surface-2);
 }
 
+/* QA2-A #12: a bar in the accent marks the chosen category (on Lokum the 20 % gold read brown-grey). */
 .settings-nav button[aria-current='true'] {
   color: var(--text);
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .settings-main {

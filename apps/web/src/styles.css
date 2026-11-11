@@ -1324,3 +1324,11 @@ main:focus,
 #theater:focus {
   outline: none;
 }
+
+/* QA2-A #12: selected text in a box (the join card's remembered name) in the theme's accent, never the browser's dark
+   blue, which vanished on the dark scene themes. */
+input::selection,
+textarea::selection {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text);
+}

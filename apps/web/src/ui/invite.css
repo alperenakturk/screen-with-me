@@ -65,10 +65,12 @@
   cursor: pointer;
 }
 
+/* QA2-A #12: in the dark scene themes the card colour was darker than the track, so the chosen tab looked pressed in
+   or switched off: the chosen tab is lit with the theme's accent instead, on every theme. */
 .invite-tab[aria-selected='true'] {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--accent) 26%, var(--surface-2));
   color: var(--text);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .invite-pane {

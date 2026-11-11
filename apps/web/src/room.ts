@@ -3448,7 +3448,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const inviteLabel = () => t('inviteButton');
   const emptyInviteLabel = () => t(canShare ? 'share' : 'copyInvite');
   const inviteText = el('span', { class: 'invite-text' }, inviteLabel());
-  const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, el('span', { 'aria-hidden': 'true' }, '🔗'), inviteText);
+  const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, icon('link'), inviteText);
   document.querySelector('.topbar-right')?.prepend(copyEl);
   // Card 6 (owner's pick C): "⋯ More" right of Invite holds the room's less-used things (the phone's ⋯ has the same).
   if (!tv) {
