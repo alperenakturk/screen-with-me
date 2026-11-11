@@ -51,8 +51,9 @@
 .sb-scene-art svg { width: 100%; height: 100%; }
 .sb-scene:active:not(:disabled) { transform: scale(0.985); }
 .sb-idle .sb-scene { filter: saturate(0.55) brightness(0.8); }
+/* 0.9.97.12x (QA2): the closed note sits low over the counter, clear of the SNACK BAR sign at the top of the scene. */
 .sb-rest {
-  position: absolute; left: 50%; top: 8px; transform: translateX(-50%); max-width: calc(100% - 16px); box-sizing: border-box;
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); max-width: calc(100% - 16px); box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 12px; border-radius: 10px;
   background: rgba(20, 16, 43, 0.88); box-shadow: 0 0 0 1px var(--sb-line); text-align: center; pointer-events: none;
 }
@@ -305,3 +306,8 @@ html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
   #game-stage .sb-scene { height: 64px; }
   #game-stage .sb-row { min-height: 38px; }
 }
+
+/* 0.9.97.12x (QA2): an upright phone gives the cinema line its own row under the buttons too (it showed "#1 · …"). */
+html.phone:not(.sideways) #game-stage .sb-foot { flex-wrap: wrap; row-gap: 4px; }
+html.phone:not(.sideways) #game-stage .sb-cinema { order: 2; flex: 1 0 100%; }
+html.phone:not(.sideways) #game-stage .sb-foot > :not(.sb-cinema):last-child { margin-left: auto; }
