@@ -287,7 +287,8 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
   border: 2px solid var(--border); border-radius: 16px; background: var(--surface); color: inherit; font: inherit; cursor: pointer; text-align: center;
   transition: transform 0.15s, border-color 0.15s;
 }
-#game-stage .mt .cl-card:not(:disabled):hover { transform: translateY(-2px); border-color: var(--accent); }
+/* QA2 (14): only a mouse lifts a card; a touch screen keeps :hover after a tap, which left one card ringed and raised. */
+@media (hover: hover) { #game-stage .mt .cl-card:not(:disabled):hover { transform: translateY(-2px); border-color: var(--accent); } }
 #game-stage .mt .cl-card.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent); }
 #game-stage .mt .cl-card:disabled { opacity: 0.5; cursor: default; }
 #game-stage .mt .cl-card-art { display: block; width: 100%; }
@@ -300,6 +301,9 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
   #game-stage .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 10px) / 2); }
   #game-stage .mt .cl-card-players { display: none; }
 }
+/* QA2 (4): an upright phone's 2 × 3 grid ends above the bottom edge (smaller pictures, a little room below). */
+html.phone:not(.sideways) #game-stage .mt .cl-picker { justify-content: safe center; padding-bottom: 12px; box-sizing: border-box; }
+html.phone:not(.sideways) #game-stage .mt .cl-card-art svg { max-height: 72px; }
 /* GPRO (layout audit): a sideways phone shows all six cards in one row (names only), so nothing is cut off. */
 html.phone.sideways #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; gap: 6px; }
 html.phone.sideways #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
