@@ -907,6 +907,8 @@ export const tr: Record<I18nKey, string> = {
   'phone.turn.upright': 'Telefonu dik tut',
   'phone.plus.fullscreen': 'Tam ekran',
   'phone.add.title': 'Video ekle',
+  'phone.more.lab': 'Test Lab',
+  'phone.more.labError': 'Test Lab · hata var',
   'phone.more.invite': 'Davet et',
   'phone.more.copied': 'Davet linki kopyalandı',
   'more.button': 'Diğer',
