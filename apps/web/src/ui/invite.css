@@ -161,6 +161,17 @@ html.phone.sideways .invite-dialog > .invite-pane {
   gap: 10px;
 }
 
+/* The ✕ stays in the window's top-right corner (in the grid it ended the left column). */
+html.phone.sideways .invite-dialog {
+  position: relative;
+}
+
+html.phone.sideways .invite-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
 html.phone.sideways .invite-head h3 {
   font-size: 16px;
 }

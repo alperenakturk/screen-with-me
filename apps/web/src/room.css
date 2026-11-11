@@ -12929,6 +12929,10 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
 }
 
 /* QA2-A #4: "Feedback" is a button but reads as one of the links: the same purple and underline. */
+.settings-links a {
+  color: var(--accent-hover);
+}
+
 .settings-links .link-btn {
   font-size: inherit;
   font-weight: inherit;
@@ -13009,8 +13013,9 @@ html.phone .settings-main::after {
   pointer-events: none;
 }
 
-/* QA2-A #4: the phone's full-page Settings keeps its "⚙️ Settings" title above the category chips. */
-html.phone .settings-nav h3 {
+/* QA2-A #4: the phone's full-page Settings keeps its "⚙️ Settings" title above the category chips (upright only: held
+   sideways the categories are a column and the title already sits on top of it). */
+html.phone:not(.sideways) .settings-nav h3 {
   display: block;
   flex: 1 0 100%;
   margin: 2px 6px 4px;

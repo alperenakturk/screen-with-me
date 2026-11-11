@@ -823,8 +823,9 @@ button.nav-link {
 }
 
 @media (max-width: 860px) {
-  /* QA2-A: the Extension link keeps its label (a bare 🧩 on a tablet read as a different thing); phones hide it. */
-  .topbar .nav-link:not([href='/extension.html']) span:last-child {
+  /* QA2-A: the Extension link keeps its label (a bare 🧩 on a tablet read as a different thing; phones hide it), and the
+     profile button keeps its picture (the avatar is its last span: it showed as an empty circle on a tablet). */
+  .topbar .nav-link:not([href='/extension.html'], .profile-btn) span:last-child {
     display: none;
   }
 }
