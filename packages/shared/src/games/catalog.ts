@@ -112,11 +112,18 @@ export interface GameNews {
 /** Newest first. Add one line per release that changes games. */
 export const GAME_NEWS: readonly GameNews[] = [
   {
+    v: '0.9.97.123',
+    kinds: ['classics', 'sea', 'duel'],
+    badge: 'updated',
+    tr: 'Telefonda daha düzenli lobiler ve masalar\n“Stub’a (bota) karşı oyna”: Stub kim, artık yazıyor\nDüello kelimeleri sayfanın dilinde başlıyor',
+    en: 'Tidier lobbies and tables on phones\n“Play against Stub (our bot)” says who Stub is\nDuel words start in your page’s language',
+  },
+  {
     v: '0.9.97.117',
     kinds: ['classics'],
     badge: 'updated',
-    tr: 'Klasikler: tavlanın nasıl oynanır kartları artık altın halkalı pulları ve kalan yolu anlatıyor, sayaçlar ne saydığını söylüyor; oyunlar odanın temasına uyuyor.',
-    en: 'Classics: backgammon’s How to play cards now explain the gold-ringed checkers and how far you have left, the counters say what they count; the games follow the room’s theme.',
+    tr: 'Tavla: nasıl oynanır kartları altın halkalı pulları ve kalan yolu anlatıyor\nSayaçlar ne saydığını gösteriyor (🏆 galibiyet)\nOyunlar odanın temasına uyuyor',
+    en: 'Backgammon: How to play explains the gold rings and the pips left\nCounters say what they count (🏆 wins)\nGames follow the room’s theme',
   },
   {
     v: '0.9.97.106',

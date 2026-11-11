@@ -190,6 +190,17 @@ describe('Snack Bar save', () => {
   });
 });
 
+describe('formatCoins in Turkish (QA2)', () => {
+  it('uses a decimal comma and Turkish units', () => {
+    expect(formatCoins(0.5, 'tr')).toBe('0,5');
+    expect(formatCoins(999, 'tr')).toBe('999');
+    expect(formatCoins(6000, 'tr')).toBe('6 B');
+    expect(formatCoins(1_234_567, 'tr')).toBe('1,23 Mn');
+    expect(formatCoins(34_500_000_000, 'tr')).toBe('34,5 Mr');
+    expect(formatCoins(6000)).toBe('6K');
+  });
+});
+
 describe('formatCoins', () => {
   it('short amounts in every language', () => {
     expect(formatCoins(0)).toBe('0');

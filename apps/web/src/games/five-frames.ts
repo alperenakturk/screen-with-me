@@ -447,7 +447,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
       {
         id: 'fiveFrames.answer',
         title: { en: "Five Frames: show today's answer", tr: 'Beş Kare: bugünün cevabını göster' },
-        help: { en: "Writes the answer of the shown day and language in the lab's log (nothing in the game changes).", tr: 'Görünen günün ve dilin cevabını lab kaydına yazar (oyunda hiçbir şey değişmez).' },
+        help: { en: "Writes the answer of the shown day and language in the lab's log (nothing in the game changes).", tr: 'Görünen günün ve dilin cevabını Test Panosu kaydına yazar (oyunda hiçbir şey değişmez).' },
         tab: 'games',
         where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
         available: () => !!answer || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },

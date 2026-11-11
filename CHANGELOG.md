@@ -26,6 +26,26 @@ games' tip jar, cuttings and badges.
 - On a phone the game's top bar is one tidy row: the small video (tap it to go back), the game's name, ?, the
   microphone, 🎮 and ⋯, which holds "Leave table" and "Close table". Every table's "?" is up there now.
 - On a laptop a side game's window keeps a small gap to "Play now".
+### 0.9.97.123 — 11 Nov
+- Games read better on phones and in other languages:
+  - Tic-tac-toe and Four in a Row: the "Waiting for an opponent" line wraps in full.
+  - Sideways phone: the Quiz and Last Heart rules show in full, and the Duel's lobby card no longer runs over its edge.
+  - Upright phone: the Classics shelf ends above the bottom edge.
+- Snack Bar:
+  - The stand you can buy stays in the list on a sideways phone.
+  - Long names wrap instead of ending in "…", and the cinema line reads "Cinema 1 · ★ 0".
+  - The "Closed until the film plays" note no longer covers the SNACK BAR sign.
+  - Turkish numbers use Turkish formats (0,5 · 6 B · 1,2 Mn).
+- "Play against Stub (our bot)" says who Stub is, and stays on phones; the eye chip says "👁 2 watching".
+- The Duel's words start in your page's language. Five Frames' letter boxes sit in the middle of each ticket, with a
+  wider Enter key.
+- The Four in a Row stand sits right under its board.
+- On a big screen, the column beside a Classics board is centred.
+- Plants still to find, empty letter boxes and the waiting Stub are easier to see on the picture themes.
+- In Matinee, Window Garden has a dusk sky and a wooden window frame, and the Games hall's covers are warm posters
+  instead of dark blocks.
+- The Games hall's "What's new" is a few short lines.
+
 ### 0.9.97.122 — 11 Nov
 - On a computer the room fills the window from top to bottom: the video's card and the chat end at the window's foot,
   with no empty band below them (while a game is open the room keeps its usual size, so the game fits whole), and the

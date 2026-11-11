@@ -63,11 +63,12 @@ const TEXT = {
     notReady: 'Not ready',
     rematch: 'Play again',
     sit: 'Take the seat',
-    bot: 'Play Stub:',
+    bot: 'Play against Stub (our bot):',
     botEasy: 'Easy',
     botMedium: 'Medium',
     botLeave: 'Stub leaves',
     watchers: 'Watching',
+    watchShort: '👁 {n} watching',
     noWatchers: 'Nobody is watching.',
     left: '{n} ships left',
     leftOne: '1 ship left',
@@ -122,11 +123,12 @@ const TEXT = {
     notReady: 'Hazır değilim',
     rematch: 'Yeniden oyna',
     sit: 'Yere otur',
-    bot: 'Stub’a karşı:',
+    bot: 'Stub’a (bota) karşı:',
     botEasy: 'Kolay',
     botMedium: 'Orta',
     botLeave: 'Stub kalksın',
     watchers: 'İzleyenler',
+    watchShort: '👁 {n} izliyor',
     noWatchers: 'İzleyen yok.',
     left: '{n} gemi kaldı',
     leftOne: '1 gemi kaldı',
@@ -478,7 +480,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const s = state!;
     const a = s.players[0];
     const b = s.players[1];
-    score.textContent = `${a?.wins ?? 0} : ${b?.wins ?? 0}`;
+    score.textContent = `${a?.wins ?? 0} – ${b?.wins ?? 0}`; // QA2 (14): the same "0 – 0" as the Classics
     score.setAttribute('aria-label', `${a?.name ?? '?'} ${a?.wins ?? 0}, ${b?.name ?? '?'} ${b?.wins ?? 0}`);
     // Stub: offered to a seated player while the other seat is free (or Stub's), not mid-battle.
     const me = mySeat();
@@ -499,7 +501,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
         opp?.bot && s.phase !== 'play' ? leave : '',
       );
     }
-    watchOpen.textContent = `👁 ${s.watchers.length}`;
+    // QA2 (12): the chip says what the eye counts (people watching, not playing).
+    watchOpen.textContent = tx('watchShort', { n: s.watchers.length });
     watchOpen.setAttribute('aria-label', `${tx('watchers')}: ${s.watchers.length}`);
     watchPop.replaceChildren(
       el('b', {}, tx('watchers')),
@@ -681,9 +684,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     commands: [
       quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
       { id: 'sea.bot', title: { en: 'Sea Battle: Stub takes the other seat', tr: 'Amiral Battı: Stub diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, available: () => (!!state && state.seat >= 0) || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
-      { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel lab sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
+      { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel test sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
       { id: 'sea.zoom', title: { en: 'Sea Battle: zoom into the next quarter (phone view)', tr: 'Amiral Battı: sonraki çeyreğe yakınlaş (telefon görünümü)' }, help: { en: 'Shows the phone zoom on any screen: each run aims at the middle of the next quarter of their sea; Whole sea goes back.', tr: 'Telefondaki yakınlaşmayı her ekranda gösterir: her çalıştırmada rakibin denizinin sonraki çeyreğinin ortasına nişan alır; Bütün deniz geri döner.' }, tab: 'games' as const, available: () => (!!state && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, during the battle', tr: 'Amiral Battı masasında, savaş sırasında' }, run: () => { const q = zoomQ === null ? 0 : (zoomQ + 1) % 4; const half = size / 2; zoomQ = q; aimAt = (Math.floor(q / 2) * half + Math.floor(half / 2)) * size + (q % 2) * half + Math.floor(half / 2); render(); } },
-      { id: 'sea.reveal', title: { en: 'Sea Battle: show their fleet (this tab)', tr: 'Amiral Battı: rakibin filosunu göster (bu sekmede)' }, help: { en: 'Local lab server only: the other fleet shows faintly on their sea.', tr: 'Sadece yerel lab sunucusunda: rakibin filosu kendi denizinde silik görünür.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase !== 'over') || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'reveal' }) },
+      { id: 'sea.reveal', title: { en: 'Sea Battle: show their fleet (this tab)', tr: 'Amiral Battı: rakibin filosunu göster (bu sekmede)' }, help: { en: 'Local lab server only: the other fleet shows faintly on their sea.', tr: 'Sadece yerel test sunucusunda: rakibin filosu kendi denizinde silik görünür.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase !== 'over') || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'reveal' }) },
     ],
   }));
   // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).
