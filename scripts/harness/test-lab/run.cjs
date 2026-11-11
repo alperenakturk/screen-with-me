@@ -191,6 +191,16 @@ async function enterRoom(page, room, name = 'Robin') {
     return { ok: r.left >= 0 && r.right <= innerWidth + 1 && r.top > 0 && r.bottom <= innerHeight + 1, wide: document.documentElement.scrollWidth <= innerWidth };
   });
   check(fits.ok && fits.wide, 'iPhone 13: a bottom sheet that fits, no sideways scroll', JSON.stringify(fits));
+  // LAB3: a long fact name wraps instead of squeezing its value off the drawer; a touch screen gets a plain
+  // "🔎 Commands" button instead of "⌘ Ctrl+K".
+  const factCols = await pp.evaluate(() => {
+    const drawer = document.querySelector('.lab-drawer').getBoundingClientRect();
+    const dds = [...document.querySelectorAll('.lab-drawer .debug-facts dd')].map((d) => d.getBoundingClientRect()).filter((r) => r.width > 0);
+    return { n: dds.length, narrow: dds.filter((r) => r.width < drawer.width * 0.4 || r.right > drawer.right + 1).length };
+  });
+  check(factCols.n > 0 && factCols.narrow === 0, 'iPhone 13: every fact\'s value has room in the drawer (no squeezed or cut column)', JSON.stringify(factCols));
+  const cmdLabel = await pp.evaluate(() => document.querySelector('.lab-cmd-open')?.textContent ?? '');
+  check(!/Ctrl|⌘/.test(cmdLabel) && cmdLabel.includes('🔎'), 'iPhone 13: the command box button says what it is, no keyboard shortcut', cmdLabel);
 
   // LABFAB: in the room an upright phone has no floating 🐞 (it covered the player row, chat names and the Shorts
   // video): ⋯ More has a 🐞 tile that opens the drawer, ⋯ is ringed red on errors; held sideways a small 🐞 waits in
@@ -206,6 +216,13 @@ async function enterRoom(page, room, name = 'Robin') {
   check(!!labTile && /·/.test(await labTile.innerText()), 'iPhone 13 room: the tile says there are errors in words, not only red', labTile && (await labTile.innerText()));
   if (labTile) await labTile.tap();
   check(!!(await until(() => shown(pp, '.lab-drawer'))), 'iPhone 13 room: the tile opens the drawer');
+  // LAB3: in a room the drawer also lists the room's lines (long names such as "Clock difference (…)").
+  const roomCols = await pp.evaluate(() => {
+    const drawer = document.querySelector('.lab-drawer').getBoundingClientRect();
+    const dds = [...document.querySelectorAll('.lab-drawer .debug-facts dd')].map((d) => d.getBoundingClientRect()).filter((r) => r.width > 0);
+    return { n: dds.length, narrow: dds.filter((r) => r.width < drawer.width * 0.4 || r.right > drawer.right + 1).length };
+  });
+  check(roomCols.n > 8 && roomCols.narrow === 0, 'iPhone 13 room: every fact\'s value has room in the drawer (Font shown included)', JSON.stringify(roomCols));
   await pp.evaluate(() => document.querySelector('.debug-fab').click());
   await until(async () => !(await shown(pp, '.lab-drawer')));
   const clearOfAll = () => pp.evaluate(() => {
@@ -280,6 +297,22 @@ async function enterRoom(page, room, name = 'Robin') {
   await page.goto(`${SITE}/?debug=0`);
   await page.waitForTimeout(800);
   check(!(await page.$('#debug-panel-root')) && !page.url().includes('debug'), '?debug=0 turns it off');
+
+  // QA2-A #3: on a sideways tablet (touch, no mouse) the open drawer lies over the room; the room keeps its width.
+  {
+    const tab = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+    const tp = await tab.newPage();
+    await tp.goto(`${SITE}/?debug=1`);
+    await tp.waitForSelector('.debug-fab');
+    await enterRoom(tp, `lab-tab-${Date.now().toString(36)}`, 'Robin');
+    await tp.evaluate(() => { document.querySelector('.first-tip, .tip-bubble')?.remove(); });
+    const before = await tp.evaluate(() => Math.round(document.querySelector('.room').getBoundingClientRect().width));
+    await tp.evaluate(() => document.querySelector('.debug-fab').click());
+    await until(() => shown(tp, '.lab-drawer'));
+    const after = await tp.evaluate(() => ({ cls: document.documentElement.className, room: Math.round(document.querySelector('.room').getBoundingClientRect().width), pad: getComputedStyle(document.body).paddingRight }));
+    check(after.cls.includes('is-touch') && !after.cls.includes('has-mouse') && after.room === before && after.pad === '0px', 'sideways tablet: the open drawer lies over the room, the room keeps its width', JSON.stringify({ before, ...after }));
+    await tab.close();
+  }
 
   await browser.close();
   console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ Test Lab works');

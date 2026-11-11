@@ -215,7 +215,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
   let roomName: string | null = null;
   let info: { people?: string[]; count?: number; playing?: string | null } | null = null;
   const renderCode = () => {
-    roomCode.textContent = roomName ? `💾 ${roomName}` : friendlyRoomName(roomId);
+    roomCode.textContent = roomName ? `💾 ${roomName}` : friendlyRoomName(roomId, lang());
     const people = (info?.people ?? []).filter(Boolean);
     const count = info?.count ?? 0;
     app.querySelector<HTMLElement>('#join-invite')!.hidden = count === 0;
@@ -739,10 +739,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
           <div class="settings-sec" data-sec="room" hidden>
             <p class="settings-room"><b id="settings-room-name"></b> <span id="settings-room-count" class="muted"></span></p>
+            <p id="room-host-line" class="muted small" data-i18n="settings.youAreHost" hidden></p>
             <p id="save-status" class="small"></p>
             <form id="save-form" class="set-inline">
               <input id="save-name" maxlength="40" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" />
-              <button class="btn primary" id="save-submit"></button>
+              <button class="btn" id="save-submit"></button>
             </form>
             <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
           </div>
@@ -767,6 +768,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </div>
           </div>
           <div class="settings-sec" data-sec="schedule" hidden>
+            <p class="muted small" data-i18n="settings.youAreHost"></p>
             <p class="schedule-intro" data-i18n="settings.schedule"></p>
             <div class="schedule-now" id="schedule-now" hidden>
               <div class="schedule-now-text"><b id="schedule-now-time"></b><span id="schedule-now-left"></span></div>
@@ -786,10 +788,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="set-label" data-i18n="schedule.custom"></p>
             <div class="set-inline schedule-row">
               <input type="datetime-local" id="opt-start" aria-labelledby="settings-title" />
-              <button type="button" class="btn primary" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
+              <button type="button" class="btn" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
             </div>
           </div>
           <div class="settings-sec" data-sec="sound" hidden>
+            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <span aria-hidden="true">🔒</span>&nbsp;<a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice" data-i18n="settings.whoSees"></a></p>
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
               <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
@@ -797,7 +800,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="set-row"><span class="set-text"><b data-i18n="settings.devices"></b><span data-i18n="settings.devices.d"></span></span><button type="button" class="btn small-btn" id="settings-devices">🎛 <span data-i18n="settings.devices.btn"></span></button></div>
               <label class="set-row" id="settings-voiceask-row"><span class="set-text"><b data-i18n="settings.voiceAsk"></b><span data-i18n="settings.voiceAsk.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-voiceask" /></label>
             </div>
-            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice">🔒 <span data-i18n="settings.whoSees"></span></a></p>
           </div>
           <div class="settings-sec" data-sec="about" hidden>
             <p class="settings-about"><b>Sidelit</b> <span id="settings-version" class="muted"></span></p>
@@ -899,7 +901,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   function drawRoomTitle(): void {
     // An unsaved room shows its friendly name (0.9.93.2; the same for everyone, worked out from the id).
-    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId);
+    roomTitleName.textContent = roomSettings.saved && roomSettings.name ? roomSettings.name : friendlyRoomName(roomId, lang());
     // People, not connections: the same person's site tab + film tab count once; two people with the same name and
     // avatar count twice (R11: the server's person key).
     const people = new Set(members.map(personOf)).size;
@@ -3075,12 +3077,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       sideHidden = on;
       unread = 0;
       sessionSave(cinemaKey, on ? '1' : '0');
+      // QA2-A (Planner): one way-out hint only, the "✕ Leave cinema mode · T" pill (the 1.8 s flash said the same).
       render();
-      const seen = Number(load('cinemaHint') ?? 0);
-      if (on && seen < 2) {
-        save('cinemaHint', String(seen + 1));
-        flashHint($('.player-wrap'), t('cinemaHint'), 1800);
-      }
     };
     button.addEventListener('click', () => set(!sideHidden));
     exit.addEventListener('click', () => set(false));
@@ -3450,7 +3448,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const inviteLabel = () => t('inviteButton');
   const emptyInviteLabel = () => t(canShare ? 'share' : 'copyInvite');
   const inviteText = el('span', { class: 'invite-text' }, inviteLabel());
-  const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, el('span', { 'aria-hidden': 'true' }, '🔗'), inviteText);
+  const copyEl = el('button', { type: 'button', id: 'invite-btn', class: 'btn primary small-btn invite-btn', title: inviteUrl }, icon('link'), inviteText);
   document.querySelector('.topbar-right')?.prepend(copyEl);
   // Card 6 (owner's pick C): "⋯ More" right of Invite holds the room's less-used things (the phone's ⋯ has the same).
   if (!tv) {
@@ -3636,9 +3634,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#save-submit').textContent = saved ? t('rename') : t('saveRoom');
     const input = $<HTMLInputElement>('#save-name');
     if (document.activeElement !== input) input.value = name;
-    input.placeholder = friendlyRoomName(roomId);
+    // QA2-A #4: "e.g. Velvet Lounge", so the grey suggestion isn't read as a name already set.
+    input.placeholder = t('roomNameExample', { name: friendlyRoomName(roomId, lang()) });
+    $('#room-host-line').hidden = !host;
     drawRoomTitle();
-    baseTitle = `${saved && name ? name : friendlyRoomName(roomId)} · Sidelit`;
+    baseTitle = `${saved && name ? name : friendlyRoomName(roomId, lang())} · Sidelit`;
     drawTabTitle();
     // Ana sayfadaki "Kaydedilen odalar" listesi: sadece sunucudan ayarlar geldikten sonra (önce varsayılan ayarla
     // "kayıtlı değil" sanılıp liste siliniyordu; bağlantı hiç kurulmazsa oda listeden kayboluyordu) ve sadece değişince

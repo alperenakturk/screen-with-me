@@ -823,9 +823,15 @@ button.nav-link {
 }
 
 @media (max-width: 860px) {
-  .topbar .nav-link span:last-child {
+  /* QA2-A: the Extension link keeps its label (a bare 🧩 on a tablet read as a different thing; phones hide it), and the
+     profile button keeps its picture (the avatar is its last span: it showed as an empty circle on a tablet). */
+  .topbar .nav-link:not([href='/extension.html'], .profile-btn) span:last-child {
     display: none;
   }
+}
+/* QA2-A: a phone (also held sideways) never offers the extension: it only works in a computer's browser. */
+html.phone .topbar .nav-link[href='/extension.html'] {
+  display: none;
 }
 
 .dialog-backdrop {
@@ -1318,4 +1324,12 @@ button.nav-link {
 main:focus,
 #theater:focus {
   outline: none;
+}
+
+/* QA2-A #12: selected text in a box (the join card's remembered name) in the theme's accent, never the browser's dark
+   blue, which vanished on the dark scene themes. */
+input::selection,
+textarea::selection {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text);
 }

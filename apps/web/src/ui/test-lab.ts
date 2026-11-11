@@ -55,7 +55,7 @@ const TEXT = {
     people: 'People in the room',
     playing: 'Playing',
     nothing: 'nothing',
-    graph: 'My video against the room, last 60 s (middle line = together, ± 1 s)',
+    graph: 'My video against the room, last 60\u00a0s (middle line = together, ±\u00a01\u00a0s)',
     switches: 'Switches',
     tvLab: 'TV version (trial)',
     measure: 'Measure how fast Shorts switch',
@@ -77,7 +77,7 @@ const TEXT = {
     copied: '✓ Copied',
     copyFailed: 'Copy failed: select the text and copy it',
     hide: 'Turn the lab off',
-    hideNote: '?debug=0 in the address also turns it off.',
+    hideNote: 'Adding ?debug=0 to the address also turns it off.',
     commands: 'Commands',
     searchPlaceholder: 'Type what you want to do… (Enter runs it)',
     noCommands: 'No commands here yet.',
@@ -98,8 +98,8 @@ const TEXT = {
     done: 'done',
   },
   tr: {
-    open: 'Test Lab',
-    title: 'Test Lab',
+    open: 'Test Panosu',
+    title: 'Test Panosu',
     close: 'Kapat',
     tabs: { status: '📊 Durum', friends: '👥 Arkadaşlar', video: '🎬 Video ve ağ', games: '🎮 Oyunlar', scenarios: '🧪 Senaryolar', screen: '🖥 Ekran', log: '📜 Kayıt' },
     device: 'Bu cihaz',
@@ -121,7 +121,7 @@ const TEXT = {
     people: 'Odadaki kişi',
     playing: 'Oynayan',
     nothing: 'hiçbir şey',
-    graph: 'Videom ile oda, son 60 sn (orta çizgi = birlikte, ± 1 sn)',
+    graph: 'Videom ile oda, son 60\u00a0sn (orta çizgi = birlikte, ±\u00a01\u00a0sn)',
     switches: 'Anahtarlar',
     tvLab: 'TV sürümü (deneme)',
     measure: 'Shorts geçiş hızını ölç',
@@ -142,12 +142,12 @@ const TEXT = {
     copy: '📋 Kopyala',
     copied: '✓ Kopyalandı',
     copyFailed: 'Kopyalanamadı: yazıyı seçip kopyala',
-    hide: 'Lab\'ı kapat',
-    hideNote: 'Adresteki ?debug=0 de kapatır.',
+    hide: 'Panoyu tamamen kapat',
+    hideNote: 'Adrese ?debug=0 eklemek de panoyu kapatır.',
     commands: 'Komutlar',
     searchPlaceholder: 'Ne yapmak istediğini yaz… (Enter çalıştırır)',
     noCommands: 'Burada henüz komut yok.',
-    soon: 'Lab\'ın sonraki bir adımında gelecek.',
+    soon: 'Panonun sonraki bir adımında gelecek.',
     noMatch: 'Eşleşen komut yok.',
     run: 'Çalıştır',
     undo: 'Geri al',
@@ -466,14 +466,14 @@ export function mountDebugPanel(): void {
   // ---- the lab's own commands ----
   let marks = 0;
   const own: LabCommand[] = [
-    { id: 'lab.bug', title: { en: 'Lab: this is a bug', tr: 'Lab: bu bir hata' }, help: { en: 'Shows the text to copy for a bug: versions, the room\'s state, errors and the last 2 minutes of the log.', tr: 'Hata için kopyalanacak yazıyı gösterir: sürümler, odanın durumu, hatalar ve kaydın son 2 dakikası.' }, tab: 'status', run: () => openBug() },
-    { id: 'lab.mark', title: { en: 'Lab: put a marker in the log', tr: 'Lab: kayda bir işaret koy' }, help: { en: 'A line "— mark N —" in the log, to find this moment later. Undo removes it.', tr: 'Kayda "— mark N —" satırı düşer, bu anı sonra bulmak için. Geri al siler.' }, tab: 'log', run: () => { marks++; addLog({ dir: 'lab', type: 'mark', text: `— mark ${marks} —` }); return `mark ${marks}`; }, undo: () => { let i = log.length - 1; while (i >= 0 && log[i]!.type !== 'mark') i--; if (i >= 0) log.splice(i, 1); for (const fn of logListeners) fn(); } },
-    { id: 'lab.clearLog', title: { en: 'Lab: clear the log', tr: 'Lab: kaydı temizle' }, help: { en: 'Empties the lab\'s log. The room is not touched.', tr: 'Lab\'ın kaydını boşaltır. Odaya dokunmaz.' }, tab: 'log', run: () => { log.length = 0; for (const fn of logListeners) fn(); } },
-    { id: 'lab.clearErrors', title: { en: 'Lab: clear the errors', tr: 'Lab: hataları temizle' }, help: { en: 'Empties the list of recent errors; 🐞 turns back to normal.', tr: 'Son hatalar listesini boşaltır; 🐞 normale döner.' }, tab: 'status', run: () => { clearDebugErrors(); fab.classList.remove('has-error'); draw(); } },
-    { id: 'lab.selfTest', title: { en: 'Lab: self-test (a command that fails)', tr: 'Lab: kendini dene (bozuk bir komut)' }, help: { en: 'Runs a command that fails on purpose: you see a red line in the log and the room keeps working.', tr: 'Bilerek bozulan bir komut çalışır: kayıtta kırmızı bir satır görürsün, oda çalışmaya devam eder.' }, tab: 'log', run: () => { throw labFail({ en: 'self-test: this error is expected', tr: 'kendini deneme: bu hata bekleniyor' }); } },
-    { id: 'lab.reload', title: { en: 'Lab: reload the page', tr: 'Lab: sayfayı yenile' }, help: { en: 'Reloads this tab; the lab stays on.', tr: 'Bu sekmeyi yeniler; lab açık kalır.' }, tab: 'status', run: () => location.reload() },
-    { id: 'lab.firstVisit', title: { en: 'Lab: start as a first-time visitor', tr: 'Lab: ilk kez gelen biri gibi başla' }, help: { en: 'Forgets my name, avatar, tips and room names in this browser (never the browser id), then reloads.', tr: 'Bu tarayıcıdaki adımı, avatarımı, ipuçlarını ve oda adlarını unutur (tarayıcı kimliğini asla), sonra yeniler.' }, tab: 'screen', run: () => { if (confirm(tx.firstAsk)) { forgetVisits(); location.reload(); } } },
-    { id: 'lab.off', title: { en: 'Lab: turn the lab off', tr: 'Lab: lab\'ı kapat' }, help: { en: 'Removes the lab from this tab (same as ?debug=0).', tr: 'Lab\'ı bu sekmeden kaldırır (?debug=0 ile aynı).' }, tab: 'status', run: () => turnOff() },
+    { id: 'lab.bug', title: { en: 'Lab: this is a bug', tr: 'Pano: bu bir hata' }, help: { en: 'Shows the text to copy for a bug: versions, the room\'s state, errors and the last 2 minutes of the log.', tr: 'Hata için kopyalanacak yazıyı gösterir: sürümler, odanın durumu, hatalar ve kaydın son 2 dakikası.' }, tab: 'status', run: () => openBug() },
+    { id: 'lab.mark', title: { en: 'Lab: put a marker in the log', tr: 'Pano: kayda bir işaret koy' }, help: { en: 'A line "— mark N —" in the log, to find this moment later. Undo removes it.', tr: 'Kayda "— mark N —" satırı düşer, bu anı sonra bulmak için. Geri al siler.' }, tab: 'log', run: () => { marks++; addLog({ dir: 'lab', type: 'mark', text: `— mark ${marks} —` }); return `mark ${marks}`; }, undo: () => { let i = log.length - 1; while (i >= 0 && log[i]!.type !== 'mark') i--; if (i >= 0) log.splice(i, 1); for (const fn of logListeners) fn(); } },
+    { id: 'lab.clearLog', title: { en: 'Lab: clear the log', tr: 'Pano: kaydı temizle' }, help: { en: 'Empties the lab\'s log. The room is not touched.', tr: 'Panonun kaydını boşaltır. Odaya dokunmaz.' }, tab: 'log', run: () => { log.length = 0; for (const fn of logListeners) fn(); } },
+    { id: 'lab.clearErrors', title: { en: 'Lab: clear the errors', tr: 'Pano: hataları temizle' }, help: { en: 'Empties the list of recent errors; 🐞 turns back to normal.', tr: 'Son hatalar listesini boşaltır; 🐞 normale döner.' }, tab: 'status', run: () => { clearDebugErrors(); fab.classList.remove('has-error'); draw(); } },
+    { id: 'lab.selfTest', title: { en: 'Lab: self-test (a command that fails)', tr: 'Pano: kendini dene (bozuk bir komut)' }, help: { en: 'Runs a command that fails on purpose: you see a red line in the log and the room keeps working.', tr: 'Bilerek bozulan bir komut çalışır: kayıtta kırmızı bir satır görürsün, oda çalışmaya devam eder.' }, tab: 'log', run: () => { throw labFail({ en: 'self-test: this error is expected', tr: 'kendini deneme: bu hata bekleniyor' }); } },
+    { id: 'lab.reload', title: { en: 'Lab: reload the page', tr: 'Pano: sayfayı yenile' }, help: { en: 'Reloads this tab; the lab stays on.', tr: 'Bu sekmeyi yeniler; pano açık kalır.' }, tab: 'status', run: () => location.reload() },
+    { id: 'lab.firstVisit', title: { en: 'Lab: start as a first-time visitor', tr: 'Pano: ilk kez gelen biri gibi başla' }, help: { en: 'Forgets my name, avatar, tips and room names in this browser (never the browser id), then reloads.', tr: 'Bu tarayıcıdaki adımı, avatarımı, ipuçlarını ve oda adlarını unutur (tarayıcı kimliğini asla), sonra yeniler.' }, tab: 'screen', run: () => { if (confirm(tx.firstAsk)) { forgetVisits(); location.reload(); } } },
+    { id: 'lab.off', title: { en: 'Lab: turn the lab off', tr: 'Pano: panoyu tamamen kapat' }, help: { en: 'Removes the lab from this tab (same as ?debug=0).', tr: 'Panoyu bu sekmeden kaldırır (?debug=0 ile aynı).' }, tab: 'status', run: () => turnOff() },
   ];
   const unregisterOwn = debugHooks.register('lab', () => ({ commands: own }));
   // 👥 Fake friends (DL2): ordinary clients in this room, all gone when the lab is turned off or the tab closes.
@@ -509,7 +509,9 @@ export function mountDebugPanel(): void {
   const body = el('div', { class: 'debug-body lab-body', role: 'tabpanel' });
   const bugButton = words(el('button', { type: 'button', class: 'btn primary debug-copy lab-bug' }), (t) => t.bug);
   const offButton = words(el('button', { type: 'button', class: 'btn debug-small debug-off' }), (t) => t.hide);
-  const cmdButton = el('button', { type: 'button', class: 'btn debug-small lab-cmd-open', title: 'Ctrl+K' }, '⌘ Ctrl+K');
+  // LAB3: a touch screen without a mouse or keyboard shortcut gets a plain "🔎 Commands" (⌘ Ctrl+K meant nothing there).
+  const keyless = () => !document.documentElement.classList.contains('has-mouse') && document.documentElement.classList.contains('is-touch');
+  const cmdButton = words(el('button', { type: 'button', class: 'btn debug-small lab-cmd-open', title: 'Ctrl+K' }), (t) => (keyless() ? `🔎 ${t.commands}` : '⌘ Ctrl+K'));
   panel.append(
     el('header', { class: 'debug-head' }, words(el('h3', {}), (t) => `🐞 ${t.title}`), cmdButton, closeButton),
     tabBar,

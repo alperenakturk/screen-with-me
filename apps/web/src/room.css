@@ -6638,7 +6638,8 @@ html.in-room .topbar-right > .lang {
   grid-template-columns: 210px minmax(0, 1fr);
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: var(--surface);
+  /* QA2-A #12: a see-through --surface (scene themes) let the room show through behind the settings. */
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
   box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
   overflow: hidden;
   animation: r-in 0.18s ease-out;
@@ -6677,9 +6678,11 @@ html.in-room .topbar-right > .lang {
   background: var(--surface-2);
 }
 
+/* QA2-A #12: a bar in the accent marks the chosen category (on Lokum the 20 % gold read brown-grey). */
 .settings-nav button[aria-current='true'] {
   color: var(--text);
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .settings-main {
@@ -7802,10 +7805,17 @@ button.together-person:focus-visible .together-name {
   cursor: pointer;
 }
 
-.schedule-chips .chip:hover,
+/* QA2-A #5: hover only where there is a real pointer: a touch screen kept "In 1 hour" lit as if it were chosen. */
 .rules-groups .chip[aria-pressed='true'] {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+}
+
+@media (hover: hover) {
+  .schedule-chips .chip:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+  }
 }
 
 /* Date + "Set" side by side (the old column layout turned the input's 220 px flex-basis into its height). */
@@ -10184,8 +10194,9 @@ html.shorts-view .game-stage .game-place {
 
   html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room {
     --side-w: clamp(300px, 21vw, 400px);
-    /* 254, not 252: with the footer the room was 1 px taller than the window (sweep-2 #10). */
-    --stage-w: calc((100dvh - 254px) * 16 / 9 + 28px);
+    /* 254, not 252: with the footer the room was 1 px taller than the window (sweep-2 #10). QA2-A #8: 212 when the
+       room fills the window (below). */
+    --stage-w: calc((100dvh - var(--stage-over, 254px)) * 16 / 9 + 28px);
     grid-template-columns: minmax(0, max(var(--stage-w), 560px)) var(--side-w);
     justify-content: center;
     gap: 16px;
@@ -10203,6 +10214,29 @@ html.shorts-view .game-stage .game-place {
   html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room .theater:not(:fullscreen, .fake-fs) {
     gap: 8px;
     padding: 10px 12px 12px;
+  }
+
+  /* QA2-A #8 (Planner): the room fills the window's height. When the width (not the height) limits the 16:9 card,
+     the card and the side panel still reach the bottom: the video's box grows taller and the picture sits in it. */
+  /* Not while a game is open (in the video's place, under it or as a window beside a YouTube player): the games are
+     sized for the room as it was. 212 = what is really above and below the picture (top bar, link box, "Now playing"
+     line, the card's padding). */
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up):not(:has(#game-stage:not([hidden]))) main {
+    --stage-over: 212px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) {
+    flex: 1 1 auto;
+  }
+
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) > .stage > .theater:not(:fullscreen, .fake-fs) {
+    flex: 1 1 auto;
+  }
+
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) .theater:not(:fullscreen, .fake-fs) > .player-wrap {
+    flex: 1 1 auto;
   }
 }
 
@@ -10602,129 +10636,6 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
 }
 
 /* ==== Invite window (0.9.93.1, ui/invite.ts): the link with Copy, share / WhatsApp, a QR code, "show when alone". ==== */
-.invite-dialog {
-  width: min(440px, calc(100vw - 32px));
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.invite-row {
-  display: flex;
-  gap: 8px;
-}
-
-.invite-link {
-  flex: 1;
-  min-width: 0;
-  font-size: 14px;
-  text-overflow: ellipsis;
-}
-
-.invite-copy {
-  flex: none;
-  min-width: 96px;
-  justify-content: center;
-}
-
-.invite-copy.done {
-  background: var(--ok);
-  color: #06281a;
-  border-color: transparent;
-}
-
-.invite-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.invite-actions .btn {
-  flex: 1 1 140px;
-  justify-content: center;
-  text-decoration: none;
-}
-
-.invite-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 12px;
-  background: var(--surface-2);
-}
-
-.invite-tab {
-  flex: 1;
-  padding: 8px 10px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.invite-tab[aria-selected='true'] {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.25);
-}
-
-.invite-pane {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.invite-pane[hidden] {
-  display: none;
-}
-
-/* WhatsApp's own glyph in its own green (card 4, brand colour #25D366) on the theme's plain button: still WhatsApp at
-   a glance, but no longer the loudest thing in a light theme (YT5 batch, first-look review). */
-.btn.invite-wa {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 700;
-}
-
-.btn.invite-wa .wa-glyph {
-  color: #25d366;
-}
-
-.wa-glyph {
-  width: 20px;
-  height: 20px;
-  flex: none;
-}
-
-/* The QR tab: only the code, big, and "Copy image" (card 4: no explanation sentence). */
-.invite-qr-pane {
-  align-items: center;
-}
-
-.invite-qr {
-  width: min(240px, 42dvh, 70vw);
-  height: auto;
-  aspect-ratio: 1;
-  padding: 10px;
-  border-radius: 12px;
-  background: #fff;
-  image-rendering: pixelated;
-}
-
-.invite-auto {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
 /* ==== Keyboard shortcuts card (0.9.93.2, ui/shortcuts.ts) ==== */
 .shortcuts-dialog {
   width: min(460px, calc(100vw - 32px));
@@ -10893,10 +10804,9 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   display: none;
 }
 
-/* A fresh room on a computer (nothing has played yet): add a video, invite, chat and join voice; the rest comes for
-   everyone with the first video, or from "⋯ More". */
-/* The Share card (screen share) stays: it needs no video, and the owner missed it in an empty room (0.9.96.23). */
-html:not(.phone) .room.fresh :is(.tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
+/* A fresh room on a computer (nothing has played yet) hides the toolbar's sync test until the first video. The Queue and
+   People tabs stay (QA2-A, Planner: always visible, also in the empty room); so does Share (0.9.96.23). */
+html:not(.phone) .room.fresh #sync-test {
   display: none !important;
 }
 
@@ -11056,12 +10966,6 @@ html.cinema-on:not(.cinema-peek, .phone, .shell):has(.room.cinema:not(.shorts)) 
    behind the panel showed through like a smudge; the same colour laid over the theme's solid background is opaque. */
 html.in-room .side .card {
   background: linear-gradient(var(--surface), var(--surface)), var(--bg);
-}
-
-/* Sweep-1 small things: the invite window's line wraps without leaving one word alone. */
-
-.invite-sub {
-  text-wrap: pretty;
 }
 
 /* Sweep-2 #8: the Draw & Guess lobby (and the final podium) sat on a see-through dark layer over the white canvas: a grey
@@ -12762,7 +12666,16 @@ html.sideways.ph-room .room.has-item :is(.together-strip, .ph-cams, [data-panel=
    fullscreen, so a sideways phone keeps the faces and the chat on the right (the layout above) instead of "hold the
    phone upright". */
 html.sideways.ph-room .room:not(.has-item) {
-  grid-template-columns: minmax(0, 1fr) min(46%, 380px);
+  grid-template-columns: minmax(0, 1fr) min(53%, 380px);
+}
+/* LAB3: the narrow sideways column's message box keeps its hint whole ("Say something…" was cut to "Say some"). */
+.sideways #chat-input::placeholder {
+  font-size: 13px;
+}
+/* LAB3: the empty box takes the column's full height (a 16:9 box cut its steps off on an iPhone SE). */
+html.sideways.ph-room .room:not(.has-item) .player-wrap {
+  aspect-ratio: auto;
+  height: 100dvh;
 }
 
 html.sideways.ph-room .room.has-item .ph-turn {
@@ -12816,17 +12729,21 @@ html.phone .game-menu.gallery {
   max-height: none;
 }
 
-/* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the room line and the hint go, the title is
-   smaller and the button sits beside the name. */
+/* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the title is smaller and the button sits
+   beside the name. QA2-A #9: the room's name and the avatar hint stay (they fit; without them the card didn't say which
+   room it was), the hint in small type, and the button sits level with the name box. */
 @media (max-height: 500px) {
   .join-card:not(.avatar-card) {
     padding: 14px 18px;
   }
 
-  .join-card:not(.avatar-card) .step-label,
-  .join-card:not(.avatar-card) .join-playing,
-  .join-card:not(.avatar-card) [data-i18n='joinHint'] {
+  .join-card:not(.avatar-card) .join-playing {
     display: none;
+  }
+
+  .join-card:not(.avatar-card) [data-i18n='joinHint'] {
+    margin: 8px 0 0;
+    font-size: 13px;
   }
 
   .join-card:not(.avatar-card) .join-waiting {
@@ -12837,7 +12754,7 @@ html.phone .game-menu.gallery {
   .join-card:not(.avatar-card) #name-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    align-items: center;
     gap: 6px 10px;
   }
 
@@ -13015,13 +12932,21 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   gap: 8px 16px;
 }
 
-.settings-links .link-btn {
-  font-size: inherit;
+/* QA2-A #4: "Feedback" is a button but reads as one of the links: the same purple and underline. */
+.settings-links :is(a, .link-btn) {
+  font: inherit;
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* QA2-A NIT: the 🔒 sits outside the link (the underline only under the words), and the words never break apart. */
+#settings-who-sees {
+  white-space: nowrap;
 }
 
 
 /* YT5 batch: cinema mode's way out for a mouse or a touch, in the page's empty bottom-left corner (never over the
-   video; chat lines come in under the video on the right); quiet until the mouse is on it. `hidden` outside cinema. */
+   video; chat lines come in under the video on the right); the one way-out hint (Planner: readable size + full text colour). `hidden` outside cinema. */
 .cinema-exit {
   position: fixed;
   left: 16px;
@@ -13032,19 +12957,14 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
-  color: var(--muted);
+  color: var(--text);
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
 }
 
-.cinema-exit:is(:hover, :focus-visible) {
-  color: var(--text);
-}
-
-/* First-look review: the invite window's "Ask before letting people in" row lines up with the rows under it. */
-.invite-dialog .set-row.invite-door {
-  padding-inline: 0;
+.cinema-exit:hover {
+  border-color: var(--accent);
 }
 
 /* First-look review: "Run a sync test" alone in the room (.alone) read as broken at 50 %: full opacity in the muted
@@ -13052,4 +12972,45 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
 #sync-test.alone {
   opacity: 1;
   color: var(--muted);
+}
+
+/* QA2-A #2 (B2's sweep): Settings on a sideways phone. The category column was cut below "Sound & camera" on a short
+   phone: tighter rows (and a scroll of its own as the last resort). The settings list is long and scrolls; a fade at its
+   foot shows there is more below (the fade is also the list's bottom padding, so at the end it covers nothing). */
+html.phone.sideways .settings-nav {
+  gap: 2px;
+  padding: 10px 8px;
+  overflow-y: auto;
+}
+
+html.phone.sideways .settings-nav h3 {
+  margin-bottom: 4px;
+  font-size: 15px;
+}
+
+html.phone.sideways .settings-nav button {
+  padding: 7px 12px;
+}
+
+html.phone .settings-main {
+  padding-bottom: 0;
+}
+
+html.phone .settings-main::after {
+  content: '';
+  position: sticky;
+  bottom: 0;
+  flex: none;
+  height: 28px;
+  margin-top: -14px;
+  background: linear-gradient(transparent, var(--surface));
+  pointer-events: none;
+}
+
+/* QA2-A #4: the phone's full-page Settings keeps its "⚙️ Settings" title above the category chips (upright only: held
+   sideways the categories are a column and the title already sits on top of it). */
+html.phone:not(.sideways) .settings-nav h3 {
+  display: block;
+  flex: 1 0 100%;
+  margin: 2px 6px 4px;
 }
