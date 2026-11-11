@@ -29,7 +29,7 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 | What to work on now / next / frozen, milestone gates, plan to 1.0 | `docs/internal/ROADMAP.md` "Focus" and "Milestone gates to 1.0" |
 | What each release changed (user-facing, one block per release) | `CHANGELOG.md` |
 | How every feature works: files, messages, constants, keys, tests | `docs/internal/architecture/reference.md` (to be split into area files) |
-| Old release narration, finished plans | `docs/internal/archive/` (`claude-md-history.md` = the old "Live:" line) |
+| Old release narration, finished plans, done cards, ticked hand tests | `docs/internal/archive/` (`claude-md-history.md` = the old "Live:" line, `status-history.md`, `cards-done.md`) |
 | Design notes and picks, game design | `docs/internal/design/`, `docs/internal/design/games/` |
 | Research, vision | `docs/internal/research/`, `docs/internal/VIZYON.md`, `docs/internal/rakip-analizi.md`, `docs/internal/name-research.md` |
 | Security reviews | `docs/internal/security-review-<n>.md`, `docs/internal/security-review-cf.md` (Cloudflare audit) |
@@ -90,6 +90,9 @@ Rules for all:
   in parentheses for a release (`Fix film-page cover flash (0.9.83)`), trailing `Co-Authored-By`; never model names.
   Delete a merged branch (`.claude/settings.json` allows `git push origin --delete <branch>`; check first with
   `git merge-base --is-ancestor`).
+- **Finished work leaves the live files in the same PR (DOCS2, 11 Nov 2026):** a card that is done or a hand test that
+  is ticked moves verbatim to `docs/internal/archive/` (`cards-done.md`, `status-history.md`); `check-docs.mjs` keeps
+  STATUS and CARDS small and names anything lost.
 - **A developer who changes a feature updates its reference section in the same PR**
   (`docs/internal/architecture/reference.md`, or its area file once split).
 
