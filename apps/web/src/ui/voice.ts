@@ -6,7 +6,7 @@ import { LevelMeter } from '@swm/shared/level-meter';
 import { SpeechDetector } from '@swm/shared/speech-detector';
 import { P2pVoice } from '@swm/shared/voice-p2p';
 import { el } from '../dom.ts';
-import { t } from '../i18n.ts';
+import { percent, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
 import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
@@ -681,9 +681,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (!isMe && member.voice && client.active) {
       const range = el('input', { type: 'range', min: '0', max: '100', step: '5', class: 'person-pop-range', 'aria-label': t('voice.volume') }) as HTMLInputElement;
       range.value = String(Math.round((s.v ?? 1) * 100));
-      const value = el('span', { class: 'person-pop-value' }, `${range.value}%`);
+      const value = el('span', { class: 'person-pop-value' }, percent(range.value));
       range.addEventListener('input', () => {
-        value.textContent = `${range.value}%`;
+        value.textContent = percent(range.value);
         setSound(member, { v: Number(range.value) / 100, m: false });
       });
       items.push(el('label', { class: 'person-pop-volume' }, el('span', {}, `🔊 ${t('voice.volume')}`), range, value));

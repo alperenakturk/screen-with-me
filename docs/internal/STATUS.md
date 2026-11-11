@@ -8,12 +8,6 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] **Lane A, after 0.9.97.120 (stopped 10 Nov for the usage limit; continue from here).** Pre-existing items the
-  LABFAB first look found (not fixed, need cards from the Planner): (1) phone sideways with a video: the first-time tip
-  bubble covers "Watch fullscreen" (iPhone SE: fully); (2) iPhone SE sideways, empty room: "No video yet" and "Run a sync
-  test" cut off (fit rule); (3) the Test Lab drawer on a phone: the "Font shown" value cut off at the right, "⌘ Ctrl+K"
-  shown on touch screens, the drawer says "Test Lab" in Turkish while the glossary says "Test Panosu" (the ⋯ tile follows
-  the drawer); (4) shots.cjs's phone room shot catches the intro mid-fade.
 - [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
   phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
@@ -48,6 +42,20 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
+- [ ] 16b. [QW1–QW5, 0.9.97.124] Tablet upright and sideways, a video playing: Snack Bar never covers the video
+  (sideways the right column down to the message box, upright the column beside the chat); the rail's 🎮 hall shows
+  whole; a sideways phone's hall shows all six tables in a row. Laptop, chess with a video playing: "Video paused for
+  the game" under the window's top bar, its buttons read "Game hall · Leave table · Close table · Back to video".
+  Phone upright, a table: one top row (the small video with "‹" = back, the name, ?, 🎙, 🎮, ⋯ holding Leave / Close,
+  Close asks first); sideways Leave / Close sit in that row. Cinema mode (T) then Snack Bar: cinema mode ends, the
+  window sits off the video with a small gap to "Play now".
+- [ ] 16a. [M1–M3, Q1–Q5, 0.9.97.122] On a laptop and a big screen the room reaches the window's foot, and the
+  Queue / People tabs are there before any video. A table under a YouTube video, or in the video's place, stays whole.
+  On a phone held sideways: no tip over "Watch fullscreen"; on an iPhone SE the empty room fits; Invite (WhatsApp
+  included) and every Settings category fit. On a phone there is no 🧩 in the top bar, and the extension page says it
+  is for computers. Turkish: a nameless room gets a Turkish name; Settings → Sound shows "%70"; the Test Lab says
+  "Test Panosu". Sinema / Lokum: the chosen invite tab and Settings category are lit, and the new scene art stays
+  clear of the text.
 - [ ] 16. [W121, 0.9.97.121] Snack Bar on a laptop and a big screen: its window covers the chat column from the top to
   just above the message box and you can still type; drag, resize, double-click the top bar: back to the column.
 - [ ] 17. [L1–L2, 0.9.97.120] Test Lab on a phone: no floating 🐞 upright (⋯ has the Test Lab tile); sideways a small
@@ -71,23 +79,17 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   monitor's bigger Snack Bar keeps its size.
 - [ ] 26. [Q1–Q6, 0.9.97.93 and .95] On a hotspot or the backup connection, and with a background tab, an idle table and
   five tabs of one room for 10 minutes: no "reconnecting", nothing "too many connections".
-- [ ] 27. [QW1–QW5, 0.9.97.124] Tablet upright and sideways, a video playing: Snack Bar never covers the video
-  (sideways the right column down to the message box, upright the column beside the chat); the rail's 🎮 hall shows
-  whole; a sideways phone's hall shows all six tables in a row. Laptop, chess with a video playing: "Video paused for
-  the game" under the window's top bar, its buttons read "Game hall · Leave table · Close table · Back to video".
-  Phone upright, a table: one top row (the small video with "‹" = back, the name, ?, 🎙, 🎮, ⋯ holding Leave / Close,
-  Close asks first); sideways Leave / Close sit in that row. Cinema mode (T) then Snack Bar: cinema mode ends, the
-  window sits off the video with a small gap to "Play now".
+
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
-- [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
+- [ ] 27. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
   film page and voice there, fullscreen, sounds; Brave Shields + "Disable non-proxied UDP" shows the "blocks direct
   connections" note; Edge "Strict" tracking prevention; Opera's ad blocker, VPN and GX limits; write down each version.
-- [ ] 29. The site without the extension in Firefox, Safari (Mac) and on an iPhone: room, YouTube, chat, a game, voice +
+- [ ] 28. The site without the extension in Firefox, Safari (Mac) and on an iPhone: room, YouTube, chat, a game, voice +
   camera, screen share (Firefox: picture only), fullscreen, "Add to Home Screen".
-- [ ] 30. On your own phone: the 20 no-code release tests of `is-akislari/yayina-hazirlik.md` part C (in the owner's
+- [ ] 29. On your own phone: the 20 no-code release tests of `is-akislari/yayina-hazirlik.md` part C (in the owner's
   guide repo); Claude turns them into a Sidelit list when asked.
-- [ ] 31. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
+- [ ] 30. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
   bar; `?measure=1` switch times with a friend (then decide on a hidden preload player); TikTok links play and loop;
   a fresh invite opens on one screen; the extension's install card turns into "Go to the film" by itself.
 

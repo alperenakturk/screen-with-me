@@ -177,3 +177,9 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-tray { gap: 3px 1px; }
   #game-stage .ff:not(.duel) { padding-inline: 8px; }
 }
+/* QA2-A (0.9.97.122): the room now fills the window, so the narrow column beside the video can be taller than 540 px. The
+   narrow width alone keeps the compact sides and key gaps, or the Turkish row of 11 keys drops under 24 px. */
+@container game (max-width: 340px) {
+  #game-stage .ff:not(.duel) { padding-inline: 8px; }
+  #game-stage .ff:not(.duel) .ff-tray { column-gap: 1px; }
+}
