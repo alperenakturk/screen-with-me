@@ -95,7 +95,8 @@
 .wg-dot.on.wg-dot-gold { background: #ffc65a; } .wg-dot.on.wg-dot-rose { background: #ff8fb8; }
 .wg-dot.on.wg-dot-sky { background: #7fc4ff; } .wg-dot.on.wg-dot-violet { background: #b892ff; }
 .wg-album-art, .wg-album-art svg { display: block; width: 100%; height: 100%; }
-.wg-album-cell:not(.found) .wg-album-art { opacity: 0.35; filter: grayscale(1) brightness(0.6); }
+/* QA2 (15): the plants still to find read as silhouettes on every dark theme (they nearly vanished on the scene ones). */
+.wg-album-cell:not(.found) .wg-album-art { opacity: 0.5; filter: grayscale(1) brightness(0.85); }
 
 .wg-elsewhere {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;

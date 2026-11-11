@@ -63,7 +63,7 @@
 .ff-cells { display: grid; grid-template-columns: repeat(5, 37px); justify-content: center; gap: 6px; padding: 3px 4px; }
 .ff-cell {
   position: relative; display: grid; place-items: center; border-radius: 6px; font-size: 21px; font-weight: 800;
-  text-transform: none; background: rgba(255, 255, 255, 0.04); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.1);
+  text-transform: none; background: rgba(255, 255, 255, 0.06); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.2); /* QA2 (15): visible on the scene themes */
 }
 .ff-cell.typed { background: #2a2350; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.33); color: var(--ff-cream); }
 .ff-cell.hit { background: rgba(255, 198, 90, 0.1); box-shadow: inset 0 0 0 3px var(--ff-mark); color: var(--ff-cream); }
