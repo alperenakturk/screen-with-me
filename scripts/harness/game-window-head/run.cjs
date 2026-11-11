@@ -11,7 +11,7 @@
 //       resize corner never moves the window; an old
 //       saved spot is left behind once; from a free window 🎮's hall slides out of its left side, visible with the side
 //       panel open or closed, and closes on Esc, an outside click or a chosen game.
-//   QA2 Tablets: a side game lines up with the side panel, never over the video; the rail's hall shows whole. 1366: words
+//   QA2 Tablets: a side game lines up with the side panel (upright: its column beside the chat), never over the video; the rail's hall shows whole. 1366: words
 //       on a table's head buttons where they fit, the paused note under the head, a gap to "Play now", a side game leaves
 //       cinema mode. Phone: a one-row head (name, ?, 🎙, 🎮, ⋯ with Leave / Close); sideways Leave / Close in the head.
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
@@ -474,7 +474,13 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await openGame(page, 'snack');
     const b = await box(page);
     const pf = await panelFit(page);
-    check(b.mode === 'float' && !b.overVideo && pf.top && pf.aboveInput, `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf });
+    // Upright the side panel is under the video: the window takes its column beside the chat (the chat stays whole).
+    const chatFree = await page.evaluate(() => {
+      const w = document.getElementById('game-stage').getBoundingClientRect();
+      const c = document.querySelector('.room .chat-panel')?.getBoundingClientRect();
+      return !c || c.width < 1 || w.left >= c.right - 1 || w.right <= c.left + 1;
+    });
+    check(b.mode === 'float' && !b.overVideo && pf.top && (L === 'tablet' ? chatFree : pf.aboveInput), `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf, chatFree });
     await ctx.close();
   }
   // A computer: labels in a table's head where they fit, the paused note under the head (not over its buttons), the gap

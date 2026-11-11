@@ -489,7 +489,15 @@ export function createGameStage(opts: StageOptions) {
         const left = Math.max(page.left + EDGE, (yt ? video : wrap.getBoundingClientRect()).right + EDGE / 2, besideLinks, panel.right - width);
         return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
       }
-      if (panel.top >= video.bottom - 1 && tallEnough) return { left: Math.round(panel.left), top: Math.round(panel.top), width: Math.round(panel.width), height };
+      // Under the video (an upright tablet): the panel's column beside the chat (Together, the queue), its full height,
+      // so the chat stays whole and the game keeps a tall, readable shape (CI's tablet harness, card GT); the whole panel
+      // only when there is no such column.
+      if (panel.top >= video.bottom - 1) {
+        const chat = document.querySelector<HTMLElement>('.room .chat-panel')?.getBoundingClientRect();
+        const left = chat && chat.width > 1 && chat.left <= panel.left + 1 ? Math.round(chat.right + EDGE) : 0;
+        if (left && panel.right - left >= minSize[0] * MIN_FIT * 2) return { left, top: Math.round(panel.top), width: Math.round(panel.right - left), height: Math.round(panel.height) };
+        if (tallEnough) return { left: Math.round(panel.left), top: Math.round(panel.top), width: Math.round(panel.width), height };
+      }
     }
     // Over YouTube nothing may cover the player: the window shrinks to the column (or the largest strip beside it).
     // Elsewhere (0.9.97.114, owner) a side game keeps at least its smallest readable size in the right column, sticking

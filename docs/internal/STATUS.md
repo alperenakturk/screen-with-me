@@ -501,8 +501,8 @@ Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them)
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
 **0.9.97.124 (QA2-W, lane W: B2's sweep of the game-window frame; fold into the next round).**
-- [ ] QW1. Tablet upright and sideways, a video playing: open Snack Bar from 🎮. Sideways it fills the right column;
-  upright it covers the area under the video down to just above the message box. Never over the video.
+- [ ] QW1. Tablet upright and sideways, a video playing: open Snack Bar from 🎮. Sideways it fills the right column
+  down to just above the message box; upright it takes the column beside the chat under the video. Never over the video.
 - [ ] QW2. Tablet: the 🎮 beside the video opens the hall whole (both rows of tables). Phone sideways: the hall sheet
   shows all six tables in one row.
 - [ ] QW3. Laptop, a table (chess) with a video playing: "Video paused for the game" shows under the window's top bar,
