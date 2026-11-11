@@ -366,6 +366,13 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
 - [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
   phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
+- [ ] **Lane A, after 0.9.97.120 (stopped 10 Nov for the usage limit; continue from here).** Pre-existing items the
+  LABFAB first look found (not fixed, need cards from the Planner): (1) phone sideways with a video: the first-time tip
+  bubble covers "Watch fullscreen" (iPhone SE: fully); (2) iPhone SE sideways, empty room: "No video yet" and "Run a sync
+  test" cut off (fit rule); (3) the Test Lab drawer on a phone: the "Font shown" value cut off at the right, "⌘ Ctrl+K"
+  shown on touch screens, the drawer says "Test Lab" in Turkish while the glossary says "Test Panosu" (the ⋯ tile follows
+  the drawer); (4) shots.cjs's phone room shot catches the intro mid-fade.
+
 ## Design sweep (card 16): what was found and what happened
 From Design's `docs/internal/design/sweep-1.md` and `sweep-2.md` plus lane A's own screenshots.
 **Sweep 1 (0.9.96.8):**
@@ -497,6 +504,11 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
 - [ ] W121. Laptop (1366 and a big screen): open Snack Bar from 🎮. Its window covers the chat column from the top
   down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
   top bar, resize it from the corner, then double-click the top bar: it goes back to the column.
+
+**0.9.97.120 (lane A: Test Lab 🐞 on phones; with the Lab on).**
+- [ ] L1. Phone upright in a room: no floating 🐞 anywhere. Open ⋯: a "🐞 Test Lab / Test Panosu" tile opens the Lab.
+- [ ] L2. Phone sideways with a video playing: a small 🐞 bottom right, never over the video or its buttons; in
+  fullscreen no 🐞.
 
 **0.9.97.118 (lane A: first-look fixes; fold into the next round).**
 - [ ] Y1. Phone and tablet, before joining voice: the 🎙 and 📷 buttons look plain (not red). Join voice and mute: now

@@ -129,7 +129,11 @@ async function sweep(browser, device, lang) {
   check(stray.length === 0, `${tag}: no other red line in the log`, stray.slice(0, 5).map((l) => `${l.type}: ${l.text}`).join(' | '));
 
   // ---- The drawer by hand: every tab, the command box, "This is a bug" ----
-  await page.click('.debug-fab');
+  // LABFAB: an upright phone's room has no floating 🐞; the drawer opens from ⋯ More's 🐞 tile there.
+  if (device === 'phone') {
+    await page.click('#strip-more');
+    await page.click('.ph-sheet .ph-lab-tile');
+  } else await page.click('.debug-fab');
   check(!!(await until(() => page.evaluate(() => { const d = document.querySelector('.lab-drawer'); return d && !d.hidden && d.getBoundingClientRect().height > 0; }))), `${tag}: 🐞 opens the drawer${device === 'phone' ? ' (a bottom sheet)' : ''}`);
   const tabs = await page.$$eval('.lab-tab', (t) => t.map((x) => x.dataset.tab));
   const empty = [];

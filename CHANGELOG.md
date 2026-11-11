@@ -21,6 +21,10 @@ games' tip jar, cuttings and badges.
   top down to just above the message box, so no cut-off strip of chat shows around it and you can still type.
 - Dragging a game window by its top bar no longer stops halfway on a busy page, and a window you resized no longer
   jumps back to where you last dropped it when you click its top bar.
+### 0.9.97.120 — 10 Nov
+- Testers only: on a phone the Test Lab's 🐞 no longer sits over the video, the player's own buttons or the chat. Held
+  upright, the room's ⋯ menu has a "🐞 Test Lab" tile instead (ringed red while the lab has errors); held sideways with a
+  video, a small 🐞 waits in the bottom-right corner, clear of the video and its buttons (none in fullscreen).
 
 ### 0.9.97.119 — 10 Nov
 - In the light Matinee theme the games' pictures are drawn in light colours too: every "How to play" picture and
@@ -30,6 +34,7 @@ games' tip jar, cuttings and badges.
 - Backgammon: bigger dice (a used die is struck through), the tray's dark checkers have a light rim, and the bot level
   you picked is filled in.
 - Window Garden: the 🎨 button is named "Decorations" for screen readers and on hover.
+
 ### 0.9.97.118 — 10 Nov
 - Before you join voice, the microphone and camera buttons look plain instead of red; red now only means "off" while
   you are in voice.
