@@ -1,0 +1,174 @@
+--- a/scripts/theme-art.mjs
++++ b/scripts/theme-art.mjs
+@@ -121,8 +121,16 @@
+ }
+ 
+ /** Arkadan görülen, yüzsüz seyirci başı ve omuzları; (x, y) omuz hizası. */
+-function head(x, y, r, fill, rim) {
+-  return `<path d="M${f(x - r * 2.1)} ${f(y + r)} Q${f(x - r * 2)} ${f(y - r * 0.6)} ${f(x)} ${f(y - r * 0.7)} Q${f(x + r * 2)} ${f(y - r * 0.6)} ${f(x + r * 2.1)} ${f(y + r)}Z" fill="${fill}"/><circle cx="${f(x)}" cy="${f(y - r * 1.5)}" r="${f(r)}" fill="${fill}"${rim ? ` stroke="${rim}" stroke-width="1.4" stroke-opacity=".6"` : ''}/>`;
++function head(x, y, r, fill, rim, kind = 0) {
++  // ART-S: head, neck and shoulders are one silhouette (a lone circle with a full rim read as an empty avatar slot);
++  // the screen's light catches only the top of the head, and a few heads wear a bun or a cap so they read as people.
++  const hy = y - r * 1.25;
++  let s = `<path d="M${f(x - r * 2.2)} ${f(y + r)} Q${f(x - r * 2.1)} ${f(y - r * 0.5)} ${f(x - r * 0.55)} ${f(y - r * 0.55)} L${f(x - r * 0.5)} ${f(hy + r * 0.6)} A${f(r * 0.92)} ${f(r * 1.05)} 0 1 1 ${f(x + r * 0.5)} ${f(hy + r * 0.6)} L${f(x + r * 0.55)} ${f(y - r * 0.55)} Q${f(x + r * 2.1)} ${f(y - r * 0.5)} ${f(x + r * 2.2)} ${f(y + r)}Z" fill="${fill}"/>`;
++  if (kind === 1) s += `<ellipse cx="${f(x + r * 0.2)}" cy="${f(hy - r * 1.05)}" rx="${f(r * 0.45)}" ry="${f(r * 0.38)}" fill="${fill}"/>`;
++  if (kind === 2) s += `<path d="M${f(x - r * 1.05)} ${f(hy - r * 0.25)} Q${f(x)} ${f(hy - r * 1.6)} ${f(x + r * 1.05)} ${f(hy - r * 0.25)} Z" fill="${fill}"/>`;
++  // A short highlight on the upper left of the head only (a full arc read as headphones, a full ring as an avatar).
++  if (rim) s += `<path d="M${f(x - r * 0.88)} ${f(hy - r * 0.05)} A${f(r * 0.92)} ${f(r * 1.05)} 0 0 1 ${f(x - r * 0.2)} ${f(hy - r * 1.0)}" stroke="${rim}" stroke-width="1.5" stroke-opacity=".38" fill="none" stroke-linecap="round"/>`;
++  return s;
+ }
+ 
+ // =====================================================================
+@@ -250,9 +258,9 @@
+     const t = r();
+     const y = 680 + t * 210;
+     const spread = 20 + t * 170;
+-    const x = 1180 + (r() - 0.5) * 2 * spread * r();
++    const x = 1310 + (r() - 0.5) * 2 * spread * r();
+     const w = 6 + r() * 22 * (0.5 + t);
+-    glitter += `<path d="M${f(x)} ${f(y)} h${f(w)}" stroke="${r() > 0.3 ? '#f4e6c8' : '#c8d4f0'}" stroke-width="${f(1 + t * 1.6)}" opacity="${f(0.3 + r() * 0.6 * (1 - Math.abs(x - 1180) / 260))}" stroke-linecap="round"/>`;
++    glitter += `<path d="M${f(x)} ${f(y)} h${f(w)}" stroke="${r() > 0.3 ? '#f4e6c8' : '#c8d4f0'}" stroke-width="${f(1 + t * 1.6)}" opacity="${f(0.3 + r() * 0.6 * (1 - Math.abs(x - 1310) / 260))}" stroke-linecap="round"/>`;
+   }
+   let ripples = '';
+   for (let i = 0; i < 70; i++) {
+@@ -277,8 +285,8 @@
+ ${tilePattern('tile', { s: 0.7, bg: '#1a3478', star: '#2a92a0' })}
+ ${GRAIN_DEFS}
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#090e24"/><stop offset=".45" stop-color="#18224a"/><stop offset=".72" stop-color="#3a4870"/></linearGradient>
+-<radialGradient id="moonlit" cx="1180" cy="280" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#eef0ff"/><stop offset=".4" stop-color="#8a96c8"/><stop offset="1" stop-color="#2a3460"/></radialGradient>
+-<radialGradient id="halo" cx="1180" cy="280" r="300" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff1d8" stop-opacity=".5"/><stop offset=".35" stop-color="#c8d0f0" stop-opacity=".15"/><stop offset="1" stop-color="#c8d0f0" stop-opacity="0"/></radialGradient>
++<radialGradient id="moonlit" cx="1310" cy="175" r="700" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#eef0ff"/><stop offset=".4" stop-color="#8a96c8"/><stop offset="1" stop-color="#2a3460"/></radialGradient>
++<radialGradient id="halo" cx="1310" cy="175" r="300" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff1d8" stop-opacity=".5"/><stop offset=".35" stop-color="#c8d0f0" stop-opacity=".15"/><stop offset="1" stop-color="#c8d0f0" stop-opacity="0"/></radialGradient>
+ <linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <mask id="cm"><rect y="100" width="${W}" height="500" fill="url(#cf)"/></mask>
+ <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#26305a"/><stop offset="1" stop-color="#070a18"/></linearGradient>
+@@ -293,8 +301,8 @@
+ ${stars(81, 80, 0, 400, '#f2f0ff', 1, 0.5)}
+ <g mask="url(#cm)"><rect y="100" width="${W}" height="500" fill="url(#moonlit)" filter="url(#cl)" opacity=".45"/></g>
+ <rect width="${W}" height="${H}" fill="url(#halo)"/>
+-<circle cx="1180" cy="280" r="46" fill="#fff4dc"/>
+-<circle cx="1166" cy="268" r="9" fill="#e8dcc4" opacity=".6"/><circle cx="1194" cy="294" r="6" fill="#e8dcc4" opacity=".5"/>
++<circle cx="1310" cy="175" r="42" fill="#fff4dc"/>
++<circle cx="1297" cy="164" r="8" fill="#e8dcc4" opacity=".6"/><circle cx="1322" cy="188" r="5.5" fill="#e8dcc4" opacity=".5"/>
+ <!-- Karşı kıyı: bulanık silüet ve ışıklar -->
+ <g fill="#1a1e3a" filter="url(#b2)">${shoreline(668)}</g>
+ <g filter="url(#b2)">${lights}</g>
+@@ -306,7 +314,9 @@
+ <!-- Card NP3 (MASCOT3's scene notes): the tile panel, marble column, arch and kandil moved to the right edge (the
+      left group mirrored: panel x 1470…1610, column 1420…1478, the arch sweeping left to ~1040), so the home text column
+      keeps only the moonlit water and sky. -->
+-<g transform="translate(${W} 0) scale(-1 1)">
++<!-- ART-S: the group moves 130 further right: the column is the screen's right edge (x 1550–1608), the panel off-canvas,
++     the kandil hangs short (bottom ~y 190) above the hero's phone; nothing crosses the hero art or the room's panels. -->
++<g transform="translate(${W + 130} 0) scale(-1 1)">
+ <g filter="url(#br2)">
+   <rect x="-10" y="0" width="140" height="840" fill="url(#tile)"/>
+   <rect x="-10" y="0" width="140" height="840" fill="#05040e" opacity=".45"/>
+@@ -315,13 +325,9 @@
+   <rect x="122" y="220" width="58" height="580" fill="url(#marble)"/>
+   <rect x="112" y="196" width="78" height="26" fill="url(#marble)"/><rect x="116" y="790" width="70" height="20" fill="url(#marble)"/>
+ </g>
+-${kandil(262, 190, '#c8402e', 'kg', 150)}
+-</g>
+-<!-- One cypress in front of the tile panel (the second one is gone, NP3) -->
+-<g filter="url(#br)" transform="translate(80 0)">
+-  <path d="M1460 840 C1410 640 1418 420 1462 220 C1504 420 1514 640 1468 840Z" fill="#0b1712"/>
+-  <path d="M1462 220 C1430 420 1424 600 1446 760" stroke="#2c4a3c" stroke-width="10" fill="none" opacity=".7"/>
++${kandil(262, 120, '#c8402e', 'kg', 0)}
+ </g>
++<!-- ART-S: the cypress is gone (it stood in front of the hero's phone mockup). -->
+ <rect width="${W}" height="${H}" fill="url(#lamp)"/>
+ <!-- Taş korkuluk ve döşeme -->
+ <rect y="772" width="${W}" height="14" fill="url(#parapet)"/>
+@@ -497,39 +503,38 @@
+     for (let x = 18; x < 220; x += 26) s += `<rect x="${x}" y="150" width="3" height="650" fill="#d4a23e" opacity=".12"/>`;
+     s += `<path d="M0 150 H230 V170 H210 V190 H0Z" fill="#1c2238"/><path d="M0 150 H230" stroke="#d4a23e" stroke-opacity=".5" stroke-width="2"/>`;
+     // Yelpaze aplik
+-    s += `<ellipse cx="130" cy="490" rx="90" ry="110" fill="url(#sconce)" opacity=".3"/>`;
+-    s += rays(130, 520, 64, 9, ['#ffd27a', '#d4a23e'], { from: 200, to: 340, fill: 0.6, opacity: 0.9 });
+-    s += `<path d="M106 520 H154 L144 540 H116Z" fill="url(#gold)"/>`;
++    // ART-S: the fan sconce sits low on the wall (y 600–690), below the home hero and its "this part!" bubble.
++    s += `<ellipse cx="130" cy="640" rx="80" ry="90" fill="url(#sconce)" opacity=".3"/>`;
++    s += rays(130, 670, 56, 9, ['#ffd27a', '#d4a23e'], { from: 200, to: 340, fill: 0.6, opacity: 0.9 });
++    s += `<path d="M110 670 H150 L141 688 H119Z" fill="url(#gold)"/>`;
+     return s;
+   };
+ 
+-  // Makine dairesi penceresi, projektör silueti ve huzme
+-  const booth = `
+-<rect x="30" y="210" width="190" height="96" fill="#070912"/>
+-<rect x="146" y="232" width="62" height="48" fill="#fff1c8" opacity=".85" filter="url(#g)"/>
+-<g fill="#05060c"><circle cx="164" cy="242" r="13"/><circle cx="194" cy="246" r="11"/><rect x="150" y="252" width="56" height="22" rx="3"/><rect x="204" y="258" width="10" height="9"/></g>
+-<circle cx="164" cy="242" r="5" fill="#2a2a3a"/><circle cx="194" cy="246" r="4" fill="#2a2a3a"/>`;
++  // ART-S: no booth window (it sat behind the home title); the projector's light enters from the left along the ceiling,
++  // in the band above every page's content (y 30–110), so it never runs through the join card or the hero.
+   let dust = '';
+-  for (let i = 0; i < 90; i++) {
+-    const t = 0.08 + r() * 0.92;
+-    const x = 214 + t * 1386;
+-    const y = 262 + t * 40 + (r() - 0.5) * 2 * 250 * t * 0.85;
+-    dust += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(0.6 + r() * 1.4)}" fill="#fff6dc" opacity="${f(0.15 + r() * 0.45)}"/>`;
++  for (let i = 0; i < 70; i++) {
++    const t = 0.05 + r() * 0.95;
++    const x = -60 + t * 1660;
++    const y = 74 - t * 34 + (r() - 0.5) * 2 * 60 * t * 0.8;
++    dust += `<circle cx="${f(x)}" cy="${f(y)}" r="${f(0.6 + r() * 1.3)}" fill="#fff6dc" opacity="${f(0.15 + r() * 0.4)}"/>`;
+   }
+ 
+-  // Film makarası ve kıvrılan şerit (sağ duvar)
+-  const filmPath = 'M1480 410 C1480 470 1400 470 1400 530 C1400 590 1470 600 1450 660';
++  // Film makarası (ART-S): on the floor at the bottom right (y 790–900), below the room's panels and right of the home's
++  // feature cards, with a short ribbon running into the aisle. It used to hang on the right wall behind the hero art.
++  const RX = 1532, RY = 842, RR = 54;
+   let holes = '';
+   for (let i = 0; i < 5; i++) {
+     const a = rad(i * 72 - 90);
+-    holes += `<circle cx="${f(1480 + Math.cos(a) * 44)}" cy="${f(330 + Math.sin(a) * 44)}" r="20" fill="#0b0e1c"/>`;
++    holes += `<circle cx="${f(RX + Math.cos(a) * RR * 0.54)}" cy="${f(RY + Math.sin(a) * RR * 0.54)}" r="${f(RR * 0.24)}" fill="#0b0e1c"/>`;
+   }
++  const filmPath = `M${RX - 40} ${RY + 34} C${RX - 90} ${RY + 50} ${RX - 120} ${RY + 30} ${RX - 170} ${RY + 64}`;
+   const reel = `
+-<path d="${filmPath}" stroke="#141826" stroke-width="30" fill="none"/>
+-<path d="${filmPath}" stroke="#d4a23e" stroke-opacity=".75" stroke-width="22" stroke-dasharray="4 7" fill="none"/>
+-<path d="${filmPath}" stroke="#1d2236" stroke-width="12" fill="none"/>
+-<circle cx="1480" cy="330" r="82" fill="#1c2238" stroke="url(#gold)" stroke-width="8"/>
+-${holes}<circle cx="1480" cy="330" r="12" fill="url(#gold)"/>`;
++<path d="${filmPath}" stroke="#141826" stroke-width="22" fill="none"/>
++<path d="${filmPath}" stroke="#d4a23e" stroke-opacity=".7" stroke-width="16" stroke-dasharray="3 6" fill="none"/>
++<path d="${filmPath}" stroke="#1d2236" stroke-width="8" fill="none"/>
++<circle cx="${RX}" cy="${RY}" r="${RR}" fill="#1c2238" stroke="url(#gold)" stroke-width="6"/>
++${holes}<circle cx="${RX}" cy="${RY}" r="9" fill="url(#gold)"/>`;
+ 
+   // Koltuk sıraları: arkadan öne büyür; birkaç başta perdeden gelen ışık
+   const rows = [
+@@ -540,7 +545,7 @@
+   let seats = '';
+   rows.forEach((row, ri) => {
+     const curve = (x) => -(((x - 800) / 800) ** 2) * 26;
+-    for (const hx of row.heads) seats += head(hx, row.y - row.h + curve(hx) + 4, row.hr, '#04050a', '#6a5a80');
++    row.heads.forEach((hx, i) => { seats += head(hx, row.y - row.h + curve(hx) + 4, row.hr, '#04050a', '#8a7aa8', (i + row.y) % 3); });
+     for (let x = -30 + ri * 17; x < W + 30; x += row.w + row.gap) {
+       const y = row.y - row.h + curve(x + row.w / 2);
+       seats += `<rect x="${f(x)}" y="${f(y)}" width="${row.w}" height="${row.h + 60}" rx="${f(row.w * 0.28)}" fill="${row.c}"/><rect x="${f(x + 6)}" y="${f(y + 2)}" width="${row.w - 12}" height="2" rx="1" fill="#4a4a6a" opacity=".5"/>`;
+@@ -554,16 +559,15 @@
+ <rect width="${W}" height="${H}" fill="url(#bg)"/>
+ <rect width="${W}" height="${H}" fill="url(#screen)"/>
+ <!-- Perde üstü kademeli altın çizgiler -->
+-<path d="M300 236 H1300 M330 222 H1270 M360 208 H1240" stroke="#d4a23e" stroke-opacity=".28" stroke-width="2"/>
++<path d="M700 128 H1560 M730 116 H1540" stroke="#d4a23e" stroke-opacity=".2" stroke-width="2"/>
+ ${wall()}
+ <g transform="translate(${W} 0) scale(-1 1)">${wall()}</g>
+-${booth}
+-<!-- Projektör huzmesi -->
+-${S.cone(214, 262, 1600, 300, 270, '#fff1c8', 0.3, 0.02)}
+-${S.cone(214, 262, 1600, 300, 90, '#fffbe8', 0.22, 0)}
++<!-- Projektör huzmesi (ART-S): along the ceiling, from off-canvas left -->
++${S.cone(-60, 78, 1600, 40, 72, '#fff1c8', 0.26, 0.02)}
++${S.cone(-60, 78, 1600, 40, 26, '#fffbe8', 0.2, 0)}
+ ${dust}
+-${reel}
+ ${seats}
++${reel}
+ ${aisle}
+ ${grain(0.24)}
+ `);
