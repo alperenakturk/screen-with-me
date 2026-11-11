@@ -257,7 +257,8 @@ export function createGameStage(opts: StageOptions) {
     // A phone always plays full screen (0.9.92.5, pick 10A): the video shrinks to a thumbnail in the head.
     mode = narrow.matches ? (!youtube && (want === 'stage' || shortsView() || isPhoneLayout()) ? 'full' : 'below') : want;
     // YTG: no room beside the YouTube player for the free window: under it instead.
-    if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer()) mode = 'below';
+    // QA2: a tablet's side panel is a place clear of the player too (the game fitted to it), so no "under it" there.
+    if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer() && !(kind && isTablet() && homeBox(kind))) mode = 'below';
     // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
     // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
     // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
@@ -473,7 +474,9 @@ export function createGameStage(opts: StageOptions) {
     // over the picture or the link box's "Play now"; under the video (an upright tablet) it takes the panel's width.
     const panel = document.querySelector<HTMLElement>('.room .side')?.getBoundingClientRect();
     const form = document.getElementById('chat-form')?.getBoundingClientRect();
-    if (!overYoutube() && panel && panel.width > 1) {
+    // Over YouTube only on a tablet (a computer keeps YTG's column below), and then never over the player itself.
+    const yt = overYoutube();
+    if ((!yt || isTablet()) && panel && panel.width > 1) {
       const { minSize, maxSize } = sizeOf(kind);
       // Another tab (people, queue) hides the message box: then down to the panel's bottom.
       const inPanel = form && form.height > 1 && form.top > panel.top && form.top <= panel.bottom;
@@ -483,7 +486,7 @@ export function createGameStage(opts: StageOptions) {
         const width = Math.round(Math.min(maxSize[0], Math.max(minSize[0], panel.width)));
         const media = document.getElementById('media-form')?.getBoundingClientRect();
         const besideLinks = media && media.width > 1 && media.bottom > panel.top ? media.right + EDGE : 0;
-        const left = Math.max(page.left + EDGE, wrap.getBoundingClientRect().right + EDGE / 2, besideLinks, panel.right - width);
+        const left = Math.max(page.left + EDGE, (yt ? video : wrap.getBoundingClientRect()).right + EDGE / 2, besideLinks, panel.right - width);
         return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
       }
       if (panel.top >= video.bottom - 1 && tallEnough) return { left: Math.round(panel.left), top: Math.round(panel.top), width: Math.round(panel.width), height };
