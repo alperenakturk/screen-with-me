@@ -299,7 +299,7 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
 #game-stage .mt .cl-card-art { display: block; width: 100%; }
 #game-stage .mt .cl-card-art svg { display: block; width: 100%; height: auto; max-height: 96px; border-radius: 10px; }
 #game-stage .mt .cl-card-name { font-size: 15px; }
-#game-stage .mt .cl-card-line { font-size: 13px; line-height: 1.25; color: var(--muted); }
+#game-stage .mt .cl-card-line { font-size: 13px; line-height: 1.25; color: var(--muted); text-wrap: pretty; }
 #game-stage .mt .cl-card-players { font-size: 13px; color: var(--accent-2, var(--accent)); }
 #game-stage .mt .cl-card::before, #game-stage .mt .cl-card::after { content: none; }
 @container game (max-width: 440px) {

@@ -184,3 +184,6 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-tray { gap: 3px 1px; }
   #game-stage .ff:not(.duel) { padding-inline: 8px; }
 }
+
+/* QA2 (14): on a computer or tablet the game window's head already says "Five Frames" (a phone's head does not). */
+html:not(.phone) #game-stage .ff:not(.duel) .ff-title { display: none; }

@@ -480,7 +480,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const s = state!;
     const a = s.players[0];
     const b = s.players[1];
-    score.textContent = `${a?.wins ?? 0} : ${b?.wins ?? 0}`;
+    score.textContent = `${a?.wins ?? 0} – ${b?.wins ?? 0}`; // QA2 (14): the same "0 – 0" as the Classics
     score.setAttribute('aria-label', `${a?.name ?? '?'} ${a?.wins ?? 0}, ${b?.name ?? '?'} ${b?.wins ?? 0}`);
     // Stub: offered to a seated player while the other seat is free (or Stub's), not mid-battle.
     const me = mySeat();
