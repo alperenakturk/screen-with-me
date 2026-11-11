@@ -298,6 +298,22 @@ async function enterRoom(page, room, name = 'Robin') {
   await page.waitForTimeout(800);
   check(!(await page.$('#debug-panel-root')) && !page.url().includes('debug'), '?debug=0 turns it off');
 
+  // QA2-A #3: on a sideways tablet (touch, no mouse) the open drawer lies over the room; the room keeps its width.
+  {
+    const tab = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+    const tp = await tab.newPage();
+    await tp.goto(`${SITE}/?debug=1`);
+    await tp.waitForSelector('.debug-fab');
+    await enterRoom(tp, `lab-tab-${Date.now().toString(36)}`, 'Robin');
+    await tp.evaluate(() => { document.querySelector('.first-tip, .tip-bubble')?.remove(); });
+    const before = await tp.evaluate(() => Math.round(document.querySelector('.room').getBoundingClientRect().width));
+    await tp.evaluate(() => document.querySelector('.debug-fab').click());
+    await until(() => shown(tp, '.lab-drawer'));
+    const after = await tp.evaluate(() => ({ cls: document.documentElement.className, room: Math.round(document.querySelector('.room').getBoundingClientRect().width), pad: getComputedStyle(document.body).paddingRight }));
+    check(after.cls.includes('is-touch') && !after.cls.includes('has-mouse') && after.room === before && after.pad === '0px', 'sideways tablet: the open drawer lies over the room, the room keeps its width', JSON.stringify({ before, ...after }));
+    await tab.close();
+  }
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ Test Lab works');
   process.exit(fails ? 1 : 0);

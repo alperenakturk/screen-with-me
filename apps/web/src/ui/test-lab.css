@@ -57,7 +57,9 @@
   box-shadow: -8px 0 30px rgb(0 0 0 / 40%);
 }
 
-html.lab-open:not(.phone, .tablet-up) body {
+/* QA2-A #3 (B2's sweep): a sideways tablet (touch, no mouse) is not pushed aside either: the room keeps its full width
+   and the drawer lies over its right side, like the bottom sheet on an upright tablet. */
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) body {
   padding-right: var(--lab-w);
 }
 
@@ -495,15 +497,15 @@ html.phone .lab-drawer {
 
 /* The room's windows pinned to the window's right edge move left of the open drawer (the page itself makes room with
    its padding; fixed things don't follow padding). */
-html.lab-open:not(.phone, .tablet-up) .knock-cards {
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) .knock-cards {
   right: calc(var(--lab-w) + 16px);
 }
 
-html.lab-open:not(.phone, .tablet-up) .profile-pop {
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) .profile-pop {
   right: calc(var(--lab-w) + 12px);
 }
 
-html.lab-open:not(.phone, .tablet-up) .recap-invite {
+html.lab-open:not(.phone, .tablet-up, .is-touch:not(.has-mouse)) .recap-invite {
   right: calc(var(--lab-w) + 16px);
 }
 
