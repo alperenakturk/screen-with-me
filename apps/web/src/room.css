@@ -12952,7 +12952,7 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
 
 
 /* YT5 batch: cinema mode's way out for a mouse or a touch, in the page's empty bottom-left corner (never over the
-   video; chat lines come in under the video on the right); quiet until the mouse is on it. `hidden` outside cinema. */
+   video; chat lines come in under the video on the right); the one way-out hint (Planner: readable size + full text colour). `hidden` outside cinema. */
 .cinema-exit {
   position: fixed;
   left: 16px;
@@ -12963,14 +12963,15 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
-  color: var(--muted);
+  color: var(--text);
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .cinema-exit:is(:hover, :focus-visible) {
-  color: var(--text);
+  border-color: var(--accent);
 }
 
 /* First-look review: "Run a sync test" alone in the room (.alone) read as broken at 50 %: full opacity in the muted

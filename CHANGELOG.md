@@ -24,7 +24,7 @@ games' tip jar, cuttings and badges.
   keeps the room's name and its hint with "Enter room" level with the name box.
 - Settings look the same in every category: plain buttons, the host line in Room and Film time too, "Feedback" as a
   link like the others, and the room name box suggests "e.g. Velvet Lounge" instead of looking already filled in.
-- Cinema mode shows one way out (the "Leave cinema mode" pill), and the scene themes read better: the chosen invite tab
+- Cinema mode shows one way out, the "Leave cinema mode" pill, now in bigger, full-strength text, and the scene themes read better: the chosen invite tab
   and settings category are lit in the theme's colour, Settings is no longer see-through on a tablet, and the Invite
   button's chain is drawn in the button's own colour.
 - Phones never offer the extension (it only works in a computer's browser); the extension page says so on a phone or
