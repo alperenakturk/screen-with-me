@@ -1865,7 +1865,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Playwright's browser is cached. Its system part (apt) gets 3 tries of at most 45 s, 30 s apart, with short apt timeouts
   (`scripts/ci-playwright.sh`, via the prepare action and the e2e job's help step). On an unreachable Ubuntu mirror the job goes on with the runner
   image's own libraries (it skips only the extra CJK / Thai fallback fonts) after checking Chromium's libraries (`ldd`)
-  and the emoji and Latin fonts; if anything is missing it fails with a clear error. **Card CI2: parallel jobs.** `checks` (typecheck, texts, unit tests, build, size
+  and the emoji and Latin fonts; if anything is missing it fails with a clear error. The harnesses' test video
+  (`scripts/ci-test-video.sh`, :5300) gets its ffmpeg from PyPI (`imageio-ffmpeg`), not from apt. **Card CI2: parallel jobs.** `checks` (typecheck, texts, unit tests, build, size
   budget; push + PR), and on a PR only `e2e` (local e2e + the help harness), `site` (the site's browser harnesses) and
   `games` + `games-more` (games quality, split in 0.9.97.106 when one job passed its 20 minutes on a slow runner:
   `games` = the sweep and the tables' harnesses, `games-more` = YouTube, tablets, Snack Bar and motion); each starts with the composite action `.github/actions/prepare` (Node, `npm ci`, build,
