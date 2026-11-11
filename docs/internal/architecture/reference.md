@@ -1358,7 +1358,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the coins for it). The tables' commands carry their names (`Masa aç: Bilgi yarışması`). Harnesses
   `scripts/harness/lab-games-all/run.cjs` (every command, laptop / phone × EN / TR; `LIVE=1` on a live-like host:
   local-only ones say so) and `scripts/harness/lab-table-friend/run.cjs` (the friend at each table), both in CI's
-  `games-more`. The owner's steps: STATUS "Test round with the Lab: games".
+  `games-more`. The owner's steps: `archive/status-history.md` "Test round with the Lab: games".
   Messages: room `{t:'lab', op:'tipjar'}` (the tip jar fills for the film playing; elsewhere `bad_message`), Classics
   `{t:'lab', position}` (`games/lab-positions.ts` `LAB_POSITIONS`: chess `mate1`, dama `chain`, backgammon `bearoff`,
   each checked by its board's state check; a player; elsewhere `lab_off`), Quiz / Draw `{t:'lab', op:'skip'}` (the phase
