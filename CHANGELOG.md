@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.QA2A — 11 Nov
+### 0.9.97.122 — 11 Nov
 - On a computer the room fills the window from top to bottom: the video's card and the chat end at the window's foot,
   with no empty band below them, and the Queue and People tabs are there from the start, also in an empty room.
 - Phones held sideways: the invite window fits in two columns (the WhatsApp button is no longer cut off), every
@@ -30,13 +30,13 @@ games' tip jar, cuttings and badges.
 - Phones never offer the extension (it only works in a computer's browser); the extension page says so on a phone or
   tablet and points to the site instead. In Turkish, generated room names are Turkish ("Kadife Salon") and percentages
   read "%70".
-- Testers only: on a sideways tablet the Test Lab drawer lies over the room instead of squeezing it.
-
-### 0.9.97.122 — 11 Nov
+- The Picture Palace and Moonlit Nights scenes are redrawn so their landmarks stay clear of the page (a film reel and
+  wall lights, a column, a lantern and the moon, a projector beam along the ceiling), with people-like seat heads.
 - Phones held sideways: the first-time tips wait until the phone is upright again, so they never cover "Watch
   fullscreen", and a small phone's empty room (an iPhone SE) fits sideways without anything cut off.
 - Testers only: in Turkish the Test Lab is called "Test Panosu" everywhere; on a phone its facts no longer squeeze their
-  values off the screen, and its top button says "🔎 Commands" instead of a keyboard shortcut.
+  values off the screen, its top button says "🔎 Commands" instead of a keyboard shortcut, and on a sideways tablet
+  the drawer lies over the room instead of squeezing it.
 
 ### 0.9.97.121 — 10 Nov
 - On a computer, Snack Bar, Window Garden and Five Frames open in a window that lines up with the chat column: from its

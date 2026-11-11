@@ -505,7 +505,7 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
   down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
   top bar, resize it from the corner, then double-click the top bar: it goes back to the column.
 
-**0.9.97.QA2A (lane A, QA2-A: B2's sweep findings for the room and the site).**
+**0.9.97.122, part 2 (lane A, QA2-A: B2's sweep findings for the room and the site, plus Design's ART-S scenes).**
 - [ ] Q1. Laptop and a big screen, in a room: the video's card and the chat reach the bottom of the window (no empty
   starry band below); Queue and People tabs are there before any video plays.
 - [ ] Q2. Phone sideways: 🔗 Invite (⋯ → Invite) shows everything without scrolling, WhatsApp included; Settings shows
@@ -513,7 +513,7 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
 - [ ] Q3. Phone: no 🧩 Extension in the top bar; open the extension page: it says the extension is for computers.
 - [ ] Q4. Turkish: a room without a name shows a Turkish name ("Kadife Salon"-like); Settings → Sound shows "%70".
 - [ ] Q5. Theme Sinema or Lokum: the invite's chosen tab and the chosen Settings category are lit in the theme's
-  colour; on a tablet Settings is not see-through.
+  colour; on a tablet Settings is not see-through; the new scene art stays clear of the page's text and cards.
 
 **0.9.97.122 (lane A, LAB3: a phone held sideways, the Test Panosu name).**
 - [ ] M1. Phone (new browser or Test Lab "start as a first-time visitor"): enter a room, a tip shows; turn the phone
