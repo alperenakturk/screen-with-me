@@ -161,7 +161,7 @@ const until = async (fn, ms = 6000) => {
   const back = await page.evaluate(() => ({ snack: localStorage.getItem('snackBar'), copies: Object.keys(localStorage).filter((k) => k.startsWith('lab:real:')) }));
   check(restored.dir === 'lab' && JSON.parse(back.snack || '{}').coins === 1234 && back.copies.length === 0, 'Restore my real saves: the real Snack Bar save is back, no copies left', `${restored.text} ${back.snack?.slice(0, 40)} ${back.copies}`);
   const again = await run('games.restore');
-  check(again.dir === 'error' && /no lab cheat|lab hilesi/.test(again.text), 'nothing to restore any more: the command says why', again.text);
+  check(again.dir === 'error' && /no lab cheat|Test Panosu hilesi/.test(again.text), 'nothing to restore any more: the command says why', again.text);
   await run('games.speed', '1');
   await run('games.playing');
 

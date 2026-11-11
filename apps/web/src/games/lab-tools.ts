@@ -174,7 +174,7 @@ export function registerGamesLab(
       {
         id: 'games.tipjar',
         title: { en: 'Fill the tip jar now', tr: 'Bahşiş kavanozunu hemen doldur' },
-        help: { en: 'Local lab server only: the room\'s tip jar fills for the film playing (+10 % for everyone this film).', tr: 'Sadece yerel lab sunucusunda: odanın bahşiş kavanozu oynayan film için dolar (bu film boyunca herkese +%10).' },
+        help: { en: 'Local lab server only: the room\'s tip jar fills for the film playing (+10 % for everyone this film).', tr: 'Sadece yerel test sunucusunda: odanın bahşiş kavanozu oynayan film için dolar (bu film boyunca herkese +%10).' },
         tab: 'games',
         where: { en: 'in a room with a film', tr: 'film oynayan bir odada' },
         available: () => labServerHere() || LOCAL_ONLY,
@@ -241,7 +241,7 @@ export function registerGamesLab(
         title: { en: 'Restore my real saves', tr: 'Gerçek kayıtlarımı geri getir' },
         help: { en: 'Puts back the side-game saves the lab kept aside before its first cheat: my real coins and plants come back.', tr: 'Lab\'ın ilk hileden önce kenara ayırdığı yan oyun kayıtlarını geri koyar: gerçek jetonlarım ve bitkilerim geri gelir.' },
         tab: 'games',
-        available: () => sandboxed().length > 0 || { en: 'no lab cheat used yet: the saves are the real ones', tr: 'henüz lab hilesi kullanılmadı: kayıtlar zaten gerçek' },
+        available: () => sandboxed().length > 0 || { en: 'no lab cheat used yet: the saves are the real ones', tr: 'henüz Test Panosu hilesi kullanılmadı: kayıtlar zaten gerçek' },
         run: () => restoreSaves().join(', '),
       },
     ];

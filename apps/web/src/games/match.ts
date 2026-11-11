@@ -930,7 +930,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       ...Object.values(LAB_POSITIONS).flat().map((position) => ({
         id: `classics.position.${position}`,
         title: { en: `Classics: set the "${position}" position`, tr: `Klasikler: "${position}" dizilişini kur` },
-        help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel lab sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
+        help: { en: 'Local lab server only: chess mate1 (Ra1-a8 mates), dama chain (three captures), backgammon bearoff.', tr: 'Sadece yerel test sunucusunda: satranç mate1 (Ra1-a8 mat eder), dama chain (üç taş birden alınır), tavla bearoff (taşlar toplanıyor).' },
         tab: 'games' as const,
         where: { en: 'at a Classics table, seated', tr: 'Klasikler masasında, oturmuşken' },
         // LAB2: the server sets the position (and switches to its board) only for a seated player.
