@@ -929,7 +929,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`placeOf`, owner 10 Nov 2026):** the tables always play in the video's place, without a switch (`STAGE_READY`, on
   since card .113; over YouTube, `overYoutube` / YTG, the free window beside the player); the side games always play in
   the free window, without a switch on a computer (narrow screens keep their below / large pick, `gamePlace:<kind>`).
-  The free window's **home** (`homeBox`) is the column right of the theater, under the top bar, over the side panel,
+  The free window's **home** (`homeBox`): with the side panel showing, the window lines up with it (its top and right
+  edge, down to just above `#chat-form`, at least the game's `minSize` wide, never over the video box itself), so no
+  sliver of chat shows and the message box stays free (0.9.97.117, Game Studio's review); otherwise the column right of the theater, under the top bar, over the side panel,
   right-aligned at its top, as big as the column allows up to `maxSize` and never below `minSize` (a column narrower
   than that: the window sticks out over the video's edge by the difference); over YouTube it shrinks to the column (or
   the largest strip beside the player, `largestClear`) so it never covers the player; tablets, phones and the video's
@@ -946,7 +948,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`SIDE_STICK`). Once moved or resized, each game remembers its spot (`gameFloat:at:<kind>`; the older
   `gameFloat:spot[:<kind>]` keys are ignored, so every game first opens in its home) and zoom (`gameFloat:zoom:<kind>`,
   saved as it leaves its home). A drag follows the mouse once per frame; drag and resize live only while the button is
-  held (`buttons`, `lostpointercapture`, `pointercancel` end them), so hovering the corner never moves the window. A double
+  held, so hovering the corner never moves the window. The resize ends on `buttons` / `lostpointercapture` /
+  `pointercancel`; the drag (0.9.97.117) hears its moves and release on the page too (a capture that didn't take still
+  drags), ignores a move with no button held (another pointer), and a drag whose release was never heard ends at the
+  next press where the window stands (never replaying the old pointer). A double
   click on the head (or `gameWindow.reset`) forgets the spot. **🎮 in the head** (`hubFromHead`): the hall moves into a
   fixed `.head-game-wrap` (inside `document.fullscreenElement` while there is one); from a free window it slides out of
   the window's left side, level with its top (its right side when there is no room), elsewhere it hangs under the 🎮

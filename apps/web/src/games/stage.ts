@@ -458,6 +458,21 @@ export function createGameStage(opts: StageOptions) {
     const fits = (b: Box) => Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h);
     let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
     const { low, high } = zoomRange(kind);
+    // Game Studio's review (0.9.97.117): the home lines up with the side panel: from its top down to just above the chat's
+    // message box, at least the game's smallest width (right-aligned to the panel, out over the video's edge when the
+    // panel is narrower), so no sliver of chat shows around it and the message box stays free. The game is fitted in it.
+    const panel = document.querySelector<HTMLElement>('.room .side')?.getBoundingClientRect();
+    const form = document.getElementById('chat-form')?.getBoundingClientRect();
+    if (!overYoutube() && panel && panel.width > 1 && panel.left >= video.right - 1) {
+      const { minSize, maxSize } = sizeOf(kind);
+      const width = Math.round(Math.min(maxSize[0], Math.max(minSize[0], panel.width)));
+      // Another tab (people, queue) hides the message box: then down to the panel's bottom.
+      const inPanel = form && form.height > 1 && form.top > panel.top && form.top <= panel.bottom;
+      const height = Math.round((inPanel ? form.top - EDGE / 2 : panel.bottom) - panel.top);
+      // Never over the picture itself (the video box); the theater card's own padding may be covered.
+      const left = Math.max(page.left + EDGE, wrap.getBoundingClientRect().right + EDGE / 2, panel.right - width);
+      if (height >= minSize[1]) return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
+    }
     // Over YouTube nothing may cover the player: the window shrinks to the column (or the largest strip beside it).
     // Elsewhere (0.9.97.114, owner) a side game keeps at least its smallest readable size in the right column, sticking
     // out over the video's right edge when the column is narrower than that (a 1366 laptop: ≈ 46 px).
@@ -540,12 +555,20 @@ export function createGameStage(opts: StageOptions) {
     const kind = shownKind();
     if (kind && !spot) save(zoomKey(kind), String(Math.round((box.width / sizeOf(kind).size[0]) * 1000) / 1000));
     if (!menu.hidden && menu.parentElement === headMenuWrap) setHub(false);
-    head.setPointerCapture(event.pointerId);
     stage.classList.add('game-dragging');
+    // The capture keeps the drag on the head over iframes; the move and the release are also heard on the page, so a
+    // capture that didn't take (a busy page) still drags and still ends.
+    try {
+      head.setPointerCapture(event.pointerId);
+    } catch {
+      /* the page-level listeners carry the drag */
+    }
   });
-  head.addEventListener('pointermove', (event) => {
+  addEventListener('pointermove', (event) => {
     if (!drag || event.pointerId !== drag.id) return;
-    if (!(event.buttons & 1) || mode !== 'float') return endDrag(event);
+    // A move with no button held is not part of the drag (another pointer, or a release nobody heard: see below).
+    if (!(event.buttons & 1)) return;
+    if (mode !== 'float') return endDrag(event, true);
     dragAt = { x: event.clientX, y: event.clientY };
     if (!dragFrame) dragFrame = requestAnimationFrame(dragStep);
   });
@@ -563,10 +586,13 @@ export function createGameStage(opts: StageOptions) {
     placeFloat();
     dispatchEvent(new Event('swm-layout'));
   }
-  function endDrag(event: PointerEvent): void {
+  // 0.9.97.117: a release nobody heard (outside the page) leaves the drag open but still: the next press anywhere ends
+  // it where the window stands; replaying the old pointer there would throw the window back over a resize since.
+  addEventListener('pointerdown', (event) => endDrag(event, true), true);
+  function endDrag(event: PointerEvent, lost = false): void {
     if (!drag || event.pointerId !== drag.id) return;
     if (dragFrame) cancelAnimationFrame(dragFrame);
-    if (mode === 'float') dragStep();
+    if (mode === 'float' && !lost) dragStep();
     drag = null;
     dragAt = null;
     stage.classList.remove('game-dragging');
@@ -574,9 +600,9 @@ export function createGameStage(opts: StageOptions) {
     spot = spotNow();
     saveSpot();
   }
-  head.addEventListener('pointerup', endDrag);
-  head.addEventListener('pointercancel', endDrag);
-  head.addEventListener('lostpointercapture', endDrag);
+  addEventListener('pointerup', (event) => endDrag(event));
+  addEventListener('pointercancel', (event) => endDrag(event));
+  head.addEventListener('lostpointercapture', (event) => endDrag(event));
   /** Double click on the head (or the lab): the game's own size, back where it first opened. */
   function resetFloat(): void {
     const kind = shownKind();
