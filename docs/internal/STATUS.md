@@ -500,6 +500,19 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**QA2-W (lane W: B2's sweep of the game-window frame; fold into the next round).**
+- [ ] QW1. Tablet upright and sideways, a video playing: open Snack Bar from 🎮. Sideways it fills the right column;
+  upright it covers the area under the video down to just above the message box. Never over the video.
+- [ ] QW2. Tablet: the 🎮 beside the video opens the hall whole (both rows of tables). Phone sideways: the hall sheet
+  shows all six tables in one row.
+- [ ] QW3. Laptop, a table (chess) with a video playing: "Video paused for the game" shows under the window's top bar,
+  not over its buttons; the buttons read "Game hall", "Leave table", "Close table", "Back to video".
+- [ ] QW4. Phone upright, a table with a video: one top row: the small video (tap = back to the video, a "‹" on it),
+  the game's name, ?, 🎙, 🎮, ⋯. ⋯ shows "Leave table" and "Close table" (Close asks first). Sideways: those two sit in
+  the top row instead of ⋯.
+- [ ] QW5. Laptop: cinema mode (T), then open Snack Bar from 🎮: cinema mode ends and the window sits in the right
+  column, off the video. Snack Bar's window leaves a small gap to "Play now".
+
 **0.9.97.121 (lane W: the side game window lines up with the chat column; fold into the next round).**
 - [ ] W121. Laptop (1366 and a big screen): open Snack Bar from 🎮. Its window covers the chat column from the top
   down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
