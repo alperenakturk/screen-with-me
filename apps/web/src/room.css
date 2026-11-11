@@ -5821,15 +5821,13 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   display: none;
 }
 
-/* The head follows the window's width: icons only when it is narrow. */
+/* The head's buttons show their words whenever they fit (QA2; stage.ts `fitHeadLabels`), else icons only. */
 .game-stage {
   container: gstage / inline-size;
 }
 
-@container gstage (max-width: 1100px) {
-  .game-stage .game-head-text {
-    display: none;
-  }
+.game-stage:not(.head-labels) .game-head-text {
+  display: none;
 }
 
 .game-stage-head {
@@ -6109,10 +6107,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   z-index: 1100;
 }
 
-.game-stage.full .game-head-text {
-  display: none;
-}
-
 /* ---- Game window placements (0.9.91.8): side / float / stage; narrow screens below / full ---- */
 .game-place {
   display: inline-flex;
@@ -6162,10 +6156,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   overflow: hidden;
 }
 
-.game-stage.float .game-head-text {
-  display: none;
-}
-
 .game-stage.float .game-stage-head {
   cursor: grab;
   touch-action: none;
@@ -6211,11 +6201,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
     padding: 0;
     justify-content: center;
   }
-
-  .game-stage.float.solo-game .game-place-btn {
-    width: 30px;
-    height: 32px;
-  }
 }
 
 /* Narrow screens: under the video (the rest of the screen) */
@@ -6226,10 +6211,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   border-top: 1px solid var(--border);
   border-radius: 16px 16px 0 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.game-stage.below .game-head-text {
-  display: none;
 }
 
 /* Davet kartı: "Ali bir XOX açtı · Katıl / Sonra" (filmden dönüş kartıyla aynı yerde) */
@@ -9893,10 +9874,6 @@ html.ph-shorts .room #player-error:not([hidden]) {
   transform: translateX(-50%);
 }
 
-html.shorts-view .game-stage .game-place {
-  display: none;
-}
-
 /* ==== 0.9.91.13: our own players (Shorts in the room view, the sync test) use the dock too: the old bar goes, our
    click catcher stays (click = play / pause, double click = fullscreen, the wheel scrolls Shorts); ⏯ and the volume
    sit on the dock. ==== */
@@ -11263,22 +11240,6 @@ button.chat-name:hover,
   color: var(--text);
 }
 
-/* R10: a narrow game table's window (a small free window, below 520 px since card GW added ⛶; the side games keep their one-row head, card GP): the title gets the whole first row of the head (the
-   game's name in full, "· started by …" cut first) and the buttons move to a second row, right-aligned. */
-@container gstage (max-width: 520px) {
-  .game-stage:not(.solo-game) .game-stage-head {
-    flex-wrap: wrap;
-    row-gap: 6px;
-    padding: 6px 8px;
-  }
-  .game-stage:not(.solo-game) .game-stage-title {
-    flex: 1 0 100%;
-  }
-  .game-stage:not(.solo-game) .game-place {
-    margin-left: auto;
-  }
-}
-
 /* ---- phone.css, whole (see above) ---- */
 
 /*
@@ -12076,7 +12037,19 @@ html.ph-game:has(.room.has-item) .game-stage-head {
   padding-left: calc(8px + 92px + 10px + env(safe-area-inset-left));
 }
 
+/* QA2 (Planner's pick 1): the game's name, cut with "…"; the video thumbnail is "back" ("‹" on it), so no button. */
 html.ph-game .game-stage-head .game-stage-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+html.ph-game .game-stage-title-name {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+html.ph-game .game-stage-title-by,
+html.ph-game:has(.room.has-item) .game-stage .game-minimize {
   display: none;
 }
 
@@ -12102,11 +12075,6 @@ html.ph-game .game-stage .game-minimize > span[aria-hidden] {
   display: none;
 }
 
-html.ph-game .game-stage .game-minimize .game-head-text {
-  display: inline;
-  white-space: normal;
-}
-
 html.ph-game .game-stage .game-minimize .game-head-text::before {
   content: '‹ ';
   font-size: 15px;
@@ -12120,6 +12088,7 @@ html.ph-game .game-stage-head #strip-voice:not([hidden]) {
 html.ph-game .game-stage-head #strip-voice .cam-ctl {
   width: 44px;
   height: 44px;
+  border-radius: 10px;
 }
 
 /* GP2: every control in a game is a 44 px target on a phone (Apple / Material; the games sweep checks it). Board
@@ -12216,10 +12185,14 @@ html.ph-game .room .player-wrap > :not(.player) {
 
 /* Over the player: a tap reaches the page (not the YouTube frame) and goes back to the video. */
 html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs)::after {
-  content: '';
+  content: '‹';
   position: absolute;
   inset: 0;
   z-index: 20;
+  padding: 8px;
+  font: 800 28px/1 sans-serif;
+  color: #fff;
+  background: rgb(0 0 0 / 0.4);
 }
 
 html.ph-game .room:not(.has-item) .theater {

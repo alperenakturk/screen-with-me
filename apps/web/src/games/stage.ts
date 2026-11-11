@@ -16,7 +16,7 @@
 import { slideIn } from './motion.ts';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
-import { hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
+import { hasMouse, isPhoneLayout, isSideways, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -164,6 +164,11 @@ export function createGameStage(opts: StageOptions) {
   const minimizeButton = headButton('✕', 'game-minimize');
   const leaveButton = headButton('↩', 'game-leave');
   const endButton = headButton('⏹', 'game-end');
+  // QA2 (Planner's pick 1): an upright phone's head is one row, [video thumbnail = back] [name] [?] [🎙] [🎮] [⋯]; the
+  // ⋯ holds "Leave table" and "Close table" (with their words) in the phone's bottom sheet. Sideways they sit in the head.
+  const moreButton = headButton('⋯', 'game-more');
+  const morePop = el('div', { class: 'live-menu game-more-pop', role: 'menu' });
+  morePop.hidden = true;
   // Placement switch: free window / in the video's place (narrow screens: below / large).
   const placeButtons = PLACES.map((p) => {
     const b = el('button', { type: 'button', class: `game-place-btn place-${p}` });
@@ -179,7 +184,7 @@ export function createGameStage(opts: StageOptions) {
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
   // A game may put its own small buttons here (Classics: "Change game"); it empties the slot when it closes.
   const headSlot = el('span', { class: 'game-head-slot' });
-  const head = el('header', { class: 'game-stage-head' }, title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, minimizeButton.node);
+  const head = el('header', { class: 'game-stage-head' }, title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, moreButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
   /**
@@ -256,7 +261,9 @@ export function createGameStage(opts: StageOptions) {
     // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
     // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
     // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
-    if (mode === 'below' && youtube && !narrow.matches && !stage.hidden && cinemaOn()) {
+    // QA2 (Planner's pick 1, 11 Nov 2026: never over the video): a side game's free window has no place beside the video
+    // in cinema mode either, so it leaves cinema mode the same way; T puts it away again.
+    if (((mode === 'below' && youtube) || (mode === 'float' && !current && !!solo)) && !narrow.matches && !stage.hidden && cinemaOn()) {
       const toggle = document.getElementById('side-toggle') as HTMLButtonElement | null;
       if (toggle && !toggle.hidden) {
         toggle.click();
@@ -273,6 +280,7 @@ export function createGameStage(opts: StageOptions) {
     document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
     // phone.css: the room's video becomes a small preview in the game's head (it keeps playing, a tap goes back).
     document.documentElement.classList.toggle('ph-game', isPhoneLayout() && mode === 'full' && !stage.hidden && !shortsView());
+    phoneHead();
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
     else for (const p of ['left', 'top', 'width', 'height', 'transform']) stage.style.removeProperty(p);
@@ -696,7 +704,8 @@ export function createGameStage(opts: StageOptions) {
     if (cinema !== wasCinema) {
       wasCinema = cinema;
       // Cinema mode turned on over YouTube with a game open: the game goes away (a dot on 🎮), as in fullscreen.
-      if (cinema && overYoutube() && !stage.hidden && !narrow.matches) return minimize();
+      // QA2: a side game too (its free window would sit over the video).
+      if (cinema && (overYoutube() || (!current && !!solo)) && !stage.hidden && !narrow.matches) return minimize();
       if (!stage.hidden) place();
     }
     const now = shortsView();
@@ -733,9 +742,16 @@ export function createGameStage(opts: StageOptions) {
 
   // ---- Fit the game to its box: no scrollbars, ever (owner's rule) ----
   let fitting = false;
+  /** QA2 (B2's sweep): the head's buttons show their words whenever they fit beside the game's name, else icons only. */
+  function fitHeadLabels(): void {
+    stage.classList.add('head-labels');
+    const name = titleText.querySelector<HTMLElement>('.game-stage-title-name') ?? titleText;
+    if (isPhoneLayout() || head.scrollWidth > head.clientWidth + 1 || name.scrollWidth > name.clientWidth + 1) stage.classList.remove('head-labels');
+  }
   function refit(): void {
     const kind = shownKind();
     if (fitting || stage.hidden || !kind) return;
+    fitHeadLabels();
     const W = frame.clientWidth;
     const H = frame.clientHeight;
     if (!W || !H) return;
@@ -826,6 +842,7 @@ export function createGameStage(opts: StageOptions) {
     minimizeButton.label(t('game.minimize'));
     leaveButton.label(t('hub.leave'));
     endButton.label(t('hub.close'));
+    moreButton.label(t('more.button'));
     leaveButton.node.hidden = !current;
     for (const b of triggers) b.title = t('hub.title');
     stage.classList.toggle('solo-game', !current && !!solo);
@@ -843,6 +860,7 @@ export function createGameStage(opts: StageOptions) {
       title.title = `${t(`games.${solo}.title`)} · ${t('hub.solo')}`;
       endButton.node.hidden = true;
     }
+    phoneHead();
     for (const b of triggers) {
       b.classList.toggle('game-on', tables.length > 0);
       b.classList.toggle('game-new', unseenNews(load(SEEN_KEY)).length > 0);
@@ -1019,7 +1037,8 @@ export function createGameStage(opts: StageOptions) {
   function autoPause(): void {
     if (mode !== 'stage' || !current || !opts.pauseVideo?.()) return;
     pausedAt = Date.now();
-    flashHint(hubButton.node, t('game.pausedForGame'));
+    // QA2: under the head, on the game's top (on the 🎮 it covered the tops of ?, 🎮 and Leave).
+    flashHint(head, t('game.pausedForGame'), 2800, true);
   }
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */
@@ -1108,6 +1127,44 @@ export function createGameStage(opts: StageOptions) {
     if (table && (await sure('leave')) && current?.id === table.id) leave();
   });
   endButton.node.addEventListener('click', () => current && void endTable(current.id));
+  /** An upright phone with a table: Leave / Close live behind ⋯ (QA2). */
+  function tightHead(): boolean {
+    return isPhoneLayout() && !isSideways() && !!current;
+  }
+  // While the head is tight, Leave / Close wait in the menu (a phone sheet, `.live-menu`, out of the page until ⋯).
+  function closeMore(): void {
+    morePop.hidden = true;
+    morePop.remove();
+    moreButton.node.setAttribute('aria-expanded', 'false');
+  }
+  function phoneHead(): void {
+    const tight = tightHead();
+    if (tight && leaveButton.node.parentElement !== morePop) morePop.append(leaveButton.node, endButton.node);
+    if (!tight && leaveButton.node.parentElement === morePop) {
+      closeMore();
+      moreButton.node.before(leaveButton.node, endButton.node);
+    }
+    for (const b of [leaveButton.node, endButton.node]) {
+      if (tight) b.setAttribute('role', 'menuitem');
+      else b.removeAttribute('role');
+    }
+    moreButton.node.hidden = !tight || (leaveButton.node.hidden && endButton.node.hidden);
+  }
+  moreButton.node.setAttribute('aria-haspopup', 'menu');
+  moreButton.node.setAttribute('aria-expanded', 'false');
+  moreButton.node.addEventListener('click', () => {
+    if (!morePop.hidden) return closeMore();
+    document.body.append(morePop);
+    morePop.hidden = false;
+    moreButton.node.setAttribute('aria-expanded', 'true');
+  });
+  // A choice in the menu (it asks first where the head's button asks), a tap elsewhere or Esc closes it.
+  morePop.addEventListener('click', () => closeMore());
+  document.addEventListener('pointerdown', (event) => {
+    const target = event.target as Node | null;
+    if (!morePop.hidden && target && !morePop.contains(target) && !moreButton.node.contains(target)) closeMore();
+  });
+  document.addEventListener('keydown', (event) => event.key === 'Escape' && closeMore());
   // Closing the tab (or reloading it) in the middle of a game asks first. Automated browsers only with
   // `opt:leaveWarn` = '1' (a harness that reloads mid-game would otherwise be stopped by the prompt).
   addEventListener('beforeunload', (event) => {
