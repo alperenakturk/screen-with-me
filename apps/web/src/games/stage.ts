@@ -1267,6 +1267,14 @@ export function createGameStage(opts: StageOptions) {
         available: () => (!stage.hidden ? true : { en: 'no game window on screen', tr: 'ekranda oyun penceresi yok' }),
         run: () => hubButton.node.click(),
       },
+      {
+        id: 'gameWindow.more',
+        title: { en: 'Game window: the phone head’s ⋯ menu', tr: 'Oyun penceresi: telefon başlığının ⋯ menüsü' },
+        help: { en: 'On an upright phone with a table open: presses ⋯ in the head, which holds “Leave table” and “Close table” (each asks first where it did before).', tr: 'Dik telefonda bir masa açıkken başlıktaki ⋯’ya basar: içinde “Masadan kalk” ve “Masayı kapat” var (önceden sorduklarında yine sorarlar).' },
+        tab: 'games',
+        available: () => (!moreButton.node.hidden && !stage.hidden ? true : { en: 'no ⋯ in the head (an upright phone with a table only)', tr: 'başlıkta ⋯ yok (yalnız dik telefonda, masa açıkken)' }),
+        run: () => moreButton.node.click(),
+      },
     ],
     status: () => {
       const kind = shownKind();
@@ -1274,8 +1282,9 @@ export function createGameStage(opts: StageOptions) {
       const where = stage.hidden ? 'minimized' : mode;
       const home = mode === 'float' && !spot ? ' · home' : '';
       const hall = !menu.hidden && menu.parentElement === headMenuWrap ? ` · hall ${headMenuWrap.dataset.side ?? ''}` : '';
+      const labelled = stage.classList.contains('head-labels') ? ' · labels' : '';
       const paused = pausedAt ? ` · paused the video ${Math.round((Date.now() - pausedAt) / 1000)} s ago` : '';
-      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${paused}${overYoutube() ? ' · YouTube' : ''}`]];
+      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`]];
     },
   }));
 
