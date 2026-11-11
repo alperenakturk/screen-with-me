@@ -17,7 +17,8 @@
 .cl-bot[hidden] { display: none; }
 .cl-bot-label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); }
 .cl-bot-icon, .cl-bot-icon svg { width: 22px; height: 22px; display: block; }
-.cl-bot-level.on { border-color: var(--accent); color: var(--text); }
+/* (l) The chosen level is filled in the main-button colour, so it reads as chosen, not as one more outlined button. */
+.cl-bot-level.on { border-color: var(--accent-btn, var(--accent)); background: var(--accent-btn, var(--accent)); color: var(--on-accent); }
 
 /* The game shelf (owner's pick 2 B): boxes on a wooden shelf, the chosen one's lid open, Stub's light above. */
 .xox-board-wrap { position: relative; }
@@ -135,7 +136,7 @@
 .bg-bar { justify-content: space-between; background: #0003; border-radius: 6px; }
 .bg-bar-o, .bg-bar-x { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; }
 .bg-bar-x { flex-direction: column-reverse; }
-.bg-off { justify-content: space-between; padding: 6px 0; border-radius: 6px; background: #0003; font-size: 12px; font-weight: 700; }
+.bg-off { justify-content: space-between; padding: 6px 0; border-radius: 6px; background: #0003; font-size: 13px; font-weight: 700; }
 .bg-point.movable, .bg-bar.movable, .bg-point.target, .bg-off.target { cursor: pointer; }
 .bg-point.movable .bg-checker:last-of-type, .bg-bar.movable .bg-checker { box-shadow: inset 0 -2px 0 #0004, 0 0 0 2px rgba(255, 198, 90, 0.8); }
 .bg-point.picked::before, .bg-bar.picked { filter: brightness(1.35); box-shadow: 0 0 0 2px #ffc65a; }
@@ -401,3 +402,10 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 html.phone #game-stage [data-board='backgammon'] .xox-player { gap: 6px; }
 html.phone #game-stage [data-board='backgammon'] .xox-name { flex: 1 0 auto; }
 html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; white-space: nowrap; font-size: 13px; letter-spacing: 0; }
+
+/* (k) The dice are big enough to read on a phone (the glyph was about 22 px), and a used die is clearly spent: faded and
+   struck through. */
+.bg-dice { font-size: 44px; gap: 8px; }
+.bg-die.used { opacity: 0.3; text-decoration: line-through; text-decoration-thickness: 3px; }
+/* (m) The tray's dark checker has a light rim, so it shows on the dark wood. */
+.bg-off-o { filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff8); }

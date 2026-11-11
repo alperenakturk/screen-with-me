@@ -507,6 +507,9 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     state.setAttribute('aria-label', ctx.playing ? t('growing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
     state.title = ctx.playing ? t('growing') : t('restingTitle');
+    // (j) Every icon in the bar says what it is (the 🎨 had no name).
+    decorButton.title = t('decor');
+    decorButton.setAttribute('aria-label', t('decor'));
     // SIDE340: the narrow column beside the video shows the short form (garden.css swaps them).
     const albumText = `📖 ${t('album', { n: found(garden), all: ALBUM_IDS.length })}`;
     albumCount.title = albumText;

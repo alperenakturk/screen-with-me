@@ -1232,6 +1232,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   button always "💧 Water" (`.wg-btn.full` when the pot is full), 🌙 for resting; Classics' wins pill and score carry
   🏆, the backgammon tray a title, "Just watch" hidden on your own turn. Harness
   `scripts/harness/five-frames/run.cjs` (20 checks: marks against the real list via the dev server's modules). Harness `scripts/harness/snack-bar/run.cjs` (25 checks).
+  **ART-L (0.9.97.119):** Design's light-theme art: the tutorial SVGs (`games/art/tutorial/`) and Window Garden's
+  `art/garden/window-sill.svg` write each colour as `var(--al-<hex>, #<hex>)`; the variables are set only under
+  `:root[data-theme='matinee']` (end of how-to-play.css), so every other theme draws the original colours. Window
+  Garden's body in Matinee maps its `--wg-*` variables to the room tokens (end of garden.css; the garden harness checks
+  Night stays dark and Matinee is light). Sea Battle's "Whole sea" lives in their board's `.sea-head` (re-added after
+  `seatHead()` redraws it; the sea harness checks it sits outside the zoomed grid). Backgammon: dice 44 px, `.bg-die.used`
+  struck through, `.bg-off-o` gets a light rim, the chosen `.cl-bot-level.on` is filled.
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the
