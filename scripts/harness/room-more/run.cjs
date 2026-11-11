@@ -59,7 +59,9 @@ const shown = (page, selector) =>
   // D: the fresh room's first view.
   // 0.9.96.23 (owner: "where did the stream go"): Share (screen share) needs no video, so it is there from the start.
   for (const [sel, what] of [['#media-input', 'add a video'], ['#invite-btn', 'invite'], ['.tab[data-tab="chat"]', 'chat'], ['#voice-join', 'join voice'], ['#live-share', 'share (screen share)']]) check(await shown(page, sel), `fresh room: ${what} is there`);
-  for (const [sel, what] of [['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab'], ['#sync-test', 'the sync test button']]) check(!(await shown(page, sel)), `fresh room: no ${what} yet`);
+  // QA2-A (Planner): Queue and People are always there, also before the first video; only the toolbar's sync test waits.
+  for (const [sel, what] of [['.tab[data-tab="queue"]', 'the queue tab'], ['.tab[data-tab="people"]', 'the people tab']]) check(await shown(page, sel), `fresh room: ${what} is there too`);
+  check(!(await shown(page, '#sync-test')), 'fresh room: no sync test button yet');
   check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '1024×640: no sideways scrolling');
 
   // 6e (owner): the rail is there in the empty room; voice, cameras, games and emojis work, the video controls are
@@ -188,6 +190,26 @@ const shown = (page, selector) =>
   const shared = ['Games', 'Save the room', "Today's recap", 'Sync test', 'Room rules'];
   const order = shared.map((l) => tiles.indexOf(l));
   check(order.every((i, n) => i >= 0 && (n === 0 || i > order[n - 1])), 'phone ⋯: the same items in the same order, Games included (no rail on a phone)', JSON.stringify(tiles));
+
+  // QA2-A #8 (Planner): the room fills the window's height on a computer, with and without a video, and the page never
+  // scrolls (the card and the side panel end at the window's foot, not ~100 px above it).
+  for (const [w, h] of [[1366, 768], [1920, 1080], [2560, 1080]]) {
+    const big = await enter({ viewport: { width: w, height: h } }, 'Robin', `fill${w}${Math.random().toString(36).slice(2, 6)}`);
+    for (const state of ['empty', 'video']) {
+      if (state === 'video') {
+        await big.fill('#media-input', VIDEO);
+        await big.click('#media-form button[value=load]');
+        await big.waitForSelector('.room.has-item', { timeout: 8000 }).catch(() => {});
+        await big.waitForTimeout(600);
+      }
+      const fill = await big.evaluate(() => {
+        const b = (s) => Math.round(document.querySelector(s).getBoundingClientRect().bottom);
+        return { stage: b('.stage'), side: b('.room > .side'), vh: innerHeight, scroll: document.documentElement.scrollHeight - innerHeight };
+      });
+      check(fill.scroll <= 0 && fill.vh - fill.stage <= 16 && Math.abs(fill.side - fill.stage) <= 1, `${w}×${h} ${state} room: the video's card and the side panel reach the window's foot, no page scroll`, JSON.stringify(fill));
+    }
+    await big.context().close();
+  }
 
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ The room is simpler (⋯ More, fresh room)');

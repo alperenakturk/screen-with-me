@@ -485,6 +485,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   are already visible to anyone in the room), the avatar is a button next to the name (`openAvatarDialog`), one
   "Odaya gir". The first time in any room (`localStorage` `tipsSeen`) `ui/first-tips.ts` shows 3 bubbles: 🔗 Davet et
   → the link box (＋ on phones) → 🎙 Sese katıl ("Sonraki" / "Anladım", ✕ / Esc end them; not in the shell / TV).
+  LAB3: on a phone held sideways (`html.phone.sideways`) a tip waits hidden (and the first one waits to start) until the
+  phone is upright again, so it never covers "Watch fullscreen"; the sideways empty room's box takes the column's full
+  height (`.player-wrap` `aspect-ratio: auto`, `100dvh`) and the right column is `min(53%, 380px)` with a 13 px
+  placeholder, so an iPhone SE fits it and "Say something…" stays whole. Harness `phone-sideways` (site job).
   Extension install while the "Filme git" card waits: the extension has the `scripting` permission and on
   `onInstalled` (`install`) injects `site-bridge.js` into open site tabs; the site watches `data-swm-extension` and
   redraws the card ("✓ Eklenti kuruldu!"). Store-time follow-up: a one-click store link on that card.
@@ -1272,7 +1276,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   upright there is no floating 🐞, ⋯ More / the Shorts ⋯ has a `.ph-lab-tile` that clicks it and ⋯ is ringed red on
   errors; held sideways with a video a 34 px 🐞 sits bottom right beside the video, none in fullscreen (the rail's foot is full on an
   iPhone SE); the tile reads "Test Lab · errors" while there are errors; rules in
-  `test-lab.css`, `labTile` in `phone-room.ts`, checks in the test-lab harness) or
+  `test-lab.css`, `labTile` in `phone-room.ts`, checks in the test-lab harness; LAB3: in Turkish the lab is "Test Panosu"
+  everywhere (drawer, tile, "Pano: …" commands; the glossary's name), the facts' name column is `fit-content(45%)` so long
+  names wrap, and a touch screen without a mouse shows "🔎 Commands" instead of "⌘ Ctrl+K") or
   Ctrl+Shift+D opens a drawer on the right (`--lab-w`, the page makes room with `html.lab-open` so it never covers the
   rail; in real fullscreen it moves into the fullscreen element on the left; on a phone a bottom sheet); tabs 📊 Status
   (card 12's facts + hook lines + a 60 s drift graph + switches + errors), 👥 🎬 🎮 🧪 🖥 (the commands registered for
@@ -1788,6 +1794,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   not while a dialog is open). **Unread in the tab title:** chat from others while `document.hidden` → "(n) title",
   cleared on `visibilitychange` (`drawTabTitle`, `baseTitle` from `renderSaved`). Test: `scripts/harness/invite/run.cjs`
   (22 checks).
+- **QA2-A (B2's full sweep, room / site; Planner's decisions 6, 7, 8, 10, 11, 13, 14):** the computer room fills the
+  window's height (`room.css` "QA2-A #8": `main` is a flex column, `.room` / `.theater` / `.player-wrap` grow; the
+  card's 16:9 width uses `100dvh − var(--stage-over)`: 212 px, the real overhead now that the footer is hidden, set on
+  `main` with the flex column; when the width limits, the video's box grows taller and the picture sits in it). Not while
+  a game is open (`:has(#game-stage:not([hidden]))`: in the video's place, under it, or a window beside a YouTube player):
+  then the room keeps the old geometry (254 px, no growth) the games are sized for (state-matrix: a table under a YouTube video at
+  1366 was pushed off the screen; games-youtube: after fullscreen the window beside a wider player overlapped it; game-proportions: a sideways tablet's 798 × 594 box shrank poker's text). Five Frames in
+  the narrow column keeps its compact sides and key gaps by width alone (`@container game (max-width: 340px)`), so the
+  Turkish row of 11 keys stays ≥ 24 px in the taller column. The Queue / People tabs show from the start (the fresh room hides
+  only `#sync-test`); cinema mode has one leave hint (the pill, `cinemaHint` gone). The invite window's styles live in
+  `ui/invite.css` (loaded with its lazy chunk, out of the room's 38 kB budget); on `html.phone.sideways` it is a two-column
+  grid (head, tabs, door | link pane). Settings on a phone: the fade at the list's foot is `.settings-main::after`
+  (sticky, also the list's bottom padding); sideways the category column is tighter and scrolls as the last resort;
+  upright the "⚙️ Settings" title shows. Settings categories share plain buttons (no `primary`), the host line
+  (`settings.youAreHost`) in Room (`#room-host-line`) and Film time, "Feedback" styled as a link, and the room-name
+  placeholder `roomNameExample` ("e.g. {name}"). Generated names follow the page language (`friendlyRoomName(id,
+  lang())`, 32 × 32 Turkish words); `percent()` in `i18n.ts` writes "%70" in Turkish. Phones never show the top bar's
+  🧩 Extension link (`styles.css`); the extension page shows a "for computers" note and a quiet download on
+  `(hover: none) and (pointer: coarse)`. The Test Lab drawer lies over the room on a touch screen without a mouse (no
+  `padding-right` on `body`). The join card on a short screen keeps the room's name and hint. "Fullscreen when turned
+  sideways" stays hidden on phones on purpose: a browser needs a tap for fullscreen, so a sideways phone offers "Watch
+  fullscreen" instead. Tests: `phone-sideways` (invite and Settings fit, iPhone SE + Galaxy S9+), `room-more` (the
+  room reaches the window's foot at 1366 / 1920 / 2560 wide, with and without a video), `test-lab` (sideways tablet).
 - **🎞 Cinema mode (card 14, 0.9.96.7; `room.ts` `side`, CSS `html.cinema-on` in `room.css`, harness `cinema`):** T, the
   rail's ⋯ or `#side-toggle` (the old "hide the side panel") turns the page around the video dark and gives the video the
   largest 16:9 beside the rail; the top bar comes back at the top edge (`#cinema-edge`, `cinema-peek`), chat lines come in

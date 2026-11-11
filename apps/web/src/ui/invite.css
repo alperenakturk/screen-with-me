@@ -1,0 +1,181 @@
+/* The invite window (ui/invite.ts): loaded with its lazy chunk, so the room page doesn't carry it (QA2-A; moved out
+   of room.css). */
+.invite-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invite-row {
+  display: flex;
+  gap: 8px;
+}
+
+.invite-link {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  text-overflow: ellipsis;
+}
+
+.invite-copy {
+  flex: none;
+  min-width: 96px;
+  justify-content: center;
+}
+
+.invite-copy.done {
+  background: var(--ok);
+  color: #06281a;
+  border-color: transparent;
+}
+
+.invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.invite-actions .btn {
+  flex: 1 1 140px;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.invite-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.invite-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* QA2-A #12: in the dark scene themes the card colour was darker than the track, so the chosen tab looked pressed in
+   or switched off: the chosen tab is lit with the theme's accent instead, on every theme. */
+.invite-tab[aria-selected='true'] {
+  background: color-mix(in srgb, var(--accent) 26%, var(--surface-2));
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.invite-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.invite-pane[hidden] {
+  display: none;
+}
+
+/* WhatsApp's own glyph in its own green (card 4, brand colour #25D366) on the theme's plain button: still WhatsApp at
+   a glance, but no longer the loudest thing in a light theme (YT5 batch, first-look review). */
+.btn.invite-wa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.btn.invite-wa .wa-glyph {
+  color: #25d366;
+}
+
+.wa-glyph {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+/* The QR tab: only the code, big, and "Copy image" (card 4: no explanation sentence). */
+.invite-qr-pane {
+  align-items: center;
+}
+
+.invite-qr {
+  width: min(240px, 42dvh, 70vw);
+  height: auto;
+  aspect-ratio: 1;
+  padding: 10px;
+  border-radius: 12px;
+  background: #fff;
+  image-rendering: pixelated;
+}
+
+.invite-auto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Sweep-1 small things: the invite window's line wraps without leaving one word alone. */
+
+.invite-sub {
+  /* QA2-A NIT: balanced lines, so "account needed." no longer sits alone on the second line. */
+  text-wrap: balance;
+}
+
+/* First-look review: the invite window's "Ask before letting people in" row lines up with the rows under it. */
+.invite-dialog .set-row.invite-door {
+  padding-inline: 0;
+}
+
+/* QA2-A #1 (B2's sweep): on a sideways phone the window was taller than the screen and its WhatsApp row was cut with no
+   sign that it scrolled. Two columns instead: the title, tabs and the door switch on the left, the link (or the QR
+   code) on the right, so all of it fits the phone's height. */
+html.phone.sideways .invite-dialog {
+  width: min(680px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  grid-template-rows: auto auto 1fr;
+  gap: 10px 18px;
+  align-content: start;
+  padding: 14px 18px;
+}
+
+html.phone.sideways .invite-dialog > :not(.invite-pane) {
+  grid-column: 1;
+}
+
+html.phone.sideways .invite-dialog > .invite-pane {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  align-self: center;
+  gap: 10px;
+}
+
+/* The ✕ stays in the window's top-right corner (in the grid it ended the left column). */
+html.phone.sideways .invite-dialog {
+  position: relative;
+}
+
+html.phone.sideways .invite-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+html.phone.sideways .invite-head h3 {
+  font-size: 16px;
+}
+
+html.phone.sideways .invite-qr {
+  width: min(180px, calc(100dvh - 120px));
+}

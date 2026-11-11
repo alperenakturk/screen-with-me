@@ -198,7 +198,7 @@ export function createVideoLab() {
       title: { en: 'Make one server request fail', tr: 'Bir sunucu isteği hata versin' },
       help: {
         en: 'Local lab server only: one request fails inside the server on purpose. It must answer a short {"error":"unavailable"} (503) and write one line to its log, never an error page.',
-        tr: 'Sadece yerel lab sunucusunda: bir istek sunucunun içinde bilerek hata verir. Kısa bir {"error":"unavailable"} (503) cevabı vermeli ve kaydına tek satır yazmalı, asla bir hata sayfası değil.',
+        tr: 'Sadece yerel test sunucusunda: bir istek sunucunun içinde bilerek hata verir. Kısa bir {"error":"unavailable"} (503) cevabı vermeli ve kaydına tek satır yazmalı, asla bir hata sayfası değil.',
       },
       tab: 'video',
       where: { en: 'test server only', tr: 'sadece test sunucusu' },
@@ -214,7 +214,7 @@ export function createVideoLab() {
       title: { en: 'Chat images run out now', tr: 'Sohbet görselleri şimdi süresini doldursun' },
       help: {
         en: 'Local lab server only: the room drops its chat images as if their time were up (1 day, 7 in a saved room). Their messages stay; after a reload they show the "Image" placeholder.',
-        tr: 'Sadece yerel lab sunucusunda: oda sohbet görsellerini süreleri dolmuş gibi siler (1 gün, kayıtlı odada 7). Mesajları kalır; sayfa yenilenince yerlerinde "Görsel" yazar.',
+        tr: 'Sadece yerel test sunucusunda: oda sohbet görsellerini süreleri dolmuş gibi siler (1 gün, kayıtlı odada 7). Mesajları kalır; sayfa yenilenince yerlerinde "Görsel" yazar.',
       },
       tab: 'video',
       where: { en: 'test server only', tr: 'sadece test sunucusu' },
@@ -291,8 +291,8 @@ export function createVideoLab() {
                 : { en: '🔴 connecting…', tr: '🔴 bağlanıyor…' },
         ],
       ];
-      if (handles.forcedHttp()) lines.push([{ en: 'Lab', tr: 'Lab' }, { en: 'backup way forced', tr: 'yedek yol zorlandı' }]);
-      if (handles.latencyMs()) lines.push([{ en: 'Lab slowness', tr: 'Lab yavaşlığı' }, { en: `🟡 everything waits ${handles.latencyMs()} ms`, tr: `🟡 her şey ${handles.latencyMs()} ms bekliyor` }]);
+      if (handles.forcedHttp()) lines.push([{ en: 'Lab', tr: 'Pano' }, { en: 'backup way forced', tr: 'yedek yol zorlandı' }]);
+      if (handles.latencyMs()) lines.push([{ en: 'Lab slowness', tr: 'Pano yavaşlığı' }, { en: `🟡 everything waits ${handles.latencyMs()} ms`, tr: `🟡 her şey ${handles.latencyMs()} ms bekliyor` }]);
       return lines;
     },
     /** The lab goes off: nothing of it stays (no latency, no forced fallback). */

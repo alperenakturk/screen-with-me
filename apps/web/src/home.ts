@@ -425,7 +425,7 @@ function renderContinue(app: HTMLElement): void {
   const last = lastRoom();
   if (!last) return void (box.hidden = true);
   const fresh = Date.now() - last.at < CONTINUE_MS;
-  const name = el('b', { class: 'continue-name' }, last.name ?? friendlyRoomName(last.id));
+  const name = el('b', { class: 'continue-name' }, last.name ?? friendlyRoomName(last.id, lang()));
   const status = el('span', { class: 'continue-status' }, ago(last.at));
   const go = el(
     'a',
