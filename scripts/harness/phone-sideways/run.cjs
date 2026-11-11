@@ -1,6 +1,6 @@
 // Card LAB3: a phone held sideways. (1) The first-time tips never cover "Watch fullscreen": held sideways they wait
 // hidden and come back when the phone is upright. (2) An iPhone SE's empty room fits sideways: "No video yet", the steps
-// and "Run a sync test" all inside the screen, nothing cut off.
+// and "Run a sync test" all inside the screen, nothing cut off, and the message box's hint whole.
 //
 //   built site on wrangler dev (CI):  npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //                                     node scripts/harness/phone-sideways/run.cjs http://localhost:8787
@@ -63,6 +63,15 @@ async function enter(page, room, name, tips) {
     });
     check(fit.parts >= 1 && fit.inside, 'iPhone SE sideways, empty room: the heading and "Run a sync test" are inside the screen', JSON.stringify(fit));
     check(fit.scroll, 'iPhone SE sideways, empty room: the page does not scroll', JSON.stringify(fit));
+    const hint = await page.evaluate(() => {
+      const i = document.querySelector('#chat-input');
+      const c = document.createElement('canvas').getContext('2d');
+      const ph = getComputedStyle(i, '::placeholder');
+      c.font = `${ph.fontSize} ${ph.fontFamily}`;
+      const cs = getComputedStyle(i);
+      return { room: Math.round(i.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)), text: Math.round(c.measureText(i.placeholder).width) };
+    });
+    check(hint.text <= hint.room, 'iPhone SE sideways: the message box\'s "Say something…" is whole', JSON.stringify(hint));
     await ctx.close();
   }
 

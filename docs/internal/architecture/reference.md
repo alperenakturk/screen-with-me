@@ -487,7 +487,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   → the link box (＋ on phones) → 🎙 Sese katıl ("Sonraki" / "Anladım", ✕ / Esc end them; not in the shell / TV).
   LAB3: on a phone held sideways (`html.phone.sideways`) a tip waits hidden (and the first one waits to start) until the
   phone is upright again, so it never covers "Watch fullscreen"; the sideways empty room's box takes the column's full
-  height (`.player-wrap` `aspect-ratio: auto`, `100dvh`), so an iPhone SE fits it. Harness `phone-sideways` (site job).
+  height (`.player-wrap` `aspect-ratio: auto`, `100dvh`) and the right column is `min(53%, 380px)` with a 13 px
+  placeholder, so an iPhone SE fits it and "Say something…" stays whole. Harness `phone-sideways` (site job).
   Extension install while the "Filme git" card waits: the extension has the `scripting` permission and on
   `onInstalled` (`install`) injects `site-bridge.js` into open site tabs; the site watches `data-swm-extension` and
   redraws the card ("✓ Eklenti kuruldu!"). Store-time follow-up: a one-click store link on that card.

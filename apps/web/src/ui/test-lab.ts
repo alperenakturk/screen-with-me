@@ -142,7 +142,7 @@ const TEXT = {
     copy: '📋 Kopyala',
     copied: '✓ Kopyalandı',
     copyFailed: 'Kopyalanamadı: yazıyı seçip kopyala',
-    hide: 'Panoyu kapat',
+    hide: 'Panoyu tamamen kapat',
     hideNote: 'Adresteki ?debug=0 de kapatır.',
     commands: 'Komutlar',
     searchPlaceholder: 'Ne yapmak istediğini yaz… (Enter çalıştırır)',
@@ -473,7 +473,7 @@ export function mountDebugPanel(): void {
     { id: 'lab.selfTest', title: { en: 'Lab: self-test (a command that fails)', tr: 'Pano: kendini dene (bozuk bir komut)' }, help: { en: 'Runs a command that fails on purpose: you see a red line in the log and the room keeps working.', tr: 'Bilerek bozulan bir komut çalışır: kayıtta kırmızı bir satır görürsün, oda çalışmaya devam eder.' }, tab: 'log', run: () => { throw labFail({ en: 'self-test: this error is expected', tr: 'kendini deneme: bu hata bekleniyor' }); } },
     { id: 'lab.reload', title: { en: 'Lab: reload the page', tr: 'Pano: sayfayı yenile' }, help: { en: 'Reloads this tab; the lab stays on.', tr: 'Bu sekmeyi yeniler; pano açık kalır.' }, tab: 'status', run: () => location.reload() },
     { id: 'lab.firstVisit', title: { en: 'Lab: start as a first-time visitor', tr: 'Pano: ilk kez gelen biri gibi başla' }, help: { en: 'Forgets my name, avatar, tips and room names in this browser (never the browser id), then reloads.', tr: 'Bu tarayıcıdaki adımı, avatarımı, ipuçlarını ve oda adlarını unutur (tarayıcı kimliğini asla), sonra yeniler.' }, tab: 'screen', run: () => { if (confirm(tx.firstAsk)) { forgetVisits(); location.reload(); } } },
-    { id: 'lab.off', title: { en: 'Lab: turn the lab off', tr: 'Pano: panoyu kapat' }, help: { en: 'Removes the lab from this tab (same as ?debug=0).', tr: 'Panoyu bu sekmeden kaldırır (?debug=0 ile aynı).' }, tab: 'status', run: () => turnOff() },
+    { id: 'lab.off', title: { en: 'Lab: turn the lab off', tr: 'Pano: panoyu tamamen kapat' }, help: { en: 'Removes the lab from this tab (same as ?debug=0).', tr: 'Panoyu bu sekmeden kaldırır (?debug=0 ile aynı).' }, tab: 'status', run: () => turnOff() },
   ];
   const unregisterOwn = debugHooks.register('lab', () => ({ commands: own }));
   // 👥 Fake friends (DL2): ordinary clients in this room, all gone when the lab is turned off or the tab closes.
