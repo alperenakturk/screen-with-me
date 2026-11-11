@@ -10218,9 +10218,10 @@ html.shorts-view .game-stage .game-place {
 
   /* QA2-A #8 (Planner): the room fills the window's height. When the width (not the height) limits the 16:9 card,
      the card and the side panel still reach the bottom: the video's box grows taller and the picture sits in it. */
-  /* Not while a table plays in the video's place or under it: the games are sized for the room as it was. 212 = what
-     is really above and below the picture (top bar, link box, "Now playing" line, the card's padding). */
-  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up, .game-below):not(:has(#game-stage.stage:not([hidden]))) main {
+  /* Not while a game is open (in the video's place, under it or as a window beside a YouTube player): the games are
+     sized for the room as it was. 212 = what is really above and below the picture (top bar, link box, "Now playing"
+     line, the card's padding). */
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up):not(:has(#game-stage:not([hidden]))) main {
     --stage-over: 212px;
     display: flex;
     flex-direction: column;

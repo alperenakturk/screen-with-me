@@ -1798,9 +1798,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   window's height (`room.css` "QA2-A #8": `main` is a flex column, `.room` / `.theater` / `.player-wrap` grow; the
   card's 16:9 width uses `100dvh − var(--stage-over)`: 212 px, the real overhead now that the footer is hidden, set on
   `main` with the flex column; when the width limits, the video's box grows taller and the picture sits in it). Not while
-  a table plays in the video's place (`:has(#game-stage.stage:not([hidden]))`) or under it (`html.game-below`): then the
-  room keeps the old geometry (254 px, no growth) the games are sized for (state-matrix: a table under a YouTube video at
-  1366 was pushed off the screen; game-proportions: a sideways tablet's 798 × 594 box shrank poker's text). Five Frames in
+  a game is open (`:has(#game-stage:not([hidden]))`: in the video's place, under it, or a window beside a YouTube player):
+  then the room keeps the old geometry (254 px, no growth) the games are sized for (state-matrix: a table under a YouTube video at
+  1366 was pushed off the screen; games-youtube: after fullscreen the window beside a wider player overlapped it; game-proportions: a sideways tablet's 798 × 594 box shrank poker's text). Five Frames in
   the narrow column keeps its compact sides and key gaps by width alone (`@container game (max-width: 340px)`), so the
   Turkish row of 11 keys stays ≥ 24 px in the taller column. The Queue / People tabs show from the start (the fresh room hides
   only `#sync-test`); cinema mode has one leave hint (the pill, `cinemaHint` gone). The invite window's styles live in

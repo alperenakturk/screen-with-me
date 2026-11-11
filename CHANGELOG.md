@@ -18,7 +18,7 @@ games' tip jar, cuttings and badges.
 
 ### 0.9.97.122 — 11 Nov
 - On a computer the room fills the window from top to bottom: the video's card and the chat end at the window's foot,
-  with no empty band below them (while a table is open the room keeps its usual size, so the game fits whole), and the
+  with no empty band below them (while a game is open the room keeps its usual size, so the game fits whole), and the
   Queue and People tabs are there from the start, also in an empty room.
 - Phones held sideways: the invite window fits in two columns (the WhatsApp button is no longer cut off), every
   Settings category fits its column and a long settings list fades at its foot to show there is more, and the join card
