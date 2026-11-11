@@ -53,6 +53,48 @@ function tint(svg, sill = false) {
   });
 }
 
+// ART-C (11 Nov 2026): the games hall covers. They stay posters in Matinee: the dark navy background stops become warm
+// mid-tone poster colours (terracotta → umber; a lighter felt; a dusk sky), so the cream pieces and lines drawn on them
+// still read. Only the background gradient stops (and the garden window's wall, frame and sky) move; boards, pieces,
+// panels and the mascot never do. Variables are --alc-<hex> so they never mix with the tutorials' --al-*.
+//   node docs/internal/design/games/art-l/tint.mjs covers   → ./svg/covers/*.svg + ./matinee-covers.css
+export const COVER_STOPS = {
+  '#1d1740': '#946a4c', '#08061a': '#4f3727', // the shared night gradient → a warm sepia poster
+  '#2a1d4f': '#946a4c', '#0c0920': '#4f3727', // Snack Bar's
+  '#1f3a34': '#4a7a5e', '#08130f': '#28473a', // Last Heart's felt, lighter
+  '#0f1640': '#5a76a8', '#061026': '#2f4470', // Sea Battle's sky → dusk
+  '#1a2150': '#5f7fb3', '#2a2257': '#f0c08e', // Window Garden's sky (as in the game, art-s/garden-matinee.css)
+};
+export const COVER_FILLS = { '#120e27': '#d6c6aa', '#1d2353': '#7a8bac' }; // Window Garden's wall and moon cut-out (the sky's colour at the moon on this 200-high cover)
+export const COVER_STROKES = { '#3a2e57': '#7a6550' }; // Window Garden's frame
+function tintCover(svg) {
+  return svg.replace(/<(\w+)((?:\s[^>]*?)?)(\/?)>/g, (all, tag, attrs, self) => {
+    const add = [];
+    attrs.replace(/\s(fill|stroke|stop-color)="(#[0-9a-fA-F]{6})"/g, (m, attr, hex) => {
+      const h = hex.toLowerCase();
+      const map = attr === 'stop-color' ? COVER_STOPS : attr === 'fill' ? COVER_FILLS : COVER_STROKES;
+      if (map[h]) add.push(`${attr}:var(--alc-${h.slice(1)},${h})`);
+      return m;
+    });
+    if (!add.length) return all;
+    if (/\sstyle="/.test(attrs)) attrs = attrs.replace(/\sstyle="([^"]*)"/, (m, st) => ` style="${st.replace(/;?\s*$/, ';')}${add.join(';')}"`);
+    else attrs += ` style="${add.join(';')}"`;
+    return `<${tag}${attrs}${self}>`;
+  });
+}
+if (process.argv[2] === 'covers') {
+  mkdirSync(here('./svg/covers/'), { recursive: true });
+  for (const f of readdirSync(new URL('covers/', ART))) writeFileSync(here(`./svg/covers/${f}`), tintCover(readFileSync(new URL(`covers/${f}`, ART), 'utf8')));
+  const all = { ...COVER_STOPS, ...COVER_FILLS, ...COVER_STROKES };
+  writeFileSync(here('./matinee-covers.css'), `/* ART-C: the games hall covers in Matinee (docs/internal/design/games/art-l/README.md). Every other theme leaves these
+   unset, so the covers keep their own colours. Goes into apps/web/src/games/gallery.css (or wherever the covers show). */
+:root[data-theme='matinee'] {
+${Object.entries(all).map(([k, v]) => `  --alc-${k.slice(1)}: ${v};`).join('\n')}
+}
+`);
+  console.log('✓ covers + matinee-covers.css');
+  process.exit(0);
+}
 mkdirSync(here('./svg/tutorial/'), { recursive: true });
 mkdirSync(here('./svg/garden/'), { recursive: true });
 let changed = 0;
