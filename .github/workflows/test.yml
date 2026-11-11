@@ -144,7 +144,7 @@ jobs:
       - name: Help page and policy numbers
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0
-          npx playwright install --with-deps chromium
+          bash scripts/ci-playwright.sh
           node scripts/harness/help/run.cjs http://localhost:8787
 
       # Only its end: the whole log of every run buried the failing step's own output.
@@ -297,10 +297,7 @@ jobs:
       # Card GT: on a tablet (iPad + Android, upright and sideways) a game's window stays clear of the chat.
       - name: Tablets
         run: |
-          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
-          mkdir -p /tmp/vid && ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 -t 120 -c:v libvpx -b:v 300k /tmp/vid/video.webm
-          (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
-          sleep 1
+          bash scripts/ci-test-video.sh
           node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       # Lane W: the game window's head and free window (W1–W5, 0.9.97.112–114): no ⛶, 🎮 opens the hall, drag / resize /
@@ -370,9 +367,7 @@ jobs:
 
       - name: Game windows in every state
         run: |
-          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null)
-          mkdir -p /tmp/vid && ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=24 -t 120 -c:v libvpx -b:v 300k /tmp/vid/video.webm
-          (cd /tmp/vid && python3 -m http.server 5300 >/dev/null 2>&1 &)
+          bash scripts/ci-test-video.sh
           HEADFUL=1 FILM_URL=http://localhost:5300/video.webm xvfb-run -a node scripts/harness/state-matrix/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
