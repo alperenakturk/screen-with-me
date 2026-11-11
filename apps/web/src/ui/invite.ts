@@ -1,3 +1,4 @@
+import './invite.css';
 import { qrSvg } from '@swm/shared/qr';
 import { canShareSheet } from '../device.ts';
 import { el } from '../dom.ts';

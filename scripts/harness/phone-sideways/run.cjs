@@ -1,6 +1,8 @@
 // Card LAB3: a phone held sideways. (1) The first-time tips never cover "Watch fullscreen": held sideways they wait
 // hidden and come back when the phone is upright. (2) An iPhone SE's empty room fits sideways: "No video yet", the steps
-// and "Run a sync test" all inside the screen, nothing cut off, and the message box's hint whole.
+// and "Run a sync test" all inside the screen, nothing cut off, and the message box's hint whole. (3) QA2-A: the invite
+// window and Settings fit a sideways phone (iPhone SE, Galaxy S9+): the invite needs no scrolling, every Settings
+// category is inside its column, and the long settings list shows a fade at its foot.
 //
 //   built site on wrangler dev (CI):  npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //                                     node scripts/harness/phone-sideways/run.cjs http://localhost:8787
@@ -105,8 +107,43 @@ async function enter(page, room, name, tips) {
     await friend.close();
   }
 
+  // ---- (3) QA2-A: the invite window and Settings fit a sideways phone ----
+  for (const [label, dev] of [['iPhone SE', devices['iPhone SE landscape']], ['Galaxy S9+', devices['Galaxy S9+ landscape']]]) {
+    const ctx = await browser.newContext({ ...dev });
+    const page = await ctx.newPage();
+    await enter(page, `side-dlg-${Date.now().toString(36)}`, 'Alex', false);
+    await page.waitForTimeout(600);
+    if (!(await page.$('.invite-dialog'))) await page.evaluate(() => document.querySelector('#invite-btn').click());
+    await page.waitForSelector('.invite-dialog');
+    await page.waitForTimeout(400);
+    const inv = await page.evaluate(() => {
+      const d = document.querySelector('.invite-dialog');
+      const r = d.getBoundingClientRect();
+      const wa = d.querySelector('.invite-wa')?.getBoundingClientRect();
+      return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, scroll: d.scrollHeight - d.clientHeight, wa: wa ? Math.round(wa.bottom) : null };
+    });
+    check(inv.top >= 0 && inv.bottom <= inv.vh && inv.scroll <= 1, `${label} sideways: the invite window fits without scrolling`, JSON.stringify(inv));
+    check(inv.wa !== null && inv.wa <= inv.bottom, `${label} sideways: the invite's WhatsApp button is inside the window`, JSON.stringify(inv));
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => document.querySelector('#settings-open').click());
+    await page.waitForSelector('.settings-nav');
+    await page.waitForTimeout(400);
+    const set = await page.evaluate(() => {
+      const nav = document.querySelector('.settings-nav');
+      const n = nav.getBoundingClientRect();
+      const buttons = [...nav.querySelectorAll('button')].filter((b) => b.offsetParent);
+      const last = buttons.at(-1).getBoundingClientRect();
+      const main = document.querySelector('.settings-main');
+      const fade = getComputedStyle(main, '::after');
+      return { buttons: buttons.length, lastBottom: Math.round(last.bottom), navBottom: Math.round(n.bottom), navScroll: nav.scrollHeight - nav.clientHeight, more: main.scrollHeight > main.clientHeight + 1, fade: fade.content !== 'none' && fade.position === 'sticky' };
+    });
+    check(set.buttons >= 6 && set.lastBottom <= set.navBottom && set.navScroll <= 1, `${label} sideways: every Settings category is inside its column`, JSON.stringify(set));
+    check(!set.more || set.fade, `${label} sideways: the long settings list shows a fade at its foot`, JSON.stringify(set));
+    await ctx.close();
+  }
+
   await browser.close();
-  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ A sideways phone: tips wait, the empty room fits');
+  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ A sideways phone: tips wait, the empty room, the invite and Settings fit');
   process.exit(fails ? 1 : 0);
 })().catch((e) => {
   console.error(e);

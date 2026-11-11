@@ -191,6 +191,26 @@ const shown = (page, selector) =>
   const order = shared.map((l) => tiles.indexOf(l));
   check(order.every((i, n) => i >= 0 && (n === 0 || i > order[n - 1])), 'phone ⋯: the same items in the same order, Games included (no rail on a phone)', JSON.stringify(tiles));
 
+  // QA2-A #8 (Planner): the room fills the window's height on a computer, with and without a video, and the page never
+  // scrolls (the card and the side panel end at the window's foot, not ~100 px above it).
+  for (const [w, h] of [[1366, 768], [1920, 1080], [2560, 1080]]) {
+    const big = await enter({ viewport: { width: w, height: h } }, 'Robin', `fill${w}${Math.random().toString(36).slice(2, 6)}`);
+    for (const state of ['empty', 'video']) {
+      if (state === 'video') {
+        await big.fill('#media-input', VIDEO);
+        await big.click('#media-form button[value=load]');
+        await big.waitForSelector('.room.has-item', { timeout: 8000 }).catch(() => {});
+        await big.waitForTimeout(600);
+      }
+      const fill = await big.evaluate(() => {
+        const b = (s) => Math.round(document.querySelector(s).getBoundingClientRect().bottom);
+        return { stage: b('.stage'), side: b('.room > .side'), vh: innerHeight, scroll: document.documentElement.scrollHeight - innerHeight };
+      });
+      check(fill.scroll <= 0 && fill.vh - fill.stage <= 16 && Math.abs(fill.side - fill.stage) <= 1, `${w}×${h} ${state} room: the video's card and the side panel reach the window's foot, no page scroll`, JSON.stringify(fill));
+    }
+    await big.context().close();
+  }
+
   await browser.close();
   console.log(fails ? `\n✗ ${fails} failed` : '\n✓ The room is simpler (⋯ More, fresh room)');
   process.exit(fails ? 1 : 0);
