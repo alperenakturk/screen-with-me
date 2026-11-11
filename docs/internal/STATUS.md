@@ -505,7 +505,7 @@ explains each step in Turkish when asked. Details and reasons: `browser-support.
   down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
   top bar, resize it from the corner, then double-click the top bar: it goes back to the column.
 
-**LAB3 (lane A: a phone held sideways, the Test Panosu name).**
+**0.9.97.122 (lane A, LAB3: a phone held sideways, the Test Panosu name).**
 - [ ] M1. Phone (new browser or Test Lab "start as a first-time visitor"): enter a room, a tip shows; turn the phone
   sideways with a video playing: no tip over "Watch fullscreen"; upright again: the tip is back.
 - [ ] M2. Small phone (iPhone SE size) sideways in an empty room: "No video yet", both steps and "Run a sync test" fit.

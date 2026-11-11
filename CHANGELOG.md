@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.122 — 11 Nov
+- Phones held sideways: the first-time tips wait until the phone is upright again, so they never cover "Watch
+  fullscreen", and a small phone's empty room (an iPhone SE) fits sideways without anything cut off.
+- Testers only: in Turkish the Test Lab is called "Test Panosu" everywhere; on a phone its facts no longer squeeze their
+  values off the screen, and its top button says "🔎 Commands" instead of a keyboard shortcut.
+
 ### 0.9.97.121 — 10 Nov
 - On a computer, Snack Bar, Window Garden and Five Frames open in a window that lines up with the chat column: from its
   top down to just above the message box, so no cut-off strip of chat shows around it and you can still type.
