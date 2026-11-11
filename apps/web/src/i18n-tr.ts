@@ -286,7 +286,7 @@ export const tr: Record<I18nKey, string> = {
   'classics.back': 'Raf',
   'classics.backTitle': 'Rafa dön ve başka bir oyun seç',
   'classics.busy': 'Oyun sürerken başka oyun seçilmez',
-  'classics.bot': 'Stub’a karşı oyna',
+  'classics.bot': 'Stub’a (bota) karşı oyna',
   'classics.botEasy': 'Kolay',
   'classics.botMedium': 'Orta',
   'classics.botLeave': 'Stub kalksın',

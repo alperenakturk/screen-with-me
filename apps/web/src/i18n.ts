@@ -284,7 +284,7 @@ const en = {
   'classics.back': 'Shelf',
   'classics.backTitle': 'Back to the shelf to pick another game',
   'classics.busy': 'Finish this game before picking another',
-  'classics.bot': 'Play against Stub',
+  'classics.bot': 'Play against Stub (our bot)',
   'classics.botEasy': 'Easy',
   'classics.botMedium': 'Medium',
   'classics.botLeave': 'Stub leaves',

@@ -63,11 +63,12 @@ const TEXT = {
     notReady: 'Not ready',
     rematch: 'Play again',
     sit: 'Take the seat',
-    bot: 'Play Stub:',
+    bot: 'Play against Stub (our bot):',
     botEasy: 'Easy',
     botMedium: 'Medium',
     botLeave: 'Stub leaves',
     watchers: 'Watching',
+    watchShort: '👁 {n} watching',
     noWatchers: 'Nobody is watching.',
     left: '{n} ships left',
     leftOne: '1 ship left',
@@ -122,11 +123,12 @@ const TEXT = {
     notReady: 'Hazır değilim',
     rematch: 'Yeniden oyna',
     sit: 'Yere otur',
-    bot: 'Stub’a karşı:',
+    bot: 'Stub’a (bota) karşı:',
     botEasy: 'Kolay',
     botMedium: 'Orta',
     botLeave: 'Stub kalksın',
     watchers: 'İzleyenler',
+    watchShort: '👁 {n} izliyor',
     noWatchers: 'İzleyen yok.',
     left: '{n} gemi kaldı',
     leftOne: '1 gemi kaldı',
@@ -499,7 +501,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
         opp?.bot && s.phase !== 'play' ? leave : '',
       );
     }
-    watchOpen.textContent = `👁 ${s.watchers.length}`;
+    // QA2 (12): the chip says what the eye counts (people watching, not playing).
+    watchOpen.textContent = tx('watchShort', { n: s.watchers.length });
     watchOpen.setAttribute('aria-label', `${tx('watchers')}: ${s.watchers.length}`);
     watchPop.replaceChildren(
       el('b', {}, tx('watchers')),
