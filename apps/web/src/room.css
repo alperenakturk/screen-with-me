@@ -10184,8 +10184,9 @@ html.shorts-view .game-stage .game-place {
 
   html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room {
     --side-w: clamp(300px, 21vw, 400px);
-    /* 254, not 252: with the footer the room was 1 px taller than the window (sweep-2 #10). */
-    --stage-w: calc((100dvh - 254px) * 16 / 9 + 28px);
+    /* QA2-A #8: 212 = what is really above and below the picture now that the footer is hidden in the room (top bar,
+       link box, "Now playing" line, the card's padding; 254 still counted the footer). */
+    --stage-w: calc((100dvh - 212px) * 16 / 9 + 28px);
     grid-template-columns: minmax(0, max(var(--stage-w), 560px)) var(--side-w);
     justify-content: center;
     gap: 16px;
@@ -10203,6 +10204,25 @@ html.shorts-view .game-stage .game-place {
   html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room .theater:not(:fullscreen, .fake-fs) {
     gap: 8px;
     padding: 10px 12px 12px;
+  }
+
+  /* QA2-A #8 (Planner): the room fills the window's height. When the width (not the height) limits the 16:9 card,
+     the card and the side panel still reach the bottom: the video's box grows taller and the picture sits in it. */
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) main {
+    display: flex;
+    flex-direction: column;
+  }
+
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) {
+    flex: 1 1 auto;
+  }
+
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) > .stage > .theater:not(:fullscreen, .fake-fs) {
+    flex: 1 1 auto;
+  }
+
+  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) .theater:not(:fullscreen, .fake-fs) > .player-wrap {
+    flex: 1 1 auto;
   }
 }
 
