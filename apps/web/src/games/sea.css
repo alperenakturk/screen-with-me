@@ -61,7 +61,9 @@
 .sea-zoom.zoomed[data-q='1'] > .sea-grid { transform-origin: 100% 0; }
 .sea-zoom.zoomed[data-q='2'] > .sea-grid { transform-origin: 0 100%; }
 .sea-zoom.zoomed[data-q='3'] > .sea-grid { transform-origin: 100% 100%; }
-.sea-whole { position: absolute; z-index: 3; left: 50%; bottom: 8px; translate: -50% 0; min-height: 44px; padding: 4px 14px; font-weight: 800; box-shadow: 0 6px 18px rgb(0 0 0 / 0.45); }
+.sea-whole { flex: none; margin-left: auto; min-height: 44px; padding: 4px 12px; font-weight: 800; }
+/* With "Whole sea" in it the title row keeps its height (the grid's room is the container minus 46 px). */
+.sea-head:has(> .sea-whole:not([hidden])) { padding-block: 0; min-height: 44px; }
 .sea-whole[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .sea-zoom > .sea-grid { transition: none; } }
 .sea-grid {

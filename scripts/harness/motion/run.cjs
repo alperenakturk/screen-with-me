@@ -35,10 +35,13 @@ async function run(browser, reduced) {
   // Count the animations the window gets in the moment it opens.
   const opened = await page.evaluate(async () => {
     document.getElementById('game-btn').click();
-    await new Promise((r) => setTimeout(r, 300));
-    document.querySelector('#game-menu [data-tab="together"]')?.click();
+    // The hall is a lazy chunk: wait for its tab and card (a slow runner needs more than a fixed pause).
+    const find = async (sel) => { for (let i = 0; i < 100; i++) { const el = document.querySelector(sel); if (el) return el; await new Promise((r) => setTimeout(r, 50)); } return null; };
+    (await find('#game-menu [data-tab="together"]'))?.click();
     await new Promise((r) => setTimeout(r, 150));
-    document.querySelector('#game-menu [data-kind="classics"]').click();
+    const card = await find('#game-menu [data-kind="classics"]');
+    if (!card) return -1;
+    card.click();
     const stage = document.getElementById('game-stage');
     for (let i = 0; i < 20 && stage.hidden; i++) await new Promise((r) => setTimeout(r, 10));
     return stage.getAnimations().length;

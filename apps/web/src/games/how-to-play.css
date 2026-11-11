@@ -81,3 +81,42 @@ button.htp-open.htp-head:hover { background: var(--surface-2); border-color: var
   .htp-dots { grid-area: dots; }
   .htp-actions { grid-area: actions; margin-top: 6px; }
 }
+
+/* ART-L: the games' art in Matinee (docs/internal/design/games/art-l/README.md). The tutorial pictures and Window
+   Garden's scene read these variables; every other theme leaves them unset, so the art keeps its own colours there.
+   Goes into a stylesheet the games load (e.g. apps/web/src/games/how-to-play.css), or into room.css. */
+:root[data-theme='matinee'] {
+  /* shapes and gradient stops */
+  --al-22174f: #efe7da;
+  --al-120d2c: #e2d7c4;
+  --al-2a2257: #eadfcd;
+  --al-1a2150: #e2d6c2;
+  --al-120e27: #e4d9c6;
+  --al-2a2350: #f7f1e6;
+  --al-3a2d78: #f6e4bf;
+  --al-3a3458: #ddd1bc;
+  --al-24212e: #e6dccb;
+  --al-16122c: #d6c8b0;
+  --al-1a1622: #e1d6c4;
+  --al-1d2353: #e3d8c6;
+  --al-8f84d8: #a8997f;
+  --al-3a2e57: #b5a68d;
+  --al-a79fc4: #8a7c66;
+  /* text on the art */
+  --alt-fff3d6: #26201a;
+  --alt-fff8ea: #26201a;
+  --alt-cfc8ea: #564b3e;
+  --alt-a79fc4: #564b3e;
+  --alt-ffc65a: #7a4a00;
+  --alt-3ee08f: #16653c;
+  /* faint marks and cream outlines */
+  --alg-fff3d6: #3a2f25;
+  --alg-fff4d6: #3a2f25;
+  --alg-fffaf0: #3a2f25;
+  --alg-cfc8ea: #3a2f25;
+  --alg-c9cbe0: #3a2f25;
+  --alk-fff3d6: #564b3e;
+  /* Window Garden's window: dusk */
+  --als-2a2257: #9fb2cc;
+  --als-1a2150: #e6c7a6;
+}

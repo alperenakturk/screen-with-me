@@ -199,6 +199,13 @@ async function unnamed(page) {
   const z1 = await zoom();
   check(aimed.cells.length === 1 && aimed.cells[0] === other && /aiming at [A-J]\d+/i.test(aimed.status) && /fire at [A-J]\d+/i.test(aimed.fire), "phone: Sam's first tap only aims (crosshair, the cell's name, a Fire button)", aimed);
   check(z1.zoomed && z1.q === '0' && z1.scale > 1.9 && z1.whole, 'phone: the first tap zooms into that quarter (cells twice as big), "Whole sea" shows (44 px)', z1);
+  // B2's find (0.9.97.118): "Whole sea" never sits over the zoomed grid (it covered H10 in the bottom-right quarter).
+  const clear = await sam.page.evaluate(() => {
+    const f = document.querySelector('#game-stage .sea-theirs .sea-zoom').getBoundingClientRect();
+    const w = document.querySelector('#game-stage .sea-whole').getBoundingClientRect();
+    return w.bottom <= f.top + 1 || w.top >= f.bottom - 1 || w.right <= f.left + 1 || w.left >= f.right - 1;
+  });
+  check(clear, 'phone: "Whole sea" sits outside the zoomed grid, so every cell can be shot');
   check(!(await cellsWith(alex.page, 'mine', 'miss')).includes(other), 'phone: nothing is fired by an aim');
   await sam.page.click('#game-stage .sea-whole');
   await wait(400);
