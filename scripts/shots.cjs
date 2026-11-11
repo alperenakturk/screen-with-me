@@ -29,8 +29,12 @@ const SIZES = {
   desktop: { viewport: { width: 1920, height: 1080 } },
   tablet: { viewport: { width: 820, height: 1180 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   phone: devices['iPhone 13'],
+  'tablet-land': { viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
+  'phone-land': devices['iPhone 13 landscape'],
 };
-const sizeNames = flag('sizes', Object.keys(SIZES).join(',')).split(',');
+// Themes by id (themes.ts): gece = Night (the default), matinee = Matinee, sinema / lokum … = scene themes.
+const THEMES = flag('themes', 'gece').split(',');
+const sizeNames = flag('sizes', 'laptop,desktop,tablet,phone').split(',');
 const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
 const branch = (() => {
   try {
@@ -51,6 +55,20 @@ const SCREENS = {
   extension: { what: 'Extension page', go: (p) => p.goto(`${SITE}/extension.html`) },
   join: { what: 'Join card (an invited person, before entering)', go: (p) => p.goto(`${SITE}/r/${room()}`).then(() => p.waitForSelector('#name')) },
   room: { what: 'Empty room after joining', room: true },
+  invite: { what: 'Invite window (🔗 Invite)', room: true, after: (p) => p.evaluate(() => document.querySelector('#invite-btn')?.click()) },
+  'games-hall': {
+    what: 'Games hall (🎮: the games gallery)',
+    room: true,
+    video: true,
+    after: async (p) => {
+      await p.evaluate(() => {
+        const b = [...document.querySelectorAll('#game-btn, #dock-game, #shorts-game, .room-more-game, [data-more="game"]')].find((x) => x.getBoundingClientRect().width > 0) ?? document.querySelector('#game-btn');
+        b?.click();
+      });
+      await wait(1500);
+    },
+  },
+  'lab-drawer': { what: 'Test Lab drawer (🐞 open)', room: true, keepLab: true, after: async (p) => { await p.waitForSelector('.debug-fab', { state: 'attached' }); await p.evaluate(() => document.querySelector('.debug-fab').click()); await wait(800); } },
   'room-video': { what: 'Room playing a video file', room: true, video: true },
   // Cinema mode (card 14) is the room's only way to hide the side panel. Computers only: a phone's room is one column
   // and a touch-only tablet doesn't offer it (it needs a mouse for its edges).
@@ -142,8 +160,8 @@ async function lab(page, id) {
   const screens = pickScreens(gameKinds);
   const index = [];
   const problems = [];
-  for (const name of screens) {
-    const s = name.startsWith('game:') ? { what: `Game: ${name.slice(5)} (in the room's games stage)`, room: true, lab: `games.open.${name.slice(5)}` } : SCREENS[name];
+  for (const name of screens) for (const theme of THEMES) {
+    const s = name.startsWith('game:') ? { what: `Game: ${name.slice(5)} (opened over a playing video file, where it opens by default)`, room: true, video: true, lab: `games.open.${name.slice(5)}` } : SCREENS[name];
     if (!s) {
       problems.push(`unknown screen "${name}" (--screens list)`);
       continue;
@@ -151,12 +169,12 @@ async function lab(page, id) {
     for (const size of sizeNames.filter((n) => !s.sizes || s.sizes.includes(n))) {
       for (const lang of LANGS) {
         const ctx = await browser.newContext({ ...SIZES[size] });
-        await ctx.addInitScript((lang) => {
-          for (const [k, v] of Object.entries({ lang, name: 'Alex', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', extUpdateSeen: '9', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1' })) localStorage.setItem(k, v);
-        }, lang);
+        await ctx.addInitScript(({ lang, theme }) => {
+          for (const [k, v] of Object.entries({ lang, theme, name: 'Alex', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', extUpdateSeen: '9', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1' })) localStorage.setItem(k, v);
+        }, { lang, theme });
         const page = await ctx.newPage();
         page.on('pageerror', (e) => problems.push(`${name} ${size} ${lang}: page error ${e.message}`));
-        const file = `${name.replace(/[^\w-]+/g, '_')}-${size}-${lang}.png`;
+        const file = `${name.replace(/[^\w-]+/g, '_')}-${size}-${lang}${theme === 'gece' ? '' : `-${theme}`}.png`;
         try {
           if (s.room) await enterRoom(page, s);
           else await s.go(page);
@@ -164,9 +182,9 @@ async function lab(page, id) {
           if (s.after) await s.after(page);
           await wait(700);
           // The Test Lab opened the screen; its 🐞 is not part of what a person sees.
-          await page.addStyleTag({ content: '#debug-panel-root { display: none !important; }' });
+          if (!s.keepLab) await page.addStyleTag({ content: '#debug-panel-root { display: none !important; }' });
           await page.screenshot({ path: path.join(OUT, file) });
-          index.push({ name, what: s.what, size, lang, file });
+          index.push({ name, what: s.what + (theme === 'gece' ? '' : ` · theme ${theme}`), size, lang, file });
           console.log(`ok   ${file}`);
         } catch (e) {
           problems.push(`${name} ${size} ${lang}: ${String(e.message ?? e).split('\n')[0]}`);
