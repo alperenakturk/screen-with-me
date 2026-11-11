@@ -449,7 +449,7 @@ export function createGameStage(opts: StageOptions) {
    * tablet (card GT keeps it clear of the chat): null, and the window takes `SPOT_HOME`.
    */
   function homeBox(kind: Kind): Box | null {
-    if (inFullscreen() || isTablet() || isPhoneLayout()) return null;
+    if (inFullscreen() || isPhoneLayout()) return null;
     const video = theater.getBoundingClientRect();
     if (video.width < 2 || video.height < 2) return null;
     const [w, h] = sizeOf(kind).size;
@@ -459,19 +459,26 @@ export function createGameStage(opts: StageOptions) {
     let col: Box | null = { left: video.right, top: bar, width: page.left + page.width - video.right, height: page.top + page.height - bar };
     const { low, high } = zoomRange(kind);
     // Game Studio's review (0.9.97.117): the home lines up with the side panel: from its top down to just above the chat's
-    // message box, at least the game's smallest width (right-aligned to the panel, out over the video's edge when the
-    // panel is narrower), so no sliver of chat shows around it and the message box stays free. The game is fitted in it.
+    // message box, so no sliver of chat shows around it and the message box stays free; the game is fitted in it.
+    // QA2 (owner's rule, 11 Nov 2026: never over the video, tablets too): beside the video (a computer, a sideways tablet)
+    // it is at least the game's smallest width, right-aligned to the panel, out over the theater card's padding but never
+    // over the picture or the link box's "Play now"; under the video (an upright tablet) it takes the panel's width.
     const panel = document.querySelector<HTMLElement>('.room .side')?.getBoundingClientRect();
     const form = document.getElementById('chat-form')?.getBoundingClientRect();
-    if (!overYoutube() && panel && panel.width > 1 && panel.left >= video.right - 1) {
+    if (!overYoutube() && panel && panel.width > 1) {
       const { minSize, maxSize } = sizeOf(kind);
-      const width = Math.round(Math.min(maxSize[0], Math.max(minSize[0], panel.width)));
       // Another tab (people, queue) hides the message box: then down to the panel's bottom.
       const inPanel = form && form.height > 1 && form.top > panel.top && form.top <= panel.bottom;
       const height = Math.round((inPanel ? form.top - EDGE / 2 : panel.bottom) - panel.top);
-      // Never over the picture itself (the video box); the theater card's own padding may be covered.
-      const left = Math.max(page.left + EDGE, wrap.getBoundingClientRect().right + EDGE / 2, panel.right - width);
-      if (height >= minSize[1]) return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
+      const tallEnough = height >= minSize[1] * (isTablet() ? MIN_FIT : 1);
+      if (panel.left >= video.right - 1 && tallEnough) {
+        const width = Math.round(Math.min(maxSize[0], Math.max(minSize[0], panel.width)));
+        const media = document.getElementById('media-form')?.getBoundingClientRect();
+        const besideLinks = media && media.width > 1 && media.bottom > panel.top ? media.right + EDGE : 0;
+        const left = Math.max(page.left + EDGE, wrap.getBoundingClientRect().right + EDGE / 2, besideLinks, panel.right - width);
+        return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
+      }
+      if (panel.top >= video.bottom - 1 && tallEnough) return { left: Math.round(panel.left), top: Math.round(panel.top), width: Math.round(panel.width), height };
     }
     // Over YouTube nothing may cover the player: the window shrinks to the column (or the largest strip beside it).
     // Elsewhere (0.9.97.114, owner) a side game keeps at least its smallest readable size in the right column, sticking
@@ -1137,11 +1144,27 @@ export function createGameStage(opts: StageOptions) {
     requestAnimationFrame(keepHubOnScreen);
   }
   hubButton.node.addEventListener('click', hubFromHead);
+  function hubBeside(trigger: HTMLElement): void {
+    if (!menu.hidden && menu.parentElement === headMenuWrap) return setHub(false);
+    if (headMenuWrap.parentElement !== document.body) document.body.append(headMenuWrap);
+    if (menu.parentElement !== headMenuWrap) headMenuWrap.append(menu);
+    setHub(true);
+    const r = trigger.getBoundingClientRect();
+    const mh = menu.getBoundingClientRect().height;
+    headMenuWrap.style.top = `${Math.round(Math.max(EDGE, Math.min(r.top, innerHeight - EDGE - mh)))}px`;
+    headMenuWrap.style.right = `${Math.round(innerWidth - r.left + EDGE)}px`;
+    headMenuWrap.dataset.side = 'left';
+    requestAnimationFrame(keepHubOnScreen);
+  }
   for (const trigger of triggers) {
     trigger.addEventListener('click', () => {
       // A minimized table comes back first; the hub is one more press away (or the head's 🎮).
       if (menu.hidden && current && stage.hidden) return void open(current);
       if (menu.hidden && solo && stage.hidden) return void openSolo(solo);
+      // QA2 (B2's sweep): on a tablet the rail's 🎮 sits in the video's frame, which cut the hall's second row off
+      // (upright) or hid "Next" (sideways): there the hall hangs from the fixed box instead, left of the 🎮, its top
+      // level with the button and moved up as far as it needs to show whole.
+      if (isTablet() && !inFullscreen() && trigger.closest('.fs-dock')) return hubBeside(trigger);
       // The hub opens next to the 🎮 that was pressed.
       if (trigger.parentElement && menu.parentElement !== trigger.parentElement) {
         trigger.parentElement.append(menu);

@@ -12815,6 +12815,14 @@ html.sideways.ph-room .room .ph-turn-fs[hidden] {
 html.phone .game-menu.gallery {
   max-height: none;
 }
+/* QA2: a sideways phone's games hall uses the whole height (at 75dvh only its header and a third of a row showed). */
+html.phone.sideways .game-menu.gallery:not([hidden]) {
+  max-height: 100dvh !important;
+  padding-top: 14px !important;
+}
+html.phone.sideways .game-menu.gallery .hub-cards {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
 
 /* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the room line and the hint go, the title is
    smaller and the button sits beside the name. */
