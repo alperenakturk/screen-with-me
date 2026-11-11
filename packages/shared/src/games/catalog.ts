@@ -115,8 +115,8 @@ export const GAME_NEWS: readonly GameNews[] = [
     v: '0.9.97.117',
     kinds: ['classics'],
     badge: 'updated',
-    tr: 'Klasikler: tavlanın nasıl oynanır kartları artık altın halkalı pulları ve kalan yolu anlatıyor, sayaçlar ne saydığını söylüyor; oyunlar odanın temasına uyuyor.',
-    en: 'Classics: backgammon’s How to play cards now explain the gold-ringed checkers and how far you have left, the counters say what they count; the games follow the room’s theme.',
+    tr: 'Tavla: nasıl oynanır kartları altın halkalı pulları ve kalan yolu anlatıyor\nSayaçlar ne saydığını gösteriyor (🏆 galibiyet)\nOyunlar odanın temasına uyuyor',
+    en: 'Backgammon: How to play explains the gold rings and the pips left\nCounters say what they count (🏆 wins)\nGames follow the room’s theme',
   },
   {
     v: '0.9.97.106',

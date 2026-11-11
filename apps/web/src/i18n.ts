@@ -107,7 +107,7 @@ const en = {
   'game.ended': '{name} ended the game',
   'game.endedAuto': 'The game is over',
   'game.busy': 'A game is already open. Only whoever started it, or the host, can change it.',
-  'hub.title': 'Game hall',
+  'hub.title': 'Games hall',
   'hub.place.float': 'Free window: drag it anywhere, resize from its corner',
   'hub.place.stage': 'In the video’s place: the game takes the video’s frame (the room stays around it)',
   'hub.place.notYoutube': 'Not over a YouTube video (YouTube’s rule): the game opens beside it',

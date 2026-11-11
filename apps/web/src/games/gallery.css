@@ -46,7 +46,10 @@
    new reads in full: it wraps instead of stopping at two lines with "…". */
 .hub-count, .hub-label, .hub-table-text small, .hub-game-text small, .hub-side-text small { font-size: 13px; }
 .hub-news-line { font-size: 13px; }
-.hub-news-line > span { display: inline; -webkit-line-clamp: unset; overflow: visible; }
+.hub-news-line > b { display: block; margin-bottom: 2px; }
+.hub-news-line > ul { margin: 0; padding-left: 18px; display: grid; gap: 1px; }
+.hub-news-line li { line-height: 1.3; }
+html.phone .hub-news-line li:nth-child(n + 3) { display: none; }
 
 /* THEMEG: the chosen tab in the theme's accent (it was the games' gold on every theme). */
 .hub-tab.on { background: var(--accent-btn, var(--accent)); color: var(--on-accent); }

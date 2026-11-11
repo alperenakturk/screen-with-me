@@ -172,10 +172,12 @@ export function renderGallery(s: GalleryState): HTMLElement[] {
     const together = el('div', { class: 'hub-panel', role: 'tabpanel', 'data-panel': 'together' });
     together.hidden = s.tab !== 'together';
     if (news.length) {
-      // The newest note in two lines (the gallery never scrolls); all of them in its tooltip.
+      // QA2 (16): the newest note as short bullet lines (one per line of the note; a phone shows the first two), all of
+      // the notes in its tooltip.
       const text = (n: (typeof news)[number]) => (lang() === 'en' ? n.en : n.tr);
-      const note = el('p', { class: 'hub-news hub-news-line', role: 'note' }, el('span', {}, el('b', {}, `✨ ${t('hub.news')}: `), text(news[0]!)));
-      note.title = news.map(text).join('\n\n');
+      const lines = text(news[0]!).split('\n').filter(Boolean);
+      const note = el('div', { class: 'hub-news hub-news-line', role: 'note' }, el('b', {}, `✨ ${t('hub.news')}`), el('ul', {}, ...lines.map((line) => el('li', {}, line))));
+      note.title = news.map((n) => text(n).replace(/\n/g, ' · ')).join('\n\n');
       together.append(note);
     }
     if (tables.length) {

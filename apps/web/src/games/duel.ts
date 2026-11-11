@@ -286,6 +286,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   // ---- Helpers ----
   const mySeat = () => state?.seat ?? -1;
   const wordLang = (): Lang => state?.lang ?? 'en';
+  let langSet = false;
   const nameOf = (i: number) => state?.players[i]?.name ?? '';
   const other = () => (mySeat() === 0 ? 1 : 0);
   const me = (): DuelPlayer | null => (mySeat() >= 0 ? (state?.players[mySeat()] ?? null) : null);
@@ -609,6 +610,13 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         if (m.round !== lastRound) revealed = '';
         lastRound = m.round;
         state = m;
+        // QA2 (13): a fresh table takes the opener's page language for its words (Turkish page → Turkish words), once;
+        // the other player can still switch it in the lobby.
+        if (!langSet && m.phase === 'wait' && m.round === 0 && m.seat >= 0 && m.players.filter(Boolean).length === 1) {
+          langSet = true;
+          const want = pageLang() === 'tr' ? 'tr' : 'en';
+          if (m.lang !== want) send({ t: 'lang', lang: want });
+        }
         sounds(prev, m);
         render();
         // BUG6: the race starts (or I came back to a running one): the keyboard goes straight to the word.
