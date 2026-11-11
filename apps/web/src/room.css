@@ -12705,7 +12705,6 @@ html.phone .game-menu.gallery {
 /* QA2: a sideways phone's games hall uses the whole height (at 75dvh only its header and a third of a row showed). */
 html.phone.sideways .game-menu.gallery:not([hidden]) {
   max-height: 100dvh !important;
-  padding-top: 14px !important;
 }
 html.phone.sideways .game-menu.gallery .hub-cards {
   grid-template-columns: repeat(6, minmax(0, 1fr));
