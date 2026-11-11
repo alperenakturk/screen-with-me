@@ -16,6 +16,17 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.124 — 11 Nov
+- On a tablet a side game never covers the video: held sideways it sits in the right column, upright it fills the area
+  under the video down to the message box. Over a YouTube video too. Opening a side game in cinema mode leaves cinema
+  mode so the game has its place.
+- The games hall shows whole on a tablet, and on a phone held sideways all six tables fit in one row.
+- "Video paused for the game" shows under the game window's top bar instead of over its buttons, and the buttons show
+  their names ("Game hall", "Leave table", "Close table", "Back to video") whenever there is room.
+- On a phone the game's top bar is one tidy row: the small video (tap it to go back), the game's name, ?, the
+  microphone, 🎮 and ⋯, which holds "Leave table" and "Close table". Every table's "?" is up there now.
+- On a laptop a side game's window keeps a small gap to "Play now".
+
 ### 0.9.97.121 — 10 Nov
 - On a computer, Snack Bar, Window Garden and Five Frames open in a window that lines up with the chat column: from its
   top down to just above the message box, so no cut-off strip of chat shows around it and you can still type.
