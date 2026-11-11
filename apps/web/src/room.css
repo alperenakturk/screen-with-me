@@ -7802,10 +7802,17 @@ button.together-person:focus-visible .together-name {
   cursor: pointer;
 }
 
-.schedule-chips .chip:hover,
+/* QA2-A #5: hover only where there is a real pointer: a touch screen kept "In 1 hour" lit as if it were chosen. */
 .rules-groups .chip[aria-pressed='true'] {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+}
+
+@media (hover: hover) {
+  .schedule-chips .chip:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+  }
 }
 
 /* Date + "Set" side by side (the old column layout turned the input's 220 px flex-basis into its height). */
@@ -12715,17 +12722,21 @@ html.phone .game-menu.gallery {
   max-height: none;
 }
 
-/* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the room line and the hint go, the title is
-   smaller and the button sits beside the name. */
+/* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the title is smaller and the button sits
+   beside the name. QA2-A #9: the room's name and the avatar hint stay (they fit; without them the card didn't say which
+   room it was), the hint in small type, and the button sits level with the name box. */
 @media (max-height: 500px) {
   .join-card:not(.avatar-card) {
     padding: 14px 18px;
   }
 
-  .join-card:not(.avatar-card) .step-label,
-  .join-card:not(.avatar-card) .join-playing,
-  .join-card:not(.avatar-card) [data-i18n='joinHint'] {
+  .join-card:not(.avatar-card) .join-playing {
     display: none;
+  }
+
+  .join-card:not(.avatar-card) [data-i18n='joinHint'] {
+    margin: 8px 0 0;
+    font-size: 13px;
   }
 
   .join-card:not(.avatar-card) .join-waiting {
@@ -12736,7 +12747,7 @@ html.phone .game-menu.gallery {
   .join-card:not(.avatar-card) #name-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
+    align-items: center;
     gap: 6px 10px;
   }
 
