@@ -126,6 +126,8 @@ async function enterRoom(page, s) {
   await page.click('#name-form button.primary');
   await page.waitForSelector('.room-title-dot[data-status="open"]', { state: 'attached', timeout: 20000 });
   await wait(1200);
+  // The room's intro fades out on its own; a shot must not catch it mid-fade.
+  await page.waitForFunction(() => !document.querySelector('.swm-intro'), null, { timeout: 8000 }).catch(() => {});
   if (s.video) {
     // The link box is in the "＋ Add" sheet on a phone (hidden until opened): fill and press it from the page.
     await page.evaluate((url) => {
