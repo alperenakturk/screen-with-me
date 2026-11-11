@@ -73,7 +73,6 @@ const en = {
   'settings.showReactions': 'Flying emojis',
   'sideHide': 'Cinema mode · T',
   'sideShow': 'Leave cinema mode · T',
-  'cinemaHint': 'Cinema mode · press T or Esc to leave',
   'settings.railPin': 'Keep the controls open',
   'settings.actionNotice': '"Alex paused" note',
   'settings.rotateFs': 'Fullscreen when turned sideways',

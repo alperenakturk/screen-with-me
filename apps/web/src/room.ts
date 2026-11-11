@@ -3075,12 +3075,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       sideHidden = on;
       unread = 0;
       sessionSave(cinemaKey, on ? '1' : '0');
+      // QA2-A (Planner): one way-out hint only, the "✕ Leave cinema mode · T" pill (the 1.8 s flash said the same).
       render();
-      const seen = Number(load('cinemaHint') ?? 0);
-      if (on && seen < 2) {
-        save('cinemaHint', String(seen + 1));
-        flashHint($('.player-wrap'), t('cinemaHint'), 1800);
-      }
     };
     button.addEventListener('click', () => set(!sideHidden));
     exit.addEventListener('click', () => set(false));

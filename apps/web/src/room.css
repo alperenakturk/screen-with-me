@@ -10893,10 +10893,9 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   display: none;
 }
 
-/* A fresh room on a computer (nothing has played yet): add a video, invite, chat and join voice; the rest comes for
-   everyone with the first video, or from "⋯ More". */
-/* The Share card (screen share) stays: it needs no video, and the owner missed it in an empty room (0.9.96.23). */
-html:not(.phone) .room.fresh :is(.tab[data-tab='queue'], .tab[data-tab='people'], #sync-test) {
+/* A fresh room on a computer (nothing has played yet) hides the toolbar's sync test until the first video. The Queue and
+   People tabs stay (QA2-A, Planner: always visible, also in the empty room); so does Share (0.9.96.23). */
+html:not(.phone) .room.fresh #sync-test {
   display: none !important;
 }
 

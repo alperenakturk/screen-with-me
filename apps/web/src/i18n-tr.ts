@@ -75,7 +75,6 @@ export const tr: Record<I18nKey, string> = {
   'settings.showReactions': 'Uçuşan emojiler',
   'sideHide': 'Sinema modu · T',
   'sideShow': 'Sinema modundan çık · T',
-  'cinemaHint': 'Sinema modu · çıkmak için T\'ye ya da Esc\'ye bas',
   'settings.railPin': 'Kontroller hep açık',
   'settings.actionNotice': '"Ali durdurdu" notu',
   'settings.rotateFs': 'Yan çevirince tam ekran',
