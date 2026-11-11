@@ -1,4 +1,4 @@
-// 🍿 Snack Bar: the solo idle game played beside the video (CARDS.md "Snack Bar", research
+// 🍿 Snack Bar: the solo idle game played beside the video (docs/internal/archive/cards-done.md "Snack Bar", research
 // `docs/internal/research/solo-games-accounts.md` Part A). Pure rules, no DOM and no network: the page ticks the save
 // with how long the room's video played, and keeps it in `localStorage` as one versioned JSON (`SNACK_KEY`).
 //

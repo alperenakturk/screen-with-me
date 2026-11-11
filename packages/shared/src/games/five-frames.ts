@@ -1,4 +1,4 @@
-// 🎟️ Five Frames (TR "Beş Kare"): the daily five-letter word game played beside the video (CARDS.md "Daily word
+// 🎟️ Five Frames (TR "Beş Kare"): the daily five-letter word game played beside the video (docs/internal/archive/cards-done.md "Daily word
 // game", research `docs/internal/research/word-game.md`, look `docs/internal/design/side-games/word/`). Pure rules,
 // no DOM and no network: the same word for everyone on the same local day, seven tries, marks per letter, a share
 // line without spoilers, one versioned JSON save in `localStorage` (`FRAMES_KEY`). Word lists live in their own

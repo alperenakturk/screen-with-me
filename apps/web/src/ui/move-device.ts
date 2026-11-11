@@ -1,4 +1,4 @@
-// "📲 Move to another device" (CARDS.md "Move my things to another device"): sends this browser's game saves, saved
+// "📲 Move to another device" (docs/internal/archive/cards-done.md "Move my things to another device"): sends this browser's game saves, saved
 // rooms, emoji collection and default name / avatar to another browser once, through a short-lived 6-digit code (the
 // server's `MoveLink` relays it and stores nothing). The old device shows the code and a QR (`/#move=<code>`), the new
 // one types or scans it; the old device must press "Send" before anything leaves it. The new device merges

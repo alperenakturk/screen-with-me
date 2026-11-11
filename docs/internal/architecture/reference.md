@@ -1372,7 +1372,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the coins for it). The tables' commands carry their names (`Masa aç: Bilgi yarışması`). Harnesses
   `scripts/harness/lab-games-all/run.cjs` (every command, laptop / phone × EN / TR; `LIVE=1` on a live-like host:
   local-only ones say so) and `scripts/harness/lab-table-friend/run.cjs` (the friend at each table), both in CI's
-  `games-more`. The owner's steps: STATUS "Test round with the Lab: games".
+  `games-more`. The owner's steps: `archive/status-history.md` "Test round with the Lab: games".
   Messages: room `{t:'lab', op:'tipjar'}` (the tip jar fills for the film playing; elsewhere `bad_message`), Classics
   `{t:'lab', position}` (`games/lab-positions.ts` `LAB_POSITIONS`: chess `mate1`, dama `chain`, backgammon `bearoff`,
   each checked by its board's state check; a player; elsewhere `lab_off`), Quiz / Draw `{t:'lab', op:'skip'}` (the phase
@@ -1936,7 +1936,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `git diff --name-only origin/main...HEAD` through `SCREEN_FOR`. Room screens open as the first person with `?debug=1`
   (Test Lab commands `settings.<section>`, `games.open.<kind>`; the lab's 🐞 is hidden before the shot); a video file
   from `--video` (default the film server's `http://localhost:5300/video.webm`). Run it against the built site on the
-  local server with the lab flag.
+  local server with the lab flag. QA2 additions:
+  - `--themes gece,matinee,sinema` sets theme ids (Night is the default; any other theme is added to the file name).
+  - The sizes `tablet-land` (1180×820) and `phone-land` (iPhone 13 sideways) exist but are not in the default set.
+  - New screens: `invite`, `games-hall` and `lab-drawer`.
+  - A game screen opens over a playing video file.
+  - A room shot waits for the room intro to fade first.
+  - A full sweep runs batches in parallel with separate `--out` folders.
   **State matrix (QA1 part 2, `scripts/harness/state-matrix/run.cjs`):** every game the lab can open (`games.open.*`) in
   each placement its head offers × side panel open / closed (cinema) × no video / a file / YouTube (`via-youtube.cjs`) ×
   1366, 1920 and an upright tablet: the window and its controls whole on screen, nothing over a YouTube player, a free
