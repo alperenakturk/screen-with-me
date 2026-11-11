@@ -487,14 +487,14 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const gap = await page.evaluate(() => Math.round(document.getElementById('game-stage').getBoundingClientRect().left - document.getElementById('media-form').getBoundingClientRect().right));
     check(gap >= 8, '1366 QA2: a side game keeps a gap to "Play now"', { gap });
     await page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
-    await page.keyboard.press('t');
-    await wait(500);
+    await page.evaluate(() => document.getElementById('side-toggle')?.click());
+    await wait(600);
     const cinema = await page.evaluate(() => document.documentElement.classList.contains('cinema-on'));
     if (cinema) {
       await openGame(page, 'snack');
       const c = await box(page);
       check(!(await page.evaluate(() => document.documentElement.classList.contains('cinema-on'))) && !c.overVideo, '1366 QA2: a side game leaves cinema mode and stays off the video', c);
-    } else console.log('note 1366: T did not turn on cinema mode here; the cinema check is skipped');
+    } else check(false, '1366 QA2: cinema mode turns on (#side-toggle)');
     await openGame(page, 'xox');
     await page.evaluate(() => window.__swmLab.run('gameWindow.autoPause'));
     await wait(200);
@@ -519,12 +519,19 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.goto(`${SITE}/r/gp${Math.random().toString(36).slice(2, 8)}?debug=1#back`);
     await page.waitForFunction(() => !!window.__swmLab && !!document.querySelector('#media-input'), null, { timeout: 20000 });
     await wait(1200);
-    await load(page, WEBM);
+    // The link box is in the phone's "＋ Add" sheet (hidden): fill and press it from the page.
+    await page.evaluate((url) => {
+      const input = document.querySelector('#media-input');
+      input.value = url;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#media-form button[value="load"]').click();
+    }, WEBM);
+    await until(() => page.evaluate(() => document.querySelector('.room')?.classList.contains('has-item')), 15000);
     await openGame(page, 'xox');
     const h = await page.evaluate(() => {
       const head = document.querySelector('#game-stage .game-stage-head');
       const shown = (sel) => { const e = head.querySelector(sel); return !!e && e.getBoundingClientRect().width > 0; };
-      const tops = new Set([...head.children].filter((c) => c.getBoundingClientRect().width > 0).map((c) => Math.round(c.getBoundingClientRect().top / 8)));
+      const tops = new Set([...head.children].filter((c) => c.getBoundingClientRect().width > 0).map((c) => { const r = c.getBoundingClientRect(); return Math.round((r.top + r.height / 2) / 24); }));
       return { rows: tops.size, name: shown('.game-stage-title-name'), help: shown('.htp-head'), more: shown('.game-more'), leave: shown('.game-leave'), back: shown('.game-minimize') };
     });
     check(h.rows === 1 && h.name && h.help, `${L} QA2: the head is one row with the game's name and "?"`, h);
