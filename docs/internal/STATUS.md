@@ -363,6 +363,8 @@ Versions count in a fourth part from now on (0.9.90.1, …; CLAUDE.md "Release c
   wording, dated change line), join screen's links behind ⓘ, Test Lab "Settings: <category>", harness `settings`
   (CI) + `lazy-gates` / `room-more` / `move` updated, reference, Room rules in two groups (Planner's pick C),
   0.9.97.107 + CHANGELOG, PR #383. Next: green → merge → deploy check → ping lane A (Test Lab texts) and Game Studio → report.
+- [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
+  phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
 - [ ] **Lane A, after 0.9.97.120 (stopped 10 Nov for the usage limit; continue from here).** Pre-existing items the
   LABFAB first look found (not fixed, need cards from the Planner): (1) phone sideways with a video: the first-time tip
@@ -711,6 +713,10 @@ with the same friend:
   play" card is light, with "Skip" at the bottom (no ✕ in the corner). On a phone, play backgammon against Stub: no
   pink ring, the dice are readable, 🏆 shows the wins, "Just watch" is gone on your turn; its "?" explains the gold
   rings. Open the games hall: only Classics says UPDATED, What's new reads in full. Window Garden: "💧 Water".
+- [ ] G21. Light art in Matinee (0.9.97.119): in Matinee open any "How to play" picture and Window Garden: the pictures,
+  the window sill and the garden's cards are light, the words dark (Night still looks as before). Phone, Sea Battle vs
+  Stub: tap their sea, "Whole sea" sits in the title line, not over the cells. Backgammon: big dice, a used die struck
+  through, the dark checkers in the tray have a light rim, the bot level you picked is filled.
 
 **Before 1.0, on the owner's own phone (added 3 Nov 2026):** the 20 no-code release tests listed (in Turkish) in the
 owner's guide repo `alperenakturk/my-awesome-list`, `is-akislari/yayina-hazirlik.md` part C: airplane mode, cold

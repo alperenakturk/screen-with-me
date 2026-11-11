@@ -177,3 +177,42 @@ html.phone.sideways .wg-album { align-self: start; }
   #game-stage .wg-album-short { display: inline; }
   #game-stage .wg-bar > button { flex: none; }
 }
+
+/* 0.9.97.119: the body in Matinee (a light theme) takes the room's tokens, like the How-to cards (THEMEG); the window
+   sill itself reads ART-L's variables. Dark themes keep the game's own night colours above. */
+:root[data-theme='matinee'] .wg {
+  --wg-night: var(--surface-2);
+  --wg-panel: var(--surface);
+  --wg-cream: var(--text);
+  --wg-gold: var(--accent);
+  --wg-ink: var(--on-accent);
+  --wg-muted: var(--muted);
+  --wg-fill: rgb(38 32 26 / 0.06);
+  --wg-line: rgb(38 32 26 / 0.16);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+:root[data-theme='matinee'] .wg-pill,
+:root[data-theme='matinee'] .wg button.htp-open { background: var(--wg-fill); color: var(--text); box-shadow: inset 0 0 0 1px var(--wg-line); }
+:root[data-theme='matinee'] .wg button.htp-open:hover { background: var(--surface-2); }
+:root[data-theme='matinee'] .wg-pill.wg-state.on { background: var(--ok); color: #fff; box-shadow: none; }
+:root[data-theme='matinee'] .wg-scene { background: var(--al-120e27, #e4d9c6); box-shadow: inset 0 0 0 1px var(--border); }
+/* The disc that cuts the moon into a crescent takes the Matinee sky's colour at the moon's height (else a pale disc shows). */
+:root[data-theme='matinee'] .wg-scene-art { --al-1d2353: #d9c3ad; }
+:root[data-theme='matinee'] .wg-idle .wg-scene-art { filter: saturate(0.7) brightness(0.94); }
+:root[data-theme='matinee'] .wg-rest,
+:root[data-theme='matinee'] .wg-elsewhere { background: rgb(241 234 221 / 0.94); box-shadow: 0 0 0 1px var(--border); }
+:root[data-theme='matinee'] .wg-page { background: var(--surface); box-shadow: 0 0 0 1px var(--border), 0 10px 30px rgb(38 32 26 / 0.25); }
+:root[data-theme='matinee'] .wg-pot.on { background: rgb(154 53 23 / 0.1); box-shadow: inset 0 0 0 1.5px var(--accent); }
+:root[data-theme='matinee'] .wg-pot:not(.on):hover:not(:disabled) { background: var(--wg-fill); }
+:root[data-theme='matinee'] .wg-action,
+:root[data-theme='matinee'] .wg-album-cell,
+:root[data-theme='matinee'] .wg-page-entry,
+:root[data-theme='matinee'] .wg-page-close { background: var(--wg-fill); box-shadow: inset 0 0 0 1px var(--wg-line); }
+:root[data-theme='matinee'] .wg-btn,
+:root[data-theme='matinee'] .wg-btn.full:disabled,
+:root[data-theme='matinee'] .wg-btn.lamp { border-color: var(--accent); }
+:root[data-theme='matinee'] .wg-btn.main { background: var(--accent-btn, var(--accent)); border-color: var(--accent-btn, var(--accent)); }
+:root[data-theme='matinee'] .wg-btn.seed-color { border-color: #6b3fb0; color: #5a2f9e; }
+:root[data-theme='matinee'] .wg-dot { background: var(--wg-line); }
+:root[data-theme='matinee'] .wg-album-cell:not(.found) .wg-album-art,
+:root[data-theme='matinee'] .wg-page-entry:not(.found) .wg-page-art { opacity: 0.6; filter: grayscale(1) brightness(0.55); }
