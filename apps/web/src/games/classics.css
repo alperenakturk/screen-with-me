@@ -252,15 +252,23 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
 
 /* One status line (Stub the referee beside it). */
 #game-stage .mt .cl-ref { grid-area: status; min-height: 30px; min-width: 0; }
-#game-stage .mt .xox-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 15px; }
+/* QA2 (1): the status wraps to a second line instead of ending in "…" ("Waiting for an opponent: someone in the room
+   needs to …"). */
+#game-stage .mt .xox-status {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; min-width: 0; font-size: 15px;
+  line-height: 1.3; overflow-wrap: anywhere;
+}
 #game-stage .mt .xox-actions { grid-area: actions; justify-content: center; gap: 8px; flex-wrap: wrap; }
 
 /* Per-game touches: XOX playful, Four in a Row on its stand, dama and chess on wood. */
 #game-stage .mt[data-board='xox'] .xox-cell { border-radius: 22%; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 #game-stage .mt[data-board='xox'] .xox-cell:nth-child(odd) { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
-#game-stage .mt[data-board='four'] .xox-board-wrap::after {
-  content: ''; position: absolute; left: 50%; bottom: 0; translate: -50% 0; width: min(100cqw, (100cqh - 14px) * 7 / 6 + 36px); height: 14px;
-  border-radius: 7px 7px 4px 4px; background: linear-gradient(#1f3fa8, #142a70); box-shadow: 0 6px 14px rgb(0 0 0 / 0.35);
+/* QA2 (9): the stand hangs from the board itself (a little wider, right under it), so it never floats apart or grows
+   wider than the board on a phone. */
+#game-stage .mt[data-board='four'] .four-board { position: relative; }
+#game-stage .mt[data-board='four'] .four-board::after {
+  content: ''; position: absolute; left: -3%; right: -3%; top: 100%; height: 12px;
+  border-radius: 4px 4px 7px 7px; background: linear-gradient(#1f3fa8, #142a70); box-shadow: 0 6px 14px rgb(0 0 0 / 0.35);
 }
 #game-stage .mt[data-board='dama'] .dama-board, #game-stage .mt[data-board='chess'] .dama-board {
   padding: 3%; border-radius: 12px; background: linear-gradient(135deg, #7a4a2a, #4e2c17); box-shadow: inset 0 0 0 2px #2a170c, 0 14px 30px rgb(0 0 0 / 0.4);
@@ -376,8 +384,10 @@ html.phone .game-head-slot .cl-change-text { display: none; }
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .xox-page.mt > .mt-table {
     grid-template-columns: min(100cqh - 24px, 58cqw) minmax(0, 1fr);
-    grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
-    grid-template-areas: 'board bar' 'board top' 'board bottom' 'board tray' 'board .' 'board status' 'board actions'; gap: 8px 18px;
+    /* QA2 (10): the column beside the board is one block, centred in the height (no hole between the players and the
+       status line). */
+    grid-template-rows: minmax(0, 1fr) auto auto auto auto auto auto minmax(0, 1fr);
+    grid-template-areas: 'board .' 'board bar' 'board top' 'board bottom' 'board tray' 'board status' 'board actions' 'board .'; gap: 8px 18px;
   }
   #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: min((100cqh - 24px) * 1.45, 54cqw) minmax(0, 1fr); }
   /* Inside the board's own box (a size container): as big as it allows. */
