@@ -66,6 +66,7 @@ const en = {
   'settings.theme': 'Theme',
   'settings.view': 'These only affect your screen.',
   'settings.hostTitle': 'Host settings',
+  'roomNameExample': 'e.g. {name}',
   'settings.youAreHost': "You're this room's host: these settings apply to everyone.",
   yourNameLabel: 'Your name (everyone in the room sees it)',
   saveName: 'Change name',

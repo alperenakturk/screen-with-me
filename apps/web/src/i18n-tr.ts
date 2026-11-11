@@ -68,6 +68,7 @@ export const tr: Record<I18nKey, string> = {
   'settings.theme': 'Tema',
   'settings.view': 'Bunlar sadece senin ekranını etkiler.',
   'settings.hostTitle': 'Yönetici ayarları',
+  'roomNameExample': 'Örn. {name}',
   'settings.youAreHost': 'Bu odanın yöneticisi sensin: buradaki ayarlar herkes için geçerli.',
   yourNameLabel: 'Adın (odadakiler bunu görür)',
   saveName: 'Adı değiştir',

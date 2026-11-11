@@ -739,10 +739,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
           <div class="settings-sec" data-sec="room" hidden>
             <p class="settings-room"><b id="settings-room-name"></b> <span id="settings-room-count" class="muted"></span></p>
+            <p id="room-host-line" class="muted small" data-i18n="settings.youAreHost" hidden></p>
             <p id="save-status" class="small"></p>
             <form id="save-form" class="set-inline">
               <input id="save-name" maxlength="40" autocomplete="off" data-i18n-placeholder="roomNamePlaceholder" />
-              <button class="btn primary" id="save-submit"></button>
+              <button class="btn" id="save-submit"></button>
             </form>
             <button type="button" id="save-off" class="btn small-btn" data-i18n="saveOff"></button>
           </div>
@@ -767,6 +768,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </div>
           </div>
           <div class="settings-sec" data-sec="schedule" hidden>
+            <p class="muted small" data-i18n="settings.youAreHost"></p>
             <p class="schedule-intro" data-i18n="settings.schedule"></p>
             <div class="schedule-now" id="schedule-now" hidden>
               <div class="schedule-now-text"><b id="schedule-now-time"></b><span id="schedule-now-left"></span></div>
@@ -786,10 +788,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <p class="set-label" data-i18n="schedule.custom"></p>
             <div class="set-inline schedule-row">
               <input type="datetime-local" id="opt-start" aria-labelledby="settings-title" />
-              <button type="button" class="btn primary" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
+              <button type="button" class="btn" id="opt-start-set" data-i18n="settings.scheduleSet"></button>
             </div>
           </div>
           <div class="settings-sec" data-sec="sound" hidden>
+            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice"><span aria-hidden="true">🔒</span>&nbsp;<span data-i18n="settings.whoSees"></span></a></p>
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
               <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
@@ -797,7 +800,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="set-row"><span class="set-text"><b data-i18n="settings.devices"></b><span data-i18n="settings.devices.d"></span></span><button type="button" class="btn small-btn" id="settings-devices">🎛 <span data-i18n="settings.devices.btn"></span></button></div>
               <label class="set-row" id="settings-voiceask-row"><span class="set-text"><b data-i18n="settings.voiceAsk"></b><span data-i18n="settings.voiceAsk.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-voiceask" /></label>
             </div>
-            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice">🔒 <span data-i18n="settings.whoSees"></span></a></p>
           </div>
           <div class="settings-sec" data-sec="about" hidden>
             <p class="settings-about"><b>Sidelit</b> <span id="settings-version" class="muted"></span></p>
@@ -3632,7 +3634,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $('#save-submit').textContent = saved ? t('rename') : t('saveRoom');
     const input = $<HTMLInputElement>('#save-name');
     if (document.activeElement !== input) input.value = name;
-    input.placeholder = friendlyRoomName(roomId, lang());
+    // QA2-A #4: "e.g. Velvet Lounge", so the grey suggestion isn't read as a name already set.
+    input.placeholder = t('roomNameExample', { name: friendlyRoomName(roomId, lang()) });
+    $('#room-host-line').hidden = !host;
     drawRoomTitle();
     baseTitle = `${saved && name ? name : friendlyRoomName(roomId, lang())} · Sidelit`;
     drawTabTitle();

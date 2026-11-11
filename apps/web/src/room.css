@@ -12925,8 +12925,22 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   gap: 8px 16px;
 }
 
+/* QA2-A #4: "Feedback" is a button but reads as one of the links: the same purple and underline. */
 .settings-links .link-btn {
   font-size: inherit;
+  font-weight: inherit;
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* QA2-A NIT: the underline only under the words, and "who sees what (privacy)" never breaks off alone. */
+#settings-who-sees {
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+#settings-who-sees > [data-i18n] {
+  text-decoration: underline;
 }
 
 
@@ -12990,4 +13004,11 @@ html.phone .settings-main::after {
   margin-top: -14px;
   background: linear-gradient(transparent, var(--surface));
   pointer-events: none;
+}
+
+/* QA2-A #4: the phone's full-page Settings keeps its "⚙️ Settings" title above the category chips. */
+html.phone .settings-nav h3 {
+  display: block;
+  flex: 1 0 100%;
+  margin: 2px 6px 4px;
 }
