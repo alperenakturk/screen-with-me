@@ -47,4 +47,30 @@ Game Studio's first-look review found that in Matinee (the light theme) the 35 t
    - a tutorial card of each game (How to play);
    - Window Garden's main screen.
 4. The art can carry the same `var()` approach for any later picture: draw the chrome in the navy colours listed in `tint.mjs`, run it, and Matinee follows.
-5. Covers (`art/covers/`) were not in the review. They are pictures framed like posters and can stay dark; `tint.mjs` can take them too if wanted.
+5. Covers: see ART-C below.
+
+## ART-C: the games hall covers (11 Nov 2026)
+In Matinee the 11 covers (`apps/web/src/games/art/covers/`) were dark navy blocks in the games hall.
+
+Covers are posters, and most of their detail is cream: the XOX grid, the Five Frames letters, the X and O. So they do **not** turn into paper.
+- In Matinee only their background gradient becomes a warm, mid-tone poster colour:
+  - the shared night gradient becomes terracotta `#946a4c` → umber `#4f3727` (Snack Bar's too);
+  - Last Heart's felt becomes a lighter green;
+  - Sea Battle's sky becomes a dusk blue;
+  - Window Garden's cover gets the same wall, frame and dusk window as the game (`../../art-s/garden-matinee.css`).
+- Boards, pieces, panels, cards, the mascot and the gold stay as drawn.
+- Every other theme is **pixel-identical** (checked: `covers-after-dark-unchanged.jpg`).
+
+| File | What |
+|---|---|
+| `svg/covers/*.svg` (11) | Drop-ins for `apps/web/src/games/art/covers/*.svg` |
+| `matinee-covers.css` | The Matinee block (13 `--alc-*` variables). It goes into `apps/web/src/games/gallery.css`, or wherever the covers show. |
+| `covers-before-matinee.jpg` / `covers-after-matinee.jpg` | All 11 covers on Matinee's page colour, before and after |
+| `covers-after-dark-unchanged.jpg` | The tinted files in a dark theme, identical to today |
+
+Remake them with `node docs/internal/design/games/art-l/tint.mjs covers`. This mode reads the product covers and touches nothing else, so it is safe to re-run after a cover changes.
+
+**For Game Studio:**
+1. Copy `svg/covers/*`.
+2. Add `matinee-covers.css` to the gallery's stylesheet.
+3. Check the games hall in Matinee and in Night.
