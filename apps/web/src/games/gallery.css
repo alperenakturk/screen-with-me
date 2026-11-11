@@ -53,3 +53,21 @@ html.phone .hub-news-line li:nth-child(n + 3) { display: none; }
 
 /* THEMEG: the chosen tab in the theme's accent (it was the games' gold on every theme). */
 .hub-tab.on { background: var(--accent-btn, var(--accent)); color: var(--on-accent); }
+
+/* ART-C: the games hall covers in Matinee (docs/internal/design/games/art-l/README.md). Every other theme leaves these
+   unset, so the covers keep their own colours. Goes into apps/web/src/games/gallery.css (or wherever the covers show). */
+:root[data-theme='matinee'] {
+  --alc-1d1740: #946a4c;
+  --alc-08061a: #4f3727;
+  --alc-2a1d4f: #946a4c;
+  --alc-0c0920: #4f3727;
+  --alc-1f3a34: #4a7a5e;
+  --alc-08130f: #28473a;
+  --alc-0f1640: #5a76a8;
+  --alc-061026: #2f4470;
+  --alc-1a2150: #5f7fb3;
+  --alc-2a2257: #f0c08e;
+  --alc-120e27: #d6c6aa;
+  --alc-1d2353: #7a8bac;
+  --alc-3a2e57: #7a6550;
+}

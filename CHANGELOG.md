@@ -32,7 +32,8 @@ games' tip jar, cuttings and badges.
 - The Four in a Row stand sits right under its board.
 - On a big screen, the column beside a Classics board is centred.
 - Plants still to find, empty letter boxes and the waiting Stub are easier to see on the picture themes.
-- Window Garden in Matinee has a dusk sky and a wooden window frame.
+- In Matinee, Window Garden has a dusk sky and a wooden window frame, and the Games hall's covers are warm posters
+  instead of dark blocks.
 - The Games hall's "What's new" is a few short lines.
 
 ### 0.9.97.121 — 10 Nov

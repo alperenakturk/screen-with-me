@@ -1267,7 +1267,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - Texts: `classics.bot` / sea `bot` say "Stub (our bot)"; watchers show as `watchShort` "👁 {n} watching"; `hub.title`
     reads "Games hall".
   - What's new: each `\n` in a GAME_NEWS note is one bullet (a phone shows two).
-  - ART-S: `art/stub/small.svg` and the garden scene's Matinee variables (garden.css). Checks: snack-bar (sign clear,
+  - ART-S: `art/stub/small.svg` and the garden scene's Matinee variables (garden.css).
+  - ART-C: the 11 covers in
+    `art/covers/` read `var(--alc-…)`, set only in Matinee (end of gallery.css). Checks: snack-bar (sign clear,
     cinema line, sideways stands), table-how (hall title, bullets), five-frames, side-games-polish (scale 1 since
     .121).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
