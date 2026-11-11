@@ -1,4 +1,4 @@
-// 🌱 Window Garden: the cozy solo collection game played beside the video (CARDS.md "Window Garden"). Pure rules, no
+// 🌱 Window Garden: the cozy solo collection game played beside the video (docs/internal/archive/cards-done.md "Window Garden"). Pure rules, no
 // DOM and no network: the page ticks it with how long the room's video played and keeps it in `localStorage` as one
 // versioned JSON (`GARDEN_KEY`).
 //

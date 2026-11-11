@@ -1,4 +1,4 @@
-// 🌱 Window Garden, the second solo side game (CARDS.md "Window Garden"; look: the owner's pick A "window sill", art
+// 🌱 Window Garden, the second solo side game (docs/internal/archive/cards-done.md "Window Garden"; look: the owner's pick A "window sill", art
 // in `./art/garden/` from `docs/internal/design/side-games/garden/`). The rules are `@swm/shared/games/garden`; this
 // file draws them and ticks them once a second with the room's state (`room()`). A lazy chunk with its own stylesheet
 // and texts. Like Snack Bar it never takes the room's keys or the focus, and one tab plays at a time.

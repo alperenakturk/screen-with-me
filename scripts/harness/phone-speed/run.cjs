@@ -9,7 +9,7 @@
 const { chromium, devices } = require('playwright');
 const SITE = process.argv[2] || 'http://localhost:8787';
 const RUNS = Number(process.argv[3] || 3);
-// Budgets in ms (median). Measured 2 Nov 2026 in the cloud container: see docs/internal/STATUS.md "Phone speed".
+// Budgets in ms (median). Measured 2 Nov 2026 in the cloud container: see docs/internal/perf-1.md "The budgeted phone check".
 const BUDGET = { home: 1500, join: 1500, room: 1500 };
 const CPU = 4;
 const NETWORK = { offline: false, latency: 60, downloadThroughput: (9000 * 1024) / 8, uploadThroughput: (3000 * 1024) / 8 };
