@@ -1796,8 +1796,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (22 checks).
 - **QA2-A (B2's full sweep, room / site; Planner's decisions 6, 7, 8, 10, 11, 13, 14):** the computer room fills the
   window's height (`room.css` "QA2-A #8": `main` is a flex column, `.room` / `.theater` / `.player-wrap` grow; the
-  card's 16:9 width uses `100dvh − 212px`, the real overhead now that the footer is hidden; when the width limits, the
-  video's box grows taller and the picture sits in it). The Queue / People tabs show from the start (the fresh room hides
+  card's 16:9 width uses `100dvh − var(--stage-over)`: 212 px, the real overhead now that the footer is hidden, set on
+  `main` with the flex column; when the width limits, the video's box grows taller and the picture sits in it). Not while
+  a table plays in the video's place (`:has(#game-stage.stage:not([hidden]))`) or under it (`html.game-below`): then the
+  room keeps the old geometry (254 px, no growth) the games are sized for (state-matrix: a table under a YouTube video at
+  1366 was pushed off the screen; game-proportions: a sideways tablet's 798 × 594 box shrank poker's text). Five Frames in
+  the narrow column keeps its compact sides and key gaps by width alone (`@container game (max-width: 340px)`), so the
+  Turkish row of 11 keys stays ≥ 24 px in the taller column. The Queue / People tabs show from the start (the fresh room hides
   only `#sync-test`); cinema mode has one leave hint (the pill, `cinemaHint` gone). The invite window's styles live in
   `ui/invite.css` (loaded with its lazy chunk, out of the room's 38 kB budget); on `html.phone.sideways` it is a two-column
   grid (head, tabs, door | link pane). Settings on a phone: the fade at the list's foot is `.settings-main::after`

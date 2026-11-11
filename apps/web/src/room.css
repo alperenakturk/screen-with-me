@@ -10194,9 +10194,9 @@ html.shorts-view .game-stage .game-place {
 
   html.in-room:not(.shell, .shorts-view, .tv-mode, .phone) .room {
     --side-w: clamp(300px, 21vw, 400px);
-    /* QA2-A #8: 212 = what is really above and below the picture now that the footer is hidden in the room (top bar,
-       link box, "Now playing" line, the card's padding; 254 still counted the footer). */
-    --stage-w: calc((100dvh - 212px) * 16 / 9 + 28px);
+    /* 254, not 252: with the footer the room was 1 px taller than the window (sweep-2 #10). QA2-A #8: 212 when the
+       room fills the window (below). */
+    --stage-w: calc((100dvh - var(--stage-over, 254px)) * 16 / 9 + 28px);
     grid-template-columns: minmax(0, max(var(--stage-w), 560px)) var(--side-w);
     justify-content: center;
     gap: 16px;
@@ -10218,20 +10218,23 @@ html.shorts-view .game-stage .game-place {
 
   /* QA2-A #8 (Planner): the room fills the window's height. When the width (not the height) limits the 16:9 card,
      the card and the side panel still reach the bottom: the video's box grows taller and the picture sits in it. */
-  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) main {
+  /* Not while a table plays in the video's place or under it: the games are sized for the room as it was. 212 = what
+     is really above and below the picture (top bar, link box, "Now playing" line, the card's padding). */
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up, .game-below):not(:has(#game-stage.stage:not([hidden]))) main {
+    --stage-over: 212px;
     display: flex;
     flex-direction: column;
   }
 
-  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) {
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) {
     flex: 1 1 auto;
   }
 
-  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) > .stage > .theater:not(:fullscreen, .fake-fs) {
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) > .stage > .theater:not(:fullscreen, .fake-fs) {
     flex: 1 1 auto;
   }
 
-  html.in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) .theater:not(:fullscreen, .fake-fs) > .player-wrap {
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) .room:not(.shorts) .theater:not(:fullscreen, .fake-fs) > .player-wrap {
     flex: 1 1 auto;
   }
 }
@@ -12929,25 +12932,15 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
 }
 
 /* QA2-A #4: "Feedback" is a button but reads as one of the links: the same purple and underline. */
-.settings-links a {
-  color: var(--accent-hover);
-}
-
-.settings-links .link-btn {
-  font-size: inherit;
-  font-weight: inherit;
+.settings-links :is(a, .link-btn) {
+  font: inherit;
   color: var(--accent-hover);
   text-decoration: underline;
 }
 
-/* QA2-A NIT: the underline only under the words, and "who sees what (privacy)" never breaks off alone. */
+/* QA2-A NIT: the 🔒 sits outside the link (the underline only under the words), and the words never break apart. */
 #settings-who-sees {
   white-space: nowrap;
-  text-decoration: none;
-}
-
-#settings-who-sees > [data-i18n] {
-  text-decoration: underline;
 }
 
 
@@ -12966,11 +12959,10 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
   color: var(--text);
   font: inherit;
   font-size: 15px;
-  font-weight: 600;
   cursor: pointer;
 }
 
-.cinema-exit:is(:hover, :focus-visible) {
+.cinema-exit:hover {
   border-color: var(--accent);
 }
 

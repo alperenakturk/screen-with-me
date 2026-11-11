@@ -792,7 +792,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             </div>
           </div>
           <div class="settings-sec" data-sec="sound" hidden>
-            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice"><span aria-hidden="true">🔒</span>&nbsp;<span data-i18n="settings.whoSees"></span></a></p>
+            <p class="muted small"><span data-i18n="settings.voiceOnPress"></span> <span aria-hidden="true">🔒</span>&nbsp;<a id="settings-who-sees" href="/privacy.html#voice" target="_blank" rel="noopener" data-privacy-link="voice" data-i18n="settings.whoSees"></a></p>
             <div class="set-box">
               <label class="set-row"><span class="set-text"><b data-i18n="settings.sounds"></b><span data-i18n="settings.sounds.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-sounds" /></label>
               <label class="set-row sound-volume-row"><span class="set-text"><b data-i18n="settings.soundVolume"></b><span data-i18n="settings.soundVolume.d"></span></span><input type="range" min="0" max="100" step="5" id="opt-soundvolume" data-i18n-title="settings.soundVolume" /><output id="opt-soundvolume-val" class="sound-volume-val"></output></label>
