@@ -174,3 +174,33 @@ html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-heig
 /* A long question or answer wraps inside the card (the card grew wider than the phone and the game shrank to fit). */
 #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-main { min-width: 0; width: 100%; box-sizing: border-box; }
 #game-stage.in-tab .quiz-page:not(.draw-lobby) :is(.quiz-question, .quiz-text) { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+/* Draw & Guess running: the canvas keeps its 4:3 shape in the height that is left; the players are a row of chips;
+   the guesses scroll in a short feed above the 44 px guess box. */
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-main { height: 100%; flex-direction: column; flex-wrap: nowrap; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-left { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-top { min-height: 32px; padding: 0 8px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-canvas-wrap { flex: 1 1 0; min-height: 0; height: auto; width: auto; max-width: 100%; aspect-ratio: 4 / 3; align-self: center; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-side { flex: 0 0 auto; overflow: visible; gap: 6px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-players { flex-direction: row; flex-wrap: wrap; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-player { flex: 0 1 auto; min-width: 0; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-feed { max-height: 64px; min-height: 0; overflow-y: auto; padding: 4px 8px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-overlay { padding: 8px; gap: 6px; }
+/* The drawer's tools: the 🎨 colour button exists only in the tab (draw.ts). In the tab: one row ✏️ 🧽 🪣 🎨 ↶ ↷ 🗑, the
+   sizes under it, every button 44 px; the 20 colours open over the canvas from 🎨. While I draw, the guess box and the
+   feed (mine to read later in the chat) give the canvas their room; the faces still show who has guessed. */
+.draw-color-open { display: none; }
+#game-stage.in-tab .draw-tools:not([hidden]) { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 0 4px; }
+#game-stage.in-tab .draw-tools .draw-tool-pick { display: contents; }
+#game-stage.in-tab .draw-tools .draw-tool-pick:last-child > * { order: 1; }
+#game-stage.in-tab .draw-tools .draw-sizes { order: 2; flex-basis: 100%; display: flex; justify-content: center; gap: 4px; }
+#game-stage.in-tab .draw-tools :is(.draw-tool, .draw-size, .btn) { min-width: 44px; min-height: 44px; height: 44px; padding: 0; display: grid; place-items: center; }
+#game-stage.in-tab .draw-tools .draw-tool-word { display: none; }
+#game-stage.in-tab .draw-tools .draw-color-open { display: grid; }
+#game-stage.in-tab .draw-color-open i { width: 24px; height: 24px; border-radius: 50%; background: var(--c, #000); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--border); }
+#game-stage.in-tab .draw-tools .draw-colors { display: none; }
+#game-stage.in-tab .draw-tools.colors-open .draw-colors {
+  display: grid; grid-template-columns: repeat(5, 44px); gap: 4px; position: absolute; bottom: calc(100% + 6px); left: 50%; translate: -50% 0;
+  z-index: 6; padding: 8px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+#game-stage.in-tab .draw-tools .draw-color { width: 44px; height: 44px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-left:has(> .draw-tools:not([hidden])) + .draw-side :is(.draw-form, .draw-feed) { display: none; }
