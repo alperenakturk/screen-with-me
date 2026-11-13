@@ -494,3 +494,11 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
    shrinks and the pips line goes (the tray under the board carries the dice and moves). */
 #game-stage.in-tab .mt[data-board='backgammon'] .xox-name { flex: 1 1 auto; }
 #game-stage.in-tab .mt[data-board='backgammon'] .mt-taken { display: none; }
+/* The picker in the tab: 2 × 3 cards with their picture and name (the one-line description goes; the "?" says it). */
+#game-stage.in-tab .mt .cl-picker { padding: 6px 8px; justify-content: safe center; }
+#game-stage.in-tab .mt .cl-picker-title { font-size: 20px; }
+#game-stage.in-tab .mt .cl-picker-line { margin-bottom: 6px; font-size: 13px; }
+#game-stage.in-tab .mt .cl-picker-grid { gap: 8px; }
+#game-stage.in-tab .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 8px) / 2); }
+#game-stage.in-tab .mt .cl-card-line { display: none; }
+#game-stage.in-tab .mt .cl-card-art svg { max-height: 64px; }
