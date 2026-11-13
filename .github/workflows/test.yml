@@ -239,6 +239,10 @@ jobs:
       - name: Phone held sideways
         run: node scripts/harness/phone-sideways/run.cjs http://localhost:8787
 
+      # R27 + 0.9.97.129: the avatar picker is one fixed grid, and a pick never sends it back to the top.
+      - name: Avatar picker
+        run: node scripts/harness/avatar-picker/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true

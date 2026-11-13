@@ -1966,6 +1966,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Avatar choice:** on the site "Avatarı değiştir" → a large centered dialog (`openAvatarDialog`); since 0.9.87 a pick
   is only applied (and seen by others) with "Tamam" or a double-click; ✕ / Esc / outside cancel. In the extension a
   panel covering the whole window. Hover wobbles, the selected one floats (CSS; off with `prefers-reduced-motion`).
+  Since 0.9.97.129 a pick only moves `aria-checked` in place (`renderAvatarPicker`): the grid is not redrawn, so its
+  scroll and the focus stay where they were (owner's phone bug; `avatar-picker` harness in CI's `site` job).
 - **Avatar lists have no pages:** with many avatars in a tab the grid scrolls (no ‹ ›; the user didn't want them).
 - **CI (`.github/workflows/test.yml`):** on every push/PR: typecheck, unit tests, build, local server with `wrangler
   dev` + `npm run e2e`. On push to `main` (or Actions → "Run workflow"), if tests pass, the `deploy` job: build →
