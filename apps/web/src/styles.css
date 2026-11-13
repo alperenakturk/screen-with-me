@@ -1342,3 +1342,10 @@ textarea::selection {
 html.is-touch:not(.has-mouse) .touch-note {
   display: block;
 }
+
+/* PWA1 (Planner): never inside the installed app, and not while the iOS "Add to Home Screen" hint shows (one of the
+   two at a time; the note comes back once the hint is closed). */
+html.is-touch.is-standalone .touch-note,
+html.is-touch.ios-hint-on .touch-note {
+  display: none;
+}

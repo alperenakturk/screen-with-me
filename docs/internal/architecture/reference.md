@@ -616,7 +616,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   YouTube's bar at rest). Touch screens keep it at 30 %. Real fullscreen: windows / hints / the person menu added to
   `<body>` move into the fullscreen element while it lasts (`ui/fs-layer.ts`). Messages come down from the top
   right, just left of the dock, in the window and in fullscreen (`ui/toasts.ts`; 0.9.93.4, owner: at the dock's foot
-  in fullscreen they covered YouTube's own bar). In the shell the dock and its open window are islands
+  in fullscreen they covered YouTube's own bar). Since 0.9.97.132 (`dodgeGame`, GS QA1 finding 3) they never cover an
+  open game window (`#game-stage` as a free window up to 85 % of the video's width): they go to its left when they fit,
+  else below it, else above it (inline `!important`, since cinema's strip is placed with !important rules; `place()`
+  clears it); harness `scripts/harness/toast-game` (CI `games-more`). In the shell the dock and its open window are islands
   (`reportLayout`); our catcher is never an island there (the film player takes the clicks). The camera pill has no 🎙 / 📷 / 🖥️
   any more (0.9.91.7: they are on the dock; the dock's and the Shorts bar's 📷 also shows outside voice and joins with
   the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") is only for players
@@ -1652,6 +1655,25 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   apple-touch) + `public/sw.js`: does NOT cache files (nobody should enter a room with old code), only shows
   `offline.html` when a page load has no internet. Registered at the end of `app.ts`, only in the top window (not in
   the shell); app.ts may load after "load", so `readyState` is checked. If you change the SW, bump the `CACHE` name.
+  **Since 0.9.97.132 (card PWA1):** the manifest is English (`lang: en`, `dir: ltr`; `id: "/"` kept so installed apps
+  stay the same app), with two `screenshots` (`public/screenshots/home-phone.jpg` 1080×1920 narrow, `home-wide.jpg`
+  1920×1200 wide; remade by `scripts/pwa-screenshots.cjs` after a home page change), a "Create room" `shortcut`
+  (`/?new=1`) and a `share_target` (GET `/` with `share_url` / `share_text` / `share_title`). `home.ts` `launched()`
+  reads both first: `?new=1` → a new room; a share → `sharedLink()` (`packages/shared/src/media.ts`: the first http(s)
+  link in url, text or title, closing punctuation trimmed) → `start:<room>` in sessionStorage → the new room, which
+  plays it on the first welcome (the same path as a pasted home link); a share with no link stays on the home page with
+  the address cleaned. **Wake lock** (`ui/wake-lock.ts`): `room.ts` `applyState` calls `wakeLock.set(item && !paused)`
+  (never in the shell), `pagehide` releases; it is asked for again when the page becomes visible and still plays; no
+  API = nothing. **iOS hint** (`home.ts` `iosHint`, `device.ts` `isIOSSafari`): once on iOS Safari outside the
+  installed app, a card under the two start buttons (never over a button) with iOS's Share glyph, ✕ stores `iosHintSeen`. While it shows,
+  `html.ios-hint-on` hides PH1's "made for computers" `.touch-note` (one of the two at a time), and `html.is-standalone`
+  hides that note inside the installed app (`styles.css`). The home harness (`scripts/harness/home`, now in CI `site`)
+  checks the first screen still fits on an iPhone with the hint. Test Lab `pwa.state` (status tab):
+  installed, the wake lock's state, the share target's action. Checks: `scripts/check-manifest.mjs` (CI `checks`:
+  English, icon and screenshot sizes, shortcut, share target), harness `scripts/harness/pwa/run.cjs` (CI `games-more`,
+  for the :5300 webm; the wake lock API is stubbed). Standalone notes: the in-app back button is the system one (no
+  router, rooms are real pages); invite links open in the installed app where the OS hands over in-scope links
+  (Android WebAPK), otherwise in the browser.
 - **"Back to the room" notice:** in the shell, "🏠 Odaya dön" → `{t:'home'}` → the server sends `{t:'home', by}` to
   everyone except the sender (once per 30 s per person, `homeLimit`); people on the film get a "join them?" card over
   the video (`askHome`, 20 s; at most once a minute from the same person).

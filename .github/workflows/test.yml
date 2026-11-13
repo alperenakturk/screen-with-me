@@ -87,6 +87,10 @@ jobs:
       - name: Name check (Sidelit)
         run: node scripts/check-name.mjs
 
+      # Card PWA1: the home-screen app's manifest (English, icons and screenshots at their sizes, shortcut, share target).
+      - name: App manifest
+        run: node scripts/check-manifest.mjs
+
       - name: The site's address comes from site.config.json only
         run: node scripts/check-domain.mjs
 
@@ -248,6 +252,10 @@ jobs:
       - name: Avatar picker
         run: node scripts/harness/avatar-picker/run.cjs http://localhost:8787
 
+      # Card 15b + PWA1: the home page fits its first screen at every size (EN + TR), the iOS install hint included.
+      - name: Home page
+        run: node scripts/harness/home/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
@@ -324,6 +332,14 @@ jobs:
       - name: Games sweep on a 360 × 640 phone (the Games tab, EN + TR)
         # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
         run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+
+      # Card PWA1: the home-screen app (share target → a new room that plays the link, "Create room" shortcut, the screen
+      # kept on while playing, the one-time iOS hint). Here for the webm the Tablets step serves on :5300.
+      - name: Home-screen app
+        run: |
+          node scripts/harness/pwa/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+          # GS QA1 finding 3: chat messages over the video keep clear of an open game window.
+          node scripts/harness/toast-game/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       - name: Snack Bar and motion
         run: |

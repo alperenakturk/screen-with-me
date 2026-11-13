@@ -176,3 +176,30 @@ export function samePage(a: string, b: string): boolean {
   };
   return normalize(a) === normalize(b);
 }
+
+/** Closing punctuation a shared text may put right after a link. */
+const TRAILING = new Set(['.', ',', ';', ':', '!', '?', ')', ']', '}', '»', '”', '’']);
+
+/**
+ * PWA1: the link in something shared to the installed app (Android's share sheet sends `url`, `text`, `title`; a
+ * YouTube share puts "Title https://youtu.be/…" in `text`). The first http(s) link found, closing punctuation trimmed,
+ * at most 2000 characters; null when there is none.
+ */
+export function sharedLink(...parts: Array<string | null | undefined>): string | null {
+  for (const part of parts) {
+    // Capped first, and the closing punctuation trimmed with a loop, not a regex (CodeQL: a `[…]+$` on a long run of
+    // "!" backtracks in quadratic time).
+    const found = typeof part === 'string' ? /https?:\/\/[^\s<>"']+/i.exec(part.slice(0, 4096)) : null;
+    if (!found) continue;
+    let end = found[0].length;
+    while (end > 0 && TRAILING.has(found[0][end - 1]!)) end--;
+    const link = found[0].slice(0, end);
+    try {
+      const url = new URL(link);
+      if ((url.protocol === 'http:' || url.protocol === 'https:') && link.length <= 2000) return url.href;
+    } catch {
+      // Not a real address: look at the next part.
+    }
+  }
+  return null;
+}

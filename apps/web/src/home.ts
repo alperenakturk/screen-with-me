@@ -1,9 +1,11 @@
 import { extractRoomId, friendlyRoomName, newRoomId } from '@swm/shared/room-id';
 import { createMascot } from '@swm/shared/logo';
+import { sharedLink } from '@swm/shared/media';
 import { el } from './dom.ts';
 import { AVATAR_PAGES, cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
-import { forgetLastRoom, lastRoom, load, sessionSave } from './storage.ts';
+import { forgetLastRoom, lastRoom, load, save, sessionSave } from './storage.ts';
+import { isIOSSafari, isStandalone } from './device.ts';
 import { helpHref, lang, t, translate } from './i18n.ts';
 import './home.css';
 
@@ -20,6 +22,8 @@ const TEXT = {
     pill: 'Free · no account · no ads',
     slogan1: 'Different screens,',
     slogan2: 'same moment.',
+    iosHint: 'Add Sidelit to your Home Screen: tap Share, then “Add to Home Screen”.',
+    iosHintClose: 'Close',
     sub: 'Watch a video with friends anywhere, in sync. Talk, see each other and play in the same room.',
     create: 'Create room',
     join: 'Join with a code',
@@ -59,6 +63,8 @@ const TEXT = {
     pill: 'Ücretsiz · hesap yok · reklam yok',
     slogan1: 'Ayrı ekranlar,',
     slogan2: 'aynı an.',
+    iosHint: 'Sidelit’i ana ekranına ekle: Paylaş’a dokun, sonra “Ana Ekrana Ekle”yi seç.',
+    iosHintClose: 'Kapat',
     sub: 'Arkadaşlarınla nerede olursanız olun aynı videoyu aynı anda izle. Aynı odada konuş, birbirinizi gör, oyna.',
     create: 'Oda oluştur',
     join: 'Kodla katıl',
@@ -279,7 +285,29 @@ function placeMascot(app: HTMLElement): void {
   });
 }
 
+/**
+ * PWA1: what the installed app was opened for. The "Create room" shortcut (`?new=1`) and a link shared to Sidelit from
+ * another app (the manifest's `share_target`: `share_url`, `share_text`, `share_title`) both go straight to a new room;
+ * a shared link starts there as soon as I'm in (room.ts reads `start:<room>` on the first welcome, the same path as a
+ * link pasted on the home page). A share without a link just opens the home page. True when it left the page.
+ */
+function launched(): boolean {
+  const query = new URLSearchParams(location.search);
+  const shared = ['share_url', 'share_text', 'share_title'].some((key) => query.has(key));
+  if (!shared && !query.has('new')) return false;
+  const link = shared ? sharedLink(query.get('share_url'), query.get('share_text'), query.get('share_title')) : null;
+  if (!link && !query.has('new')) {
+    history.replaceState(null, '', '/');
+    return false;
+  }
+  const id = newRoomId();
+  if (link) sessionSave(`start:${id}`, link);
+  location.replace(`/r/${id}`);
+  return true;
+}
+
 export function renderHome(app: HTMLElement): void {
+  if (launched()) return;
   app.innerHTML = `
     <section class="hm-first">
       <div class="hm-main">
@@ -401,6 +429,7 @@ export function renderHome(app: HTMLElement): void {
 
   renderRecent(app);
   renderContinue(app);
+  iosHint(app);
   window.addEventListener('langchange', () => {
     draw();
     renderRecent(app);
@@ -411,6 +440,31 @@ export function renderHome(app: HTMLElement): void {
     history.replaceState(null, '', location.pathname + location.search);
     void import('./ui/feedback.ts').then(({ openFeedback }) => openFeedback(null));
   }
+}
+
+/**
+ * PWA1: once, on iOS Safari only (Android and computers offer installing themselves), a one-line hint at the bottom of
+ * the home page: how to add Sidelit to the Home Screen. ✕ closes it for good (`iosHintSeen`); it never shows inside the
+ * installed app.
+ */
+function iosHint(app: HTMLElement): void {
+  if (!isIOSSafari() || isStandalone() || load('iosHintSeen') === '1') return;
+  const text = el('span', { 'data-h': 'iosHint' }, h('iosHint'));
+  const close = el('button', { type: 'button', class: 'icon-btn', 'aria-label': h('iosHintClose'), title: h('iosHintClose'), 'data-ios-close': '' }, '✕');
+  // iOS's own Share glyph (a square with an arrow up), so the button is easy to find in Safari's bar.
+  const glyph = el('span', { class: 'hm-ios-share', 'aria-hidden': 'true' });
+  glyph.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M7 10H5v11h14V10h-2"/></svg>';
+  const bar = el('div', { class: 'hm-ios-hint', role: 'note' }, glyph, text, close);
+  close.addEventListener('click', () => {
+    save('iosHintSeen', '1');
+    bar.remove();
+    document.documentElement.classList.remove('ios-hint-on');
+  });
+  // Only one of the two shows: the hint hides the "made for computers" note until it is closed (Planner).
+  document.documentElement.classList.add('ios-hint-on');
+  // In the page's flow under Create room / Join with a code (first look: a bar fixed at the bottom covered Join on an
+  // iPhone SE), so it never sits over a button.
+  app.querySelector('#start-form')?.after(bar);
 }
 
 /** Rooms are deleted a day after they empty unless saved: an older unsaved room isn't offered. */

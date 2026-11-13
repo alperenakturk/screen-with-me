@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage } from './media.ts';
+import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage, sharedLink } from './media.ts';
 import { cleanMedia, countdownMedia, isValidMedia, maxRateFor } from './protocol.ts';
 
 describe('samePage', () => {
@@ -166,5 +166,24 @@ describe('isTikTokHop', () => {
     expect(isTikTokHop(new URL('https://user:pw@www.tiktok.com/x'))).toBe(false);
     expect(isTikTokHop(new URL('https://tiktok.com.evil.example/x'))).toBe(false);
     expect(isTikTokHop(new URL('https://nottiktok.com/x'))).toBe(false);
+  });
+});
+
+describe('sharedLink (PWA1 share target)', () => {
+  it('takes the url field first, then a link inside the text', () => {
+    expect(sharedLink('https://youtu.be/abc123', 'Look https://example.com/x')).toBe('https://youtu.be/abc123');
+    expect(sharedLink(null, 'Funny cat video https://youtu.be/abc123?si=xyz', 'Funny cat')).toBe('https://youtu.be/abc123?si=xyz');
+    expect(sharedLink('', 'watch this: https://www.youtube.com/watch?v=abc123).', null)).toBe('https://www.youtube.com/watch?v=abc123');
+  });
+  it('returns null without an http(s) link', () => {
+    expect(sharedLink(null, 'just some words', 'title')).toBeNull();
+    expect(sharedLink('javascript:alert(1)', 'ftp://x.y/z')).toBeNull();
+    expect(sharedLink(`https://example.com/${'a'.repeat(2100)}`)).toBeNull();
+  });
+  it('stays fast on long runs of closing punctuation', () => {
+    const start = Date.now();
+    expect(sharedLink(`https://example.com/x${'!'.repeat(50_000)}y`)).toBe('https://example.com/x');
+    expect(sharedLink(`see https://example.com/x${'!'.repeat(3000)}`)).toBe('https://example.com/x');
+    expect(Date.now() - start).toBeLessThan(200);
   });
 });

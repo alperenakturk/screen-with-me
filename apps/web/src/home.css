@@ -711,3 +711,28 @@ html.phone.sideways .hm-btn {
 .hm-how > .hm-help {
   background: color-mix(in srgb, var(--bg) 88%, transparent);
 }
+
+/* PWA1: the one-time iOS "Add to Home Screen" hint, in the page's flow under the two start buttons (iOS Safari only). */
+.hm-ios-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  padding: 3px 3px 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+.hm-ios-hint > span[data-h] {
+  flex: 1;
+}
+.hm-ios-share {
+  display: inline-flex;
+  color: var(--hm-accent);
+}
+.hm-ios-hint .icon-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
