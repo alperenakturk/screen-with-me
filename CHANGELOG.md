@@ -21,6 +21,11 @@ games' tip jar, cuttings and badges.
 - Choosing a character no longer jumps the list back to the top: the list stays where you scrolled, and the one you
   picked stays in view.
 
+### 0.9.97.128 — 13 Nov
+
+- On a phone, the ⋯ in a game's top bar opens its "Leave table" / "Close table" sheet above the game again. In every
+  table's lobby the sheet had opened under the game, so it could not be tapped.
+
 ### 0.9.97.127 — 13 Nov
 
 - The room on a phone is now laid out like an app, with four tabs at the bottom: 🎬 Room, 🔍 Search, 🎮 Games and
