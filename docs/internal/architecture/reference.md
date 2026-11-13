@@ -619,7 +619,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   in fullscreen they covered YouTube's own bar). Since 0.9.97.132 (`dodgeGame`, GS QA1 finding 3) they never cover an
   open game window (`#game-stage` as a free window up to 85 % of the video's width): they go to its left when they fit,
   else below it, else above it (inline `!important`, since cinema's strip is placed with !important rules; `place()`
-  clears it); harness `scripts/harness/toast-game` (CI `games-more`). In the shell the dock and its open window are islands
+  clears it). Since 0.9.97.133 (B2 on .132) a game window covering the side panel's chat (a side game's free window lines up over it, and opening one leaves cinema mode) also brings the messages as toasts: `room.ts` `gameCoversChat()` (computer, `#game-stage` over more than half of `#chat-list` both ways) sets `.room.game-over-chat`, which shows `.toasts` outside cinema / fullscreen, and counts the message as seen (no chat sound). Harness `scripts/harness/toast-game` (CI `games-more`) uses a real Snack Bar window: cinema toast, then Snack Bar open (cinema left, chat covered) → a toast clear of it, then ✕ → no toast. In the shell the dock and its open window are islands
   (`reportLayout`); our catcher is never an island there (the film player takes the clicks). The camera pill has no 🎙 / 📷 / 🖥️
   any more (0.9.91.7: they are on the dock; the dock's and the Shorts bar's 📷 also shows outside voice and joins with
   the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") is only for players
@@ -1720,7 +1720,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (the server's per-room person key, else name + avatar, so a reload or their second tab stays blocked); nothing is sent.
   `room.ts` passes `blocks.has` to `createChatPanel`, which keeps a blocked person's lines in memory but never draws them
   (unblock redraws; no unread count, toast, Shorts bubble or sound), and drops their `reaction`s. **Report** (lazy chunk
-  `ui/report.ts`, own `TEXT` EN / TR checked by `check-game-text.mjs`, styles from `feedback.css`): reason chips
+  `ui/report.ts`, own `TEXT` EN / TR checked by `check-game-text.mjs`, styles from `feedback.css`; on a sideways phone, 0.9.97.133, the chips stay on one row that scrolls and the note box keeps ≥ 2 lines, checked at 844 × 390 EN / TR and 667 × 375 TR by the safety harness): reason chips
   `REPORT_REASONS` (spam / abuse / sexual / other), an optional note, "See what is sent", a link to
   `terms.html#abuse`; posts `{kind:'report', reason, room, name, lines, note?}` to `/api/feedback` with the chat's
   `linesBy(member, REPORT_LINES)` (their last 5 lines). The Worker tries `validateReport` first (room must match

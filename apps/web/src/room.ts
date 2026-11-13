@@ -1728,10 +1728,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         // Shorts görünümünde mesaj yazanın avatarından baloncukla çıkar.
         if (shortsOn) seats.say(by, text);
         // Tam ekranda (ya da sağ panel gizliyken) sohbet paneli görünmez; mesaj videonun köşesinde belirir.
-        if (fullscreen.isActive() || roomEl.classList.contains('cinema')) toasts.show(withAvatar(by), text, by.id === myId);
+        // B2 on .132: a game window covering the chat (a side game's free window over the side panel) shows it too.
+        const covered = gameCoversChat();
+        if (fullscreen.isActive() || roomEl.classList.contains('cinema') || covered) toasts.show(withAvatar(by), text, by.id === myId);
         if (roomEl.classList.contains('cinema') && by.id !== myId) side.unread();
         // A sound only when the message is nowhere on my screen (another tab, or another panel tab is open).
-        const seen = !document.hidden && (fullscreen.isActive() || roomEl.classList.contains('cinema') || shortsOn || tabs.chatShown);
+        const seen = !document.hidden && (fullscreen.isActive() || roomEl.classList.contains('cinema') || shortsOn || covered || tabs.chatShown);
         if (by.id !== myId && !seen) playSound('chat');
         if (by.id !== myId && document.hidden) {
           hiddenUnread++;
@@ -2990,6 +2992,25 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onRate: requestRate,
   });
   const toasts = createToasts($('#toasts'), $('#fs-chat'), $('#fs-dock'));
+  /**
+   * B2 on .132: on a computer an open game window can sit over the side panel's chat (a side game's free window lines
+   * up with it), so a new message would show nowhere. While it covers most of the visible chat lines, messages also
+   * come as toasts (`.room.game-over-chat` lets them show outside cinema / fullscreen), placed clear of the window.
+   */
+  function gameCoversChat(): boolean {
+    const stage = document.getElementById('game-stage');
+    const list = document.getElementById('chat-list');
+    let covered = false;
+    if (stage && list && !stage.hidden && !document.documentElement.classList.contains('phone') && !roomEl.classList.contains('side-hidden')) {
+      const g = stage.getBoundingClientRect();
+      const c = list.getBoundingClientRect();
+      const w = Math.min(g.right, c.right) - Math.max(g.left, c.left);
+      const h = Math.min(g.bottom, c.bottom) - Math.max(g.top, c.top);
+      covered = c.width > 0 && c.height > 0 && w > c.width * 0.5 && h > c.height * 0.5;
+    }
+    roomEl.classList.toggle('game-over-chat', covered);
+    return covered;
+  }
   if (tv) {
     // The room on a TV: always "fullscreen", the remote's basics only (see ui/tv-room.ts).
     fullscreen.pin();

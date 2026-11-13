@@ -98,6 +98,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27e. [0.9.97.133] On a laptop with a friend: play a video, open Snack Bar from 🎮; when the friend writes, the
+  message shows as a note beside the game window. On a phone held sideways: open 🚩 Report; the reasons are one row
+  you can slide, the note box shows two lines.
 - [ ] 27d. [PWA1, 0.9.97.132] On your Android phone: install Sidelit (Chrome menu → Install app); in the YouTube app,
   Share a video → Sidelit: a new room opens and plays it once you enter; let it play a few minutes, the screen stays on.
   Long-press the Sidelit icon → "Create room". On an iPhone (Safari), the home page shows the "Add to Home Screen" hint
