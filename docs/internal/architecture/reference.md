@@ -1305,7 +1305,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   rate, so the pills take the second line; under 360 px the paused pill is just ⏸, `.sb-state-word`), names wrap beside their tag, the counter picture is `xMaxYMin slice` (the
   sign at its top right is never cropped) and shrinks 104 → 64 px (`.sb-scene-box` flex basis) before the window
   scales; under 470 px the "closed" note is one line on the counter's edge, under 420 px the cinema line hides and
-  `fitRows` may keep two stands (`SHORT_H`, or a head on two lines: `HEAD_ONE_LINE`) and adds the column's blocks up
+  `fitRows` may keep two stands (`SHORT_H`, or a head on two lines: `HEAD_ONE_LINE`), drops one more while the
+  column still overflows (a taller stand further down; `rowCap` keeps that count for the height; the stands never
+  shrink, `.sb-rows { flex-shrink: 0 }`) and adds the column's blocks up
   one by one (a box with room to spare reports its own height as `scrollHeight`: a big busy window showed three stands); `fit` is 312 × 380; the stage also refits when something in the game is shown or hidden (`hidden` in its
   MutationObserver: rows hidden after a scale-down otherwise left the game shrunk). games-sweep `snack` / `snackBusy` (three friends,
   the film playing, every stand at level 30) check `whole`: no "…" and the sign inside the picture, at laptop and

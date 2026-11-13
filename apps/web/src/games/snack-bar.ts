@@ -1087,6 +1087,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   let compact = false;
   /** How many rows fit (SB3): the window's height minus everything but the list, over one row's height. */
   let rowRoom = STANDS.length;
+  /** The most stands that fitted at a window height (`fitRows`), found by an overflow. */
+  let rowCap: { height: number; rows: number } | null = null;
   function draw(): void {
     const ctx = room();
     const income = incomeRate(game, ctx);
@@ -1306,10 +1308,21 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     // rate and the 👥 pill of a busy bar), keeps two stands rather than shrink the text below 13 px or a phone's
     // targets below 44 px; the "+N more" line says the rest come with a bigger window.
     const least = height < SHORT_H || head.offsetHeight > HEAD_ONE_LINE ? 2 : ROWS_COMPACT;
-    const next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
+    let next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
+    // A count that overflowed at this height stays the most (else the estimate puts the stand back and it flickers).
+    if (rowCap && rowCap.height === Math.round(height)) next = Math.max(least, Math.min(next, rowCap.rows));
     if (next !== rowRoom) {
       rowRoom = next;
       draw();
+      return;
+    }
+    // 0.9.97.134: the count above takes the first stand's height; a taller one further down (a tag line, a name on
+    // two lines) can still overflow the column: then one stand fewer, until it fits or only `least` are left.
+    if (box.scrollHeight > box.clientHeight + 1 && rowRoom > least) {
+      rowRoom--;
+      rowCap = { height: Math.round(height), rows: rowRoom };
+      draw();
+      requestAnimationFrame(fitRows);
     }
   }
   const fit = new ResizeObserver(() => {
