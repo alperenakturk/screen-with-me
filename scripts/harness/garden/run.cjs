@@ -186,10 +186,10 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
     return new Promise((done) => setTimeout(() => {
       const r = (s) => document.querySelector(s).getBoundingClientRect();
       const scene = r('#game-stage .wg-scene'); const album = r('#game-stage .wg-album');
-      done({ sceneW: Math.round(scene.width), sceneH: Math.round(scene.height), besideAlbum: album.left >= scene.right, album: [Math.round(album.left), Math.round(album.width)], sceneL: Math.round(scene.left) });
+      done({ sceneW: Math.round(scene.width), sceneH: Math.round(scene.height), beside: r('#game-stage .wg-action').left >= scene.right, under: album.top >= scene.bottom, album: [Math.round(album.left), Math.round(album.width)], sceneL: Math.round(scene.left) });
     }, 900));
   });
-  check(strip.besideAlbum && strip.sceneH >= 0.6 * strip.sceneW, 'a wide, low window: the sill stands beside the album, not a strip', JSON.stringify(strip));
+  check(strip.beside && strip.under && strip.sceneH >= 0.6 * strip.sceneW, 'a wide, low window: the sill beside the pot\'s card, the album under it, not a strip', JSON.stringify(strip));
   await alex.setViewportSize({ width: 900, height: 560 });
   await wait(400);
 
@@ -207,12 +207,16 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   check(await openGarden(sid), 'sideways phone: it opens');
   await wait(500);
   const albumEdge = await sid.evaluate(() => {
-    // Against the column the album shares with the pot's card (the window's padding hid an overflow of 10 px).
-    const box = { right: document.querySelector('#game-stage .wg-action').getBoundingClientRect().right, bottom: document.querySelector('#game-stage .wg').getBoundingClientRect().bottom };
+    // Against the pot's card's right edge (the window's padding hid an overflow of 10 px).
+    const r = (s) => document.querySelector(s).getBoundingClientRect();
+    const box = { right: r('#game-stage .wg-action').right, bottom: r('#game-stage .wg').bottom };
     const cells = [...document.querySelectorAll('#game-stage .wg-album-cell')].map((c) => c.getBoundingClientRect());
-    return { cells: cells.length, out: cells.filter((c) => c.right > box.right + 0.5 || c.bottom > box.bottom + 0.5).length, small: cells.filter((c) => c.width < 44 || c.height < 44).length };
+    // QA3 review (1): the pot's buttons stay inside its card, clear of the album.
+    const card = r('#game-stage .wg-action'), btns = r('#game-stage .wg-action-buttons'), album = r('#game-stage .wg-album');
+    return { cells: cells.length, out: cells.filter((c) => c.right > box.right + 0.5 || c.bottom > box.bottom + 0.5).length, small: cells.filter((c) => c.width < 44 || c.height < 44).length, buttonsInCard: btns.bottom <= card.bottom + 0.5 && card.bottom <= album.top + 0.5 };
   });
   check(albumEdge.cells === 8 && albumEdge.out === 0 && albumEdge.small === 0, 'sideways phone: the album stays inside the window, every cell ≥ 44 px', JSON.stringify(albumEdge));
+  check(albumEdge.buttonsInCard, 'sideways phone: Water / Stub\'s lamp stay inside the pot\'s card, clear of the album', JSON.stringify(albumEdge));
   check((await fits(sid)).length === 0, 'sideways phone: fits without scrollbars', (await fits(sid)).join('; '));
 
   // 0.9.97.119: the body follows a light theme (Matinee): dark words on light cards; Night keeps its own colours.
