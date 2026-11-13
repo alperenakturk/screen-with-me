@@ -11577,9 +11577,9 @@ html.ph-room:not([data-ph-tab='room']) .room :is(.together-strip, .ph-cams, [dat
 .ph-me-title {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 12px;
-  font-variant: small-caps;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 /* Search: the room's own link / search box, its results as a list, "Up next" = the queue. */
@@ -12661,7 +12661,7 @@ html.phone.sideways .game-menu.gallery .hub-cards {
     gap: 6px 10px;
   }
 
-  .join-card #name-form > .step-title {
+  .join-card #name-form > :is(.step-title, .touch-note) {
     grid-column: 1 / -1;
     margin: 0;
   }

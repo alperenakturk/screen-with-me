@@ -297,6 +297,11 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   if (gameMenu) {
     new MutationObserver(() => {
       if (tab === 'games' && gameMenu.hidden) requestAnimationFrame(() => tab === 'games' && $('#game-menu')?.hidden && setTab('room'));
+      // Opened from anywhere else (the Test Lab, a link): it shows in the Games tab too, never over the tabs.
+      else if (!gameMenu.hidden && html.classList.contains('ph-room') && !gameMenu.closest('.ph-games-wrap')) {
+        gamesWrap.append(gameMenu);
+        setTab('games');
+      }
     }).observe(gameMenu, { attributes: true, attributeFilter: ['hidden'] });
   }
 
