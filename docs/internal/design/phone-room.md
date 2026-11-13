@@ -46,7 +46,8 @@ Night on a phone, so Night already covers it.
 
 Inside PH1 itself no real choice was left: rows vs tiles was the only one, and rows win on every measure the card names
 (the computer's look, fewer rules, no wrapping in Turkish). The owner's later request for an app-like room (PH1b, below)
-is a real choice and goes to him; whichever option he picks, decisions 1–3, 6, 9–11 above stay.
+was a real choice for him: **he picked option A, bottom tabs (13 Nov 2026).** Decisions 1–3, 6 and 9–11 above stay;
+PH1b's "What changes against PH1 if A is picked" says what of the rest changes.
 
 ## The screens
 
@@ -155,7 +156,7 @@ showing); images `options-abc.jpg` (A, B, B's ⋯, C side by side), `a-tabs-nigh
   muted text ("Alex started …", "Sam joined"). The computer's "Show activity" toggle stays; the phone defaults to on.
 - **Nothing over the video.** All of it sits under the player, so YouTube's rule holds.
 
-### Option A (recommended): bottom tabs 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me
+### Option A (picked by the owner, 13 Nov 2026): bottom tabs 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me
 - Preview: `a-tabs-night-en.jpg`. The bar uses the computer's `.tab` look (muted label, the selected one in `--text`
   with a 2 px `--accent` line, on top because the bar is at the bottom), 52 px high plus the safe area.
 - **Room:** video · strip · feed · input row. No ⋯ and no ＋ left.
