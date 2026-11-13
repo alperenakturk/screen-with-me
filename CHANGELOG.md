@@ -32,6 +32,11 @@ games' tip jar, cuttings and badges.
   its sign.
 - Five Frames: in a tall, narrow window the legend sits in the middle of the free space above the keys.
 
+### 0.9.97.125 — 13 Nov
+
+- Picture Palace: the film reel and its ribbon no longer peek out between the room's panels (they are gone), and the
+  two wall lamps sit further in, so a tablet's picture shows them whole instead of as half lamps at the edges.
+
 ### 0.9.97.124 — 11 Nov
 - On a tablet a side game never covers the video: held sideways it sits in the right column, upright it takes the
   column beside the chat under the video. Over a YouTube video too. Opening a side game in cinema mode leaves cinema

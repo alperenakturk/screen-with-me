@@ -39,6 +39,114 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## Ready
 
+### PH1. An app-like phone room: bottom tabs, one input row, chat sideways, join sound in step (owner, 13 Nov 2026; lane A)
+- Why: on a phone, everyday actions hide behind the ＋ and ⋯ sheets (search a video is 2 taps away, games 3), the
+  sheets repeat what Settings already has, and the join sound comes out of sync. The owner asked which phone features
+  are needed, showed a competitor app's phone layout ("bottom tabs, one input row; do it our own way") and asked for a
+  design pass ("more basic, fast, matching the PC").
+- Spec: `docs/internal/design/phone-room.md` (Design, PR #422), **option A**, picked by the owner. Phone layout only
+  (`html.ph-room`); computers and tablets are unchanged, and no feature code is deleted (things move or hide).
+- What:
+  - **Bottom tab bar** (`role=tablist`, the computer's `.tab` look): 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me. Four
+    panels, no router.
+  - **Room tab:** the video, then a strip with the faces (tap → People + Invite) and 📌 Pin · ⏩ Speed · 🔄 Sync ·
+    ⏭ Skip, then the chat with activity lines inline in italics, then ONE input row: 🔗 Invite · box · 🎙 · 📷 · 😀.
+    ➤ swaps in for 🎙📷 while typing; 😀 holds the reactions and 🖼 Send an image. The ＋, ⋯ and Add-a-video sheets go.
+  - **Search tab:** our own search / link box and results with thumbnails, plus "Up next" (the queue). It borrows
+    `#media-form` and calls the same code as `openAdd()`.
+  - **Games tab:** the games hall as a list (tables, then side games).
+  - **Me tab:** Profile + Settings as grouped cards, each row a toggle or ›, with a one-line help text. It includes
+    Save the room, Room rules, Film time (host), Theme, Sound & camera, Language, Help, Privacy and Terms.
+  - **The owner's earlier picks stay, inside A:**
+    - the 🧪 Sync test is gone from the phone (the Test Lab keeps it);
+    - Recap only in Me;
+    - the empty room says "🔍 Search a video" (goes to the Search tab) and "🔗 Invite";
+    - sideways with a video: video + a column of ⛶ Watch fullscreen, 💬 and 🎙, with the tabs and input row hidden;
+    - Shorts upright: the 9:16 video fills, and the feed becomes a 💬 sheet with a count;
+    - the phone home page has no extension box.
+  - **Fast:** no blur, shadow or grip on sheets; one 44 px radius-10 button shape; `room.css`'s phone section gets
+    smaller (the md's rule table: about 26 rules out, 22 in).
+  - **Join sound in step:** today `playIntro()` runs on the server's `welcome`, and `intro-sound.ts` makes a fresh
+    `AudioContext` that waits at most 250 ms for `resume()`, so on a phone the sound comes late or not at all.
+    - Unlock or reuse the shared context on the "Enter room" tap.
+    - Start the picture and the sound from one clock: once the context is running, or the picture alone, never the
+      sound late.
+  - Nothing goes over the YouTube player.
+- Done when:
+  - On a phone each tab is one tap, and the four tabs fit at 360 px in Turkish.
+  - The input row works: typing swaps in ➤, 😀 sends a reaction and an image.
+  - Search adds and plays a video.
+  - The Me tab has every setting the phone had before.
+  - Sideways and Shorts behave as in the spec.
+  - The intro sound starts with the picture or not at all.
+  - The Test Lab hook `phoneRoom.state` reports the tab, the input-row state and the visible controls.
+  - Nothing changes on a computer or a tablet.
+- Tests:
+  - `scripts/harness/phone/run.cjs` rewritten with text-based selectors for the tabs and input row.
+  - `shorts-rail`, `room-more`, `settings`, `phone-sideways`, `first-tips`, `check-texts` and the size budget.
+  - First look: `shots.cjs` phone and phone-land, EN + TR, Night + Matinee + one scene theme.
+  - Owner's hand test: the phone room on his own phone.
+- Owner's pick: council + Planner review and the owner's answers in the Planner chat, 13 Nov 2026 (removals: the
+  duplicates and the sync test; promote: empty-room buttons, chat sideways, no extension box on the phone home page,
+  Help); layout option A of `phone-room.md`, 13 Nov 2026. Kept on purpose: ⏩ Speed, 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save
+  room.
+
+### SAFE1. Report a person and "block for me" in the room (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; lane A, after PH1)
+- Why: a room has no way to report someone or to stop seeing one person's messages. This matters for safety at 1.0,
+  and app stores require it (Apple 1.2). The owner said "yes, before 1.0".
+- What:
+  - The person menu (computer) and the person sheet (phone, PH1's People) get two rows: **🔇 Block for me** and
+    **🚩 Report**.
+  - **Block for me** is local only: that person's chat, reactions and images are hidden for you. It is kept per room
+    (`me:<room>` style), reversible from the same menu, and sends nothing to the server. Your own messages still reach
+    them.
+  - **Report** sends a short form (reason chips + optional text, `cleanText`) through the existing `POST /api/feedback`
+    path, labelled `report`. It carries the room id, the reported person's shown name, the last few chat lines they
+    sent and a time. It never sends `cid`, IP or anything hidden. The server rate-limits it like feedback.
+  - Hosts already have kick and ban; Report links to `terms.html#abuse` for the 72-hour process.
+  - **Privacy:** reports are new data. `privacy.html` gets a dated "Changes" line in both languages (what a report
+    holds, where it goes, how long it is kept).
+- Done when:
+  - Block hides that person's messages for you only, survives a reload and can be undone.
+  - A report reaches the private feedback repository with the fields above and no hidden ids.
+  - It is rate-limited.
+  - The privacy page is updated in TR and EN.
+  - Test Lab hook `safety.state` lists the blocked people and the last report result.
+- Tests:
+  - Server unit test for the report validation and its cap.
+  - e2e: block, then a message from the blocked person is hidden for one client and shown for another.
+  - The help harness checks that both privacy languages match.
+  - `check-texts`.
+  - Owner's hand test: block and report a friend in a real room.
+- Owner's pick: "Yes, before 1.0" (Planner chat, 13 Nov 2026).
+
+### PWA1. A better home-screen app (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; B2, after PH1)
+- Why: the owner picked "the web app first". It is free and needs no store; Google Play comes after 1.0 and the own
+  domain, and iOS only if Play shows demand.
+- What:
+  - `manifest.webmanifest`:
+    - `lang: en` with an English name and description;
+    - `id`, screenshots (phone + wide);
+    - shortcuts ("Create room");
+    - a `share_target` so a YouTube / video link shared from another app opens Sidelit ready to add it.
+  - **Wake lock while a video plays**, released on pause or leave (a small module; one call from the room, agreed
+    with lane A).
+  - **iOS "Add to Home Screen" hint:** once, on the home page, iOS Safari only, dismissible, plain words.
+  - Check standalone behaviour: the back button, the theme colour, opening invite links in the installed app.
+  - The service worker rule stands: it never caches files.
+- Done when:
+  - Lighthouse PWA "installable" is green.
+  - A link shared to Sidelit from the Android share sheet opens the add box with it.
+  - The screen stays on while playing in the installed app.
+  - The iOS hint shows once.
+  - Test Lab hook `pwa.state` reports installed, wake lock and share target.
+- Tests:
+  - The manifest is checked in `checks` (JSON fields, English).
+  - A harness for share-target URL handling.
+  - Owner's hand test: install on his Android phone, share a YouTube link to it, watch with the screen on.
+- Owner's pick: "Web app first" (Planner chat, 13 Nov 2026). Later and his to decide: Google Play ($25 once, after the
+  domain), push notifications (new data), the iOS store ($99 a year).
+
 ### QA1. Faster CI and fewer bugs reaching the owner (owner, 10 Nov 2026: "why do tests take so long, weren't we cutting them? and how are there so many bugs with this many tests?"; B2, ops)
 - Why: a PR's CI takes ~15–20 min (the `site` job ~15 min, ~4–5 min of it installing), each main run (deploy + live e2e) ~25 min, and
   releases go one after another, so a small fix needs ~45 min to be live. Harnesses grew with every card. Meanwhile the
