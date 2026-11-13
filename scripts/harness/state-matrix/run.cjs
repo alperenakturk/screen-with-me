@@ -140,13 +140,23 @@ async function openGame(page, kind) {
 }
 async function setVideo(page, video) {
   if (video === 'none') return true;
-  await page.evaluate((url) => {
-    const input = document.querySelector('#media-input');
-    input.value = url;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    document.querySelector('#media-form button[value="load"]').click();
-  }, video === 'youtube' ? YOUTUBE : FILM);
-  const ok = await until(() => page.evaluate((yt) => (yt ? !!document.getElementById('theater')?.classList.contains('yt-rail') : !!document.querySelector('#theater video')?.readyState), video === 'youtube'), 15000);
+  const load = () =>
+    page.evaluate((url) => {
+      const input = document.querySelector('#media-input');
+      input.value = url;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#media-form button[value="load"]').click();
+    }, video === 'youtube' ? YOUTUBE : FILM);
+  const loaded = () => until(() => page.evaluate((yt) => (yt ? !!document.getElementById('theater')?.classList.contains('yt-rail') : !!document.querySelector('#theater video')?.readyState), video === 'youtube'), 15000);
+  await load();
+  // Three headful browsers share one CI runner: a slow first fetch of the file is the runner, not the room.
+  // Load it once more before calling the room broken.
+  let ok = await loaded();
+  if (!ok) {
+    console.log(`note: the ${video} did not load in 15 s; loading it again`);
+    await load();
+    ok = await loaded();
+  }
   await wait(800);
   return !!ok;
 }
