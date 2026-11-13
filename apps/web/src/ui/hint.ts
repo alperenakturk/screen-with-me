@@ -31,7 +31,7 @@ function onKey(event: KeyboardEvent): void {
   if (event.key === 'Escape') close();
 }
 
-export function flashHint(anchor: HTMLElement, text: string, ms = 2800): void {
+export function flashHint(anchor: HTMLElement, text: string, ms = 2800, below = false): void {
   if (closedBy?.anchor === anchor && Date.now() - closedBy.at < 600) {
     closedBy = null;
     return;
@@ -41,11 +41,11 @@ export function flashHint(anchor: HTMLElement, text: string, ms = 2800): void {
   document.body.append(bubble);
   const r = anchor.getBoundingClientRect();
   const w = bubble.offsetWidth;
-  // Centered on the button and kept on screen; below it when there is no room above.
+  // Centered on the button and kept on screen; below it when there is no room above (or when asked).
   const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
   const above = r.top - bubble.offsetHeight - 8;
   bubble.style.left = `${left}px`;
-  bubble.style.top = `${above > 8 ? above : r.bottom + 8}px`;
+  bubble.style.top = `${above > 8 && !below ? above : r.bottom + 8}px`;
   current = { bubble, anchor };
   timer = window.setTimeout(close, ms);
   document.addEventListener('pointerdown', onPointerDown, true);
