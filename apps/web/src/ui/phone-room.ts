@@ -672,6 +672,13 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     else if (!now && !nowTab && stripVoice.parentElement !== stripVoiceHome.parent) stripVoiceHome.parent.insertBefore(stripVoice, stripVoiceHome.next);
   }).observe(html, { attributes: true, attributeFilter: ['class'] });
   $('#theater')?.addEventListener('click', (event) => {
+    // PH2: the video is a strip over a game in the Games tab (room.css): a tap on it goes back to the full video.
+    if (inTabGame && tab === 'games') {
+      event.preventDefault();
+      event.stopPropagation();
+      setTab('room');
+      return;
+    }
     if (!inGame) return;
     event.preventDefault();
     event.stopPropagation();
