@@ -484,7 +484,14 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const c = document.querySelector('.room .chat-panel')?.getBoundingClientRect();
       return !c || c.width < 1 || w.left >= c.right - 1 || w.right <= c.left + 1;
     });
-    check(b.mode === 'float' && !b.overVideo && pf.top && (L === 'tablet' ? chatFree : pf.aboveInput), `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf, chatFree });
+    check(b.mode === 'float' && !b.overVideo && (pf.top || L === 'tablet-land') && (L === 'tablet' ? chatFree : pf.aboveInput), `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf, chatFree });
+    // 0.9.97.135 (B2 on .132): never over "Play now", not even its border.
+    const play = await page.evaluate(() => {
+      const w = document.getElementById('game-stage').getBoundingClientRect();
+      const r = document.querySelector('#media-form button[value="load"]')?.getBoundingClientRect();
+      return !r || r.width < 1 || w.left >= r.right || w.right <= r.left || w.top >= r.bottom || w.bottom <= r.top ? true : { w: [w.left, w.top], r: [r.right, r.bottom] };
+    });
+    check(play === true, `${L} 135: the window clears "Play now"`, play);
     await ctx.close();
   }
   // A computer: labels in a table's head where they fit, the paused note under the head (not over its buttons), the gap
@@ -567,7 +574,33 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     });
     check(where.videoAbove && where.tabsBelow, `${L} PH2: the video stays above the game, the tabs below it`, where);
     check(where.paused, `${L} PH2: the table paused the video`, where);
-    if (L === 'phone-land') check(s.upright === 'held', 'phone-land PH2: opened sideways, the room is held upright', s);
+    // 0.9.97.135: the "Video paused for the game" note shows under the game's head, never over the video strip.
+    const note = await page.evaluate(() => {
+      const n = [...document.querySelectorAll('.hint-bubble')].pop()?.getBoundingClientRect();
+      const v = document.querySelector('.player-wrap').getBoundingClientRect();
+      const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
+      return n ? { top: Math.round(n.top), video: Math.round(v.bottom), head: Math.round(h.bottom) } : null;
+    });
+    check(!note || (note.top >= note.video && note.top >= note.head - 1), `${L} 135: the paused note sits under the game's head, not over the video`, note);
+    if (L === 'phone-land') {
+      check(s.upright === 'held', 'phone-land PH2: opened sideways, the room is held upright', s);
+      // 0.9.97.135 (B2 on .132): the strip shows, "▶ Back to video" under it (never over the player) goes back to the
+      // Room tab, and the bands beside the upright column are the theme's background, not black.
+      const strip = await page.evaluate(() => {
+        const v = document.querySelector('.player-wrap').getBoundingClientRect();
+        const bar = document.querySelector('.ph-strip-back')?.getBoundingClientRect();
+        const bg = getComputedStyle(document.documentElement).backgroundColor;
+        return { video: Math.round(v.height), bar: bar ? Math.round(bar.height) : 0, under: !!bar && bar.top >= v.bottom - 1, bg };
+      });
+      check(strip.video >= 20 && strip.bar > 0 && strip.under, 'phone-land 135: the strip shows, with "▶ Back to video" under it', strip);
+      check(strip.bg !== 'rgb(0, 0, 0)' && strip.bg !== 'rgba(0, 0, 0, 0)', 'phone-land 135: the bands beside the column are the theme background', strip);
+      await page.click('.ph-strip-back');
+      await wait(400);
+      const back = await phoneGames(page);
+      check(back.tab === 'room', 'phone-land 135: "▶ Back to video" goes back to the Room tab', back);
+      await page.click('#ph-tab-games');
+      await wait(400);
+    }
     await page.evaluate(() => window.__swmLab.run('gameWindow.more'));
     await wait(300);
     const menu = await page.evaluate(() => [...document.querySelectorAll('.game-more-pop:not([hidden]) button')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.textContent.trim()));

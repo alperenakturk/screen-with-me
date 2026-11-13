@@ -503,6 +503,19 @@ export function createGameStage(opts: StageOptions) {
         // (It keeps the game's smallest readable width even where that reaches a few px over the link box's edge on a
         // 1366 laptop: narrowing it for a gap to "Play now" made its text too small, QA2.)
         const left = Math.max(page.left + EDGE, (yt ? video : wrap.getBoundingClientRect()).right + EDGE / 2, panel.right - width);
+        // 0.9.97.135 (B2 on .132): a sideways tablet has no 4 px to spare over "Play now": the window starts 2 px right of
+        // the link row, at least the game's smallest readable width (`minSize`, 0.9.97.134's Snack Bar text ≥ 13 px needs
+        // it), reaching a few px past the panel's right edge if it must (never closer than EDGE to the page's edge), at the
+        // panel's full height. Only when that does not fit does it start under the link row (shorter, still fitted). The
+        // 1366 laptop keeps option 1.
+        const link = document.getElementById('media-form')?.getBoundingClientRect();
+        if (isTablet() && link && link.height > 1 && link.right > left && link.bottom > panel.top && link.top < panel.top + height) {
+          const beside = Math.round(link.right) + 2;
+          const narrow = Math.max(Math.round(panel.right - beside), minSize[0]);
+          if (beside + narrow <= Math.min(panel.right + EDGE, innerWidth - EDGE)) return { left: beside, top: Math.round(panel.top), width: narrow, height };
+          const top = Math.round(link.bottom + EDGE / 2);
+          return { left: Math.round(left), top, width: Math.round(panel.right - left), height: Math.round(panel.top + height - top) };
+        }
         return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
       }
       // Under the video (an upright tablet): the panel's column beside the chat (Together, the queue), its full height,
@@ -1083,7 +1096,12 @@ export function createGameStage(opts: StageOptions) {
     if ((mode !== 'stage' && !stage.classList.contains('in-tab')) || !current || !opts.pauseVideo?.()) return;
     pausedAt = Date.now();
     // QA2: under the head, on the game's top (on the 🎮 it covered the tops of ?, 🎮 and Leave).
-    flashHint(head, t('game.pausedForGame'), 2800, true);
+    // 0.9.97.135: on a phone the Games tab shows a moment after the game opens (ui/phone-room.ts), so the note waits for
+    // its head to be on screen; before that it measured an empty box and fell over the video strip (never over a
+    // player: YouTube's rules).
+    const note = () => flashHint(head, t('game.pausedForGame'), 2800, true);
+    if (!stage.classList.contains('in-tab')) return note();
+    requestAnimationFrame(() => requestAnimationFrame(() => head.getBoundingClientRect().height > 0 && note()));
   }
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */

@@ -684,6 +684,16 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     event.stopPropagation();
     gameMinimize()?.click();
   }, true);
+  // 0.9.97.135 (B2 on .132): the strip may be covered by the player's own controls (YouTube's we may not cover), so a
+  // thin bar under it, never over the player, also goes back to the full video.
+  const stripBack = el(
+    'button',
+    { type: 'button', class: 'ph-strip-back' },
+    el('span', { 'aria-hidden': 'true' }, '▶ '),
+    el('span', { 'data-i18n': 'game.minimize' }, t('game.minimize')),
+  ) as HTMLButtonElement;
+  stripBack.addEventListener('click', () => setTab('room'));
+  panels.get('games')?.prepend(stripBack);
   // A minimized table puts a dot on the Games tab, which brings it back; so does a game left running in the Games tab
   // while another tab shows (PH2).
   const gameButton = $<HTMLButtonElement>('#game-btn');

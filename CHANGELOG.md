@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.135 — 13 Nov
+
+- On a tablet held sideways, a side game's window now starts just right of the link box, so it never covers the edge of
+  "Play now", and keeps its full height and readable text.
+- A game opened while the phone is sideways: the small video above it is easy to see, and a "▶ Back to video" bar
+  under it goes back to the room. The sides around the upright screen take your colour theme instead of black.
+- On a phone, "Video paused for the game" shows under the game's top bar, never over the small video.
+
 ### 0.9.97.134 — 13 Nov
 
 - Snack Bar on a laptop and on a sideways tablet shows every text whole: the income per second and the 👥 bonus move

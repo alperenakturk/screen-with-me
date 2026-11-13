@@ -742,7 +742,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   height on the phone's whole screen) and is scaled into the panel; one in it fills the panel and only overflow shrinks
   it. Upright only: `device.ts` `holdUpright(on)` while the window shows in the tab keeps `isSideways()` false and
   `html.sideways` off; held sideways, `html.upright-turned` lays `body` out at the last upright size (`--up-w`,
-  `--up-h`), centred and scaled to the height (`--up-s`); closing the game releases it. The whole-screen `ph-game` is
+  `--up-h`), centred and scaled to the height (`--up-s`); closing the game releases it. 0.9.97.135 (B2 on .132): the bands beside it are
+  `var(--bg)`; the strip's height comes from `--up-h` there (not the short sideways page); `phone-room.ts` puts a
+  `.ph-strip-back` "▶ Back to video" bar (28 px, `game.minimize`) first in the Games panel, under the strip and never
+  over the player (YouTube's controls may cover the strip), shown only while a game shows in the tab; the strip is
+  `clamp(52px, 100dvh − 584px, 152px)` so the game keeps its 450 px. A sideways tablet's side-game home starts 2 px right of
+  `#media-form` when the link row reaches over the window, at least `minSize[0]` wide (its right edge up to `EDGE` past
+  the panel's, never off screen; Snack Bar's text needs that width for 13 px), and under the link row only when that
+  does not fit (`homeBox`, `isTablet()`; the 1366 laptop keeps its ≈ 4 px). The whole-screen `ph-game` is
   left only for a phone-narrow window outside the phone room (the TV); its video-thumbnail rules are gone. Test Lab:
   `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / held / sideways, the panel and window sizes, the
   scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone / phone-land: in the tab, video above

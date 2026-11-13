@@ -123,7 +123,7 @@ async function gameChecks(page, where, chatSel) {
       // Drawings (svg, aria-hidden art such as Snack Bar's sign) are pictures, not text: the same rule as games-sweep.
       const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => !e.closest('[aria-hidden="true"], svg') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
       const px = texts.map((e) => parseFloat(getComputedStyle(e).fontSize) * fit);
-      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), form: box(document.getElementById('chat-form')), video: box(document.querySelector('.player-wrap')), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0,
+      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), form: box(document.getElementById('chat-form')), link: box(document.getElementById('media-form')), video: box(document.querySelector('.player-wrap')), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0,
         // What the game's column is made of (heights in its own pixels), shown when its text gets too small.
         fit, blocks: [...(s.querySelector('.game-stage-body .sb, .game-stage-body .wg, .game-stage-body .ff')?.children ?? [])].filter((e) => e.offsetHeight).map((e) => `${e.className.split(' ')[0]} ${e.offsetHeight}`).join(', ') };
     }, chatSel);
@@ -136,7 +136,11 @@ async function gameChecks(page, where, chatSel) {
     // QA2 (Planner, 11 Nov 2026: never over the video): upright the window takes the column beside the chat; sideways it
     // lines up with the side panel like a computer's (over it, down to the message box, which stays free).
     check(clear(g.video), `${where}, ${kind}: the window never covers the video`, { stage: s, video: g.video });
-    if (sideways) check(clear(g.form) && Math.abs(s.r - c.r) <= 2 && Math.abs(s.t - c.t) <= 2, `${where}, ${kind}: the window lines up with the side panel and leaves the message box free`, { stage: s, panel: c, form: g.form });
+    // 0.9.97.135: where the link row reaches over the panel's column, the window starts just right of "Play now" at the
+    // game's smallest width (its right edge then up to 8 px past the panel's, never off the screen), or just under it.
+    const topOk = Math.abs(s.t - c.t) <= 2 || (!!g.link && g.link.r > s.l && s.t >= g.link.b - 1 && s.t <= g.link.b + 12);
+    const rightOk = s.r >= c.r - 2 && s.r <= Math.min(c.r + 8, g.vw - 8) + 1;
+    if (sideways) check(clear(g.form) && clear(g.link?.r > s.l ? g.link : null) && rightOk && topOk, `${where}, ${kind}: the window lines up with the side panel (beside or under the link row where that reaches it) and leaves the message box free`, { stage: s, panel: c, form: g.form, link: g.link });
     else check(clear(c), `${where}, ${kind}: the window never covers the chat`, { stage: s, chat: c });
     check(s.t >= g.bar - 1, `${where}, ${kind}: the window leaves the top bar free`, { stage: s, bar: g.bar });
     check(s.l >= 0 && s.t >= 0 && s.r <= g.vw && s.b <= g.vh, `${where}, ${kind}: the window is whole on screen`, { stage: s, vw: g.vw, vh: g.vh });
