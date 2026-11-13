@@ -90,6 +90,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27b. [AV1, 0.9.97.129] On your phone: open the character picker (join card or profile), scroll down, tap a
+  character: the list stays where it was and the one you tapped stays in view.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

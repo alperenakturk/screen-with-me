@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.129 — 13 Nov
+
+- Choosing a character no longer jumps the list back to the top: the list stays where you scrolled, and the one you
+  picked stays in view.
+
 ### 0.9.97.127 — 13 Nov
 
 - The room on a phone is now laid out like an app, with four tabs at the bottom: 🎬 Room, 🔍 Search, 🎮 Games and

@@ -55,6 +55,30 @@ const check = (ok, label, detail) => {
     check(firstRow.some((id) => themed.has(id)) && firstRow.some((id) => !themed.has(id)), `${name}: themed and genre avatars mixed from the first row`, firstRow);
     check(first.inView && first.gridOk, `${name}: the window fits the screen, nothing sideways (the grid ${first.scrolls ? 'scrolls' : 'fits'})`, first);
     await page.screenshot({ path: `${OUT}/avatar-picker-${name}.png` });
+    // 0.9.97.129 (owner): a pick never sends the list back to the top. Scroll down, pick one there: the scroll stays and
+    // the chosen one stays in view, marked (a few px are fine: the browser brings a half-hidden pick into view).
+    const scroller = await page.evaluate(() => {
+      // Whichever box scrolls (the grid or the dialog around it).
+      const boxes = ['.avatar-dialog .avatar-grid', '.avatar-dialog .avatar-picker', '.avatar-dialog'];
+      const sel = boxes.find((q) => { const n = document.querySelector(q); return n && n.scrollHeight > n.clientHeight + 1; });
+      if (!sel) return null;
+      const box = document.querySelector(sel);
+      box.scrollTop = box.scrollHeight;
+      return { sel, top: box.scrollTop };
+    });
+    if (scroller !== null) {
+      const deep = first.ids[first.ids.length - 2];
+      await page.click(`.avatar-dialog .avatar-option img[src="/avatars/${deep}.svg"]`);
+      await page.waitForTimeout(200);
+      const kept = await page.evaluate(([id, sel]) => {
+        const box = document.querySelector(sel);
+        const option = document.querySelector(`.avatar-dialog .avatar-option img[src="/avatars/${id}.svg"]`).closest('.avatar-option');
+        const r = option.getBoundingClientRect();
+        const b = box.getBoundingClientRect();
+        return { top: box.scrollTop, checked: option.getAttribute('aria-checked'), inView: r.top >= b.top - 1 && r.bottom <= b.bottom + 1 };
+      }, [deep, scroller.sel]);
+      check(kept.top >= scroller.top - 40 && kept.checked === 'true' && kept.inView, `${name}: a pick keeps the list where it was, the chosen one in view`, { before: scroller.top, ...kept });
+    } else check(name !== '390', `${name}: the grid fits, nothing to scroll`);
     // Pick one and press OK: the join card shows it.
     const target = first.ids[first.ids.length - 1];
     await page.click(`.avatar-dialog .avatar-option img[src="/avatars/${target}.svg"]`);
