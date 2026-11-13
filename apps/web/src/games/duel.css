@@ -149,3 +149,30 @@ html.phone.sideways #game-stage .ff.duel .ff-tray { gap: 3px; }
 html.phone #game-stage .duel[data-phase='wait'] .duel-bar { display: none; }
 /* Stub's line under Ready is the lobby's hint (the others' "You need at least 2 players"): the same small muted text. */
 .duel-lobby .duel-ref, .duel-lobby .duel-ref :is(p, span, b, strong) { font-size: 13px; font-weight: 400; color: var(--muted); }
+/* QA3 review: in a narrow window (a phone held upright, the column beside the video) the card stays at its own size:
+   no badge, tighter settings box and gaps, Ready a step shorter (the sweep's 13 px / 44 px rules held before the
+   shared settings box made the card taller). */
+@container game (max-width: 440px) {
+  #game-stage .duel-lobby { padding: 12px 12px 14px; gap: 8px; }
+  #game-stage .duel-lobby h3::before { display: none; }
+  #game-stage .duel-lobby h3 { font-size: 20px; }
+  #game-stage .duel-lobby .lobby-intro, #game-stage .duel-lobby .lobby-setup { gap: 8px; }
+  #game-stage .duel-lobby .game-settings { padding: 8px 10px; row-gap: 6px; column-gap: 8px; }
+  #game-stage .duel-lobby .game-chips { gap: 4px; }
+  #game-stage .duel-lobby .game-chip { padding-inline: 10px; }
+}
+/* A sideways phone: the setup half fits the low screen at full size (44 px chips): a slim settings box, no Stub beside
+   the hint. */
+html.phone.sideways #game-stage .duel-lobby { padding: 6px 12px 8px; }
+html.phone.sideways #game-stage .duel-lobby .lobby-setup { gap: 6px; }
+html.phone.sideways #game-stage .duel-lobby .game-settings { padding: 6px 10px; row-gap: 4px; }
+html.phone.sideways #game-stage .duel-lobby .duel-ref svg, html.phone.sideways #game-stage .duel-lobby .duel-ref img { display: none; }
+html.phone.sideways #game-stage .duel-lobby .duel-ref { min-height: 0; }
+html.phone.sideways #game-stage .duel-lobby.lobby-card:not([hidden]) { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); column-gap: 14px; }
+html.phone.sideways #game-stage .duel-lobby .game-settings { column-gap: 8px; }
+html.phone.sideways #game-stage .duel-lobby .game-chips { gap: 4px; }
+html.phone.sideways #game-stage .duel-lobby .game-chip { padding-inline: 10px; }
+html.phone.sideways #game-stage .ff.duel[data-phase='wait'] { padding-block: 4px; }
+html.phone.sideways #game-stage .duel-lobby :is(.lobby-setup, .duel-lobby-body) { gap: 4px; }
+html.phone.sideways #game-stage .duel-lobby { padding-block: 4px; }
+html.phone.sideways #game-stage .duel-lobby .game-settings { padding-block: 4px; }
