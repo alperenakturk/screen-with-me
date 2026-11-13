@@ -1647,7 +1647,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   unticked, its exact lines shown (`technicalInfo`: site / extension version, browser · OS · window, transport,
   `diagLast` from `/connection`). Privacy policy `#feedback`. Tests: unit `feedback.test.ts`, e2e `feedback.mjs` (live:
   refusals only), harness `scripts/harness/feedback/run.cjs`.
-- **Block for me and Report (card SAFE1, 0.9.97.132):** for anyone, on each other person (never on me or a TV):
+- **Block for me and Report (card SAFE1, 0.9.97.131):** for anyone, on each other person (never on me or a TV):
   the person menu (`voice.ts` `openPersonMenu`: `🔇 Block for me` / `🔈 Unblock`, `🚩 Report`, from `VoiceRoom.isBlocked`
   / `toggleBlock` / `report`) and the People list rows (`people.ts` `PeopleSafety`: `.safety-block` with `aria-pressed`,
   `.safety-report`; on a phone a face opens this list as the People sheet, so the rows are the phone's way in).

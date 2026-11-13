@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.132 — 13 Nov
+### 0.9.97.131 — 13 Nov
 
 - 🔇 **Block for me**: in a person's menu (tap their face; on a phone, the People list) you can now block someone for
   yourself. Their messages, pictures and emojis disappear from your screen only; they are not told and still see
