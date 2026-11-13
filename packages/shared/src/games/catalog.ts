@@ -94,7 +94,7 @@ export interface SoloRoom {
 export const SOLO_CATALOG: Record<SoloKind, Omit<GameInfo, 'min' | 'max'>> = {
   // Card GP (Design's `side-games-polish.md` §2): each opens at the size its content needs, so its scale (`--fit`) is 1
   // at 1366 × 768 and the text never shrinks below 13 px (the window is the fit + its 55 px head and border); smaller windows scale it down (stage.ts `refit`).
-  snack: { place: 'float', size: [400, 575], fit: [312, 400], minSize: [320, 460], maxSize: [600, 862], wide: [900, 480] },
+  snack: { place: 'float', size: [400, 575], fit: [312, 380], minSize: [320, 460], maxSize: [600, 862], wide: [900, 480] },
   garden: { place: 'float', size: [400, 555], fit: [312, 384], minSize: [320, 444], maxSize: [600, 832], wide: [900, 480] },
   word: { place: 'float', size: [400, 635], fit: [312, 448], minSize: [320, 508], maxSize: [600, 952], wide: [820, 440] },
 };

@@ -202,7 +202,11 @@ const text = (page, sel) => page.evaluate((s) => document.querySelector(s)?.text
   await wait(600);
   check((await fits(alex)).length === 0, 'fits a small screen without scrollbars', (await fits(alex)).join('; '));
   const rowsShown = await alex.evaluate(() => [...document.querySelectorAll('.sb-row')].filter((r) => !r.hidden).length);
-  check(rowsShown >= 3, 'at least three upgrade rows show', String(rowsShown));
+  // 0.9.97.134: a window under 420 px tall keeps two stands (rather than scale the text below 13 px) and says the rest
+  // come with a bigger window.
+  const short = await alex.evaluate(() => document.querySelector('#game-stage .sb')?.clientHeight < 420);
+  const moreShown = await alex.evaluate(() => !document.querySelector('#game-stage .sb-more')?.hidden);
+  check(rowsShown >= (short ? 2 : 3) && (rowsShown >= 3 || moreShown), `at least ${short ? 'two' : 'three'} upgrade rows show (and "+N more")`, String(rowsShown));
   await alex.screenshot({ path: __dirname + '/snack-window.png' });
 
   // Game window rules (owner, 4 Nov 2026): no Close for a solo game, ✕ only minimizes, ↺ Start over asks first.

@@ -4,7 +4,6 @@
 // stylesheet, loaded only when the game opens. It never takes the room's keys or the focus: its buttons don't keep
 // the focus after a click (so 1–8, Enter, P, V still reach the room), and it has no key handlers of its own.
 
-import { isPhone } from '../device.ts';
 import './snack-bar.css';
 import { gameHint } from './hint.ts';
 import {
@@ -527,6 +526,8 @@ const BUY_MODE_KEY = 'snackBar:buyMode';
 /** Below this height (in the game's own pixels) only three upgrade rows show. */
 const COMPACT_H = 470;
 const ROWS_COMPACT = 3;
+const SHORT_H = 420;
+const HEAD_ONE_LINE = 48;
 /** Room kept for the "+N more" line when fitting the rows. */
 const MORE_RESERVE = 20;
 /** One tab plays at a time (two tabs would earn twice and overwrite each other's save). */
@@ -603,9 +604,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
 
   // ---- The scene: a tap serves a customer ----
   const decorated = scene
-    // QA3 review (13), PH2: a phone's low counter box (80 px in the Games tab) keeps the drawing's top, the SNACK BAR
-    // sign, in view above the "closed" note.
-    .replace('<svg ', `<svg preserveAspectRatio="${isPhone() ? 'xMidYMin' : 'xMidYMid'} slice" `)
+    // QA3 review (13), PH2, 0.9.97.134: a low or narrow counter box keeps the drawing's top right whole, where the
+    // SNACK BAR sign hangs (a low box crops the bottom, a narrow one the left).
+    .replace('<svg ', '<svg preserveAspectRatio="xMaxYMin slice" ')
     .replace('<g id="side-light">', `${Object.entries(BACKDROPS).map(([id, svg]) => `<g id="place-${id}" style="display:none">${svg}</g>`).join('')}<g id="side-light">`)
     .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`)
     // NG2: the shop front (wall, counter, its stripes) takes the place's colours (`.sb[data-place]` in snack-bar.css).
@@ -822,7 +823,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       draw();
     },
   );
-  head.append(how.button);
+  // 0.9.97.134: the ? sits right after the rate, so in a narrow window the pills wrap to a second line, never the ? alone.
+  head.insertBefore(how.button, rate.nextSibling);
   foot.insertBefore(restart, prestige);
 
   // Buttons never keep the focus: the room's keys and the message box stay as they were.
@@ -1085,6 +1087,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   let compact = false;
   /** How many rows fit (SB3): the window's height minus everything but the list, over one row's height. */
   let rowRoom = STANDS.length;
+  /** The most stands that fitted at a window height (`fitRows`), found by an overflow. */
+  let rowCap: { height: number; rows: number } | null = null;
   function draw(): void {
     const ctx = room();
     const income = incomeRate(game, ctx);
@@ -1094,7 +1098,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     rate.textContent = t('rate', { n: fmtRate(income) });
     // GW play-through: with the others' bonus and the tip jar beside it, "▶ Film on" was cut to "▶ Film a…" in Turkish:
     // while the film plays the pill is just ▶ (its name is its label and tooltip).
-    state.textContent = ctx.playing ? '▶' : t('paused');
+    // 0.9.97.134: the word sits in its own span: a narrow window shows only ⏸ (the counter's note says it is closed).
+    const pausedWord = t('paused').replace(/^⏸\s*/u, '');
+    state.replaceChildren(...(ctx.playing ? ['▶'] : ['⏸', el('span', { class: 'sb-state-word' }, ` ${pausedWord}`)]));
     state.setAttribute('aria-label', ctx.playing ? t('playing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
     together.textContent = t('together', { n: bonus });
@@ -1283,11 +1289,41 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
     const rowH = first.offsetHeight + gap;
     // Everything but the list and the "+N more" line, which gets a fixed reserve (so showing it never changes the sum).
-    const others = box.scrollHeight - list.offsetHeight - (more.hidden ? 0 : more.offsetHeight) + MORE_RESERVE;
-    const next = Math.max(ROWS_COMPACT, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
+    // 0.9.97.134: the blocks added up one by one (a box with room to spare reports its own height as `scrollHeight`, which
+    // left a big window showing three stands); the counter picture counts at the height it has now (it gives up height to
+    // the stands down to 64 px before the window scales).
+    const bs = getComputedStyle(box);
+    let others = parseFloat(bs.paddingTop) + parseFloat(bs.paddingBottom) + MORE_RESERVE;
+    let blocks = 0;
+    for (const child of box.children) {
+      const cs = getComputedStyle(child);
+      // Layers over the game (How to play, the panels) take no place in the column.
+      if (!(child instanceof HTMLElement) || child === more || cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') continue;
+      blocks++;
+      if (child === list) continue;
+      others += child.offsetHeight;
+    }
+    others += (parseFloat(bs.rowGap) || 0) * blocks;
+    // 0.9.97.134: a very short window (a sideways tablet's free window, under 420 px), or a head on two lines (the
+    // rate and the 👥 pill of a busy bar), keeps two stands rather than shrink the text below 13 px or a phone's
+    // targets below 44 px; the "+N more" line says the rest come with a bigger window.
+    const least = height < SHORT_H || head.offsetHeight > HEAD_ONE_LINE ? 2 : ROWS_COMPACT;
+    let next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
+    // A count that overflowed at this height stays the most (else the estimate puts the stand back and it flickers).
+    if (rowCap && rowCap.height === Math.round(height)) next = Math.max(2, Math.min(next, rowCap.rows));
     if (next !== rowRoom) {
       rowRoom = next;
       draw();
+      return;
+    }
+    // 0.9.97.134: the count above takes the first stand's height; a taller one further down (a tag line, a name on
+    // two lines) can still overflow the column: then one stand fewer, until it fits or only two are left (an overflow
+    // is real, so it goes below the usual three).
+    if (box.scrollHeight > box.clientHeight + 1 && rowRoom > 2) {
+      rowRoom--;
+      rowCap = { height: Math.round(height), rows: rowRoom };
+      draw();
+      requestAnimationFrame(fitRows);
     }
   }
   const fit = new ResizeObserver(() => {
@@ -1299,6 +1335,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     fitRows();
   });
   fit.observe(root);
+  // 0.9.97.134: the head wrapping to two lines (the 👥 pill of a busy bar) changes how many stands fit.
+  fit.observe(head);
   const onHide = () => persist();
   addEventListener('pagehide', onHide);
   const onLang = () => draw();

@@ -48,6 +48,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 15c. [PH2, 0.9.97.130] Phone, upright: open Snack Bar, then a table with a friend (Quiz or Dama): it plays in
   the Oyunlar tab, the video a strip on top (a tap on it goes back to the room), nothing cut off or tiny. Turn the
   phone mid-game: nothing changes. Draw & Guess: draw with the tools and 🎨. Tavla: a tap just beside a point counts.
+- [ ] 15d. [0.9.97.134] Laptop and a sideways tablet, with a friend in the room and the film playing: Büfe shows every
+  text whole (the income, 👥 +%…, the stand names), and the BÜFE sign is whole in the picture.
 - [ ] 15a. [QA3, 0.9.97.126] The four table lobbies look alike: 👑 / "(sen)", the "Bekleniyor…" chair, the grey
   "Oyunu başlat" (Duel: "Hazır") with its hint under it. In Five Frames typing T / M / F / Boşluk writes letters, no
   cinema mode. Matinee: Five Frames and Snack Bar are light. Window Garden on an upright tablet and a sideways phone:
