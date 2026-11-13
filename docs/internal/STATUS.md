@@ -42,9 +42,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
-- [ ] 15a. [QA3, 0.9.97.125] Last Heart and the Duel waiting for a second player: faces with 👑 / "(sen)" and an empty
-  "Bekleniyor…" chair; the grey "Oyunu başlat" reads clearly. Matinee: Five Frames and Snack Bar are light. Window
-  Garden on an upright tablet sits beside its album; on a sideways phone the album is two rows of four.
+- [ ] 15a. [QA3, 0.9.97.126] The four table lobbies look alike: 👑 / "(sen)", the "Bekleniyor…" chair, the grey
+  "Oyunu başlat" (Duel: "Hazır") with its hint under it. In Five Frames typing T / M / F / Boşluk writes letters, no
+  cinema mode. Matinee: Five Frames and Snack Bar are light. Window Garden on an upright tablet and a sideways phone:
+  the album under the window sill, Sula / Stub'un ışığı inside their card.
 - [ ] 16. [QA2, 0.9.97.123] Games on phones: sideways Quiz / Last Heart rules read in full, the Duel card fits; XOX
   shows "Stub'a (bota) karşı oyna" with Kolay / Orta and "👁 0 izliyor"; Snack Bar sideways lists the popcorn machine; in
   Turkish Snack Bar numbers read 0,5 / 6 B; Matinee: the games hall covers are warm posters.

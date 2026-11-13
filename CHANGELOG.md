@@ -16,13 +16,21 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.125 — 11 Nov
-- One lobby look for the tables: Last Heart's waiting card shows the faces like Quiz (the host's 👑, "(you)", an empty
-  chair), and the Duel's card no longer sits inside a second frame.
-- "Start the game" before a second player arrives reads as "not yet" instead of a faded button.
-- In Matinee, Five Frames, the Duel and Snack Bar take the theme's light colours like Window Garden.
-- Window Garden: in a wide, low window (an upright tablet's panel under the video) the window sill stands beside the
-  album instead of shrinking to a strip; on a sideways phone the album is two rows of four, inside the window.
+### 0.9.97.126 — 13 Nov
+- One lobby look for every table: Quiz, Draw & Guess, Last Heart and the Five Frames Duel show what the game is
+  (badge, rules, the faces with the host's 👑, "(you)" and an empty chair) beside its setup (the settings in one layout,
+  Start, and the hint right under Start). English comes first in every language choice.
+- "Start the game" (the Duel's Ready) before a second player arrives reads as "not yet" instead of a faded button.
+- Typing T, M, F or Space in Five Frames or the Duel types the letter: it no longer turns on cinema mode, mute or
+  fullscreen.
+- In Matinee, Five Frames, the Duel and Snack Bar take the theme's light colours like Window Garden, and their round
+  "?" and ↻ buttons are easy to see.
+- Window Garden: in a wide, low window (an upright tablet's panel under the video) and on a sideways phone the window
+  sill stands beside the pot's card with the album underneath; Water and Stub's lamp stay inside their card. In a
+  narrow bar the album count and the acorns show whole.
+- Snack Bar: the cinema line gets its own row in a narrow window, and a sideways phone shows the whole counter with
+  its sign.
+- Five Frames: in a tall, narrow window the legend sits in the middle of the free space above the keys.
 
 ### 0.9.97.123 — 11 Nov
 - Games read better on phones and in other languages:
