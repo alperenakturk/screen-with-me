@@ -541,12 +541,20 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     }, WEBM);
     await until(() => page.evaluate(() => document.querySelector('.room')?.classList.contains('has-item')), 15000);
     await openGame(page, 'xox');
-    const h = await page.evaluate(() => {
+    // The head fills in after the window opens (the game's "?" comes with its chunk): read it until it holds a name and
+    // a "?" on one row, at most 6 s, then check what is there (13 Nov 2026: read once, it caught the head before "?").
+    const readHead = () => page.evaluate(() => {
       const head = document.querySelector('#game-stage .game-stage-head');
+      if (!head) return { rows: 0 };
       const shown = (sel) => { const e = head.querySelector(sel); return !!e && e.getBoundingClientRect().width > 0; };
       const tops = new Set([...head.children].filter((c) => c.getBoundingClientRect().width > 0).map((c) => { const r = c.getBoundingClientRect(); return Math.round((r.top + r.height / 2) / 24); }));
       return { rows: tops.size, name: shown('.game-stage-title-name'), help: shown('.htp-head'), more: shown('.game-more'), leave: shown('.game-leave'), back: shown('.game-minimize') };
     });
+    let h = await readHead();
+    for (const end = Date.now() + 6000; !(h.rows === 1 && h.name && h.help) && Date.now() < end; ) {
+      await wait(200);
+      h = await readHead();
+    }
     check(h.rows === 1 && h.name && h.help, `${L} QA2: the head is one row with the game's name and "?"`, h);
     check(h.more && !h.leave && !h.back, `${L} PH2: ⋯ instead of Leave / Close, no ✕ on a table`, h);
     const s = await phoneGames(page);
