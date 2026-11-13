@@ -270,6 +270,8 @@ jobs:
           node scripts/harness/sea/run.cjs http://localhost:8787
           # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
           node scripts/harness/table-how/run.cjs http://localhost:8787
+          # 0.9.97.128: on a phone the head's ⋯ sheet (Leave / Close table) sits above every table's lobby.
+          node scripts/harness/game-more/run.cjs http://localhost:8787
           # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
