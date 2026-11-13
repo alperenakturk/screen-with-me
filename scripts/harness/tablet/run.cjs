@@ -136,9 +136,11 @@ async function gameChecks(page, where, chatSel) {
     // QA2 (Planner, 11 Nov 2026: never over the video): upright the window takes the column beside the chat; sideways it
     // lines up with the side panel like a computer's (over it, down to the message box, which stays free).
     check(clear(g.video), `${where}, ${kind}: the window never covers the video`, { stage: s, video: g.video });
-    // 0.9.97.135: where the link row reaches over the panel's column, the window starts just under it ("Play now" free).
+    // 0.9.97.135: where the link row reaches over the panel's column, the window starts just right of "Play now" at the
+    // game's smallest width (its right edge then up to 8 px past the panel's, never off the screen), or just under it.
     const topOk = Math.abs(s.t - c.t) <= 2 || (!!g.link && g.link.r > s.l && s.t >= g.link.b - 1 && s.t <= g.link.b + 12);
-    if (sideways) check(clear(g.form) && clear(g.link?.r > s.l ? g.link : null) && Math.abs(s.r - c.r) <= 2 && topOk, `${where}, ${kind}: the window lines up with the side panel (under the link row where that reaches it) and leaves the message box free`, { stage: s, panel: c, form: g.form, link: g.link });
+    const rightOk = s.r >= c.r - 2 && s.r <= Math.min(c.r + 8, g.vw - 8) + 1;
+    if (sideways) check(clear(g.form) && clear(g.link?.r > s.l ? g.link : null) && rightOk && topOk, `${where}, ${kind}: the window lines up with the side panel (beside or under the link row where that reaches it) and leaves the message box free`, { stage: s, panel: c, form: g.form, link: g.link });
     else check(clear(c), `${where}, ${kind}: the window never covers the chat`, { stage: s, chat: c });
     check(s.t >= g.bar - 1, `${where}, ${kind}: the window leaves the top bar free`, { stage: s, bar: g.bar });
     check(s.l >= 0 && s.t >= 0 && s.r <= g.vw && s.b <= g.vh, `${where}, ${kind}: the window is whole on screen`, { stage: s, vw: g.vw, vh: g.vh });

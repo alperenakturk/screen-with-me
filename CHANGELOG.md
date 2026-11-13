@@ -18,8 +18,8 @@ games' tip jar, cuttings and badges.
 
 ### 0.9.97.135 — 13 Nov
 
-- On a tablet held sideways, a side game's window now starts just under the link box, so it never covers the edge of
-  "Play now".
+- On a tablet held sideways, a side game's window now starts just right of the link box, so it never covers the edge of
+  "Play now", and keeps its full height and readable text.
 - A game opened while the phone is sideways: the small video above it is easy to see, and a "▶ Back to video" bar
   under it goes back to the room. The sides around the upright screen take your colour theme instead of black.
 - On a phone, "Video paused for the game" shows under the game's top bar, never over the small video.
