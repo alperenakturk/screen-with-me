@@ -180,4 +180,10 @@ describe('sharedLink (PWA1 share target)', () => {
     expect(sharedLink('javascript:alert(1)', 'ftp://x.y/z')).toBeNull();
     expect(sharedLink(`https://example.com/${'a'.repeat(2100)}`)).toBeNull();
   });
+  it('stays fast on long runs of closing punctuation', () => {
+    const start = Date.now();
+    expect(sharedLink(`https://example.com/x${'!'.repeat(50_000)}y`)).toBe('https://example.com/x');
+    expect(sharedLink(`see https://example.com/x${'!'.repeat(3000)}`)).toBe('https://example.com/x');
+    expect(Date.now() - start).toBeLessThan(200);
+  });
 });
