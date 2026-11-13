@@ -85,7 +85,7 @@ const MIN_FIT = 0.4;
 /** PH2: the game's height on a phone's whole screen (a 390 × 664 page less the head), for games laid out for it. */
 const TAB_H = 600;
 /** PH2: the games with a layout of their own for the phone's Games tab: they fill the panel as it is (Game Studio). */
-const TAB_LAYOUT = new Set<string>([]);
+const TAB_LAYOUT = new Set<string>(['quiz', 'poker', 'duel', 'draw', 'word', 'snack', 'garden']);
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
 const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows, .wg, .ff';
 const readPair = (key: string): { x: number; y: number } | null => {

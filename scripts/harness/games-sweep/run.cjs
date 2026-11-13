@@ -22,6 +22,8 @@ const SIZES = {
   desktop: { viewport: { width: 1920, height: 1080 } },
   iphone: devices['iPhone 13'],
   pixel: devices['Pixel 7'],
+  // PH2: the smallest phone the Games tab is built for, 360 × 640 (the game gets about 360 × 254 under the video).
+  small: devices['Galaxy S5'],
   // GPRO (layout audit): a phone held sideways, 844 × 340 or so after the browser's bars.
   side: devices['iPhone 13 landscape'],
 };
@@ -348,7 +350,7 @@ async function windowPasses(page, label, g, phone) {
           await page.evaluate(() => ['a', 'b'].forEach((k) => document.querySelector(`#game-stage .ff-key[data-key="${k}"]`)?.click()));
           await wait(2000);
         }
-        const phone = size === 'iphone' || size === 'pixel' || size === 'side';
+        const phone = size === 'iphone' || size === 'pixel' || size === 'side' || size === 'small';
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {
