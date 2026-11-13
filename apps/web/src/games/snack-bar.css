@@ -328,6 +328,8 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
 
 /* PH2 (0.9.97.130): Snack Bar in a phone's Games tab: ×1 / ×10 / Max each a full 44 px target (they shared 122 px). */
 #game-stage.in-tab .sb .sb-mode { min-width: 44px; }
+/* Tighter gaps in the Games tab, so eight stands fit unscaled and every target stays 44 px. */
+#game-stage.in-tab .sb { gap: 5px; padding: 6px 10px 8px; }
 /* The counter's picture keeps the 80 px it has on a 360 px phone (wider phones made it taller, and three stands no
    longer fitted under it). */
 #game-stage.in-tab .sb .sb-scene-box { height: 80px; max-height: 80px; }
