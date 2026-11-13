@@ -47,7 +47,7 @@ html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canv
 html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay { padding: 8px 12px; }
 /* Quiz's lobby is two columns already: less padding so it fits the low screen. */
 html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-main { padding: 6px 10px; }
-html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-block: 4px; gap: 2px; }
+html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-block: 4px; row-gap: 2px; }
 /* GPRO: in the lobby the white drawing paper behind the card showed in its rounded corners. */
 #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { background: transparent; border: 0; border-radius: 20px; }
 
@@ -123,3 +123,7 @@ html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-heig
 #game-stage .lobby-card .game-setting-select { width: 100%; max-width: 260px; }
 /* A choice under the mouse never looks chosen (the accent edge read as "selected" on English / Best of three). */
 #game-stage .lobby-card .game-chip:not(.on):hover { border-color: color-mix(in srgb, var(--text) 35%, var(--border)); }
+/* QA3 review 2: Last Heart's lobby card stands in the middle of its box like the other tables' (it sat at the top, where
+   the window's "Video paused for the game" note covered its edge). */
+#game-stage .pk:has(> .pk-lobby) { justify-content: safe center; }
+#game-stage .pk > .pk-lobby { margin-block: auto; }

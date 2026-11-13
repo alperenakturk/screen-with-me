@@ -176,9 +176,9 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-legend-item { gap: 3px; }
   #game-stage .ff:not(.duel) .ff-cell.ff-swatch { width: 18px; height: 18px; }
   /* QA3 review (15b): the spare height went into one gap above the keys; the legend now sits in the middle of it (its
-     three marks in two even lines: 13 px text cannot fit them on one line here). */
-  #game-stage .ff:not(.duel) .ff-legend { flex: none; margin-block: auto; display: grid; grid-template-columns: auto auto; justify-content: center; column-gap: 10px; }
-  #game-stage .ff:not(.duel) .ff-legend-item:last-child { grid-column: 1 / -1; justify-self: center; }
+     three marks wrap only when they must). */
+  #game-stage .ff:not(.duel) .ff-legend { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; column-gap: 10px; }
+  #game-stage .ff:not(.duel) .ff-result:has(> .ff-legend:not([hidden])) { margin-block: auto; justify-content: center; }
   #game-stage .ff:not(.duel) .ff-tray { margin-top: 0; }
 }
 @container game (max-height: 480px) and (max-aspect-ratio: 1 / 1) {
@@ -194,6 +194,14 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
 @container game (max-width: 340px) {
   #game-stage .ff:not(.duel) { padding-inline: 8px; }
   #game-stage .ff:not(.duel) .ff-tray { column-gap: 1px; }
+}
+/* QA3 review 2: the column beside the video can be taller than 540 px now: the legend there too sits in the middle of the
+   spare height, on one line when it fits, instead of leaving it all above the keys. */
+@container game (max-width: 380px) and (max-aspect-ratio: 1 / 1) {
+  #game-stage .ff:not(.duel) .ff-legend { flex: 1 1 100%; display: flex; flex-wrap: wrap; justify-content: center; column-gap: 10px; row-gap: 2px; white-space: normal; }
+  #game-stage .ff:not(.duel) .ff-result:has(> .ff-legend:not([hidden])) { margin-block: auto; justify-content: center; }
+  #game-stage .ff:not(.duel) .ff-legend-item { white-space: nowrap; }
+  #game-stage .ff:not(.duel) .ff-tray { margin-top: 0; }
 }
 
 /* QA2 (14): on a computer or tablet the game window's head already says "Five Frames" (a phone's head does not). */
