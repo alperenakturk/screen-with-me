@@ -10991,7 +10991,7 @@ button.chat-name:hover,
 
 /* ==== Menus as bottom sheets, touch polish, the app layout ==== */
 /* Menus open as bottom sheets: full width, from the bottom edge, never off the side of the screen. */
-html.phone :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .person-pop, .shorts-feed-pop, .theme-menu):not([hidden]) {
+html.phone :is(.profile-pop, .live-menu, .speed-pop, .game-menu:not(.ph-games-wrap *), .react-tray, .person-pop, .shorts-feed-pop, .theme-menu):not([hidden]) {
   position: fixed !important;
   inset: auto 0 0 0 !important;
   transform: none !important;
@@ -11000,25 +11000,13 @@ html.phone :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .p
   max-height: 75dvh !important;
   overflow-y: auto;
   margin: 0 !important;
-  padding: 22px 16px calc(16px + env(safe-area-inset-bottom)) !important;
+  padding: 14px 16px calc(16px + env(safe-area-inset-bottom)) !important;
   border-radius: 22px 22px 0 0 !important;
   border-bottom: 0 !important;
   z-index: 980 !important;
-  box-shadow: 0 -14px 44px rgb(0 0 0 / 0.55) !important;
+  /* PH1 "fast": no shadow and no grip on a sheet. */
+  box-shadow: none !important;
   animation: sheet-up 0.18s ease-out;
-}
-
-/* The little handle that says "this is a sheet". */
-html.phone :is(.profile-pop, .live-menu, .speed-pop, .game-menu, .react-tray, .person-pop, .shorts-feed-pop, .theme-menu):not([hidden])::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  width: 40px;
-  height: 4px;
-  margin-left: -20px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--text) 30%, transparent);
 }
 
 /* Bigger targets inside the sheets. */
@@ -11135,11 +11123,7 @@ html.ph-room .room .tabs-card {
 }
 
 /* What lives in sheets or nowhere on a phone. */
-html.ph-room .room :is(#media-form, #media-done, .now-playing, .together-head, .together-actions, .voice-hint, .voice-cams, .tabs, #profile-panel, .shorts-enter) {
-  display: none !important;
-}
-
-html.ph-room .room :is([data-panel='queue'], [data-panel='people']) {
+html.ph-room .room :is(#media-form, #media-done, [data-panel='queue'], [data-panel='people'], .now-playing, .together-head, .together-actions, .voice-hint, .voice-cams, .tabs, #profile-panel, .shorts-enter):not(.ph-panel *, .ph-sheet *) {
   display: none !important;
 }
 
@@ -11607,9 +11591,14 @@ html.ph-room:not([data-ph-tab='room']) .room :is(.together-strip, .ph-cams, [dat
 }
 
 .ph-panel #media-form input {
-  flex: 1 1 0;
+  flex: 1 1 100%;
   min-width: 0;
   height: 44px;
+}
+
+.ph-panel #media-form > .btn {
+  flex: 1 1 0;
+  min-height: 44px;
 }
 
 .ph-panel #media-form .search-results {
@@ -11672,10 +11661,6 @@ html.ph-room:not([data-ph-tab='room']) .room :is(.together-strip, .ph-cams, [dat
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
 }
 
 .ph-me-card .settings-sec {
@@ -12593,6 +12578,17 @@ html.sideways.ph-room .room.has-item :is(.together-strip, .ph-cams, [data-panel=
 html.sideways.ph-room .room:not(.has-item) {
   grid-template-columns: minmax(0, 1fr) min(53%, 380px);
 }
+/* PH1: the sideways column (before the first video) is narrow: smaller input-row buttons, and 🔗 Invite stays in the
+   empty box only, so "Say something…" fits. */
+html.sideways.ph-room .room .chat-form :is(.chat-tool, .chat-send, .strip-voice .cam-ctl) {
+  width: 38px;
+  height: 38px;
+}
+
+html.sideways.ph-room .room #chat-invite {
+  display: none;
+}
+
 /* LAB3: the narrow sideways column's message box keeps its hint whole ("Say something…" was cut to "Say some"). */
 .sideways #chat-input::placeholder {
   font-size: 13px;

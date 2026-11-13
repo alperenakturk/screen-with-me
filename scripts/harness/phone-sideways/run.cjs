@@ -125,20 +125,23 @@ async function enter(page, room, name, tips) {
     check(inv.top >= 0 && inv.bottom <= inv.vh && inv.scroll <= 1, `${label} sideways: the invite window fits without scrolling`, JSON.stringify(inv));
     check(inv.wa !== null && inv.wa <= inv.bottom, `${label} sideways: the invite's WhatsApp button is inside the window`, JSON.stringify(inv));
     await page.keyboard.press('Escape');
+    // PH1: Settings on a phone is the Me tab: every category, in the right-hand column, inside the screen (a list, so
+    // it may scroll).
     await page.evaluate(() => document.querySelector('#settings-open').click());
-    await page.waitForSelector('.settings-nav');
     await page.waitForTimeout(400);
     const set = await page.evaluate(() => {
-      const nav = document.querySelector('.settings-nav');
-      const n = nav.getBoundingClientRect();
-      const buttons = [...nav.querySelectorAll('button')].filter((b) => b.offsetParent);
-      const last = buttons.at(-1).getBoundingClientRect();
-      const main = document.querySelector('.settings-main');
-      const fade = getComputedStyle(main, '::after');
-      return { buttons: buttons.length, lastBottom: Math.round(last.bottom), navBottom: Math.round(n.bottom), navScroll: nav.scrollHeight - nav.clientHeight, more: main.scrollHeight > main.clientHeight + 1, fade: fade.content !== 'none' && fade.position === 'sticky' };
+      const panel = document.querySelector('.ph-panel[data-ph-panel="me"]');
+      const r = panel?.getBoundingClientRect();
+      return {
+        tab: document.documentElement.dataset.phTab,
+        secs: panel ? panel.querySelectorAll('.settings-sec').length : 0,
+        box: r && { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) },
+        vw: innerWidth,
+        vh: innerHeight,
+        dialog: !!document.querySelector('#settings-dialog[open]'),
+      };
     });
-    check(set.buttons >= 6 && set.lastBottom <= set.navBottom && set.navScroll <= 1, `${label} sideways: every Settings category is inside its column`, JSON.stringify(set));
-    check(!set.more || set.fade, `${label} sideways: the long settings list shows a fade at its foot`, JSON.stringify(set));
+    check(set.tab === 'me' && set.secs >= 6 && !set.dialog && set.box && set.box.top >= 0 && set.box.bottom <= set.vh && set.box.right <= set.vw && set.box.left > set.vw / 3, `${label} sideways: Settings opens the Me tab beside the video, every category inside the screen`, JSON.stringify(set));
     await ctx.close();
   }
 

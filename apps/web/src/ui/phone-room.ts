@@ -71,7 +71,13 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const on = phone && !shorts;
     if (on === html.classList.contains('ph-room')) return;
     html.classList.toggle('ph-room', on);
-    if (on) setTab(savedTab(), false);
+    if (on) {
+      // The tab kept from before a reload opens once the room has finished setting up (the Me tab draws the
+      // settings, which read the room's state).
+      setTab('room', false);
+      const saved = savedTab();
+      if (saved !== 'room') queueMicrotask(() => html.classList.contains('ph-room') && setTab(saved, false));
+    }
     else {
       setTab('room', false);
       if (!sheet.dataset.sheet?.startsWith('shorts')) closeSheet();
@@ -243,7 +249,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   function setTab(next: Tab, remember = true): void {
     if (next !== 'room' && !html.classList.contains('ph-room')) next = 'room';
     const was = tab;
-    if (was === next && (next !== 'games' || !$('#game-menu')?.hidden)) return;
+    if (was === next && html.dataset.phTab === next && (next !== 'games' || !$('#game-menu')?.hidden)) return;
     // Leaving a panel: its borrowed nodes go home first.
     if (was !== next) {
       if (was === 'me') {

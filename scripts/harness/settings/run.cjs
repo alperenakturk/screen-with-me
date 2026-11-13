@@ -96,12 +96,28 @@ const SIZES = [
       check(!(await page.isVisible('#profile-move')) && !(await page.$('#profile-move')), `${where} room: the profile menu has no "Move to another device"`);
       check(!(await page.$('#voice-ip')), `${where} room: no "people in voice can see your IP" line`);
 
+      // PH1: a phone has no settings window: the Me tab holds every category as a card, in the same order.
+      if (size === 'phone') {
+        await page.getByRole('tab', { name: lang === 'tr' ? 'Ben' : 'Me', exact: true }).click();
+        await page.waitForTimeout(300);
+        const me = await page.evaluate(() => ({
+          order: [...document.querySelectorAll('.ph-me .settings-sec')].map((x) => x.dataset.sec),
+          shown: [...document.querySelectorAll('.ph-me .settings-sec')].every((x) => x.getBoundingClientRect().height > 0),
+          dialog: !document.getElementById('settings-dialog')?.hidden && !!document.querySelector('#settings-dialog[open]'),
+          roomName: document.getElementById('settings-room-name')?.textContent ?? '',
+          version: document.getElementById('settings-version')?.textContent ?? '',
+        }));
+        check(JSON.stringify(me.order) === JSON.stringify(ORDER) && me.shown && !me.dialog, `${where}: the Me tab shows every category in order, no window`, me);
+        check(me.roomName.length > 0 && me.roomName === (await page.textContent('.room-title-name')) && /^v\d/.test(me.version), `${where}: Me tab → Room has the room's name, About the version`, me);
+        await page.click('#settings-move');
+        const moveOpen = await page.waitForFunction(() => [...document.querySelectorAll('.dialog-backdrop:not([hidden]), dialog[open]')].some((d) => d.id !== 'settings-dialog'), null, { timeout: 6000 }).then(() => true, () => false);
+        check(moveOpen, `${where}: Me tab → Move to another device opens its window`);
+        await ctx.close();
+        continue;
+      }
+
       // ⚙️ opens Settings with the categories beside it.
-      const openSettings = async () => {
-        if (await page.isVisible('#settings-open')) return page.click('#settings-open');
-        await page.click('#strip-more');
-        await page.click(`.ph-sheet .ph-tile:has-text("⚙️")`);
-      };
+      const openSettings = () => page.click('#settings-open');
       await openSettings();
       await page.waitForSelector('#settings-dialog:not([hidden])');
       await page.waitForTimeout(250);

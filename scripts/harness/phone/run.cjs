@@ -1,6 +1,6 @@
-// Phones: the room as an app screen (0.9.92.3, owner's picks 1A 2B 3A 6B 7A 8A 9A on
-// https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu): no top bar, the video edge to edge, the faces strip (🎙 📷 ⋯),
-// the chat, the message box with 😀 and ＋; everything else in bottom sheets. Also fullscreen without the browser's
+// Phones: the room as an app screen (0.9.92.3; PH1 option A since 0.9.97.127): no top bar, the video edge to edge, the
+// strip (faces + 📌 ⏩ 🔄 ⏭), the chat with the room's activity, one input row 🔗 · box · 🎙 · 📷 · 😀 and the bottom
+// tabs Room · Search · Games · Me. Also fullscreen without the browser's
 // (iPhone) and by turning the phone sideways, Shorts fitting the screen with touch swipes. Needs Playwright
 // (preinstalled in cloud sessions), `npm run dev` and a long local video (for example the embed harness's
 // `FILM_VIDEO=… node scripts/harness/embed/film-server.mjs`, which serves it on :5300):
@@ -34,15 +34,31 @@ async function enter(page, room) {
   await page.waitForTimeout(1500);
 }
 
-/** Puts links / words in the room's link box: on a phone through ＋ → Add a video. */
+/** Puts links / words in the room's link box: on a phone through the Search tab. */
 async function addMedia(page, text, mode) {
-  if (!(await page.isVisible('#media-input'))) {
-    await page.click('#chat-plus');
-    await page.click('.ph-sheet .ph-tile >> nth=0');
-  }
+  if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
   await page.fill('#media-input', text);
   if (mode) await page.click(`#media-form button[value=${mode}]`);
 }
+
+/** PH1: the Test Lab's phone room state (tab, typing, sheet, unread, which controls show). */
+const phoneState = (page) => page.evaluate(() => {
+  const html = document.documentElement;
+  const shows = (sel) => {
+    const n = document.querySelector(sel);
+    return !!n && n.getClientRects().length > 0 && getComputedStyle(n).visibility !== 'hidden';
+  };
+  const sheet = document.querySelector('.ph-sheet');
+  const unread = document.querySelector('#ph-side-chat .ph-unread, #ph-shorts-chat .ph-unread');
+  return {
+    tab: html.dataset.phTab,
+    typing: !!document.querySelector('#chat-input')?.value,
+    sheet: sheet && !sheet.hidden ? sheet.dataset.sheet : null,
+    unread: unread && !unread.hidden ? Number(unread.textContent) : 0,
+    visible: Object.fromEntries(['#chat-invite', '#chat-input', '#strip-mic', '#strip-cam', '#chat-send', '#chat-react', '.ph-strip-tools', '.ph-tabs', '.ph-empty-actions', '.ph-turn'].map((s) => [s, shows(s)])),
+  };
+});
+const tab = (page, name) => page.getByRole('tab', { name, exact: true });
 
 const sheetName = (page) => page.evaluate(() => {
   const s = document.querySelector('.ph-sheet');
@@ -53,7 +69,9 @@ const sheetName = (page) => page.evaluate(() => {
   const browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'] });
   const id = () => `ph${Math.random().toString(36).slice(2, 7)}`;
 
-  // 1) iPhone held upright: the room as an app screen.
+  // 1) iPhone held upright: the room as an app screen with bottom tabs (PH1, design option A). Buttons are found by
+  // their names (Turkish here: the checks run the page in Turkish), not by ids, so a renamed id can't hide a missing
+  // button.
   {
     const ctx = await browser.newContext({ ...devices['iPhone 13'], permissions: ['camera', 'microphone'] });
     // iPhone Safari has no fullscreen for page elements.
@@ -69,94 +87,126 @@ const sheetName = (page) => page.evaluate(() => {
     check(!(await page.isVisible('.topbar')), 'phone: no top bar (2B)');
     const theater = await rect(page, '#theater');
     check(!!theater && theater.x === 0 && Math.abs(theater.w - vw) <= 1 && theater.y <= 1, 'phone: the video edge to edge at the top', JSON.stringify(theater));
-    const strip = await rect(page, '.together-strip');
-    check(!!strip && Math.abs(strip.y - theater.b) <= 2 && (await page.isVisible('#strip-mic')) && (await page.isVisible('#strip-cam')) && (await page.isVisible('#strip-more')), 'phone: faces strip under the video with 🎙 📷 ⋯');
-    const form = await rect(page, '#chat-form');
-    check(!!form && Math.abs(form.b - vh) <= 1 && (await page.isVisible('#chat-react')) && (await page.isVisible('#chat-plus')), 'phone: message box at the bottom with 😀 and ＋', JSON.stringify(form));
-    check(!(await page.isVisible('.voice-ptt')), 'phone: push-to-talk (V key) hidden');
-    // ＋ → Add a video: the link box and the queue in one sheet; "Play now" plays and closes it.
-    await page.click('#chat-plus');
-    check((await sheetName(page)) === 'plus' && (await page.$$('.ph-sheet .ph-tile')).length >= 3, 'phone: ＋ opens a sheet of actions');
-    await page.click('.ph-sheet .ph-tile >> nth=0');
-    check((await sheetName(page)) === 'add' && (await page.isVisible('.ph-sheet #media-input')) && (await page.isVisible('.ph-sheet [data-panel="queue"]')), 'phone: Add a video = link box + queue in one sheet');
+    // The bottom tabs: Room · Search · Games · Me, a tablist at the foot of the screen, Room selected.
+    const tabNames = await page.locator('.ph-tabs [role=tab] .ph-tab-label').allTextContents();
+    const tabsBox = await rect(page, '.ph-tabs[role=tablist]');
+    check(tabNames.map((s) => s.trim()).join('|') === 'Oda|Ara|Oyunlar|Ben' && !!tabsBox && Math.abs(tabsBox.b - vh) <= 1, 'phone: bottom tabs Oda · Ara · Oyunlar · Ben', JSON.stringify({ tabNames, tabsBox }));
+    check((await tab(page, 'Oda').getAttribute('aria-selected')) === 'true', 'phone: the Room tab is selected');
+    // The empty room: 🔍 Search a video and 🔗 Invite; the strip shows only the faces.
+    check(await page.getByRole('button', { name: /Video ara/ }).isVisible(), 'phone, empty room: "🔍 Video ara" in the box');
+    const state0 = await phoneState(page);
+    check(!state0.visible['.ph-strip-tools'] && state0.visible['#chat-input'] && state0.visible['#chat-invite'] && state0.visible['#chat-react'], 'phone, empty room: no Pin / Speed / Sync / Skip yet; the input row shows', JSON.stringify(state0.visible));
+    // Search a video → the Search tab: the link box, then "Up next" (the queue).
+    await page.getByRole('button', { name: /Video ara/ }).click();
+    await page.waitForTimeout(300);
+    check((await tab(page, 'Ara').getAttribute('aria-selected')) === 'true' && (await page.getByRole('combobox').or(page.locator('#media-input')).first().isVisible()) && (await page.getByText('Sırada', { exact: false }).first().isVisible()), 'phone: "Video ara" opens the Search tab with the link box and Up next');
+    const searchBox = await rect(page, '#media-input');
+    check(!!searchBox && searchBox.w >= vw - 40, 'phone: the search box takes the full width', JSON.stringify(searchBox));
+    // "Play now" plays and goes back to the Room tab; the link box goes home.
     await page.fill('#media-input', VIDEO);
-    await page.click('#media-form button[value=load]');
+    await page.getByRole('button', { name: 'Şimdi aç', exact: true }).click();
     await page.waitForSelector('#player video');
     await page.waitForTimeout(1200);
-    check((await sheetName(page)) === null && (await page.evaluate(() => !!document.querySelector('.stage #media-form'))), '"Play now" closes the sheet; the link box is back in its place');
-    // Several links at once into the queue from the sheet (the room's code must still find its note and queue).
-    await addMedia(page, 'https://www.youtube.com/watch?v=aqz-KE-bpKQ https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'enqueue');
+    check((await phoneState(page)).tab === 'room' && (await page.evaluate(() => !!document.querySelector('.stage #media-form'))), '"Şimdi aç" goes to the Room tab; the link box is back in its place');
+    // Two links at once into the queue: Up next grows, the tab stays.
+    await tab(page, 'Ara').click();
+    await page.fill('#media-input', 'https://www.youtube.com/watch?v=aqz-KE-bpKQ https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    await page.getByRole('button', { name: /Sıraya ekle/ }).click();
     await page.waitForTimeout(1500);
     const many = await page.evaluate(() => ({ queued: document.querySelectorAll('#queue li').length, note: document.getElementById('media-done')?.textContent ?? '' }));
-    check(many.queued === 2 && many.note.length > 0, 'phone: two links at once go to the queue from the Add sheet', JSON.stringify(many));
-    await page.keyboard.press('Escape');
+    check(many.queued === 2 && many.note.length > 0 && (await phoneState(page)).tab === 'search', 'phone: two links at once go to Up next; the Search tab stays', JSON.stringify(many));
+    await tab(page, 'Oda').click();
     await page.waitForTimeout(300);
-    // ⋯ More (card 6: the computer's "⋯ More" list in the same order): invite, queue, people, games, (film time,) save,
-    // recap, sync test, rules, profile, settings, language.
-    await page.click('#strip-more');
-    const moreTiles = (await page.$$('.ph-sheet .ph-tile')).length;
-    check((await sheetName(page)) === 'more' && moreTiles >= 11, 'phone: ⋯ opens the More sheet', String(moreTiles));
-    const tileText = await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].map((b) => b.textContent ?? '').join('|'));
-    // R9: one list without doubles: what the profile holds (language, help, feedback, privacy) is not a tile here.
-    const labels = tileText.split('|').map((x) => x.replace(/\s*\d+$/, '').trim());
-    check(new Set(labels).size === labels.length && !/Dil|Language|Gizlilik|Privacy|Yardım|Help|Geri bildirim|feedback/i.test(tileText), 'phone: ⋯ lists every tile once, without the profile\'s language / help / feedback / privacy (R9)', tileText);
-    await page.click('.ph-sheet .ph-tile >> nth=2');
-    check((await sheetName(page)) === 'people' && (await page.isVisible('.ph-sheet #members')), 'phone: More → People shows the people list');
-    // The phone's back button closes a sheet.
-    await page.evaluate(() => history.back());
-    await page.waitForTimeout(400);
-    check((await sheetName(page)) === null && (await page.evaluate(() => !!document.querySelector('.tabs-card [data-panel="people"]'))), 'phone: back closes the sheet, the panel is back in the room');
-    // R9: ⋯ → Profile holds the language (TR / EN, nothing switches by itself) and the privacy policy (L9: the footer
-    // is hidden on phones).
-    await page.click('#strip-more');
-    await page.click('.ph-sheet .ph-tile:has-text("Profil")');
-    await page.waitForTimeout(400);
-    const prof = await page.evaluate(() => ({ langs: document.querySelectorAll('#profile-lang [data-set-lang]').length, lang: document.documentElement.lang, privacy: !!document.querySelector('#profile-privacy')?.getClientRects().length, href: document.querySelector('#profile-privacy')?.getAttribute('href') }));
-    check(prof.langs === 2 && prof.lang === 'tr' && prof.privacy && /privacy\.html/.test(prof.href ?? ''), 'phone: ⋯ → Profile has the language (TR / EN) and the privacy policy (L9, R9)', JSON.stringify(prof));
-    await page.keyboard.press('Escape');
+    // With a video: the strip has 📌 ⏩ 🔄 ⏭ (one tap each), the input row 🔗 · box · 🎙 · 📷 · 😀 at the bottom.
+    const strip = await rect(page, '.together-strip');
+    const video = await rect(page, '#theater');
+    const toolNames = await page.locator('.ph-strip-tools button').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label')));
+    check(!!strip && Math.abs(strip.y - video.b) <= 2 && toolNames.length === 4, 'phone: the strip under the video holds four video tools', JSON.stringify({ toolNames, strip, video }));
+    const row = await page.evaluate(() => ['#chat-invite', '#chat-input', '#strip-mic', '#strip-cam', '#chat-send', '#chat-react'].map((s) => {
+      const r = document.querySelector(s)?.getBoundingClientRect();
+      return r && r.width > 0 ? Math.round(r.left) : -1;
+    }));
+    const form = await rect(page, '#chat-form');
+    check(row[0] >= 0 && row[0] < row[1] && row[1] < row[2] && row[2] < row[3] && row[3] < row[5] && row[4] === -1 && !!form && Math.abs(form.b - tabsBox.y) <= 2, 'phone: one input row 🔗 · box · 🎙 · 📷 · 😀 above the tabs (no ➤ while empty)', JSON.stringify({ row, form }));
+    const sizes = await page.evaluate(() => ['#chat-invite', '#strip-mic', '#chat-react', '.ph-strip-tools button'].map((s) => {
+      const b = document.querySelector(s);
+      const r = b.getBoundingClientRect();
+      return [Math.round(r.width), Math.round(r.height), getComputedStyle(b).borderRadius, getComputedStyle(b).boxShadow];
+    }));
+    check(sizes.every(([w, h, rad, sh]) => w === 44 && h === 44 && rad === '10px' && sh === 'none'), 'phone: one 44 px button shape, radius 10, no shadow', JSON.stringify(sizes));
+    // Typing: ➤ takes the place of 🎙 📷.
+    await page.fill('#chat-input', 'hello from the phone');
+    const typing = await phoneState(page);
+    check(typing.typing && typing.visible['#chat-send'] && !typing.visible['#strip-mic'] && !typing.visible['#strip-cam'], 'phone: while typing ➤ replaces 🎙 📷', JSON.stringify(typing.visible));
+    await page.press('#chat-input', 'Enter');
     await page.waitForTimeout(300);
-    // 😀 opens the emoji tray as a bottom sheet; 😀 again closes it.
+    check((await page.textContent('#chat-list')).includes('hello from the phone') && (await phoneState(page)).visible['#strip-mic'], 'phone: sent; 🎙 📷 are back');
+    check(!(await page.isVisible('.voice-ptt')), 'phone: push-to-talk (V key) hidden');
+    // Speed from the strip opens as a bottom sheet; a tap outside closes it.
+    await page.getByRole('button', { name: /Hız/ }).first().click();
+    await page.waitForTimeout(400);
+    const speed = await rect(page, '#speed-pop');
+    check(!!speed && speed.x >= -1 && Math.abs(speed.r - vw) <= 1 && Math.abs(speed.b - vh) <= 1 && speed.h > 40, 'phone: ⏩ Speed opens as a bottom sheet', JSON.stringify(speed));
+    await page.mouse.click(vw / 2, 30);
+    await page.waitForTimeout(300);
+    // 😀 opens the emoji tray as a bottom sheet with "🖼 Resim gönder" in it; 😀 again closes it.
     await page.click('#chat-react');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(400);
     const tray = await rect(page, '.toolbar .react-tray');
     check(!!tray && tray.x >= -1 && Math.abs(tray.r - vw) <= 1 && Math.abs(tray.b - vh) <= 1 && tray.h > 40, 'phone: 😀 opens the emoji tray from the bottom', JSON.stringify(tray));
-    const onTop = await page.evaluate(() => {
-      const r = document.querySelector('.toolbar .react-tray').getBoundingClientRect();
-      return document.elementFromPoint(r.left + r.width / 2, r.bottom - 10)?.closest('.react-tray') !== null;
-    });
-    check(onTop, 'phone: the tray covers the message box (not under it)');
-    await page.mouse.click(vw / 2, 120);
+    check(await page.locator('.react-tray').getByRole('button', { name: /Resim gönder/ }).isVisible(), 'phone: the tray holds "🖼 Resim gönder"');
+    await page.click('#chat-react', { force: true }).catch(() => {});
+    await page.mouse.click(vw / 2, 30);
     await page.waitForTimeout(300);
     check(!(await page.isVisible('.toolbar .react-tray')), 'phone: a tap outside closes it');
-    // The toolbar's windows still open as sheets (games, speed) and the profile menu too.
-    for (const [open, tileIndex, pop, label] of [
-      ['#strip-more', 3, '#game-menu', 'games (only in ⋯)'],
-      ['#chat-plus', 3, '#speed-pop', 'speed'],
-      ['#strip-more', 'Profil', '.profile-pop', 'profile'],
-    ]) {
-      await page.click(open);
-      await page.click(typeof tileIndex === 'number' ? `.ph-sheet .ph-tile >> nth=${tileIndex}` : `.ph-sheet .ph-tile:has-text("${tileIndex}")`);
-      await page.waitForTimeout(400);
-      const r = await rect(page, pop);
-      check(!!r && r.x >= -1 && Math.abs(r.r - vw) <= 1 && Math.abs(r.b - vh) <= 1 && r.h > 40, `phone: ${label} opens as a bottom sheet`, JSON.stringify(r));
-      await page.mouse.click(vw / 2, 30);
-      await page.waitForTimeout(300);
-    }
-    await page.click('#strip-more');
-    await page.click('.ph-sheet .ph-tile:has-text("Ayarlar")');
+    // The faces open People: who is here, then 🔗 Invite; the phone's back button closes it.
+    await page.click('#voice-people');
     await page.waitForTimeout(300);
-    const settings = await rect(page, '#settings-dialog .settings-window');
-    check(!!settings && settings.w >= vw - 1 && settings.h >= vh - 1, 'phone: settings is a full page', JSON.stringify(settings));
-    await page.keyboard.press('Escape');
-    // Camera on from the strip's 📷 (fake camera): my face shows the live picture; tapping it shows it big.
+    check((await sheetName(page)) === 'people' && (await page.isVisible('.ph-sheet #members')) && (await page.locator('.ph-sheet').getByRole('button', { name: /Davet/ }).isVisible()), 'phone: the faces open People with 🔗 Invite');
+    await page.goBack();
+    await page.waitForTimeout(300);
+    check((await sheetName(page)) === null && (await page.evaluate(() => !!document.querySelector('.tabs-card [data-panel="people"]'))), 'phone: back closes the sheet, the panel is back in the room');
+    // Games tab: the games hall in the panel, the tabs still on screen.
+    await tab(page, 'Oyunlar').click();
+    await page.waitForTimeout(600);
+    const hall = await rect(page, '.ph-panel[data-ph-panel=games]');
+    const inHall = await page.evaluate(() => !!document.querySelector('.ph-panel[data-ph-panel=games] #game-menu:not([hidden])'));
+    check(!!hall && Math.abs(hall.b - tabsBox.y) <= 1 && Math.abs(hall.y - video.b) <= 2 && inHall && (await page.locator('.hub-game').count()) >= 3, 'phone: the Games tab shows the hall between the video and the tabs', JSON.stringify(hall));
+    // Me tab: me, then the settings as cards (Me, My screen, Sound & camera, Room, About…), Recap; no settings window.
+    await tab(page, 'Ben').click();
+    await page.waitForTimeout(500);
+    const me = await page.evaluate(() => ({
+      head: document.querySelector('.ph-me-head')?.textContent ?? '',
+      cards: [...document.querySelectorAll('.ph-me-card [data-sec]')].map((s) => s.dataset.sec),
+      dialog: !!document.querySelector('#settings-dialog[open]'),
+    }));
+    check(me.head.includes('Alex') && me.cards.length >= 4 && me.cards.includes('view') && me.cards.includes('about') && !me.dialog, 'phone: the Me tab = me + every settings category as a card', JSON.stringify(me));
+    check(await page.locator('.ph-me').getByRole('button', { name: /Özet/ }).isVisible(), 'phone: the Me tab has ✨ Recap');
+    // A setting opened from elsewhere (the person menu's "Settings", a lab command) lands on the Me tab too.
+    await tab(page, 'Oda').click();
+    await page.evaluate(() => document.querySelector('#settings-open')?.click());
+    await page.waitForTimeout(300);
+    check((await phoneState(page)).tab === 'me' && !(await page.evaluate(() => !!document.querySelector('#settings-dialog[open]'))), 'phone: opening Settings goes to the Me tab, no window');
+    // A reload lands on the same tab (sessionStorage per room).
+    await page.reload();
+    await page.waitForSelector('.room');
+    await page.waitForTimeout(1500);
+    check((await phoneState(page)).tab === 'me', 'phone: a reload keeps the tab');
+    await tab(page, 'Oda').click();
+    // Arrow keys move between the tabs.
+    await tab(page, 'Oda').focus();
+    await page.keyboard.press('ArrowRight');
+    check((await phoneState(page)).tab === 'search' && (await page.evaluate(() => document.activeElement?.id)) === 'ph-tab-search', 'phone: → moves to the next tab');
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForSelector('#player video');
+    await page.waitForTimeout(800);
+    // Camera on from the input row's 📷 (fake camera): one tile in the camera row; tapping it shows it big.
     await page.click('#strip-cam');
-    // The IP notice, then the pre-join check (camera preview): accept both.
-    for (let i = 0; i < 6 && !(await page.evaluate(() => !!document.querySelector('#voice-people .face-cam'))); i++) {
+    for (let i = 0; i < 6 && !(await page.evaluate(() => !!document.querySelector('.ph-cams .ph-cam video'))); i++) {
       await page.waitForTimeout(600);
       const button = await page.$('.dialog-backdrop:not([hidden]) button.primary');
       if (button) await button.click().catch(() => {});
     }
-    // 0.9.92.6 (owner): one picture per person: a camera row under the faces, the face stays a face, no free windows.
     await page.waitForFunction(() => document.querySelector('.ph-cams .ph-cam video')?.readyState >= 2, null, { timeout: 15000 }).catch(() => {});
     const camRow = await page.evaluate(() => ({
       cam: document.querySelector('.ph-cams .ph-cam video')?.readyState ?? -1,
@@ -169,26 +219,32 @@ const sheetName = (page) => page.evaluate(() => {
     check(await page.evaluate(() => !!document.querySelector('.person-pop .person-cam')), 'phone: tapping a camera opens their sheet with the camera big');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
-    // Fullscreen without the browser's: the theater covers the window, the dock is there, its exit works.
-    await page.click('#chat-plus');
-    await page.click('.ph-sheet .ph-tile:has-text("Tam ekran")');
-    await page.waitForTimeout(600);
-    const fsBox = await rect(page, '#theater');
-    check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')) && !!fsBox && fsBox.w === vw && Math.abs(fsBox.h - vh) <= 1, 'iPhone: ＋ → Fullscreen covers the window (no browser fullscreen)', JSON.stringify(fsBox));
-    check((await rect(page, '#fs-dock'))?.w > 30, 'iPhone: the dock shows in fullscreen');
-    await page.click('#dock-exit');
-    await page.waitForTimeout(400);
-    check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('fake-fs'))), 'iPhone: the dock\'s exit leaves fullscreen');
-    // Turning the phone sideways does nothing by itself (0.9.92.8, owner): the video left, one big ⛶ on the right,
-    // no chat / faces there; ⛶ opens the fullscreen.
+    // Turning the phone sideways does nothing by itself (0.9.92.8): the video left; on the right ⛶ Watch fullscreen,
+    // 💬 Chat and 🎙; no tabs and no input row.
     await page.setViewportSize({ width: 844, height: 390 });
     await page.waitForTimeout(600);
+    const side = await phoneState(page);
     const turned = await page.evaluate(() => ({
       fs: document.getElementById('theater').classList.contains('pseudo-fs'),
-      button: !!document.querySelector('.ph-turn-fs') && document.querySelector('.ph-turn-fs').getBoundingClientRect().width > 100,
       chat: document.querySelector('.room [data-panel="chat"]').getBoundingClientRect().width,
     }));
-    check(!turned.fs && turned.button && turned.chat === 0, 'phone turned sideways: no automatic fullscreen, one big ⛶, no chat beside', JSON.stringify(turned));
+    check(!turned.fs && side.visible['.ph-turn'] && !side.visible['.ph-tabs'] && !side.visible['#chat-input'] && turned.chat === 0, 'phone turned sideways: no automatic fullscreen; no tabs or input row', JSON.stringify({ turned, side: side.visible }));
+    for (const name of [/Tam ekran izle/, /Sohbet/, /Sese katıl/]) check(await page.locator('.ph-turn').getByRole('button', { name }).isVisible(), `sideways: the column has ${name.source}`);
+    // A friend's message while sideways: 💬 shows a count; 💬 opens the chat as a sheet and clears it.
+    await page.evaluate(() => {
+      // A friend's line as chat.ts draws it (name + text).
+      const li = document.createElement('li');
+      li.className = 'chat-line';
+      li.innerHTML = '<span class="chat-name">Sam</span><span class="chat-text">look at this</span>';
+      document.getElementById('chat-list').append(li);
+    });
+    await page.waitForTimeout(200);
+    check((await phoneState(page)).unread === 1 && (await page.locator('#ph-side-chat .ph-unread').textContent()) === '1', 'sideways: a new message puts 1 on 💬');
+    await page.locator('.ph-turn').getByRole('button', { name: /Sohbet/ }).click();
+    await page.waitForTimeout(300);
+    check((await sheetName(page)) === 'shorts-chat' && (await phoneState(page)).unread === 0, 'sideways: 💬 opens the chat sheet and clears the count');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
     // BH13: a video that can't be played here ("can't be played" card) offers no ⛶ "Watch fullscreen".
     const turnFsShown = () => page.evaluate(() => { const b = document.querySelector('.ph-turn-fs'); return !!b && b.getBoundingClientRect().width > 0; });
     await page.evaluate(() => {
@@ -201,15 +257,15 @@ const sheetName = (page) => page.evaluate(() => {
     await page.evaluate(() => { document.getElementById('player-error').hidden = true; });
     await page.waitForTimeout(150);
     check(await turnFsShown(), 'sideways: ⛶ "Watch fullscreen" comes back once the video plays');
+    // Fullscreen without the browser's (iPhone): the theater covers the window, the dock is a column beside the video.
     await page.click('.ph-turn-fs');
     await page.waitForTimeout(600);
-    check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')), 'sideways: ⛶ opens the fullscreen');
+    const fsBox = await rect(page, '#theater');
+    check(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs')) && !!fsBox && fsBox.w === 844 && Math.abs(fsBox.h - 390) <= 1, 'iPhone sideways: ⛶ covers the window (no browser fullscreen)', JSON.stringify(fsBox));
     const dock = await rect(page, '#fs-dock');
-    check(!!dock && dock.y >= 0 && dock.b <= 390, 'sideways: the dock fits the screen', JSON.stringify(dock));
-    // 4B: a slim column beside the video (never on it), only 💬 😀 🎙 📷 and exit.
     const player = await rect(page, '#player');
     const shown = await page.evaluate(() => [...document.querySelectorAll('#fs-dock .dock-btn')].filter((b) => b.offsetParent).map((b) => b.id).join(','));
-    check(!!dock && !!player && dock.x >= player.r - 1 && dock.r >= 843 && dock.w <= 70 && dock.h >= 380, 'sideways: the dock is a column beside the video', JSON.stringify({ dock, player }));
+    check(!!dock && !!player && dock.y >= 0 && dock.b <= 390 && dock.x >= player.r - 1 && dock.r >= 843 && dock.w <= 70 && dock.h >= 380, 'sideways: the dock is a column beside the video', JSON.stringify({ dock, player }));
     check(shown === 'dock-chat,dock-react,dock-mic,dock-cam,dock-exit', 'sideways: the dock holds 💬 😀 🎙 📷 and exit', shown);
     // 💬 opens the side panel (faces, chat, message box) right of the dock; closed again, the video fills the screen.
     await page.click('#dock-chat');
@@ -225,46 +281,44 @@ const sheetName = (page) => page.evaluate(() => {
     check(closed, 'sideways: 💬 again closes it, the chat goes back to the room');
     await page.setViewportSize({ width: 390, height: 664 });
     await page.waitForTimeout(600);
-    check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs'))), 'phone upright again: the room comes back');
-    // ⛶ in the faces strip while something plays.
-    check(await page.isVisible('#strip-fs'), 'phone: ⛶ in the faces strip while a video plays');
+    check(!(await page.evaluate(() => document.getElementById('theater').classList.contains('pseudo-fs'))) && (await phoneState(page)).visible['.ph-tabs'], 'phone upright again: the room and its tabs come back');
     // The keyboard makes the page short and wide-ish: that is not "turned sideways" (0.9.92.6, owner's screenshots).
     await page.focus('#chat-input');
     await page.setViewportSize({ width: 390, height: 330 });
     await page.waitForTimeout(600);
-    const typing = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways'), fs: document.getElementById('theater').classList.contains('pseudo-fs') }));
+    const kb = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways'), fs: document.getElementById('theater').classList.contains('pseudo-fs') }));
     await page.setViewportSize({ width: 390, height: 664 });
     await page.waitForTimeout(400);
-    check(!typing.sideways && !typing.fs, 'phone: the keyboard opening does not count as turning sideways (no fullscreen, no layout jump)', JSON.stringify(typing));
+    check(!kb.sideways && !kb.fs, 'phone: the keyboard opening does not count as turning sideways (no fullscreen, no layout jump)', JSON.stringify(kb));
     await page.evaluate(() => document.activeElement?.blur());
-    // 10A: a game takes the whole screen; the video keeps playing as a small preview in its head. Games are in ⋯ only.
-    check(!(await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].length)), 'no sheet open');
-    await page.click('#chat-plus');
-    const plusTiles = await page.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile')].map((x) => x.textContent).join('|'));
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-    check(!plusTiles.includes('🎮'), 'games are not in ＋ (only in ⋯)', plusTiles);
-    await page.click('#strip-more');
-    await page.click('.ph-sheet .ph-tile >> nth=3');
-    await page.waitForTimeout(400);
+    // 10A: a table takes the whole screen; the video keeps playing as a small preview in its head.
+    await tab(page, 'Oyunlar').click();
+    await page.waitForTimeout(500);
     await page.click('.hub-game >> nth=0');
     await page.waitForTimeout(1500);
     const game = await rect(page, '#game-stage');
     const thumb = await rect(page, '#theater');
     const inHead = await page.evaluate(() => !!document.querySelector('#game-stage .game-stage-head #strip-voice'));
-    check(!!game && game.w >= vw - 1 && game.h >= vh - 1, 'game: it takes the whole screen', JSON.stringify(game));
+    check(!!game && game.w >= vw - 1 && game.h >= vh - 1 && (await phoneState(page)).tab === 'room', 'game: it takes the whole screen (back on the Room tab)', JSON.stringify(game));
     check(!!thumb && thumb.w <= 110 && thumb.w >= 60 && thumb.y < 40 && thumb.x < 30 && inHead, 'game: the video is a small preview in its head, 🎙 beside it', JSON.stringify(thumb));
     await page.mouse.click(thumb.x + thumb.w / 2, thumb.y + thumb.h / 2);
     await page.waitForTimeout(500);
     const back = await rect(page, '#theater');
-    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && back.w >= vw - 1 && (await page.evaluate(() => document.getElementById('strip-more').classList.contains('game-waiting'))), 'game: a tap on the preview goes back to the video, a dot on ⋯', JSON.stringify(back));
-    await page.click('#strip-more');
-    await page.click('.ph-sheet .ph-tile >> nth=3');
+    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && back.w >= vw - 1 && (await page.evaluate(() => document.getElementById('ph-tab-games').classList.contains('game-waiting'))), 'game: a tap on the preview goes back to the video, a dot on the Games tab', JSON.stringify(back));
+    await tab(page, 'Oyunlar').click();
     await page.waitForTimeout(500);
-    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game')), 'game: ⋯ → Games brings the game back');
-    await page.click('#game-stage .game-stage-head button:has-text("↩")');
+    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game')), 'game: the Games tab brings the table back');
+    // Back to the video from the table's preview: 🎙 📷 go back into the input row. (Leaving the table from the head's ⋯
+    // is Game Studio's check: in the Draw & Guess lobby the ⋯ menu opens under the drawing layer, reported to them.)
+    const thumb2 = await rect(page, '#theater');
+    await page.mouse.click(thumb2.x + thumb2.w / 2, thumb2.y + thumb2.h / 2);
     await page.waitForTimeout(500);
-    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && (await page.evaluate(() => !!document.querySelector('.together-strip #strip-voice'))) && !(await page.evaluate(() => document.getElementById('strip-more').classList.contains('game-waiting'))), 'game: leaving the table puts the room back as it was');
+    const left = await page.evaluate(() => ({
+      game: document.documentElement.classList.contains('ph-game'),
+      voice: !!document.querySelector('#chat-form #strip-voice'),
+      dot: document.getElementById('ph-tab-games').classList.contains('game-waiting'),
+    }));
+    check(!left.game && left.voice && left.dot, 'game: back to the video puts 🎙 📷 back in the input row, the Games tab keeps its dot', JSON.stringify(left));
     check(errors.length === 0, 'phone: no page errors', errors.join(' | '));
     await ctx.close();
   }
@@ -291,7 +345,7 @@ const sheetName = (page) => page.evaluate(() => {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
     await enter(page, id());
-    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-room'))) && (await page.isVisible('.topbar')) && (await page.isVisible('.tabs')) && !(await page.isVisible('#strip-more')) && !(await page.isVisible('#chat-plus')), 'desktop: the desktop room, no phone parts');
+    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-room'))) && (await page.isVisible('.topbar')) && (await page.isVisible('.tabs')) && !(await page.isVisible('.ph-tabs')) && !(await page.isVisible('#chat-invite')), 'desktop: the desktop room, no phone parts');
     check(await page.isVisible('#media-form .media-search'), 'desktop: 🔍 Search next to the link box');
     // One remote (0.9.92.8): with a video the toolbar under it goes, the rail has ⋯ (speed, sync, next, panel).
     await addMedia(page, VIDEO, 'load');
@@ -349,15 +403,18 @@ const sheetName = (page) => page.evaluate(() => {
     await fp.press('#shorts-input', 'Enter');
     const toast = await page.waitForFunction(() => { const t = document.querySelector('.ph-toast'); return t && !t.hidden ? t.textContent : null; }, null, { timeout: 8000 }).then((h) => h.jsonValue()).catch(() => null);
     check(!!toast && toast.includes('what a great one'), 'Shorts: a friend\'s message shows in the bar', String(toast));
+    // PH1: 💬 in the bar counts it.
+    check((await phoneState(page)).unread === 1, 'Shorts: 💬 shows 1 unread', JSON.stringify(await phoneState(page)));
     await page.click('#ph-shorts-chat');
     await page.waitForTimeout(300);
     check((await sheetName(page)) === 'shorts-chat' && (await page.isVisible('.ph-sheet #chat-input')) && (await page.textContent('.ph-sheet #chat-list')).includes('what a great one'), 'Shorts: 💬 opens the chat with the message box');
+    check((await phoneState(page)).unread === 0, 'Shorts: opening the chat clears the count');
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
     // ⋯ → Add: the Shorts add window opens as a sheet; a tap on its backdrop (over the video) closes it.
     await page.click('#ph-shorts-more');
-    check((await sheetName(page)) === 'shorts-more' && (await page.$$('.ph-sheet .ph-tile')).length >= 7, 'Shorts: ⋯ opens the Shorts menu');
-    await page.click('.ph-sheet .ph-tile:has-text("Ekle")');
+    check((await sheetName(page)) === 'shorts-more' && (await page.$$('.ph-sheet .ph-row')).length >= 7, 'Shorts: ⋯ opens the Shorts menu');
+    await page.click('.ph-sheet .ph-row:has-text("Ekle")');
     await page.waitForTimeout(400);
     const add = await rect(page, '#shorts-add-form');
     check(!!add && Math.abs(add.b - vh2) <= 1 && (await page.isVisible('.ph-pop-backdrop')), 'Shorts: ⋯ → Add opens as a bottom sheet with a backdrop', JSON.stringify(add));
@@ -373,7 +430,7 @@ const sheetName = (page) => page.evaluate(() => {
     await page.waitForTimeout(400);
     // ↩ Room view: back to the phone room, the seats back in place.
     await page.click('#ph-shorts-more');
-    await page.click('.ph-sheet .ph-tile:has-text("Oda görünümü")');
+    await page.click('.ph-sheet .ph-row:has-text("Oda görünümü")');
     await page.waitForTimeout(900);
     check((await page.evaluate(() => document.documentElement.classList.contains('ph-room') && !!document.querySelector('.stage > #seats-l') && !document.querySelector('.ph-shorts-bar'))), 'Shorts: ↩ Room view brings the phone room back');
     await friend.close();
