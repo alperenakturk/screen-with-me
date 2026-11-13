@@ -330,7 +330,10 @@ jobs:
       # Card PWA1: the home-screen app (share target → a new room that plays the link, "Create room" shortcut, the screen
       # kept on while playing, the one-time iOS hint). Here for the webm the Tablets step serves on :5300.
       - name: Home-screen app
-        run: node scripts/harness/pwa/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+        run: |
+          node scripts/harness/pwa/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+          # GS QA1 finding 3: chat messages over the video keep clear of an open game window.
+          node scripts/harness/toast-game/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       - name: Snack Bar and motion
         run: |

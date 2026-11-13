@@ -616,7 +616,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   YouTube's bar at rest). Touch screens keep it at 30 %. Real fullscreen: windows / hints / the person menu added to
   `<body>` move into the fullscreen element while it lasts (`ui/fs-layer.ts`). Messages come down from the top
   right, just left of the dock, in the window and in fullscreen (`ui/toasts.ts`; 0.9.93.4, owner: at the dock's foot
-  in fullscreen they covered YouTube's own bar). In the shell the dock and its open window are islands
+  in fullscreen they covered YouTube's own bar). Since 0.9.97.132 (`dodgeGame`, GS QA1 finding 3) they never cover an
+  open game window (`#game-stage` as a free window up to 85 % of the video's width): they go to its left when they fit,
+  else below it, else above it (inline `!important`, since cinema's strip is placed with !important rules; `place()`
+  clears it); harness `scripts/harness/toast-game` (CI `games-more`). In the shell the dock and its open window are islands
   (`reportLayout`); our catcher is never an island there (the film player takes the clicks). The camera pill has no 🎙 / 📷 / 🖥️
   any more (0.9.91.7: they are on the dock; the dock's and the Shorts bar's 📷 also shows outside voice and joins with
   the camera on, `joinWithCam`) and automatic camera tiles start left of the dock. **Our own bar** (`#fs-controls` + `#fs-catcher`, the 0.9.90.1 "one remote") is only for players

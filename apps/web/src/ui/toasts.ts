@@ -26,8 +26,46 @@ export function createToasts(container: HTMLElement, anchor: HTMLElement, dock?:
   /** Where the newest message may end at most (viewport y); null = no limit. */
   let floor: number | null = null;
 
+  /**
+   * GS QA1 finding 3: an open game window (a free window over the video on a computer) is never covered. The messages
+   * move to its left when there is room for them there, else just below it (above it when below is off the screen).
+   * A game filling the video's place keeps them where they are (there is nowhere else to put them).
+   */
+  function dodgeGame(): void {
+    const stage = document.getElementById('game-stage');
+    const parent = container.offsetParent as HTMLElement | null;
+    if (!stage || !parent || document.documentElement.classList.contains('phone') || stage.closest('[hidden]')) return;
+    const g = stage.getBoundingClientRect();
+    const p = parent.getBoundingClientRect();
+    if (g.width === 0 || g.width > p.width * 0.85) return;
+    const c = container.getBoundingClientRect();
+    const width = Math.max(c.width, container.firstElementChild ? 0 : 260);
+    const left = c.width > 0 ? c.left : c.right - width;
+    const overlaps = left < g.right && c.right > g.left && c.top < g.bottom && Math.max(c.bottom, c.top + 60) > g.top;
+    if (!overlaps) return;
+    // `important`: cinema's message strip places itself with !important rules (room.css); place() resets them.
+    const set = (prop: string, value: string) => container.style.setProperty(prop, value, 'important');
+    const height = Math.max(c.height, 32);
+    if (g.left - p.left >= width + 24) {
+      set('left', 'auto');
+      set('right', `${Math.round(p.right - g.left + 12)}px`);
+    } else if (g.bottom + height + 10 <= innerHeight) {
+      set('bottom', 'auto');
+      set('top', `${Math.round(g.bottom - p.top + 10)}px`);
+    } else if (g.top - height - 10 >= 0) {
+      set('bottom', 'auto');
+      set('top', `${Math.round(g.top - p.top - height - 10)}px`);
+    }
+  }
+
   function layout(): void {
+    place();
+    dodgeGame();
+  }
+
+  function place(): void {
     const s = container.style;
+    for (const prop of ['left', 'right', 'top', 'bottom']) if (s.getPropertyPriority(prop)) s.removeProperty(prop);
     const parent = container.offsetParent as HTMLElement | null;
     const box = anchor.getBoundingClientRect();
     const docked = dock?.getBoundingClientRect();

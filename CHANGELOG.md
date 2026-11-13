@@ -24,6 +24,8 @@ games' tip jar, cuttings and badges.
 - On an iPhone, the home page explains once, under the start buttons, how to add Sidelit to the Home Screen (Share →
   "Add to Home Screen").
 - The app's install sheet shows English text and two pictures of Sidelit.
+- On a computer, chat messages shown over the video (cinema mode, fullscreen) move aside instead of covering an open
+  game window.
 
 ### 0.9.97.129 — 13 Nov
 
