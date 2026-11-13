@@ -89,6 +89,24 @@ Two sessions never edit the same lines; the Planner splits work by files.
   - Run `settings`, `phone-sideways`, `check-texts`, the size budget and the first look (`shots.cjs` phone and
     phone-land, EN + TR).
   - Owner's hand test: the phone room on his own phone.
+- Design first (owner, 13 Nov 2026: "go over the design with Design too: more basic, fast, matching the PC"):
+  - 🎨 Design writes `docs/internal/design/phone-room.md` before lane A builds the visible parts (1, 2–5).
+  - It is one calm phone look that uses the computer room's language: the same buttons, colours, radii, icons and
+    words, in fewer and plainer pieces.
+  - It covers:
+    - the upright room;
+    - the 🔍 / ＋ / ⋯ sheets;
+    - the empty room;
+    - sideways with a video;
+    - the join card and the home page on a phone.
+  - "Fast" means:
+    - no blur;
+    - no heavy shadows;
+    - no new images;
+    - CSS that gets smaller, not bigger.
+  - If there is a real choice, Design gives the Planner 2–3 options with previews and one marked recommended; the
+    owner picks in the Planner chat.
+  - Lane A can start the join sound fix (7) and the text-based harness selectors meanwhile.
 - Owner's pick: council + Planner review, owner's answers in the Planner chat, 13 Nov 2026 (remove: duplicates + test,
   ⋯ settings duplicates; 🔍 beside the message box; promote: empty-room buttons, chat sideways, no extension box on the
   home page, ❓ Help in ⋯). Kept on purpose: ⏩ Speed, 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save room, the Shorts ⋯.
