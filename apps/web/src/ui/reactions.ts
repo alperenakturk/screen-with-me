@@ -462,8 +462,6 @@ function migrateCollection(): void {
   save(NOTE_KEY, '1');
 }
 
-/** Klavye kısayolları yazı alanlarında çalışmasın. */
-export function isTyping(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
-}
+import { isTyping } from './typing.ts';
+
+export { isTyping };

@@ -40,6 +40,10 @@ const typedRow = (page) =>
     return row ? [...row.querySelectorAll('.ff-cell')].map((c) => c.textContent.trim()).join('') : null;
   });
 
+/** The room's state the shortcuts T (cinema), F / Space (fullscreen, play) would change. */
+const roomKeysState = (page) =>
+  page.evaluate(() => ({ cinema: document.documentElement.classList.contains('cinema-on'), full: !!document.fullscreenElement || !!document.querySelector('.fake-fs') }));
+
 (async () => {
   const browser = await chromium.launch();
 
@@ -75,6 +79,20 @@ const typedRow = (page) =>
   check(/the word/.test(status), 'the lab shows where the keyboard goes', status.slice(0, 200));
   await a.ctx.close();
 
+  // ---- Owner bug (0.9.97.126): T, M, F and Space on a word game's board are letters, not room shortcuts ----
+  const d = await room(browser, { 'fiveFrames:howSeen': '1' });
+  await d.run('games.open.word');
+  await until(() => d.page.evaluate(() => document.activeElement?.classList.contains('ff-board')), 8000);
+  for (const key of ['t', 'm', 'f', 'Space']) await d.page.keyboard.press(key);
+  await wait(300);
+  const dState = await roomKeysState(d.page);
+  check(!dState.cinema && !dState.full, 'Five Frames: T / M / F / Space on the board turn on no cinema mode and no fullscreen', JSON.stringify(dState));
+  check(/^TMF/i.test((await typedRow(d.page)) ?? ''), 'Five Frames: T, M and F land in the word', await typedRow(d.page));
+  for (let i = 0; i < 3; i++) await d.page.keyboard.press('Backspace');
+  const lab = await d.run('fiveFrames.keys');
+  check(/\bok:/.test(lab.text ?? '') && /"TMF"/.test(lab.text ?? ''), 'the Test Lab command "room shortcuts stay quiet on the board" passes', lab.text);
+  await d.ctx.close();
+
   // ---- Five Frames in Turkish, first open with the "How to play" cards ----
   const b = await room(browser, { lang: 'tr', 'fiveFrames:lang': 'tr' });
   await b.run('games.open.word');
@@ -108,6 +126,11 @@ const typedRow = (page) =>
   await c.page.keyboard.type('sla');
   await wait(200);
   check(/^SLA/i.test((await typedRow(c.page)) ?? ''), 'Duel: when the race starts the letters go into the word without a click', await typedRow(c.page));
+  for (let i = 0; i < 3; i++) await c.page.keyboard.press('Backspace');
+  for (const key of ['t', 'm', 'f', 'Space']) await c.page.keyboard.press(key);
+  await wait(300);
+  const cState = await roomKeysState(c.page);
+  check(!cState.cinema && !cState.full && /^TMF/i.test((await typedRow(c.page)) ?? ''), 'Duel: T / M / F / Space are letters (no cinema mode, no fullscreen)', `${JSON.stringify(cState)} ${await typedRow(c.page)}`);
   await c.ctx.close();
 
   await browser.close();

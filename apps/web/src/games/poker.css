@@ -16,4 +16,3 @@
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .pk-lobby { width: min(100%, 820px); }
 }
-}

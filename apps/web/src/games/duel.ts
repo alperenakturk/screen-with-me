@@ -250,7 +250,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const bar = el('div', { class: 'ff-head duel-bar' }, score0, tag, el('span', { class: 'ff-gap' }), watchers, langs);
 
   // My board: seven tickets like the solo game.
-  const board = el('div', { class: 'ff-board duel-board', tabindex: '0', role: 'group' });
+  const board = el('div', { class: 'ff-board duel-board', tabindex: '0', role: 'group', 'data-takes-keys': '' });
   const rows = Array.from({ length: MAX_TRIES }, (_, i) => {
     const cells = Array.from({ length: WORD_LENGTH }, () => el('span', { class: 'ff-cell' }));
     const row = el('div', { class: 'ff-row' }, el('span', { class: 'ff-stub' }, String(i + 1)), el('span', { class: 'ff-cells' }, ...cells));
