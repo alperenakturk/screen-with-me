@@ -275,6 +275,8 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
   #game-stage .sb-cinema { order: 2; flex: 1 0 100%; }
   #game-stage .sb-foot > :not(.sb-cinema):last-child { margin-left: auto; }
   #game-stage .sb-upgrades-open { white-space: nowrap; padding-inline: 8px; }
+  /* 0.9.97.134: the paused pill is just ⏸ (its word stays its label), so the head keeps one line. */
+  #game-stage .sb-state-word { display: none; }
   #game-stage .sb-buybar { gap: 4px; }
   #game-stage .sb-mode { min-width: 38px; padding-inline: 6px; }
   /* The badge wall's nine columns of 30 px glyphs need 294 px: a little smaller in the narrow column. */

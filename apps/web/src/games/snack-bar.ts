@@ -1096,7 +1096,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     rate.textContent = t('rate', { n: fmtRate(income) });
     // GW play-through: with the others' bonus and the tip jar beside it, "▶ Film on" was cut to "▶ Film a…" in Turkish:
     // while the film plays the pill is just ▶ (its name is its label and tooltip).
-    state.textContent = ctx.playing ? '▶' : t('paused');
+    // 0.9.97.134: the word sits in its own span: a narrow window shows only ⏸ (the counter's note says it is closed).
+    const pausedWord = t('paused').replace(/^⏸\s*/u, '');
+    state.replaceChildren(...(ctx.playing ? ['▶'] : ['⏸', el('span', { class: 'sb-state-word' }, ` ${pausedWord}`)]));
     state.setAttribute('aria-label', ctx.playing ? t('playing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
     together.textContent = t('together', { n: bonus });

@@ -1302,7 +1302,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   title (the window's head shows it) and wraps its legend; Snack Bar's cinema line takes its own row, the scene is
   80 px, rows 40 px and the Upgrades rows 34 px (three stand rows, "+N more"); Window Garden's bar is tighter (a short
   "📖 n/24" album chip). **0.9.97.134 (B2):** Snack Bar shows every text whole: its head wraps (the ? right after the
-  rate, so the pills take the second line), names wrap beside their tag, the counter picture is `xMaxYMin slice` (the
+  rate, so the pills take the second line; under 360 px the paused pill is just ⏸, `.sb-state-word`), names wrap beside their tag, the counter picture is `xMaxYMin slice` (the
   sign at its top right is never cropped) and shrinks 104 → 64 px (`.sb-scene-box` flex basis) before the window
   scales; under 470 px the "closed" note is one line on the counter's edge, under 420 px the cinema line hides and
   `fitRows` may keep two stands (`SHORT_H`, or a head on two lines: `HEAD_ONE_LINE`) and adds the column's blocks up
