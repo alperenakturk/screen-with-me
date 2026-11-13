@@ -105,7 +105,7 @@ Two sessions never edit the same lines; the Planner splits work by files.
   - On a phone each tab is one tap, and the four tabs fit at 360 px in Turkish.
   - The input row works: typing swaps in ➤, 😀 sends a reaction and an image.
   - Search adds and plays a video.
-  - The Me tab has every setting the phone had before.
+  - The Me tab holds exactly the essentials list; the phones-and-tablets note shows on touch devices only.
   - Sideways and Shorts behave as in the spec.
   - The intro sound starts with the picture or not at all.
   - The Test Lab hook `phoneRoom.state` reports the tab, the input-row state and the visible controls.
