@@ -1323,6 +1323,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `art/covers/` read `var(--alc-…)`, set only in Matinee (end of gallery.css). Checks: snack-bar (sign clear,
     cinema line, sideways stands), table-how (hall title, bullets), five-frames, side-games-polish (scale 1 since
     .121).
+  - QA3 (0.9.97.126):
+    - one lobby family: every table's lobby card is two halves, `.lobby-intro` (badge, title, rules, faces) and
+      `.lobby-setup` (settings, Start, the hint under Start): `lobbySplit()` in `ui.ts` for Last Heart and Draw &
+      Guess, Quiz's own `.quiz-intro` / `.quiz-setup`, the Duel's section. lobby.css (`.lobby-card`) puts them side
+      by side at `@container game (min-aspect-ratio: 16 / 10)` (card width 820 px) and stacks them otherwise; the
+      settings are one grid (labels in their own column); one Start size; a disabled Start (the Duel's Ready while
+      waiting) is muted text on `--surface-2` with a dashed edge. `langChoices` lists English first. The Duel's first
+      seat wears 👑 (the table host); its waiting bar is hidden on phones. Harnesses count
+      `.pk-lobby .lobby-player:not(.lobby-free)`;
+    - word games keep their keys: a board that takes the keys is `[data-takes-keys]` (Five Frames, the Duel), and
+      `isTyping` (`ui/typing.ts`, used by every room shortcut and voice's M / push-to-talk) counts it as typing.
+      Checks: word-focus (T / M / F / Space on both boards), Test Lab `fiveFrames.keys`;
+    - Matinee: `.ff` (Five Frames and the Duel) and `.sb` take the room's tokens (end of five-frames.css /
+      snack-bar.css); the side games' round `htp-open` buttons get a tinted disc (how-to-play.css);
+    - Window Garden: on a sideways phone and in `@container game (min-aspect-ratio: 3 / 2) and (min-width: 600px)`
+      the grid is `'bar bar' 'scene action' 'album album'`, the pot's card a column, the album one row of eight
+      (44 px cells on a phone); a narrow or phone bar shows `🌙` without its word and the short album count. Checks:
+      garden ("wide, low window", "the album stays inside the window", "Water / Stub's lamp stay inside").
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the

@@ -34,6 +34,21 @@ games' tip jar, cuttings and badges.
   it. In the Shorts view 💬 shows the count too.
 - The phone's home page no longer offers the browser extension (it only works on a computer).
 - Entering a room, the welcome sound starts together with the picture, never late.
+### 0.9.97.126 — 13 Nov
+- One lobby look for every table: Quiz, Draw & Guess, Last Heart and the Five Frames Duel show what the game is
+  (badge, rules, the faces with the host's 👑, "(you)" and an empty chair) beside its setup (the settings in one layout,
+  Start, and the hint right under Start). English comes first in every language choice.
+- "Start the game" (the Duel's Ready) before a second player arrives reads as "not yet" instead of a faded button.
+- Typing T, M, F or Space in Five Frames or the Duel types the letter: it no longer turns on cinema mode, mute or
+  fullscreen.
+- In Matinee, Five Frames, the Duel and Snack Bar take the theme's light colours like Window Garden, and their round
+  "?" and ↻ buttons are easy to see.
+- Window Garden: in a wide, low window (an upright tablet's panel under the video) and on a sideways phone the window
+  sill stands beside the pot's card with the album underneath; Water and Stub's lamp stay inside their card. In a
+  narrow bar the album count and the acorns show whole.
+- Snack Bar: the cinema line gets its own row in a narrow window; on a sideways phone the counter keeps its sign in
+  view and the game shows at full size (it was scaled down, its text under 13 px).
+- Five Frames: in a tall, narrow window the legend sits in the middle of the free space above the keys.
 
 ### 0.9.97.125 — 13 Nov
 

@@ -32,7 +32,7 @@ import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
-import { settingsPanel } from './ui.ts';
+import { lobbyPlayers, lobbySplit, settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 import { tableHowTo } from './how-to-play.ts';
@@ -480,13 +480,15 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   function renderLobby(s: State, myPlayer: PokerPlayer | undefined): void {
     const host = s.players.find((p) => p.id === s.host);
     const online = s.players.filter((p) => p.online).length;
-    const parts: HTMLElement[] = [];
+    const intro: HTMLElement[] = [];
     if (s.phase === 'over') {
       const winner = s.players.find((p) => p.id === s.winner);
-      parts.push(el('h3', {}, winner ? t('poker.winner', { name: winner.name }) : t('games.over')));
-      if (winner) parts.push(el('div', { class: 'pk-champion' }, avatarNode(winner.avatar, 'pk-champion-avatar'), lifeBar(winner.life)));
-    } else parts.push(el('h3', {}, t('games.poker.title')), el('p', { class: 'pk-rules' }, t('poker.rules')));
-    parts.push(
+      intro.push(el('h3', {}, winner ? t('poker.winner', { name: winner.name }) : t('games.over')));
+      if (winner) intro.push(el('div', { class: 'pk-champion' }, avatarNode(winner.avatar, 'pk-champion-avatar'), lifeBar(winner.life)));
+    } else intro.push(el('h3', {}, t('games.poker.title')), el('p', { class: 'pk-rules' }, t('poker.rules')));
+    // QA3 (one lobby look): the same faces row as Quiz / Draw & Guess: the host's crown, "(you)", an empty chair.
+    intro.push(lobbyPlayers(s.players, me, s.host));
+    const setup: HTMLElement[] = [
       settingsPanel(
         [
           {
@@ -501,19 +503,18 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
         ],
         s.host === me || !host ? null : host.name,
       ),
-      el('ul', { class: 'pk-lobby-seats' }, ...s.players.map((p) => el('li', { class: p.online ? '' : 'away' }, avatarNode(p.avatar, 'pk-avatar'), el('span', {}, p.id === me ? `${p.name} (${t('games.you')})` : p.name)))),
-    );
+    ];
     if (!myPlayer && s.players.length < POKER_MAX_PLAYERS) {
       const sit = el('button', { type: 'button', class: 'btn' }, t('games.sit'));
       sit.addEventListener('click', () => send({ t: 'sit' }));
-      parts.push(sit);
+      setup.push(sit);
     }
     const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'games.again' : 'draw.start'));
     // Only the host starts (the server checks too).
     go.disabled = online < 2 || (!!host && s.host !== me);
     go.addEventListener('click', () => send({ t: 'start' }));
-    parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('poker.seats', { n: s.players.length, max: POKER_MAX_PLAYERS })));
-    root.replaceChildren(el('div', { class: 'pk-lobby' }, ...parts), toast);
+    setup.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('poker.seats', { n: s.players.length, max: POKER_MAX_PLAYERS })));
+    root.replaceChildren(el('div', { class: 'pk-lobby lobby-card' }, ...lobbySplit(intro, setup)), toast);
   }
 
   function tick(): void {

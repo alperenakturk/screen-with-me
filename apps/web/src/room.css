@@ -9260,30 +9260,6 @@ html.phone.sideways #game-stage .pk-lobby > .pk-rules { display: -webkit-box; -w
   color: var(--muted);
 }
 
-.pk-lobby-seats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pk-lobby-seats li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px 4px 4px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  font-size: 13px;
-}
-
-.pk-lobby-seats li.away {
-  opacity: 0.5;
-}
-
 .pk-champion {
   display: grid;
   justify-items: center;

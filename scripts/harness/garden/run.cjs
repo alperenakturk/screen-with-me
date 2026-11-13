@@ -174,6 +174,25 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   await wait(600);
   check((await fits(alex)).length === 0, 'fits a 900×560 window', (await fits(alex)).join('; '));
 
+  // QA3 (d): a wide, low game window (an upright tablet's panel under the video, about 796 × 460): the sill beside the
+  // pot's card and the album, not a strip across the top.
+  await alex.setViewportSize({ width: 1366, height: 900 });
+  await wait(400);
+  const strip = await alex.evaluate(() => {
+    const stage = document.querySelector('#game-stage');
+    const win = stage.closest('.game-window, [class*=float]') || stage.parentElement;
+    Object.assign(win.style, { left: '10px', top: '60px', width: '796px', height: '460px', maxWidth: 'none', maxHeight: 'none' });
+    // The fit wrapper (`.game-fit`) settles on the new size after a resize observer and a frame or two.
+    return new Promise((done) => setTimeout(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      const scene = r('#game-stage .wg-scene'); const album = r('#game-stage .wg-album');
+      done({ sceneW: Math.round(scene.width), sceneH: Math.round(scene.height), beside: r('#game-stage .wg-action').left >= scene.right, under: album.top >= scene.bottom, album: [Math.round(album.left), Math.round(album.width)], sceneL: Math.round(scene.left) });
+    }, 900));
+  });
+  check(strip.beside && strip.under && strip.sceneH >= 0.6 * strip.sceneW, 'a wide, low window: the sill beside the pot\'s card, the album under it, not a strip', JSON.stringify(strip));
+  await alex.setViewportSize({ width: 900, height: 560 });
+  await wait(400);
+
   // Phone.
   const phone = await browser.newContext({ ...devices['iPhone 13'] });
   const pam = await person(phone, 'Pam', 'elf');
@@ -181,6 +200,24 @@ const saved = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('win
   await wait(500);
   check((await fits(pam)).length === 0, 'phone: fits without scrollbars', (await fits(pam)).join('; '));
   await pam.screenshot({ path: __dirname + '/garden-phone.png' });
+
+  // QA3 (d): a sideways phone: the album's eight 44 px cells stay inside the window (two of them ran past its edge).
+  const side = await browser.newContext({ ...devices['iPhone 13 landscape'] });
+  const sid = await person(side, 'Sid', 'elf');
+  check(await openGarden(sid), 'sideways phone: it opens');
+  await wait(500);
+  const albumEdge = await sid.evaluate(() => {
+    // Against the pot's card's right edge (the window's padding hid an overflow of 10 px).
+    const r = (s) => document.querySelector(s).getBoundingClientRect();
+    const box = { right: r('#game-stage .wg-action').right, bottom: r('#game-stage .wg').bottom };
+    const cells = [...document.querySelectorAll('#game-stage .wg-album-cell')].map((c) => c.getBoundingClientRect());
+    // QA3 review (1): the pot's buttons stay inside its card, clear of the album.
+    const card = r('#game-stage .wg-action'), btns = r('#game-stage .wg-action-buttons'), album = r('#game-stage .wg-album');
+    return { cells: cells.length, out: cells.filter((c) => c.right > box.right + 0.5 || c.bottom > box.bottom + 0.5).length, small: cells.filter((c) => c.width < 44 || c.height < 44).length, buttonsInCard: btns.bottom <= card.bottom + 0.5 && card.bottom <= album.top + 0.5 };
+  });
+  check(albumEdge.cells === 8 && albumEdge.out === 0 && albumEdge.small === 0, 'sideways phone: the album stays inside the window, every cell ≥ 44 px', JSON.stringify(albumEdge));
+  check(albumEdge.buttonsInCard, 'sideways phone: Water / Stub\'s lamp stay inside the pot\'s card, clear of the album', JSON.stringify(albumEdge));
+  check((await fits(sid)).length === 0, 'sideways phone: fits without scrollbars', (await fits(sid)).join('; '));
 
   // 0.9.97.119: the body follows a light theme (Matinee): dark words on light cards; Night keeps its own colours.
   const look = () => alex.evaluate(() => {

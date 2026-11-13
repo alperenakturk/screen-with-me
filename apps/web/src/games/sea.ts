@@ -694,7 +694,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     { art: sea1Art, title: tx('how1'), line: tx('how1Line') },
     { art: sea2Art, title: tx('how2'), line: tx('how2Line') },
     { art: sea3Art, title: tx('how3'), line: tx('how3Line') },
-  ], bar);
+  ]);
   return () => {
     offLab();
     how.destroy();

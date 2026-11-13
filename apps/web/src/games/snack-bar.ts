@@ -16,6 +16,7 @@ import {
   seasonOf, seasonWeek,
 } from '@swm/shared/games/snack-bar';
 import { el } from '../dom.ts';
+import { isPhone, isSideways } from '../device.ts';
 import { lang } from '../i18n.ts';
 import { playSound } from '../sound.ts';
 import type { SoundId } from '@swm/shared/sound-policy';
@@ -601,8 +602,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   const head = el('div', { class: 'sb-head' }, art(coin, 'sb-coin'), coins, rate, el('span', { class: 'sb-gap' }), state, together, jar);
 
   // ---- The scene: a tap serves a customer ----
+  // QA3 review (13): a sideways phone's low counter box keeps the drawing's top (the SNACK BAR sign) in view.
   const decorated = scene
-    .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
+    .replace('<svg ', `<svg preserveAspectRatio="${isPhone() && isSideways() ? 'xMidYMin' : 'xMidYMid'} slice" `)
     .replace('<g id="side-light">', `${Object.entries(BACKDROPS).map(([id, svg]) => `<g id="place-${id}" style="display:none">${svg}</g>`).join('')}<g id="side-light">`)
     .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`)
     // NG2: the shop front (wall, counter, its stripes) takes the place's colours (`.sb[data-place]` in snack-bar.css).
@@ -1284,8 +1286,11 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       // In real pixels, like below: a scaled-down window has a taller list, which would hold one row too many.
       // QA2 (5): the room is the column's height below the list's top (the list itself only ever holds the rows it
       // shows, so its own height never let a third row in), minus the "+N more" line's reserve.
-      const avail = root.getBoundingClientRect().bottom - list.getBoundingClientRect().top - MORE_RESERVE * scale;
-      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((avail + gap * scale) / (rowH * scale))));
+      // QA3 review: count for the window at full size. Measured in the scaled window, three stands "fitted" because the
+      // window was already scaled for them (and stayed below 13 px). At scale 1 the list's area is the window's real
+      // height minus everything that is not the list (its grid area ends above the footer row, `contain: size`).
+      const avail = root.getBoundingClientRect().height - (root.clientHeight - list.clientHeight);
+      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((avail + gap) / rowH)));
       if (fit !== rowRoom) {
         rowRoom = fit;
         draw();

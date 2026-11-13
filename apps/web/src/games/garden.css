@@ -160,13 +160,39 @@ html.phone .wg-scene { min-height: 260px; }
 @keyframes wg-glow { 50% { opacity: 0.3; } }
 .wg-decor-item { justify-content: space-between; }
 @media (prefers-reduced-motion: reduce) { .wg-bulbs circle, .wg-lantern-glow, .wg-moth, .wg-firefly { animation: none; } }
-/* GPRO (layout audit): a sideways phone gets two columns, the window sill on the left, the pot's line, the album and
-   the note on the right, so nothing is pushed into a tiny scale. */
-html.phone.sideways .wg { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; column-gap: 10px; }
-html.phone.sideways .wg-bar { grid-column: 1 / -1; }
-html.phone.sideways .wg-scene { grid-column: 1; grid-row: 2 / span 3; min-height: 0; }
-html.phone.sideways .wg-action, html.phone.sideways .wg-album, html.phone.sideways .wg-note, html.phone.sideways .wg-elsewhere { grid-column: 2; }
-html.phone.sideways .wg-album { align-self: start; }
+/* GPRO (layout audit), QA3 review (1): a sideways phone gets the window sill on the left, the pot's card on the right and
+   the album across the foot, one row of eight 44 px cells (two rows beside the card left the grid too low, so Water /
+   Stub's lamp hung over the album). The card is a column: the words, then the buttons on their own line. */
+html.phone.sideways .wg {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'bar bar' 'scene action' 'album album'; column-gap: 10px;
+}
+html.phone.sideways .wg-bar { grid-area: bar; }
+html.phone.sideways .wg-scene { grid-area: scene; min-height: 0; }
+html.phone.sideways .wg-action { grid-area: action; align-self: start; }
+html.phone.sideways .wg-note { grid-area: action; align-self: end; }
+html.phone.sideways .wg-album { grid-area: album; }
+html.phone.sideways #game-stage .wg-action { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 4px; }
+html.phone.sideways #game-stage .wg-action-words { flex: none; }
+html.phone.sideways #game-stage .wg-action-buttons { justify-content: flex-end; }
+html.phone.sideways #game-stage .wg-album { gap: 4px; }
+html.phone.sideways #game-stage .wg-album-cell { aspect-ratio: auto; height: 44px; min-width: 0; }
+/* QA3 (d): any wide, low window (an upright tablet's panel under the video, about 796 × 460) takes the same two columns:
+   one column squeezed the window sill into a strip with the shelf above the pots and blew the album up. */
+@container game (min-aspect-ratio: 3 / 2) and (min-width: 600px) {
+  #game-stage .wg {
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'bar bar' 'scene action' 'album album'; column-gap: 12px;
+  }
+  #game-stage .wg-bar { grid-area: bar; }
+  #game-stage .wg-scene { grid-area: scene; min-height: 0; }
+  #game-stage .wg-action { grid-area: action; align-self: start; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 4px; }
+  #game-stage .wg-note { grid-area: action; align-self: end; }
+  #game-stage .wg-action-words { flex: none; }
+  #game-stage .wg-action-buttons { justify-content: flex-end; }
+  #game-stage .wg-album { grid-area: album; gap: 5px; }
+  #game-stage .wg-album-cell { aspect-ratio: auto; height: 56px; min-width: 0; }
+}
 /* The album chip's short form shows only in the narrow column. */
 .wg-album-short { display: none; }
 /* SIDE340 (0.9.97.115): the narrow column beside the video: the top bar's chips and buttons a little closer. */
@@ -180,7 +206,14 @@ html.phone.sideways .wg-album { align-self: start; }
   #game-stage .wg-album-long { display: none; }
   #game-stage .wg-album-short { display: inline; }
   #game-stage .wg-bar > button { flex: none; }
+  #game-stage .wg-state-word { display: none; }
 }
+/* QA3 review (12): a phone's bar too: 🌙 alone, the short album count and the acorns whole (it showed "Albu…" and a
+   bare 🌰). */
+html.phone #game-stage .wg-state-word { display: none; }
+html.phone #game-stage .wg-album-long { display: none; }
+html.phone #game-stage .wg-album-short { display: inline; }
+html.phone #game-stage .wg-seeds { flex: none; overflow: visible; }
 
 /* 0.9.97.119: the body in Matinee (a light theme) takes the room's tokens, like the How-to cards (THEMEG); the window
    sill itself reads ART-L's variables. Dark themes keep the game's own night colours above. */

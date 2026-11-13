@@ -221,8 +221,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       // box is wide and short.
       const intro =
         s.phase === 'over'
-          ? el('div', { class: 'quiz-intro' }, el('h3', {}, t('games.over')), podium(s.players))
-          : el('div', { class: 'quiz-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, t('quiz.rules', { count: s.count })));
+          ? el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.over')), podium(s.players))
+          : el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, t('quiz.rules', { count: s.count })));
       const parts: HTMLElement[] = [];
       const host = s.players.find((p) => p.id === s.host);
       const topics: QuizTopic[] = ['mix', ...QUIZ_CATEGORIES];
@@ -240,7 +240,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       parts.push(go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
       // CL2: the players are a row of faces in the card (no players column beside the lobby).
       if (s.phase === 'lobby') intro.append(lobbyPlayers(s.players, me, s.host));
-      body.replaceChildren(el('div', { class: 'quiz-center' }, intro, el('div', { class: 'quiz-setup' }, ...parts)));
+      body.replaceChildren(el('div', { class: 'quiz-center lobby-card' }, intro, el('div', { class: 'quiz-setup lobby-setup' }, ...parts)));
     } else {
       const reveal = s.phase === 'reveal';
       const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
@@ -399,7 +399,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     { art: quiz1Art, title: tx('how1'), line: tx('how1Line') },
     { art: quiz2Art, title: tx('how2'), line: tx('how2Line') },
     { art: quiz3Art, title: tx('how3'), line: tx('how3Line') },
-  ], app.querySelector<HTMLElement>('.draw-top'));
+  ]);
   return () => {
     offLab();
     ref.destroy();

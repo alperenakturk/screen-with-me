@@ -120,3 +120,8 @@ button.htp-open.htp-head:hover { background: var(--surface-2); border-color: var
   --als-2a2257: #f0c08e;
   --als-1a2150: #5f7fb3;
 }
+
+/* QA3 review (14): in Matinee (a light theme) the side games' round "?" and ↻ were pale circles on cream: they take the
+   room's text colour on a tinted disc with an edge, like Window Garden's. */
+:root[data-theme='matinee'] button.htp-open:not(.htp-head) { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 22%, transparent); }
+:root[data-theme='matinee'] button.htp-open:not(.htp-head):hover { background: var(--surface-2); }

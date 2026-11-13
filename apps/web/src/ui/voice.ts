@@ -17,6 +17,7 @@ import { camStates, markSwitching, switchNote, watchCamVideo } from './cam-watch
 import { setIcon } from './icons.ts';
 import type { ExtVoice } from './voice-ext.ts';
 import { isPhoneLayout } from '../device.ts';
+import { isTyping } from './typing.ts';
 import { debugHooks, labFail, labPeer, labText, type LabText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
 
@@ -908,8 +909,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     playSound(on ? 'pttDown' : 'pttUp');
     render();
   }
-  const typing = (target: EventTarget | null) =>
-    target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+  // Push-to-talk and M never fire while typing (a text box, or a game board that takes the keys: `isTyping`).
+  const typing = isTyping;
   document.addEventListener('keydown', (event) => {
     if (!ptt || !isPushToTalkKey(event.key) || event.ctrlKey || event.metaKey || event.altKey || typing(event.target)) return;
     if (!client.active) return;
