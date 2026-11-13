@@ -108,13 +108,28 @@ if (parallel > 1) {
     if (seen.length) return `the server dropped ${seen.length} canary connection(s) meanwhile (codes ${[...new Set(seen.map((d) => d.code))].join(', ')}): objects were restarting`;
     return 'no connection of this file or of a canary was dropped meanwhile: the cause is likely the code or the test, not a restart';
   };
+  const RETRY_QUIET_MS = 45_000;
+  const RETRY_QUIET_LIMIT_MS = 4 * 60_000;
+  const quietBeforeRetry = async (test) => {
+    if (!canary) return;
+    const start = Date.now();
+    const lastDrop = () => Math.max(start, ...canary.drops.map((d) => d.at));
+    while (Date.now() - lastDrop() < RETRY_QUIET_MS && Date.now() - start < RETRY_QUIET_LIMIT_MS) await new Promise((r) => setTimeout(r, 1000));
+    const quiet = Date.now() - lastDrop() >= RETRY_QUIET_MS;
+    console.log(`  (${test}: waited ${Math.round((Date.now() - start) / 1000)} s ${quiet ? `until no canary dropped for ${RETRY_QUIET_MS / 1000} s` : 'and canaries were still dropping; retrying anyway'})`);
+  };
   for (const test of RUN) {
     await paceConnects();
     console.log(`\n▶ ${test}`);
     let from = Date.now();
     let result = await runAttempt(test);
     if (result !== 0 && live) {
-      console.log(`  (${test}: ${restarts(from, Date.now())})`);
+      const why = restarts(from, Date.now());
+      console.log(`  (${test}: ${why})`);
+      // 13 Nov 2026 (.130): host.mjs failed on a restart and its immediate retry fell in the same wave (canaries dropped
+      // 8× over two minutes). After a restart, the one retry waits for the canaries to go quiet; a code failure retries
+      // at once. Still one retry, and a failure still fails.
+      if (!why.startsWith('no connection')) await quietBeforeRetry(test);
       await paceConnects();
       console.log(`\n↻ ${test} canlıda bir kez daha deneniyor (yeni sürüm yayılırken bağlantı kopmuş olabilir)`);
       from = Date.now();

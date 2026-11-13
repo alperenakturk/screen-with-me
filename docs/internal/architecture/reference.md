@@ -2066,11 +2066,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   **QA1 part 4 (canary rooms, `scripts/e2e/canary.mjs`):** idle room connections that say hello and send the free
   keepalive; the server never closes one by itself, so a close not ours means objects were restarted. Of the last 30
   live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once
-  10–12 min after it. `wait-live.mjs` now also waits for 60 s with no canary drop (at most 4 min more, then a warning);
+  10–12 min after it. `wait-live.mjs` now also waits for 120 s with no drop of 4 canaries (at most 4 min more, then a
+  warning; 60 s until 13 Nov 2026, when .130's rooms restarted 41 s after a 60 s quiet spell);
   `run.mjs` keeps 2 canaries open beside the live suite and, when a file fails, prints whether the server dropped
   canaries meanwhile ("objects were restarting"), whether its own connection got a 1006 from the server (objects
   restart one at a time, so a canary in another room can miss it: "an object restart or a crash in that object"), or
-  neither ("the cause is likely the code or the test").
+  neither ("the cause is likely the code or the test"). After a restart (the first two), the file's one retry waits
+  until the canaries have been quiet for 45 s (at most 4 min) so it doesn't land in the same wave; after "likely the
+  code" it retries at once.
   **For people, not only tests:** a deploy restarts room and game objects one at a time for several minutes (seen 2.5–5
   min after it, once 10–12 min), so a real person in a room during a release can see one reconnect too (the site
   reconnects by itself). Every release deploys, so an owner's hand test right after a release may meet one; that is a
