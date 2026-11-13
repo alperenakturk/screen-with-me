@@ -472,3 +472,5 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 /* PH2: a point that can't be played lets a tap through to the board, which snaps a near miss to a legal point
    (match.ts `SNAP_PX`) and ignores the rest. */
 .bg-board .bg-point:disabled { pointer-events: none; }
+/* Four in a Row keeps a margin from the screen's edges (its board is narrower than an 8 × 8 one). */
+#game-stage.in-tab .mt .four-board { width: min(100cqw - 16px, (100cqh - 14px) * 7 / 6); }

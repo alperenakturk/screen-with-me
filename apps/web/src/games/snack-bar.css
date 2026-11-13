@@ -331,5 +331,6 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
 /* The counter's picture keeps the 80 px it has on a 360 px phone (wider phones made it taller, and three stands no
    longer fitted under it). */
 #game-stage.in-tab .sb .sb-scene-box { height: 80px; max-height: 80px; }
+#game-stage.in-tab .sb .sb-scene { height: 80px; }
 /* The "closed" note keeps both lines but sits lower and thinner in that 80 px scene, under the SNACK BAR sign. */
 #game-stage.in-tab .sb .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }

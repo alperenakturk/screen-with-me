@@ -181,3 +181,4 @@ html.phone .sea-bot-label { flex-basis: auto; }
 #game-stage.in-tab .sea-bot { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; order: 0; flex-basis: auto; }
 #game-stage.in-tab .sea-bot-label { white-space: normal; min-width: 0; flex: 0 1 auto; line-height: 1.2; }
 #game-stage.in-tab .sea-watch-open[data-n='0'] { display: none; }
+#game-stage.in-tab .sea-score { flex: none; white-space: nowrap; }
