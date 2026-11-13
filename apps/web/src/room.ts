@@ -94,6 +94,7 @@ import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
 import { loadChunk } from './ui/lazy.ts';
+import { createWakeLock } from './ui/wake-lock.ts';
 import type { createTvRoom } from './ui/tv-room.ts';
 /** "Send feedback" (card 9): its own lazy chunk (texts, styles), so the room page stays within its size budget. */
 function openFeedbackDialog(opener: HTMLElement | null): void {
@@ -875,6 +876,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let status: ConnectionStatus = 'connecting';
   let errorText: (() => string) | null = null;
   let roomState: PlaybackState | null = null;
+  // PWA1: screen wake lock while the video plays; `pwa.state` in the Test Lab reports it with the installed-app checks.
+  const wakeLock = createWakeLock();
+  debugHooks.register('pwa', () => ({
+    commands: [
+      {
+        id: 'pwa.state',
+        tab: 'status',
+        title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
+        help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
+        run: async () => {
+          const manifest = (await fetch('/manifest.webmanifest').then((r) => r.json()).catch(() => null)) as { share_target?: { action?: string } } | null;
+          return JSON.stringify({
+            installed: matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true,
+            wakeLock: wakeLock.state,
+            shareTarget: manifest?.share_target?.action ?? null,
+          });
+        },
+      },
+    ],
+  }));
   setFilmPlaying(() => !!roomState?.item && !roomState.paused);
   const joinFilter = new JoinFilter();
 
@@ -1782,6 +1803,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   async function applyState(state: PlaybackState): Promise<void> {
     const before = roomState?.item ?? null;
     roomState = state;
+    // PWA1: the screen stays on while the room's video plays (not on the film page: the film site's own tab plays).
+    if (!isShell) wakeLock.set(!!state.item && !state.paused);
     showRate(speedEl, state.rate);
     $('#speed-label').textContent = `${state.rate}×`;
     if (SPEEDS.includes(state.rate)) fullscreen.setRate(state.rate);
@@ -3861,6 +3884,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   addEventListener('pagehide', () => {
     // R18: only a room I was really in becomes "Continue where you left off".
     if (joinedOnce) rememberRoom();
+    wakeLock.release();
     voice.leave();
     live.leave();
     connection.close();

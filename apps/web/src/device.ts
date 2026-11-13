@@ -49,6 +49,12 @@ export function isIOS(): boolean {
   return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1);
 }
 
+/** iOS Safari itself (not Chrome / Firefox / an in-app browser on iOS): the one with "Add to Home Screen" in Share. */
+export function isIOSSafari(): boolean {
+  const ua = navigator.userAgent;
+  return isIOS() && /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|Instagram|FBAN|FBAV|Line\//.test(ua);
+}
+
 /** Opened from the home screen (PWA) or inside a store app: no browser bar around the page. */
 export function isStandalone(): boolean {
   return matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true || isApp();

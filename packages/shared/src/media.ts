@@ -176,3 +176,23 @@ export function samePage(a: string, b: string): boolean {
   };
   return normalize(a) === normalize(b);
 }
+
+/**
+ * PWA1: the link in something shared to the installed app (Android's share sheet sends `url`, `text`, `title`; a
+ * YouTube share puts "Title https://youtu.be/…" in `text`). The first http(s) link found, closing punctuation trimmed,
+ * at most 2000 characters; null when there is none.
+ */
+export function sharedLink(...parts: Array<string | null | undefined>): string | null {
+  for (const part of parts) {
+    const found = typeof part === 'string' ? /https?:\/\/[^\s<>"']+/i.exec(part) : null;
+    if (!found) continue;
+    const link = found[0].replace(/[.,;:!?)\]}»”’]+$/u, '');
+    try {
+      const url = new URL(link);
+      if ((url.protocol === 'http:' || url.protocol === 'https:') && link.length <= 2000) return url.href;
+    } catch {
+      // Not a real address: look at the next part.
+    }
+  }
+  return null;
+}

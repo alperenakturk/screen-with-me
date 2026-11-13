@@ -16,6 +16,15 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.132 — 13 Nov
+
+- Sidelit as a home-screen app got better. On Android, share a video link from another app (YouTube's Share → Sidelit)
+  and a new room opens with it playing as soon as you are in. A long press on the app's icon offers "Create room".
+- While a video plays in the room, the phone's screen stays on; it may sleep again when you pause or leave.
+- On an iPhone, the home page explains once, under the start buttons, how to add Sidelit to the Home Screen (Share →
+  "Add to Home Screen").
+- The app's install sheet shows English text and two pictures of Sidelit.
+
 ### 0.9.97.129 — 13 Nov
 
 - Choosing a character no longer jumps the list back to the top: the list stays where you scrolled, and the one you
