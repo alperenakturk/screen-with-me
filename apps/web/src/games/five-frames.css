@@ -236,3 +236,10 @@ html:not(.phone) #game-stage .ff:not(.duel) .ff-title { display: none; }
 :root[data-theme='matinee'] .ff .ff-lang.on, :root[data-theme='matinee'] .ff .ff-lang[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
 :root[data-theme='matinee'] .ff .ff-board:focus-visible,
 :root[data-theme='matinee'] .ff .ff-board:focus { box-shadow: 0 0 0 1.5px var(--accent); }
+
+/* PH2 (0.9.97.130): Five Frames in a phone's Games tab (about 360 × 450). The keys are 44 px tall like the phone's own
+   keyboard; the seven guess rows (tiles, nothing to tap) give them the height. */
+#game-stage.in-tab .ff:not(.duel) .ff-tray { gap: 4px; }
+#game-stage.in-tab .ff:not(.duel) .ff-tray .ff-key { min-height: 44px; height: 44px; }
+#game-stage.in-tab .ff:not(.duel) .ff-board { flex: 1 1 0; min-height: 0; }
+#game-stage.in-tab .ff:not(.duel) .ff-row { flex: 1 1 0; min-height: 0; height: auto; }

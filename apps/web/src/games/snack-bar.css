@@ -352,3 +352,9 @@ html.phone:not(.sideways) #game-stage .sb-foot > :not(.sb-cinema):last-child { m
    clear of the sign at its top (the second line is in the window's "?" and returns on a bigger screen). */
 html.phone.sideways #game-stage .sb-rest small { display: none; }
 html.phone.sideways #game-stage .sb-rest { padding-block: 3px; }
+
+/* PH2 (0.9.97.130): Snack Bar in a phone's Games tab: ×1 / ×10 / Max each a full 44 px target (they shared 122 px). */
+#game-stage.in-tab .sb .sb-mode { min-width: 44px; }
+/* The counter's picture keeps the 80 px it has on a 360 px phone (wider phones made it taller, and three stands no
+   longer fitted under it). */
+#game-stage.in-tab .sb .sb-scene-box { height: 80px; max-height: 80px; }
