@@ -1,0 +1,159 @@
+/* PH1 (Design, 13 Nov 2026): the phone room's look, in the computer room's language. Notes: ../phone-room.md.
+   These rules replace the matching blocks of room.css's phone section; every value comes from the computer room:
+   buttons and menu rows radius 10, the message box and cards 12, the ⋯ menu panel 14, 44 px targets, the theme tokens.
+   No blur, no shadows on sheets, no new images or fonts. */
+
+/* ---- One button shape for every round thing in the room's chrome: chat tools, 🎙 📷 ⛶ ⋯ (was: 40–42 px circles) ---- */
+html.ph-room :is(.chat-tool, .chat-attach, .chat-send, .together-strip .cam-ctl, .strip-more, .strip-fs) {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 19px;
+  line-height: 1;
+}
+html.ph-room .chat-send {
+  border-color: var(--accent-btn, var(--accent));
+  background: var(--accent-btn, var(--accent));
+  color: var(--on-accent);
+}
+
+/* ---- The message row: 😀 [ Say something… ] 🖼 🔍 ＋, and ➤ in place of 🔍 ＋ once there is text (CSS only) ---- */
+html.ph-room .chat-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+html.ph-room #chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+/* 🖼 is a button of the row on a phone (it was hidden); the box keeps ~170 px at 390 px wide, ~140 px at 360 px. */
+html.ph-room .chat-form .chat-attach {
+  position: static;
+  display: grid;
+}
+html.ph-room .chat-form:has(#chat-input:placeholder-shown) .chat-send,
+html.ph-room .chat-form:has(#chat-input:not(:placeholder-shown)) :is(#chat-search, #chat-plus) {
+  display: none;
+}
+
+/* ---- Sheets: the computer's ⋯ menu, from the bottom. A list of rows, no tiles, no shadow, no blur ---- */
+.ph-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 975;
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ph-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 970;
+  background: rgb(0 0 0 / 0.5);
+}
+.ph-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 4px 6px 4px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.ph-sheet-head h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+}
+.ph-sheet-close {
+  width: 44px;
+  height: 44px;
+}
+.ph-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+}
+.ph-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  text-align: start;
+}
+.ph-row:active {
+  background: var(--surface-2);
+}
+.ph-row-ico {
+  width: 24px;
+  font-size: 19px;
+  text-align: center;
+}
+.ph-row-end {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---- The empty room: two big buttons in the video's box. In Matinee the box keeps NP1's own dark palette (room.css
+   ':root[data-theme=matinee] .player-wrap > .empty'), so the heading and the 🔗 button read on the screen tone. ---- */
+html.ph-room .room .empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+}
+html.ph-room .room .empty .ph-empty-actions {
+  display: grid;
+  gap: 8px;
+  width: min(280px, 100%);
+}
+html.ph-room .room .empty .ph-empty-actions .btn {
+  min-height: 44px;
+}
+
+/* ---- Sideways with a video (not fullscreen): ⛶ Watch fullscreen, then 💬 and 🎙 ---- */
+/* The right column keeps at least 200 px, so "⛶ Watch fullscreen" stays on one line; the video takes the rest. */
+html.sideways.ph-room .room {
+  grid-template-columns: minmax(0, 1fr) minmax(200px, auto);
+}
+html.sideways.ph-room .ph-side-actions {
+  display: grid;
+  grid-template-columns: 44px 44px;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ---- Matinee on a phone: the same framed screen as the computer (MATINEE2), never a #000 slab ---- */
+html.ph-room[data-theme='matinee'] .room .theater:not(:fullscreen, .fake-fs, .pseudo-fs),
+html.ph-room[data-theme='matinee'] .room .player-wrap {
+  background: var(--screen);
+}
