@@ -72,11 +72,40 @@ Two sessions never edit the same lines; the Planner splits work by files.
     - Start the picture and the sound from one clock: once the context is running, or the picture alone, never the
       sound late.
   - Nothing goes over the YouTube player.
+- **Phone essentials** (owner, 13 Nov 2026, later the same day: "make the phone version more optimized and basic,
+  many features can go; later we point to the app"). The Planner decided the list:
+  - The phone keeps the essentials:
+    - the video in sync, plus Search and Up next;
+    - chat with images and reactions;
+    - 🎙 and 📷 (flip included);
+    - Invite and People (the host's kick and ban stay);
+    - 📌 Pin, 🔄 Sync and ⏭ Skip;
+    - the Games tab (tables and side games);
+    - the Shorts view's bar.
+  - These leave the phone (still on computers and tablets):
+    - ⏩ Speed (this overrides the earlier "kept" note);
+    - the camera size presets;
+    - ✨ Recap and its history;
+    - ⏰ Film time (setting it; a set time still shows as the banner);
+    - editing 👑 Room rules (the rules still apply);
+    - font choice and picture themes (the colour themes stay);
+    - the Shorts ⋯ ♾ Feed and 🔁 Loop;
+    - the first-time tips (the tabs make them unnecessary);
+    - starting a screen share.
+  - The Me tab is only: name + avatar, theme colour, language, sounds on/off, "check before joining voice", Save the
+    room, Help, Feedback, Privacy, Terms.
+  - **Note for phones and tablets.** It shows on touch devices without a mouse (`device.ts`, no sniffing): one small
+    muted line under "Enter room" on the join card, and under "Create room" on the home page. It is not a pop-up and has
+    no close button. Text (`i18n.ts` / `i18n-tr.ts`):
+    - EN: "Sidelit is made for computers. Phones and tablets get the essentials; an app for them is on the way."
+    - TR: "Sidelit bilgisayar için tasarlandı. Telefon ve tablette temel özellikler var; onlar için uygulamamız
+      yolda."
+    - When the app exists, the same line becomes the link to it (PWA1 / later Play).
 - Done when:
   - On a phone each tab is one tap, and the four tabs fit at 360 px in Turkish.
   - The input row works: typing swaps in ➤, 😀 sends a reaction and an image.
   - Search adds and plays a video.
-  - The Me tab has every setting the phone had before.
+  - The Me tab holds exactly the essentials list; the phones-and-tablets note shows on touch devices only.
   - Sideways and Shorts behave as in the spec.
   - The intro sound starts with the picture or not at all.
   - The Test Lab hook `phoneRoom.state` reports the tab, the input-row state and the visible controls.
@@ -88,7 +117,7 @@ Two sessions never edit the same lines; the Planner splits work by files.
   - Owner's hand test: the phone room on his own phone.
 - Owner's pick: council + Planner review and the owner's answers in the Planner chat, 13 Nov 2026 (removals: the
   duplicates and the sync test; promote: empty-room buttons, chat sideways, no extension box on the phone home page,
-  Help); layout option A of `phone-room.md`, 13 Nov 2026. Kept on purpose: ⏩ Speed, 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save
+  Help); layout option A of `phone-room.md`, 13 Nov 2026. Kept on purpose: 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save
   room.
 
 ### SAFE1. Report a person and "block for me" in the room (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; lane A, after PH1)
