@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.133 — 13 Nov
+
+- On a computer, a new chat message no longer goes unseen while a side game's window covers the chat: it shows as a
+  short note beside the game window.
+- On a phone held sideways, the Report window keeps its reasons on one row (slide it for more) so the note box has
+  room for two lines.
+
 ### 0.9.97.132 — 13 Nov
 
 - Sidelit as a home-screen app got better. On Android, share a video link from another app (YouTube's Share → Sidelit)
