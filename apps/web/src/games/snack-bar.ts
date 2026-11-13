@@ -1310,15 +1310,16 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const least = height < SHORT_H || head.offsetHeight > HEAD_ONE_LINE ? 2 : ROWS_COMPACT;
     let next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
     // A count that overflowed at this height stays the most (else the estimate puts the stand back and it flickers).
-    if (rowCap && rowCap.height === Math.round(height)) next = Math.max(least, Math.min(next, rowCap.rows));
+    if (rowCap && rowCap.height === Math.round(height)) next = Math.max(2, Math.min(next, rowCap.rows));
     if (next !== rowRoom) {
       rowRoom = next;
       draw();
       return;
     }
     // 0.9.97.134: the count above takes the first stand's height; a taller one further down (a tag line, a name on
-    // two lines) can still overflow the column: then one stand fewer, until it fits or only `least` are left.
-    if (box.scrollHeight > box.clientHeight + 1 && rowRoom > least) {
+    // two lines) can still overflow the column: then one stand fewer, until it fits or only two are left (an overflow
+    // is real, so it goes below the usual three).
+    if (box.scrollHeight > box.clientHeight + 1 && rowRoom > 2) {
       rowRoom--;
       rowCap = { height: Math.round(height), rows: rowRoom };
       draw();
