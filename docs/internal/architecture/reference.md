@@ -1341,6 +1341,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
       the grid is `'bar bar' 'scene action' 'album album'`, the pot's card a column, the album one row of eight
       (44 px cells on a phone); a narrow or phone bar shows `🌙` without its word and the short album count. Checks:
       garden ("wide, low window", "the album stays inside the window", "Water / Stub's lamp stay inside").
+  - 0.9.97.128: the head's ⋯ sheet (`.game-more-pop`, "Leave table" / "Close table" on an upright phone) is appended
+    to `body`, so on a phone it takes `z-index: 1150` (room.css) above the full-screen stage (1100); the other sheets'
+    980 left it under every table's lobby. Checks: game-more (every lab "Open a table" kind on an iPhone: ⋯ and both
+    sheet buttons on top, Leave leaves); games-sweep `GAMES=snack SIZES=side` in CI (Snack Bar's sideways stands).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the
