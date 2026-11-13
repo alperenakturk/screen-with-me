@@ -1286,8 +1286,11 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       // In real pixels, like below: a scaled-down window has a taller list, which would hold one row too many.
       // QA2 (5): the room is the column's height below the list's top (the list itself only ever holds the rows it
       // shows, so its own height never let a third row in), minus the "+N more" line's reserve.
-      const avail = root.getBoundingClientRect().bottom - list.getBoundingClientRect().top - MORE_RESERVE * scale;
-      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((avail + gap * scale) / (rowH * scale))));
+      // QA3 review: count for the window at full size. Measured in the scaled window, three stands "fitted" because the
+      // window was already scaled for them (and stayed below 13 px). At scale 1 the list's area is the window's real
+      // height minus everything that is not the list (its grid area ends above the footer row, `contain: size`).
+      const avail = root.getBoundingClientRect().height - (root.clientHeight - list.clientHeight);
+      const fit = Math.max(2, Math.min(STANDS.length, Math.floor((avail + gap) / rowH)));
       if (fit !== rowRoom) {
         rowRoom = fit;
         draw();

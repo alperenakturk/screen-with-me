@@ -250,7 +250,8 @@ html.phone.sideways #game-stage .sb {
 }
 html.phone.sideways #game-stage .sb-head { grid-area: head; }
 html.phone.sideways #game-stage .sb-scene-box { grid-area: scene; }
-html.phone.sideways #game-stage .sb-scene { height: 96px; }
+/* QA3 review: a little lower (the drawing keeps its top, the sign, in view) so two stands fit beside it at full size. */
+html.phone.sideways #game-stage .sb-scene { height: 74px; }
 html.phone.sideways #game-stage .sb-buybar { grid-area: buy; }
 html.phone.sideways #game-stage .sb-rows { grid-area: rows; overflow: hidden; contain: size; }
 html.phone.sideways #game-stage .sb-more { grid-area: more; align-self: center; }
@@ -347,3 +348,7 @@ html.phone:not(.sideways) #game-stage .sb-foot > :not(.sb-cinema):last-child { m
 :root[data-theme='matinee'] .sb .sb-upgrades-open.ready { background: rgb(154 53 23 / 0.08); box-shadow: inset 0 0 0 1px var(--accent); }
 :root[data-theme='matinee'] .sb :is(.sb-prestige, .sb-badges-open) { border-color: var(--border); }
 :root[data-theme='matinee'] .sb .sb-badge.got .sb-badge-glyph { color: #26201a; }
+/* QA3 review: the lower counter on a sideways phone: the closed note keeps its first line only, at the counter's foot,
+   clear of the sign at its top (the second line is in the window's "?" and returns on a bigger screen). */
+html.phone.sideways #game-stage .sb-rest small { display: none; }
+html.phone.sideways #game-stage .sb-rest { padding-block: 3px; }
