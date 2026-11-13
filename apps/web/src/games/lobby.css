@@ -12,14 +12,14 @@
   border-radius: 20px; border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, var(--border));
   background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 16%, var(--surface)), var(--surface) 70%);
 }
-#game-stage .draw-page.draw-lobby :is(.draw-overlay, .quiz-intro) > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 24px; }
-#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before,
+#game-stage .draw-page.draw-lobby :is(.draw-overlay .lobby-intro, .quiz-intro) > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 24px; }
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay .lobby-intro > h3::before,
 #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before {
   display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; font-size: 28px;
   background: color-mix(in srgb, var(--lobby-tint) 28%, var(--surface-2)); box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
 }
 /* NG3: the table's drawn badge (scripts/game-badges.mjs; the games hall's covers wear the same one). */
-#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before { content: ''; rotate: -6deg; background: url('./art/badges/draw.svg') center / 100% no-repeat; }
+#game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay .lobby-intro > h3::before { content: ''; rotate: -6deg; background: url('./art/badges/draw.svg') center / 100% no-repeat; }
 #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { content: ''; rotate: 6deg; background: url('./art/badges/quiz.svg') center / 100% no-repeat; }
 #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: 46ch; margin: 4px auto 0; font-size: 14px; line-height: 1.4; color: var(--muted); }
 
@@ -38,23 +38,13 @@
    to three lines (the "?" has them all), so the card fits the low screen at a readable size. */
 html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left,
 html.phone.sideways #game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex-basis: 100%; width: 100%; max-width: none; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3::before,
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay .lobby-intro > h3::before,
 html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { display: none; }
 /* QA2 (2): the rules are not cut ("…streak bonus.…" lost the 50:50 sentence): they wrap in full, a step smaller. */
 html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: none; font-size: 14px; line-height: 1.3; }
-/* Draw & Guess's lobby on a sideways phone: the title, rules, faces and the note on the left, the settings and Start on
-   the right (one column did not fit the low screen). */
+/* Draw & Guess's lobby on a sideways phone: the canvas box gives the card the full height. */
 html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { height: 100%; aspect-ratio: auto; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-content: center; align-items: center;
-  column-gap: 16px; row-gap: 6px; padding: 8px 12px;
-}
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > h3 { grid-area: 1 / 1; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .draw-rules { grid-area: 2 / 1; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .lobby-players { grid-area: 3 / 1; justify-self: center; margin: 4px 0 0; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > p.muted { grid-area: 4 / 1; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .game-settings { grid-area: 1 / 2 / 4 / 3; width: 100%; margin: 0; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > .btn.primary { grid-area: 4 / 2; justify-self: center; }
+html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay { padding: 8px 12px; }
 /* Quiz's lobby is two columns already: less padding so it fits the low screen. */
 html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-main { padding: 6px 10px; }
 html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-block: 4px; gap: 2px; }
@@ -69,37 +59,25 @@ html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-b
   border: 1px solid color-mix(in srgb, var(--lobby-tint) 35%, var(--border));
   background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--lobby-tint) 16%, var(--surface)), var(--surface) 70%);
 }
-#game-stage .pk-lobby > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-#game-stage .pk-lobby > h3::before {
+#game-stage .pk-lobby .lobby-intro > h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#game-stage .pk-lobby .lobby-intro > h3::before {
   content: ''; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; rotate: -6deg;
   background: url('./art/badges/poker.svg') center / 100% no-repeat;
   box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
 }
-#game-stage .pk-lobby > .pk-rules { color: var(--muted); }
+#game-stage .pk-lobby .pk-rules { margin: 0; color: var(--muted); }
 html.phone.sideways #game-stage .pk-lobby { width: 100%; padding: 8px 12px; }
-html.phone.sideways #game-stage .pk-lobby > h3::before { display: none; }
+html.phone.sideways #game-stage .pk-lobby .lobby-intro > h3::before { display: none; }
 html.phone.sideways #game-stage .pk-lobby { gap: 6px; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; align-content: center; column-gap: 16px;
-}
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > h3 { grid-area: 1 / 1; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .pk-rules { grid-area: 2 / 1; display: block; -webkit-line-clamp: none; line-clamp: none; overflow: visible; font-size: 14px; line-height: 1.3; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .lobby-players { grid-area: 3 / 1; }
-/* QA2 (14): "You need at least 2 players" sits under Start, which it explains. */
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > p.muted { grid-area: 4 / 2; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .game-settings { grid-area: 1 / 2 / 3 / 3; width: 100%; }
-html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary { grid-area: 3 / 2; }
+html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-height: 1.3; }
 
 /* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the Draw & Guess
    lobby card goes in two columns like the Quiz's: the badge, rules and faces on the left, the settings, Start and the
    note on the right (stacked, it was taller than the box). */
 @container game (min-aspect-ratio: 16 / 10) {
-  #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left { flex: 0 1 820px; width: min(100%, 820px); max-width: 820px; }
-  #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: dense; align-items: center; column-gap: 28px; row-gap: 8px;
-  }
-  #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > :is(h3, .draw-rules, .lobby-players) { grid-column: 1; }
-  #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay > :not(h3, .draw-rules, .lobby-players) { grid-column: 2; }
+  #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left,
+  #game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex: 0 1 820px; width: min(100%, 820px); max-width: 820px; }
+}
 }
 /* PROP: a game of Draw & Guess in the video's place: the canvas as tall as the box allows, the players and guesses
    beside it in a column of their own width (not the rest of the box). */
@@ -112,10 +90,36 @@ html.phone.sideways #game-stage .pk-lobby:has(> .game-settings) > .btn.primary {
 
 /* QA2 (14): lobby rules and card lines never leave one word alone on the last line ("join.", "hands."). */
 #game-stage :is(.draw-rules, .quiz-rules, .pk-rules, .duel-lobby-rules) { text-wrap: pretty; }
-#game-stage :is(.pk-lobby, .draw-lobby) p.muted { text-wrap: balance; }
+#game-stage .lobby-setup p.muted { text-wrap: balance; }
 
 /* QA3 (c): Start before a second player is here reads as "not yet", not as a faded purple button: full-strength muted
    text on the card's grey with a dashed edge (the 40 % opacity of other disabled buttons fell below 4.5:1). */
-#game-stage :is(.pk-lobby, .draw-lobby) .btn.primary:disabled {
+#game-stage .lobby-setup .btn.primary:disabled {
   opacity: 1; background: var(--surface-2); color: var(--muted); border: 1px dashed var(--border); box-shadow: none;
 }
+
+/* QA3 review (3–11): one lobby family. Every table's card has the same two halves (ui.ts `lobbySplit`; Quiz's own
+   `.quiz-intro` / `.quiz-setup`; the Duel's): what the game is (badge, title, rules, faces) and the setup (the settings,
+   Start, the hint under Start). Side by side in a wide box, one above the other in a narrow one. */
+#game-stage .lobby-card .lobby-intro,
+#game-stage .lobby-card .lobby-setup { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+#game-stage .lobby-card .lobby-intro .lobby-players { margin: 2px 0 0; }
+@container game (min-aspect-ratio: 16 / 10) {
+  #game-stage .lobby-card:not([hidden]) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; align-content: center; column-gap: 28px; row-gap: 0;
+  }
+  #game-stage .lobby-card:not([hidden]) > :is(.lobby-intro, .lobby-setup) { flex: none; }
+}
+/* One Start size at every table (the Duel's Ready stands in its place), and its hint always right under it. */
+#game-stage .lobby-setup :is(> .btn.primary, .duel-actions > .btn.primary) { min-width: 200px; min-height: 44px; padding: 10px 22px; font-size: 16px; }
+#game-stage .lobby-setup > p.muted { margin: 0; max-width: 100%; }
+#game-stage .lobby-setup > .game-settings { box-sizing: border-box; width: 100%; max-width: 460px; }
+/* The settings in one layout everywhere: the labels in a column of their own, each row's choices beside its label
+   (a Turkish "Konu" no longer drops onto a line by itself). */
+#game-stage .lobby-card .game-settings { grid-template-columns: max-content minmax(0, 1fr); align-items: center; column-gap: 12px; row-gap: 8px; }
+#game-stage .lobby-card .game-setting { display: contents; }
+#game-stage .lobby-card .game-setting-label { min-width: 0; white-space: nowrap; text-align: left; }
+#game-stage .lobby-card .game-setting-note { grid-column: 1 / -1; }
+#game-stage .lobby-card .game-setting-select { width: 100%; max-width: 260px; }
+/* A choice under the mouse never looks chosen (the accent edge read as "selected" on English / Best of three). */
+#game-stage .lobby-card .game-chip:not(.on):hover { border-color: color-mix(in srgb, var(--text) 35%, var(--border)); }

@@ -62,11 +62,20 @@ export function settingsPanel(rows: readonly SettingRow[], hostName: string | nu
   return box;
 }
 
-/** The game language row (Turkish / English), the same in every word game. */
+/** The game language row, the same in every word game: English first (the product's language order). */
 export const langChoices: readonly Choice<'tr' | 'en'>[] = [
-  { value: 'tr', label: 'Türkçe' },
   { value: 'en', label: 'English' },
+  { value: 'tr', label: 'Türkçe' },
 ];
+
+/**
+ * QA3 (one lobby family): every table's lobby card is two parts: what the game is (the title, the rules, the faces) and
+ * its setup (the settings, Start and the hint under Start). lobby.css puts them side by side in a wide box and one
+ * above the other in a narrow one.
+ */
+export function lobbySplit(intro: readonly (HTMLElement | null | false)[], setup: readonly (HTMLElement | null | false)[]): HTMLElement[] {
+  return [el('div', { class: 'lobby-intro' }, ...intro), el('div', { class: 'lobby-setup' }, ...setup)];
+}
 
 /** Podium for the top three (1st in the middle and highest). */
 export function podium(players: readonly { name: string; avatar?: Avatar; score: number }[]): HTMLElement {

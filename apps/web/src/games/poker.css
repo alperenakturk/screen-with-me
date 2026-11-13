@@ -12,10 +12,8 @@
   :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-quick .game-chip, .pk-moves-label, .pk-move-name, .pk-street) { font-size: 13px; }
   .pk-move small { font-size: 12px; }
 }
-/* The lobby card in two columns there too: the title, rules (or the champion) on the left; the deck, seats, Start and
-   the note on the right. */
+/* The lobby card is as wide as the other tables' there (its two halves: lobby.css "one lobby family"). */
 @container game (min-aspect-ratio: 16 / 10) {
-  #game-stage .pk-lobby { width: min(100%, 820px); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: dense; align-items: center; align-content: center; column-gap: 28px; }
-  #game-stage .pk-lobby > :is(h3, .pk-rules, .pk-champion, .lobby-players) { grid-column: 1; }
-  #game-stage .pk-lobby > :not(h3, .pk-rules, .pk-champion, .lobby-players) { grid-column: 2; }
+  #game-stage .pk-lobby { width: min(100%, 820px); }
+}
 }

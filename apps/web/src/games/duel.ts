@@ -5,6 +5,7 @@
 // tray under them. Like there, the physical keyboard types only while the board has the focus (click it).
 import './five-frames.css';
 import './duel.css';
+import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { DUEL_PROTOCOL_VERSION, type DuelClientMessage, type DuelPlayer, type DuelServerMessage } from '@swm/shared/games/duel';
 import { ALPHABET, MAX_TRIES, WORD_LENGTH, letters, normalize, upper, type Lang, type Mark } from '@swm/shared/games/five-frames';
@@ -208,7 +209,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const lobbyTitle = el('h3', {});
   const lobbyRules = el('p', { class: 'duel-lobby-rules' });
   const lobbyFaces = el('ul', { class: 'duel-lobby-faces' });
-  const lobbyLangLabel = el('span', { class: 'duel-lobby-label' });
+  const lobbyLangLabel = el('span', { class: 'duel-lobby-label game-setting-label' });
   const lobbyBody = el('div', { class: 'duel-lobby-body' });
   // NG1: one game or best of three, and hard mode (owner's picks 9.3, 9.4).
   const chip = (label: () => string, run: () => void) => {
@@ -224,22 +225,26 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     { ...chip(() => tx('hardOff'), () => send({ t: 'settings', hard: false })), v: false },
     { ...chip(() => tx('hardOn'), () => send({ t: 'settings', hard: true })), v: true },
   ];
-  const lobbyGamesLabel = el('span', { class: 'duel-lobby-label' });
-  const lobbyHardLabel = el('span', { class: 'duel-lobby-label' });
+  const lobbyGamesLabel = el('span', { class: 'duel-lobby-label game-setting-label' });
+  const lobbyHardLabel = el('span', { class: 'duel-lobby-label game-setting-label' });
+  // QA3 (one lobby family): what the game is (title, rules, faces) and the setup (the settings as the other tables
+  // show them, Ready in Start's place, Stub's hint under it); lobby.css lays the two halves out like the others.
   const lobby = el(
     'section',
-    { class: 'duel-lobby', hidden: '' },
-    lobbyTitle,
-    lobbyRules,
-    lobbyFaces,
+    { class: 'duel-lobby lobby-card', hidden: '' },
+    el('div', { class: 'lobby-intro' }, lobbyTitle, lobbyRules, lobbyFaces),
     el(
       'div',
-      { class: 'duel-lobby-settings' },
-      el('div', { class: 'duel-lobby-lang' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
-      el('div', { class: 'duel-lobby-lang' }, lobbyGamesLabel, el('span', { class: 'game-chips', role: 'group' }, ...gamesChips.map((c) => c.b))),
-      el('div', { class: 'duel-lobby-lang' }, lobbyHardLabel, el('span', { class: 'game-chips', role: 'group' }, ...hardChips.map((c) => c.b))),
+      { class: 'lobby-setup' },
+      el(
+        'div',
+        { class: 'duel-lobby-settings game-settings' },
+        el('div', { class: 'duel-lobby-lang game-setting' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
+        el('div', { class: 'duel-lobby-lang game-setting' }, lobbyGamesLabel, el('span', { class: 'game-chips', role: 'group' }, ...gamesChips.map((c) => c.b))),
+        el('div', { class: 'duel-lobby-lang game-setting' }, lobbyHardLabel, el('span', { class: 'game-chips', role: 'group' }, ...hardChips.map((c) => c.b))),
+      ),
+      lobbyBody,
     ),
-    lobbyBody,
   );
   const watchers = el('span', { class: 'duel-watchers' });
   const bar = el('div', { class: 'ff-head duel-bar' }, score0, tag, el('span', { class: 'ff-gap' }), watchers, langs);
@@ -438,6 +443,11 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     if (mySeat() < 0) {
       const free = s.players.some((p) => !p || !p.online);
       if (s.phase !== 'play' && free) items.push(actionButton('duel-sit', tx('sit'), () => send({ t: 'sit' })));
+    } else if (s.phase === 'wait' && !two) {
+      // QA3: like Start at the other tables, Ready is there but greyed until a second player sits down.
+      const wait = actionButton('duel-ready', tx('ready'), () => undefined);
+      wait.disabled = true;
+      items.push(wait);
     } else if (s.phase === 'wait' && two) {
       items.push(mine?.ready ? actionButton('duel-ready', tx('notReady'), () => send({ t: 'ready', on: false }), false) : actionButton('duel-ready', tx('ready'), () => send({ t: 'ready', on: true })));
     } else if (s.phase === 'over' && !mine?.ready) {
@@ -474,7 +484,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     lobby.hidden = !waiting;
     main.hidden = waiting;
     // Stub's line and Ready sit in the card while it shows, under the board otherwise.
-    if (waiting && refRow.parentElement !== lobbyBody) lobbyBody.append(refRow, actions);
+    if (waiting && refRow.parentElement !== lobbyBody) lobbyBody.append(actions, refRow);
     else if (!waiting && refRow.parentElement === lobbyBody) main.after(refRow, actions);
     if (!waiting) return;
     lobbyTitle.textContent = tx('lobbyTitle');
@@ -503,7 +513,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         if (!p) return el('li', { class: 'duel-face duel-face-free' }, el('span', { class: 'duel-face-q', 'aria-hidden': 'true' }, '?'), el('span', {}, tx('lobbyWaiting')));
         const face = avatarNode(p.avatar, p.name);
         face.classList.add('duel-avatar');
-        return el('li', { class: `duel-face${i === mySeat() ? ' me' : ''}${p.ready ? ' ready' : ''}` }, face, el('span', {}, `${p.name}${i === mySeat() ? ` (${tx('you')})` : ''}${p.ready ? ' ✓' : ''}`));
+        return el('li', { class: `duel-face${i === mySeat() ? ' me' : ''}${p.ready ? ' ready' : ''}` }, face, el('span', {}, `${i === 0 ? '👑 ' : ''}${p.name}${i === mySeat() ? ` (${tx('you')})` : ''}${p.ready ? ' ✓' : ''}`));
       }),
     );
   }
