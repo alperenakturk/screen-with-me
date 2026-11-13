@@ -187,3 +187,12 @@ html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-min
    ("Benim denizim" had wrapped in a narrowed head). */
 html.phone .sea-bot-label { flex-basis: auto; }
 .sea-head :is(b, small, span) { white-space: nowrap; }
+
+/* PH2 (0.9.97.130): Sea Battle in a phone's Games tab (about 360 × 450): the bar is one row (the score, Stub's label in
+   two lines beside its levels; 👁 only when someone watches), so the sea gets the height. Its cells keep their own rule
+   (10 × 10 can't be 44 px on a phone; the sea zooms for aiming). */
+#game-stage.in-tab .sea { padding: 4px 8px 6px; gap: 6px; }
+#game-stage.in-tab .sea-bar { flex-wrap: nowrap; gap: 6px; min-height: 44px; }
+#game-stage.in-tab .sea-bot { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; order: 0; flex-basis: auto; }
+#game-stage.in-tab .sea-bot-label { white-space: normal; min-width: 0; flex: 0 1 auto; line-height: 1.2; }
+#game-stage.in-tab .sea-watch-open[data-n='0'] { display: none; }
