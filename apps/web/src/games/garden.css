@@ -248,3 +248,8 @@ html.phone #game-stage .wg-seeds { flex: none; overflow: visible; }
 :root[data-theme='matinee'] .wg-dot { background: var(--wg-line); }
 :root[data-theme='matinee'] .wg-album-cell:not(.found) .wg-album-art,
 :root[data-theme='matinee'] .wg-page-entry:not(.found) .wg-page-art { opacity: 0.6; filter: grayscale(1) brightness(0.55); }
+
+/* PH2 (0.9.97.130): in a phone's Games tab (450 px) the window sill gives way first: tighter gaps, the scene shrinks
+   (the garden was 5 px too tall and shrank to 99 %). */
+#game-stage.in-tab .wg { gap: 6px; padding-block: 8px 10px; }
+#game-stage.in-tab .wg-scene { min-height: 0; flex-shrink: 1; }
