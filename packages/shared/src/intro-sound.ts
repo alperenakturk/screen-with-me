@@ -13,6 +13,21 @@ export type IntroVariant = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 /** Sitede ve eklentide çalan sürüm. */
 export const INTRO_VARIANT: IntroVariant = 'F';
 
+/**
+ * PH1: with an already running context (the site's shared one, unlocked by the "Enter room" tap) the sound starts on
+ * this very frame, together with the picture; a context that isn't running yet means the picture alone (a sound that
+ * comes late is worse than none). The shared context is not closed here.
+ */
+export function playIntroSoundOn(ctx: AudioContext): boolean {
+  if (ctx.state !== 'running') return false;
+  try {
+    scheduleIntroSound(ctx);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function playIntroSound(): void {
   const AC: typeof AudioContext | undefined =
     globalThis.AudioContext ?? (globalThis as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;

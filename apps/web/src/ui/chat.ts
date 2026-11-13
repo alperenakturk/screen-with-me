@@ -6,6 +6,7 @@ import { confirmDialog } from './confirm.ts';
 import { load, save } from '../storage.ts';
 import { linkify } from './links.ts';
 import { setIcon } from './icons.ts';
+import { isPhoneLayout } from '../device.ts';
 
 const MAX_LINES = 120;
 /** Aynı kişinin bu kadar süre içindeki art arda mesajları tek balon grubunda (isim/avatar bir kez). */
@@ -38,7 +39,8 @@ export function createChatPanel(
   // Oda hareketleri ("Ali durdurdu") hep kaydedilir ama varsayılan gizli: sohbeti boğuyordu.
   // Sağ üstteki küçük düğme hem eskileri hem yeni gelecekleri gösterir.
   const eventsButton = root.querySelector<HTMLButtonElement>('#chat-events')!;
-  let showEvents = load('opt:chatEvents') === '1';
+  // PH1: the phone room is one feed (chat + the room's activity), so a phone starts with the activity shown.
+  let showEvents = (load('opt:chatEvents') ?? (isPhoneLayout() ? '1' : '0')) === '1';
   const drawEvents = () => {
     list.classList.toggle('hide-events', !showEvents);
     eventsButton.setAttribute('aria-pressed', String(showEvents));

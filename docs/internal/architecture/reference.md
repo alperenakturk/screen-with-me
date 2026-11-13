@@ -711,6 +711,37 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   built site as a Pixel 7 with a 4× slower CPU and a 4G-like network (home, join card, in the room: medians 556 / 478 /
   369 ms in the cloud container; budget 1500 each). Voice, live and camera windows stay in the room chunk (tightly
   tied to it); a phone-only stylesheet was not worth it (most rules are shared). Test: `scripts/harness/phone/run.cjs` (71 checks).
+- **Phone room with bottom tabs (card PH1, 0.9.97.127; layout option A of `design/phone-room.md`, the Planner's
+  "phone essentials" list in `CARDS.md`):** this replaces the ＋ / ⋯ / Add sheets, `#strip-more`, `#chat-plus` and
+  `#strip-fs` of the bullet above. `ui/phone-room.ts` adds `nav.ph-tabs[role=tablist]` (`#ph-tab-room|search|games|me`,
+  arrow keys, the selected one `tabindex=0`) and three `section.ph-panel[role=tabpanel]` to `.room`; `<html
+  data-ph-tab>` holds the tab and `sessionStorage` `phTab:<path>` keeps it over a reload (restored in a microtask, after
+  the room has set itself up, so the Me tab can read the room). The video stays on top on every tab; the other tabs
+  replace the strip, the chat and the input row. **Room:** the strip = the faces (a tap opens the People sheet with
+  🔗 Invite) + `.ph-strip-tools` 📌 🔄 ⏭ (press `#pin-btn` / `#sync-all` / `#skip`; a disabled one shows its reason;
+  only while something plays), the chat with the room's activity shown by default on a phone (`opt:chatEvents`), then
+  one input row `#chat-invite` 🔗 · `#chat-input` · `#strip-voice` (🎙 📷, moved here) · `#chat-send` · `#chat-react`
+  😀; while the box has text ➤ replaces 🎙 📷 (`:has(#chat-input:placeholder-shown)`, CSS only). 😀 opens the tray
+  sheet, which gets a `.ph-tray-image` row "🖼 Send an image" (re-added by a MutationObserver when the tray redraws).
+  The empty room shows `.ph-empty-actions` 🔍 Search a video (→ Search tab) and 🔗 Invite; the steps and the sync test
+  are hidden. **Search:** borrows `#media-form`, `#media-done` and the queue panel under "Up next"; "Play now" goes back
+  to the Room tab. **Games:** a hidden `#ph-games-open` trigger (passed to `createGameStage`'s `extraButtons`) opens the
+  hall inside the panel; picking a game goes back to Room; a waiting table puts a dot on the tab. **Me:** `meHead`
+  (avatar + name, a tap opens the profile menu: name, picture, colour theme, language) and the settings sections
+  `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
+  device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
+  `settingsDialog.setRedirect(openMe)`: any "open settings" on a phone lands on the Me tab. Not on a phone (computers
+  and tablets keep them): ⏩ Speed, camera size presets (hidden: `.person-pop-sizes`), ✨ Recap, setting ⏰ Film time,
+  editing 👑 Room rules, the font, the Shorts ⋯ ♾ Feed and 🔁 Loop, the first-time tips, starting a screen share
+  (watching one stays). **Sideways with a video:** `.ph-turn` = ⛶ Watch fullscreen · `#ph-side-chat` 💬 (the chat
+  sheet, with an unread count) · `#ph-side-mic` 🎙; the tabs and the input row hide. Before the first video sideways
+  keeps the strip, chat, tabs and a slimmer input row (38 px, no 🔗). **Shorts:** `#ph-shorts-chat` carries the same
+  unread count (`.ph-unread`); opening the chat clears it. "Fast": no shadow or grip on sheets, one 44 px radius-10
+  button shape, sheets as `.ph-row` lists. **Touch note:** `.touch-note` (`touchNote` text) under "Enter room" and
+  "Create room", shown by `html.is-touch:not(.has-mouse)` (styles.css). Home on a phone hides `.hm-ext`. Test Lab:
+  `phoneRoom.state` (📱 Screen tab) logs `{ on, tab, typing, sheet, unread, visible }`. Harnesses: `phone` (text and
+  role selectors), `phone-sideways`, `settings`, `room-more`, `shorts-rail`, `home`, `test-lab`, `lab-sweep`,
+  `feedback`, `tv`, `yt-attrib`.
 - **Room chunk (card SZ, lane B):** the room page's static JS went from 145.0 to 136.6 kB gzipped (budget 145) by
   moving what is needed only after a press, or only in the shell, into lazy chunks: `ui/voice-ext.ts` (loaded by
   `renderRoom` before the room starts, only in the shell, passed to `createVoice` as `Ext`; `isExt(client)` replaces

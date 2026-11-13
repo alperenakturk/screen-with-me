@@ -1333,3 +1333,12 @@ textarea::selection {
   background: color-mix(in srgb, var(--accent) 45%, transparent);
   color: var(--text);
 }
+
+/* PH1: "Sidelit is made for computers…": only on a touch device without a mouse (join card, home page). */
+.touch-note {
+  display: none;
+}
+
+html.is-touch:not(.has-mouse) .touch-note {
+  display: block;
+}

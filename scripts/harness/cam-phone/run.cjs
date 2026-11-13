@@ -131,7 +131,8 @@ const shot = async (page, name) => OUT && page.screenshot({ path: `${OUT}/${name
       const cam = pop?.querySelector('.person-cam');
       if (!pop || !cam || !cam.videoWidth) return null;
       const p = pop.getBoundingClientRect();
-      const buttons = [...pop.querySelectorAll('button')].map((b) => b.getBoundingClientRect());
+      // Only the buttons that show (PH1: the camera size presets are hidden on a phone).
+      const buttons = [...pop.querySelectorAll('button')].map((b) => b.getBoundingClientRect()).filter((r) => r.width > 0);
       return {
         fits: p.top >= -1 && p.bottom <= innerHeight + 1 && p.left >= -1 && p.right <= innerWidth + 1,
         buttonsShown: buttons.every((b) => b.bottom <= innerHeight + 1 && b.height >= 36),

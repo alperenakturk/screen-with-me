@@ -1,57 +1,63 @@
 import { el } from '../dom.ts';
 import { canShareSheet, isPhoneLayout, onPhoneLayout, onTurn } from '../device.ts';
-import { t } from '../i18n.ts';
+import { t, type I18nKey } from '../i18n.ts';
+import { debugHooks } from '../debug-lab.ts';
 import { flashHint } from './hint.ts';
-import { phoneCamSize } from './phone-cams.ts';
 import { switchNote, watchCamVideo } from './cam-watch.ts';
+import type { SettingsSection } from './room-more.ts';
 
 /**
- * The room on a phone (0.9.92.3, owner's picks on https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu: 1A live layout,
- * 2B no top bar, 3A 😀 / ＋ beside the message box, 6B bubbles, 7A faces strip, 8A one "Add" sheet, 9A ⋯ More menu).
+ * The room on a phone: an app screen (PH1, owner's pick A of `docs/internal/design/phone-room.md`, 13 Nov 2026).
  *
- * The page keeps the desktop room's DOM (every feature works the same); phone.css lays it out as an app screen under
- * `<html class="ph-room">`: the video edge to edge at the top, the faces strip (🎙 / 📷 / ⋯), the chat, the message
- * box with 😀 and ＋ at the bottom. Everything else opens in bottom sheets: ＋ (video, game, image, pin, speed, sync,
- * next), ⋯ (queue, people, games, recap, film time, invite, settings, profile, language), the Add sheet (link box,
- * YouTube search and the queue in one place) and the people list. Sheets borrow the room's own panels and put them
- * back when they close. A face whose camera is on shows the live picture in its circle; tapping it opens the person
- * sheet with the camera big.
+ * The page keeps the desktop room's DOM (every feature works the same); room.css lays it out under
+ * `<html class="ph-room">` and a bottom tab bar (`data-ph-tab` on <html>) switches between four panels, no router:
+ * - 🎬 Room: the video, the strip (faces · 📌 ⏩ 🔄 ⏭), the chat with its activity lines, ONE input row
+ *   (🔗 · box · 🎙 · 📷 · 😀; ➤ takes 🎙 📷's place while typing; 😀 = reactions + 🖼 Send an image).
+ * - 🔍 Search: the room's own link / search box and results, and "Up next" (the queue).
+ * - 🎮 Games: the games hall (games/stage.ts opens it next to this tab's own hidden trigger).
+ * - 👤 Me: the profile and every settings category as cards (borrowed from the settings window, all shown).
+ * Panels borrow the room's own nodes and put them back when another tab opens; the tab is kept per room for a reload.
+ * A face whose camera is on shows the live picture in its circle; tapping the faces opens the People sheet.
  */
-import type { MoreItem, SettingsSection } from './room-more.ts';
-
 export interface PhoneRoomDeps {
   root: HTMLElement;
-  /** The settings dialog (a section may be named). */
-  openSettings: (section?: SettingsSection) => void;
   myId: () => string | null;
-  /** The room's "⋯ More" list, shared with the computer's menu (card 6). */
-  moreItems: () => MoreItem[];
+  /** The settings window (Shorts' ⋯ → Settings; in the room the Me tab holds the categories). */
+  openSettings: (section?: SettingsSection) => void;
+  /** The settings window's categories and its "lend them to the Me tab" switch (PH1). */
+  settings: { sections: () => HTMLElement[]; setInPage: (on: boolean) => void };
+  /** The Me tab's head: my avatar and name (a tap opens the profile). */
+  meHead: () => HTMLElement;
 }
 
+/** The settings categories the Me tab holds (the phone essentials). */
+const ME_SECTIONS = ['me', 'room', 'sound', 'about'];
 type Borrowed = { node: Element; parent: Node; next: Node | null };
+type Tab = 'room' | 'search' | 'games' | 'me';
+const TABS: [Tab, string, I18nKey][] = [
+  ['room', '🎬', 'phone.tab.room'],
+  ['search', '🔍', 'phone.tab.search'],
+  ['games', '🎮', 'phone.tab.games'],
+  ['me', '👤', 'phone.tab.me'],
+];
+const SECTION_TITLES: Record<string, I18nKey> = {
+  me: 'settings.secMe',
+  room: 'settings.secRoom',
+  sound: 'settings.secSound',
+  about: 'settings.secAbout',
+};
 
 export function createPhoneRoom(deps: PhoneRoomDeps) {
   const { root } = deps;
   const html = document.documentElement;
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => root.querySelector<T>(sel) ?? document.querySelector<T>(sel);
+  const roomBox = $('.room');
+  const borrow = (nodes: Element[]): Borrowed[] => nodes.map((node) => ({ node, parent: node.parentNode!, next: node.nextSibling }));
+  const giveBack = (list: Borrowed[]) => {
+    for (const { node, parent, next } of list.reverse()) parent.insertBefore(node, next && next.parentNode === parent ? next : null);
+  };
 
   // ---- When the phone layout is on: a phone (or a phone-narrow window), in the room, not the Shorts view / TV ----
-  // The empty room's second step says where the link box is: "above" on a computer, "＋ below" here.
-  const emptyStep = root.querySelector<HTMLElement>('.empty-steps [data-i18n="emptyBody"], .empty-steps [data-phone-text]');
-  const drawEmptyStep = () => {
-    if (!emptyStep) return;
-    const on = html.classList.contains('ph-room');
-    if (on) {
-      emptyStep.removeAttribute('data-i18n');
-      emptyStep.dataset.phoneText = '';
-      emptyStep.textContent = t('phone.emptyBody');
-    } else if (emptyStep.dataset.phoneText !== undefined) {
-      emptyStep.setAttribute('data-i18n', 'emptyBody');
-      delete emptyStep.dataset.phoneText;
-      emptyStep.textContent = t('emptyBody');
-    }
-  };
-  addEventListener('langchange', drawEmptyStep);
   const decide = () => {
     const phone = isPhoneLayout() && !html.classList.contains('tv-mode');
     const shorts = phone && html.classList.contains('shorts-view');
@@ -63,20 +69,26 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const on = phone && !shorts;
     if (on === html.classList.contains('ph-room')) return;
     html.classList.toggle('ph-room', on);
-    drawEmptyStep();
-    if (!on && !sheet.dataset.sheet?.startsWith('shorts')) closeSheet();
+    if (on) {
+      // The tab kept from before a reload opens once the room has finished setting up (the Me tab draws the
+      // settings, which read the room's state).
+      setTab('room', false);
+      const saved = savedTab();
+      if (saved !== 'room') queueMicrotask(() => html.classList.contains('ph-room') && setTab(saved, false));
+    }
+    else {
+      setTab('room', false);
+      if (!sheet.dataset.sheet?.startsWith('shorts')) closeSheet();
+    }
     placeCams();
   };
-  onPhoneLayout(decide);
-  new MutationObserver(decide).observe(html, { attributes: true, attributeFilter: ['class'] });
 
-  // ---- Bottom sheets ----
+  // ---- Bottom sheets (People, the chat sideways and in Shorts, Shorts' ⋯): list rows, no grip, no shadow ----
   const backdrop = el('div', { class: 'ph-backdrop', hidden: '' });
   const sheet = el('section', { class: 'ph-sheet', role: 'dialog', 'aria-modal': 'true', hidden: '' });
-  const grip = el('div', { class: 'ph-grip', 'aria-hidden': 'true' });
   const head = el('div', { class: 'ph-sheet-head' });
   const body = el('div', { class: 'ph-sheet-body' });
-  sheet.append(grip, head, body);
+  sheet.append(head, body);
   // Inside the room's root: the room's code finds the panels a sheet borrows (it searches the root, not the page).
   root.append(backdrop, sheet);
   let borrowed: Borrowed[] = [];
@@ -90,7 +102,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const close = el('button', { type: 'button', class: 'icon-btn ph-sheet-close', 'aria-label': t('close'), title: t('close') }, '✕');
     close.addEventListener('click', () => closeSheet());
     head.append(close);
-    borrowed = (opts.borrow ?? []).map((node) => ({ node, parent: node.parentNode!, next: node.nextSibling }));
+    borrowed = borrow(opts.borrow ?? []);
     body.replaceChildren(...opts.nodes);
     sheet.classList.toggle('tall', opts.tall === true);
     sheet.dataset.sheet = opts.name;
@@ -108,7 +120,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     if (sheet.hidden) return;
     sheet.hidden = true;
     backdrop.hidden = true;
-    for (const { node, parent, next } of borrowed) parent.insertBefore(node, next && next.parentNode === parent ? next : null);
+    giveBack(borrowed);
     borrowed = [];
     body.replaceChildren();
     const done = onSheetClose;
@@ -128,35 +140,33 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && !sheet.hidden) closeSheet();
   });
-  // Pull the sheet down by its top to close it.
+  // Pull the sheet down by its head to close it.
   let drag: { y: number; id: number } | null = null;
-  for (const handle of [grip, head]) {
-    handle.addEventListener('pointerdown', (event) => {
-      if ((event.target as Element).closest('button')) return;
-      drag = { y: event.clientY, id: event.pointerId };
-      handle.setPointerCapture(event.pointerId);
-    });
-    handle.addEventListener('pointermove', (event) => {
-      if (!drag || event.pointerId !== drag.id) return;
-      sheet.style.translate = `0 ${Math.max(0, event.clientY - drag.y)}px`;
-    });
-    const end = (event: PointerEvent) => {
-      if (!drag || event.pointerId !== drag.id) return;
-      const moved = event.clientY - drag.y;
-      drag = null;
-      if (moved > 90) closeSheet();
-      else sheet.style.translate = '';
-    };
-    handle.addEventListener('pointerup', end);
-    handle.addEventListener('pointercancel', end);
-  }
+  head.addEventListener('pointerdown', (event) => {
+    if ((event.target as Element).closest('button')) return;
+    drag = { y: event.clientY, id: event.pointerId };
+    head.setPointerCapture(event.pointerId);
+  });
+  head.addEventListener('pointermove', (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    sheet.style.translate = `0 ${Math.max(0, event.clientY - drag.y)}px`;
+  });
+  const endDrag = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const moved = event.clientY - drag.y;
+    drag = null;
+    if (moved > 90) closeSheet();
+    else sheet.style.translate = '';
+  };
+  head.addEventListener('pointerup', endDrag);
+  head.addEventListener('pointercancel', endDrag);
 
-  // The room's own small windows (emoji tray, add, feed, games, speed) are bottom sheets on a phone too, but a tap on
-  // the video never reaches the page (YouTube's frame takes it), so they get a backdrop: a tap on it is a press
-  // outside them, which closes them by their own rules.
+  // The room's own small windows (emoji tray, games, speed) are bottom sheets on a phone too, but a tap on the video
+  // never reaches the page (YouTube's frame takes it), so they get a backdrop: a tap on it is a press outside them,
+  // which closes them by their own rules.
   const popBackdrop = el('div', { class: 'ph-backdrop ph-pop-backdrop', hidden: '' });
   root.append(popBackdrop);
-  const POPS = '.toolbar :is(.react-tray, .game-menu, .speed-pop), .shorts-bar :is(.react-tray, .shorts-feed-pop, .game-menu)';
+  const POPS = '.toolbar :is(.react-tray, .speed-pop), .shorts-bar :is(.react-tray, .shorts-feed-pop, .game-menu)';
   const watchPops = () => {
     const open = (html.classList.contains('ph-room') || html.classList.contains('ph-shorts')) && !!root.querySelector(`:is(${POPS}):not([hidden])`);
     // Only on a change: setting the attribute is itself a mutation this observer sees.
@@ -164,9 +174,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   };
   new MutationObserver(watchPops).observe(root, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
-  const tile = (icon: string, label: string, action: () => void, extra?: HTMLElement) => {
-    const button = el('button', { type: 'button', class: 'ph-tile' }, el('span', { class: 'ph-tile-ico', 'aria-hidden': 'true' }, icon), el('span', { class: 'ph-tile-label' }, label));
-    if (extra) button.append(extra);
+  /** A sheet's or the Me tab's list row: icon, words, an optional muted value at the end (decision 1: rows, not tiles). */
+  const row = (icon: string, label: string, action: () => void, end?: string) => {
+    const button = el('button', { type: 'button', class: 'ph-row' }, el('span', { class: 'ph-row-ico', 'aria-hidden': 'true' }, icon), el('span', { class: 'ph-row-label' }, label));
+    if (end) button.append(el('span', { class: 'ph-row-end' }, end));
     button.addEventListener('click', action);
     return button;
   };
@@ -175,116 +186,194 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     closeSheet();
     requestAnimationFrame(() => $<HTMLButtonElement>(selector)?.click());
   };
+  /** 🔗: the room's invite (the phone's share sheet, or the link copied with a note by `anchor`). */
+  const invite = (anchor: HTMLElement) => {
+    closeSheet();
+    $<HTMLButtonElement>('#invite-btn')?.click();
+    if (!canShareSheet()) flashHint(anchor, t('phone.more.copied'));
+  };
 
-  // ---- ＋ beside the message box: add a video, a game, an image, a pin; speed, sync, next ----
-  function openPlus(): void {
-    const hasItem = !!$('.room.has-item');
-    const tiles = [
-      tile('🎬', t('phone.plus.video'), () => openAdd()),
-      tile('🖼️', t('phone.plus.image'), press('#chat-attach')),
-    ];
-    if (hasItem) {
-      tiles.push(
-        tile('📌', t('tool.pin'), press('#pin-btn')),
-        tile('⏩', `${t('phone.plus.speed')} · ${$('#speed-label')?.textContent ?? '1×'}`, press('#speed-btn')),
-        tile('🔄', t('tool.sync'), press('#sync-all')),
-        tile('⏭', t('skip'), press('#skip')),
-        tile('⛶', t('phone.plus.fullscreen'), press('#fullscreen')),
-      );
-    } else {
-      tiles.push(tile('🧪', t('syncTest'), press('#sync-test')));
+  // ---- The bottom tab bar (option A): 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me ----
+  const tabKey = `phTab:${location.pathname}`;
+  const savedTab = (): Tab => {
+    try {
+      const v = sessionStorage.getItem(tabKey);
+      return v === 'search' || v === 'games' || v === 'me' ? v : 'room';
+    } catch {
+      return 'room';
     }
-    openSheet({ name: 'plus', nodes: [el('div', { class: 'ph-grid' }, ...tiles)] });
+  };
+  const tabBar = el('nav', { class: 'ph-tabs', role: 'tablist', 'aria-label': t('phone.tabs') });
+  const tabButtons = new Map<Tab, HTMLButtonElement>();
+  const panels = new Map<Tab, HTMLElement>();
+  for (const [tab, icon, label] of TABS) {
+    const button = el(
+      'button',
+      { type: 'button', class: 'ph-tab', role: 'tab', id: `ph-tab-${tab}`, 'data-ph-tab': tab, 'aria-selected': 'false', tabindex: '-1' },
+      el('span', { class: 'ph-tab-ico', 'aria-hidden': 'true' }, icon),
+      el('span', { class: 'ph-tab-label', 'data-i18n': label }, t(label)),
+    ) as HTMLButtonElement;
+    button.addEventListener('click', () => setTab(tab));
+    tabButtons.set(tab, button);
+    tabBar.append(button);
+    if (tab !== 'room') {
+      const panel = el('section', { class: 'ph-panel', role: 'tabpanel', 'data-ph-panel': tab, 'aria-labelledby': `ph-tab-${tab}`, hidden: '' });
+      panels.set(tab, panel);
+      roomBox?.append(panel);
+    }
   }
+  // Arrow keys move between the tabs, like the computer's tabs.
+  tabBar.addEventListener('keydown', (event) => {
+    const order = TABS.map(([tab]) => tab);
+    const at = order.indexOf(tab);
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (!step) return;
+    event.preventDefault();
+    const next = order[(at + step + order.length) % order.length]!;
+    setTab(next);
+    tabButtons.get(next)?.focus();
+  });
+  roomBox?.append(tabBar);
 
-  // ---- The Add sheet: the room's link box (+ YouTube search results) and the queue together ----
-  function openAdd(): void {
-    const form = $('#media-form');
-    const done = $('#media-done');
-    const queue = $('[data-panel="queue"]');
-    const nodes: Element[] = [];
-    const borrow: Element[] = [];
-    for (const node of [form, done]) {
-      if (node) {
-        nodes.push(node);
-        borrow.push(node);
+  let tab: Tab = 'room';
+  let lent: Borrowed[] = [];
+  /** Hidden trigger the games hall opens beside (games/stage.ts moves its hall next to the 🎮 pressed). */
+  const gamesButton = el('button', { type: 'button', id: 'ph-games-open', class: 'ph-games-open', tabindex: '-1', 'aria-hidden': 'true' }) as HTMLButtonElement;
+  const gamesWrap = el('div', { class: 'game-menu-wrap ph-games-wrap' }, gamesButton);
+  panels.get('games')?.append(gamesWrap);
+  const meBody = el('div', { class: 'ph-me' });
+  panels.get('me')?.append(meBody);
+
+  function setTab(next: Tab, remember = true): void {
+    if (next !== 'room' && !html.classList.contains('ph-room')) next = 'room';
+    const was = tab;
+    if (was === next && html.dataset.phTab === next && (next !== 'games' || !$('#game-menu')?.hidden)) return;
+    // Leaving a panel: its borrowed nodes go home first.
+    if (was !== next) {
+      if (was === 'me') {
+        deps.settings.setInPage(false);
+        meBody.replaceChildren();
+      }
+      giveBack(lent);
+      lent = [];
+      panels.get(was)?.setAttribute('hidden', '');
+    }
+    tab = next;
+    html.dataset.phTab = next;
+    for (const [key, button] of tabButtons) {
+      button.setAttribute('aria-selected', String(key === next));
+      button.tabIndex = key === next ? 0 : -1;
+    }
+    if (remember) {
+      try {
+        sessionStorage.setItem(tabKey, next);
+      } catch {
+        /* storage blocked: the tab is simply not kept */
       }
     }
-    if (queue) {
-      nodes.push(el('h4', { class: 'ph-sub' }, `${t('tab.queue')} ${$('#queue-count')?.textContent ?? ''}`.trim()), queue);
-      borrow.push(queue);
+    const panel = panels.get(next);
+    if (panel) panel.hidden = false;
+    if (next === 'search') fillSearch(panel!);
+    else if (next === 'me') fillMe();
+    else if (next === 'games' && $('#game-menu')?.hidden) requestAnimationFrame(() => gamesButton.click());
+    if (next !== 'room') closeSheet();
+  }
+
+  // 🔍 Search: the room's link box, its results and "Up next" (the queue).
+  function fillSearch(panel: HTMLElement): void {
+    const nodes = ['#media-form', '#media-done'].map((sel) => $(sel)).filter((n): n is HTMLElement => !!n);
+    const queue = $('[data-panel="queue"]');
+    lent = borrow(queue ? [...nodes, queue] : nodes);
+    const title = el('h4', { class: 'ph-sub' }, `${t('phone.upNext')} ${$('#queue-count')?.textContent ?? ''}`.trim());
+    panel.replaceChildren(...nodes, ...(queue ? [title, queue] : []));
+  }
+  // "Play now" shows the video at once: back to the Room tab. "Add to queue" stays (Up next grows).
+  $('#media-form button[value="load"]')?.addEventListener('click', () => {
+    if (tab === 'search') setTimeout(() => setTab('room'), 0);
+  });
+
+  // 🎮 Games: the hall shows in the panel; picking a game (it opens full screen) goes back to the Room tab.
+  const gameMenu = $('#game-menu');
+  if (gameMenu) {
+    new MutationObserver(() => {
+      if (tab === 'games' && gameMenu.hidden) requestAnimationFrame(() => tab === 'games' && $('#game-menu')?.hidden && setTab('room'));
+      // Opened from anywhere else (the Test Lab, a link): it shows in the Games tab too, never over the tabs. Not from a
+      // table's own 🎮 (a game on the whole screen keeps its hall over it).
+      else if (!gameMenu.hidden && html.classList.contains('ph-room') && !html.classList.contains('ph-game') && !gameMenu.closest('.ph-games-wrap')) {
+        gamesWrap.append(gameMenu);
+        setTab('games');
+      }
+    }).observe(gameMenu, { attributes: true, attributeFilter: ['hidden'] });
+  }
+
+  // 👤 Me: my avatar and name, then every settings category as a card, then the room's extras.
+  function fillMe(): void {
+    // Phone essentials (Planner, 13 Nov 2026): me, saving the room, sounds and the voice check, and About. Speed,
+    // Recap, Film time, editing the Room rules and the font stay on computers and tablets.
+    const sections = deps.settings.sections().filter((sec) => ME_SECTIONS.includes(sec.dataset.sec ?? ''));
+    lent = borrow(sections);
+    const cards: HTMLElement[] = [];
+    for (const sec of sections) {
+      const key = SECTION_TITLES[sec.dataset.sec ?? ''];
+      const card = el('div', { class: 'ph-me-card', 'data-me-card': sec.dataset.sec ?? '' }, ...(key ? [el('h4', { class: 'ph-me-title' }, t(key))] : []), sec);
+      cards.push(card);
     }
-    openSheet({ name: 'add', title: t('phone.add.title'), nodes, borrow, tall: true });
-
-    requestAnimationFrame(() => $<HTMLInputElement>('#media-input')?.focus());
+    const extras = labRow();
+    meBody.replaceChildren(deps.meHead(), ...cards, ...(extras.length ? [el('div', { class: 'ph-me-card' }, ...extras)] : []));
+    deps.settings.setInPage(true);
   }
 
-  // ---- ⋯ More: everything that used to sit in the top bar, the tabs and the toolbar ----
-  function openMore(): void {
-    const name = $('.room-title-name')?.textContent ?? '';
-    const count = $('.room-title-count')?.textContent ?? '';
-    const dot = $('.room-title-dot');
-    const status = $('.room-title-status')?.textContent ?? '';
-    const playing = $('.room.has-item') ? ($('#now-title')?.textContent ?? '') : '';
-    const headLine = el('div', { class: 'ph-room-line' }, el('span', { class: 'ph-dot', 'data-status': dot?.dataset.status ?? 'connected' }), el('b', {}, name), el('span', { class: 'muted' }, ` ${count} ${status}`.trimEnd()));
-    const nodes: Element[] = [headLine];
-    if (playing) nodes.push(el('p', { class: 'ph-playing muted small' }, `▶ ${playing}`));
-    const inviteButton = $<HTMLButtonElement>('#invite-btn');
-    nodes.push(
-      el(
-        'div',
-        { class: 'ph-grid' },
-        tile('🔗', t('phone.more.invite'), () => {
-          closeSheet();
-          inviteButton?.click();
-          if (!canShareSheet()) flashHint($('#strip-more')!, t('phone.more.copied'));
-        }),
-        tile('🎵', t('tab.queue'), () => openAdd(), el('span', { class: 'ph-tile-count' }, $('#queue-count')?.textContent ?? '')),
-        tile('👥', t('tab.people'), () => openPeople(), el('span', { class: 'ph-tile-count' }, $('#people-count')?.textContent ?? '')),
-        // The same list and order as the computer's "⋯ More" (card 6, owner's pick C).
-        ...deps.moreItems().map((item) => {
-          const button = tile(item.icon, t(item.label), () => {
-            if (item.dimmed) return flashHint(button, item.dimmed);
-            closeSheet();
-            item.run();
-          });
-          if (item.dimmed) button.classList.add('dimmed');
-          return button;
-        }),
-        tile('👤', t('tab.profile'), press('.profile-btn')),
-        tile('⚙️', t('tab.settings'), () => {
-          closeSheet();
-          deps.openSettings('view');
-        }),
-        ...labTile(),
-        // R9: no "Language" tile here any more: the profile (one tile up) has English / Türkçe, so it was there twice.
-      ),
-    );
-    openSheet({ name: 'more', nodes });
-  }
+  // ---- The Room tab ----
+  // The strip under the video: the faces (tap → People) and the video's own controls, one tap each.
+  const stripTool = (icon: string, label: I18nKey, target: string) => {
+    const button = el('button', { type: 'button', class: 'cam-ctl ph-strip-tool', 'data-press': target, title: t(label), 'aria-label': t(label) }, icon);
+    button.addEventListener('click', () => {
+      const real = $<HTMLButtonElement>(target);
+      if (real?.disabled) return flashHint(button, real.title || t('hostLock'));
+      real?.click();
+    });
+    return button;
+  };
+  const stripTools = el(
+    'div',
+    { class: 'ph-strip-tools' },
+    stripTool('📌', 'tool.pin', '#pin-btn'),
+    stripTool('🔄', 'tool.sync', '#sync-all'),
+    stripTool('⏭', 'skip', '#skip'),
+  );
+  $('.together-strip')?.append(stripTools);
+  addEventListener('langchange', () => {
+    for (const button of stripTools.querySelectorAll<HTMLElement>('.ph-strip-tool')) {
+      const key = ({ '#pin-btn': 'tool.pin', '#sync-all': 'tool.sync', '#skip': 'skip' } as Record<string, I18nKey>)[button.dataset.press ?? ''];
+      if (key) button.title = button.ariaLabel = t(key);
+    }
+    tabBar.setAttribute('aria-label', t('phone.tabs'));
+  });
 
+  // The faces open the People sheet (who is here, 👑 host, 🎙, then 🔗 Invite); a camera tile opens that person.
+  let toPerson = false;
   function openPeople(): void {
     const people = $('[data-panel="people"]');
     if (!people) return;
-    openSheet({ name: 'people', title: `${t('tab.people')} ${$('#people-count')?.textContent ?? ''}`.trim(), nodes: [people], borrow: [people], tall: true });
+    const inviteRow = row('🔗', t('phone.more.invite'), () => invite(inviteRow));
+    openSheet({ name: 'people', title: `${t('tab.people')} ${$('#people-count')?.textContent ?? ''}`.trim(), nodes: [people, inviteRow], borrow: [people], tall: true });
   }
+  $('#voice-people')?.addEventListener(
+    'click',
+    (event) => {
+      if (!html.classList.contains('ph-room') || toPerson) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openPeople();
+    },
+    true,
+  );
 
-  // "Play now" shows the video at once; "Add to queue" keeps the Add sheet open (the queue below grows).
-  $('#media-form button[value="load"]')?.addEventListener('click', () => {
-    if (!sheet.hidden && sheet.dataset.sheet === 'add') setTimeout(() => closeSheet(), 0);
-  });
-  $('#strip-more')?.addEventListener('click', openMore);
-  // No top bar here (2B): the connection's state shows as a dot on ⋯ (yellow while connecting, red when cut off).
-  const titleDot = $('.room-title-dot');
-  const showStatus = () => {
-    const more = $('#strip-more');
-    if (more && titleDot) more.dataset.status = titleDot.dataset.status ?? '';
-  };
-  if (titleDot) new MutationObserver(showStatus).observe(titleDot, { attributes: true, attributeFilter: ['data-status'] });
-  showStatus();
-  $('#chat-plus')?.addEventListener('click', openPlus);
-  // 😀 opens the room's emoji tray (it is a bottom sheet on a phone). The tray closes itself on a press outside, which
-  // this press is too: remember whether it was open, so a second 😀 closes it instead of opening it again.
+  // The one input row: 🔗 invites, 🎙 📷 are voice's own quick buttons, 😀 opens the reactions (with 🖼 in them).
+  const inviteButton = $<HTMLButtonElement>('#chat-invite');
+  inviteButton?.addEventListener('click', () => invite(inviteButton));
+  // 😀 opens the room's emoji tray (a bottom sheet on a phone). The tray closes itself on a press outside, which this
+  // press is too: remember whether it was open, so a second 😀 closes it instead of opening it again.
   const reactButton = $('#chat-react');
   let trayWasOpen = false;
   reactButton?.addEventListener('pointerdown', () => (trayWasOpen = $('.toolbar .react-open')?.getAttribute('aria-expanded') === 'true'), true);
@@ -292,6 +381,34 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     if (!trayWasOpen) $<HTMLButtonElement>('.toolbar .react-open')?.click();
     trayWasOpen = false;
   });
+  // 🖼 Send an image sits in the reactions sheet on a phone (the tray redraws itself: the row goes back in each time).
+  const trayBar = $('.toolbar .tray-bar');
+  const imageRow = row('🖼', t('phone.plus.image'), () => {
+    $<HTMLButtonElement>('.toolbar .react-open')?.click();
+    $<HTMLButtonElement>('#chat-attach')?.click();
+  });
+  imageRow.classList.add('ph-tray-image');
+  const placeImageRow = () => {
+    const tray = trayBar?.querySelector('.react-tray');
+    if (tray && imageRow.parentElement !== tray) tray.append(imageRow);
+  };
+  if (trayBar) new MutationObserver(placeImageRow).observe(trayBar, { childList: true, subtree: true });
+  placeImageRow();
+  addEventListener('langchange', () => (imageRow.querySelector('.ph-row-label')!.textContent = t('phone.plus.image')));
+
+  // The empty room: 🔍 Search a video (the Search tab) and 🔗 Invite.
+  $('#empty-search')?.addEventListener('click', () => setTab('search'));
+  const emptyInvite = $<HTMLButtonElement>('#empty-invite-ph');
+  emptyInvite?.addEventListener('click', () => invite(emptyInvite));
+
+  // No top bar here: the connection's state shows as a dot on the Room tab (yellow while connecting, red when cut off).
+  const titleDot = $('.room-title-dot');
+  const showStatus = () => {
+    const roomTab = tabButtons.get('room');
+    if (roomTab && titleDot) roomTab.dataset.status = titleDot.dataset.status ?? '';
+  };
+  if (titleDot) new MutationObserver(showStatus).observe(titleDot, { attributes: true, attributeFilter: ['data-status'] });
+  showStatus();
 
   // ---- Cameras in the faces strip (7A) and big in the person sheet ----
   let cams = new Map<string, MediaStream>();
@@ -332,11 +449,12 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
         tile.addEventListener('click', () => {
           const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
           lastFace = id;
+          toPerson = true;
           person?.click();
+          toPerson = false;
         });
       }
       if (tile.parentElement !== camRow) camRow.append(tile);
-      tile.dataset.size = phoneCamSize(id);
       const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
       const name = id === deps.myId() ? t('voice.me') : (person?.title.split(' · ')[0] ?? '');
       tile.querySelector('.ph-cam-name')!.textContent = name;
@@ -349,7 +467,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const people = $('#voice-people');
   // The voice card redraws the faces on every change: put the pictures back each time.
   if (people) new MutationObserver(placeCams).observe(people, { childList: true });
-  addEventListener('swm-phcam-size', () => placeCams());
 
   // Tapping a face opens the person menu (a bottom sheet here): their camera goes on top of it, big.
   let lastFace: string | null = null;
@@ -388,10 +505,26 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     return button;
   };
   const count = el('span', { class: 'ph-left', 'aria-hidden': 'true' });
+  // Messages that came in while the chat was out of sight: a count on each 💬.
+  let unread = 0;
+  const badges: HTMLElement[] = [];
+  function unreadBadge(): HTMLElement {
+    const badge = el('span', { class: 'badge ph-unread', hidden: '' });
+    badges.push(badge);
+    return badge;
+  }
+  function drawUnread(): void {
+    for (const badge of badges) {
+      badge.hidden = unread === 0;
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+    }
+  }
+  const shortsChat = barButton('💬', t('chat'), () => openShortsChat(), 'ph-shorts-chat');
+  shortsChat.append(unreadBadge());
   shortsBar.append(
     faces,
     toast,
-    barButton('💬', t('chat'), () => openShortsChat(), 'ph-shorts-chat'),
+    shortsChat,
     barButton('😀', t('reactTray.hint'), () => $<HTMLButtonElement>('#shorts-bar .react-open')?.click(), 'ph-shorts-react'),
     el('span', { class: 'ph-nav' }, barButton('▲', t('shorts.prev'), () => $<HTMLButtonElement>('#shorts-prev')?.click(), 'ph-shorts-prev'), count, barButton('▼', t('shorts.next'), () => $<HTMLButtonElement>('#shorts-next')?.click(), 'ph-shorts-next')),
     barButton('⋯', t('phone.more'), () => openShortsMore(), 'ph-shorts-more'),
@@ -417,9 +550,12 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const left = $('#shorts-left');
   if (left) new MutationObserver(() => (count.textContent = left.textContent ?? '')).observe(left, { childList: true, characterData: true, subtree: true });
 
+  /** The chat as a sheet (Shorts' 💬, and 💬 on a phone held sideways); its unread count resets. */
   function openShortsChat(): void {
     const panel = $('[data-panel="chat"]');
     if (!panel) return;
+    unread = 0;
+    drawUnread();
     openSheet({ name: 'shorts-chat', title: t('chat'), nodes: [panel], borrow: [panel] });
     requestAnimationFrame(() => {
       const list = $('#chat-list');
@@ -428,55 +564,51 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   }
 
   // LABFAB: with the Test Lab on, an upright phone has no floating 🐞 in the room (it sat over the player, chat names or
-  // the Shorts video): ⋯ gets this tile instead, red-ringed like 🐞 while there are errors.
-  function labTile(): HTMLElement[] {
+  // the Shorts video): the Me tab and Shorts' ⋯ get this row instead, red-ringed like 🐞 while there are errors.
+  function labRow(): HTMLElement[] {
     const fab = $<HTMLButtonElement>('.debug-fab');
     if (!fab) return [];
     const error = fab.classList.contains('has-error');
-    const button = tile('🐞', t(error ? 'phone.more.labError' : 'phone.more.lab'), () => {
+    const button = row('🐞', t(error ? 'phone.more.labError' : 'phone.more.lab'), () => {
       closeSheet();
       fab.click();
     });
-    button.classList.add('ph-lab-tile');
+    button.classList.add('ph-lab-row');
     button.classList.toggle('has-error', error);
     return [button];
   }
 
   function openShortsMore(): void {
-    const tiles: HTMLElement[] = [];
+    const rows: HTMLElement[] = [];
     if (!$('#shorts-voice')?.hidden) {
       const mic = $('#shorts-mic');
       const cam = $('#shorts-cam');
-      tiles.push(tile('🎙', mic?.title || t('voice.join'), press('#shorts-mic')));
-      if (cam && !cam.hidden) tiles.push(tile('📷', cam.title || t('voice.camOn'), press('#shorts-cam')));
+      rows.push(row('🎙', mic?.title || t('voice.join'), press('#shorts-mic')));
+      if (cam && !cam.hidden) rows.push(row('📷', cam.title || t('voice.camOn'), press('#shorts-cam')));
     }
-    tiles.push(
-      tile('＋', t('shorts.add'), press('#shorts-add')),
-      tile('♾', $('#shorts-feed-label')?.textContent || t('feed.short'), press('#shorts-feed')),
-      tile('🎮', t('tool.game'), press('#shorts-game')),
-      tile(roomLoop() ? '🔁✓' : '🔁', t('shorts.loop'), press('#shorts-loop')),
-      tile('🔗', t('phone.more.invite'), () => {
-        closeSheet();
-        $<HTMLButtonElement>('#invite-btn')?.click();
-        if (!canShareSheet()) flashHint($('#ph-shorts-more')!, t('phone.more.copied'));
-      }),
-      tile('⚙️', t('tab.settings'), () => {
+    const inviteRow = row('🔗', t('phone.more.invite'), () => invite($('#ph-shorts-more')!));
+    rows.push(
+      row('＋', t('shorts.add'), press('#shorts-add')),
+      row('🎮', t('tool.game'), press('#shorts-game')),
+      inviteRow,
+      row('⚙️', t('tab.settings'), () => {
         closeSheet();
         deps.openSettings();
       }),
-      tile('↩', t('shorts.roomView'), press('#shorts-exit')),
-      ...labTile(),
+      row('↩', t('shorts.roomView'), press('#shorts-exit')),
+      ...labRow(),
     );
-    openSheet({ name: 'shorts-more', nodes: [el('div', { class: 'ph-grid' }, ...tiles)] });
+    openSheet({ name: 'shorts-more', nodes: rows });
   }
-  const roomLoop = () => $('#shorts-loop')?.getAttribute('aria-pressed') === 'true';
 
   // The newest message from someone else shows in the bar for a few seconds (the chat itself is one tap away).
   let toastTimer = 0;
   const chatList = $('#chat-list');
   if (chatList) {
     new MutationObserver((records) => {
-      if (!html.classList.contains('ph-shorts') || !sheet.hidden) return;
+      const shortsOn = html.classList.contains('ph-shorts');
+      const sidewaysOn = html.classList.contains('ph-room') && html.classList.contains('sideways');
+      if ((!shortsOn && !sidewaysOn) || sheet.dataset.sheet === 'shorts-chat' && !sheet.hidden) return;
       // A full redraw (language change, history) adds many lines at once: only a single new line is a new message.
       if (records.length !== 1 || records[0]!.addedNodes.length !== 1) return;
       const line = records[0]!.addedNodes[0];
@@ -486,6 +618,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       for (let prev = line.previousElementSibling; !name && prev; prev = prev.previousElementSibling) name = prev.querySelector('.chat-name')?.textContent ?? '';
       const text = line.querySelector('.chat-text')?.textContent ?? (line.querySelector('.chat-image-btn, .chat-image-missing') ? '🖼️' : '');
       if (!text) return;
+      // PH1: 💬 counts what came in while the chat was out of sight (Shorts, and a phone held sideways).
+      unread++;
+      drawUnread();
+      if (!shortsOn || !sheet.hidden) return;
       toast.textContent = name ? `${name}: ${text}` : text;
       toast.hidden = false;
       clearTimeout(toastTimer);
@@ -505,7 +641,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const now = html.classList.contains('ph-game');
     if (now === inGame) return;
     inGame = now;
-    if (now) closeSheet();
+    if (now) {
+      closeSheet();
+      if (tab !== 'room') setTab('room');
+    }
     const head = document.querySelector('#game-stage .game-stage-head');
     if (!stripVoice || !stripVoiceHome) return;
     if (now && head) head.querySelector('.game-hub-open')?.before(stripVoice);
@@ -517,21 +656,15 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     event.stopPropagation();
     gameMinimize()?.click();
   }, true);
-  // Games live only in ⋯ (owner, 0.9.92.8: "once, not in ＋, ⋯ and the strip"): a minimized table puts a dot on ⋯,
-  // and ⋯ → Games brings it back.
+  // A minimized table puts a dot on the Games tab, which brings it back.
   const gameButton = $<HTMLButtonElement>('#game-btn');
   if (gameButton) {
-    const sync = () => $('#strip-more')?.classList.toggle('game-waiting', gameButton.classList.contains('game-waiting'));
+    const sync = () => tabButtons.get('games')?.classList.toggle('game-waiting', gameButton.classList.contains('game-waiting'));
     new MutationObserver(sync).observe(gameButton, { attributes: true, attributeFilter: ['class'] });
     sync();
   }
 
-  // ---- Fullscreen on a phone (0.9.92.6, owner) ----
-  // ⛶ in the faces strip while something plays (fullscreen was hidden in ＋): the browser's own fullscreen, a landscape
-  // video turns the phone sideways by itself.
-  const stripFs = el('button', { type: 'button', id: 'strip-fs', class: 'cam-ctl phone-only', title: t('phone.plus.fullscreen'), 'aria-label': t('phone.plus.fullscreen') }, '⛶');
-  stripFs.addEventListener('click', () => $<HTMLButtonElement>('#fullscreen')?.click());
-  $('#strip-more')?.before(stripFs);
+  // ---- Fullscreen on a phone (0.9.92.6, owner; PH1: ⛶ Watch fullscreen is in the sideways column) ----
   // Sideways in fullscreen, 💬 opens and closes a side panel (the faces, cameras, chat and the message box): open, the
   // video and the panel share the screen; closed, the video fills it. Its nodes are the room's own, borrowed and put
   // back (the browser's fullscreen only shows the theater, so they move into it).
@@ -575,16 +708,20 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     if (inFs()) $<HTMLButtonElement>('#fullscreen')?.click();
   });
   const turnText = el('p', { class: 'muted' });
-  const turn = el('div', { class: 'ph-turn' }, turnFs, turnText);
-  $('.room')?.append(turn);
+  // PH1: with a video, the sideways column also holds 💬 (the chat as a sheet, with a count) and 🎙 (voice's own).
+  const sideChat = el('button', { type: 'button', class: 'btn ph-turn-chat', id: 'ph-side-chat' }, '💬 ', el('span', { 'data-i18n': 'phone.chat' }, t('phone.chat')), unreadBadge());
+  sideChat.addEventListener('click', () => openShortsChat());
+  const sideMic = el('button', { type: 'button', class: 'btn ph-turn-mic', id: 'ph-side-mic' }, '🎙 ', el('span', { 'data-i18n': 'voice.join' }, t('voice.join')));
+  sideMic.addEventListener('click', () => $<HTMLButtonElement>('#strip-mic')?.click());
+  const turn = el('div', { class: 'ph-turn' }, turnFs, sideChat, sideMic, turnText);
+  roomBox?.append(turn);
   // BH13: a video that can't be played here (the player's error card) has nothing to watch fullscreen.
   const playerError = $('#player-error');
   const drawTurn = () => {
     const playing = !!$('.room.has-item') && (!playerError || playerError.hidden);
-    turnFs.hidden = !playing;
+    turnFs.hidden = sideChat.hidden = sideMic.hidden = !playing;
     turnText.textContent = t(playing ? 'phone.turn.or' : 'phone.turn.upright');
   };
-  const roomBox = $('.room');
   if (roomBox) new MutationObserver(drawTurn).observe(roomBox, { attributes: true, attributeFilter: ['class'] });
   if (playerError) new MutationObserver(drawTurn).observe(playerError, { attributes: true, attributeFilter: ['hidden'] });
   addEventListener('langchange', drawTurn);
@@ -605,7 +742,37 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   document.addEventListener('fullscreenchange', closeSideOutsideFs);
   new MutationObserver(closeSideOutsideFs).observe(html, { attributes: true, attributeFilter: ['class'] });
 
+  onPhoneLayout(decide);
+  new MutationObserver(decide).observe(html, { attributes: true, attributeFilter: ['class'] });
   decide();
+
+  // 🐞 Test Lab (PH1): the tab, the input row's state and which of the room's controls show.
+  const shows = (sel: string) => {
+    const node = $(sel);
+    return !!node && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden';
+  };
+  const phoneState = () => ({
+    on: html.classList.contains('ph-room'),
+    tab,
+    typing: !!$<HTMLInputElement>('#chat-input')?.value,
+    sheet: sheet.hidden ? null : (sheet.dataset.sheet ?? null),
+    unread,
+    visible: Object.fromEntries(
+      ['#chat-invite', '#chat-input', '#strip-mic', '#strip-cam', '#chat-send', '#chat-react', '.ph-strip-tools', '.ph-tabs', '.ph-empty-actions', '.ph-turn']
+        .map((sel) => [sel, shows(sel)]),
+    ),
+  });
+  debugHooks.register('phoneRoom', () => ({
+    commands: [{
+      id: 'phoneRoom.state',
+      tab: 'screen',
+      title: { en: 'Phone room: what shows now', tr: 'Telefon odası: şu an ne görünüyor' },
+      help: { en: 'Writes the open tab, the input row and the visible buttons into the log.', tr: 'Açık sekmeyi, yazma satırını ve görünen düğmeleri kayda yazar.' },
+      available: () => html.classList.contains('ph-room') || { en: 'not the phone room', tr: 'telefon odası değil' },
+      run: () => JSON.stringify(phoneState()),
+    }],
+    status: () => html.classList.contains('ph-room') ? [[{ en: 'Phone tab', tr: 'Telefon sekmesi' }, tab]] : [],
+  }));
 
   return {
     /** The cameras on screen (member → picture), from the voice card. */
@@ -614,5 +781,16 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       placeCams();
     },
     closeSheet,
+    /** The hidden 🎮 the games hall opens beside on the Games tab (for games/stage.ts' triggers). */
+    gamesButton,
+    /** PH1: the settings window shows as the Me tab on a phone; false when this isn't the phone room. */
+    openMe(section?: SettingsSection): boolean {
+      if (!html.classList.contains('ph-room')) return false;
+      setTab('me');
+      const card = section && meBody.querySelector<HTMLElement>(`[data-me-card="${section === 'save' ? 'room' : section}"]`);
+      card?.scrollIntoView({ block: 'start' });
+      return true;
+    },
+    setTab,
   };
 }

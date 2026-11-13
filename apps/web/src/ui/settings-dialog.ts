@@ -29,8 +29,18 @@ export function createSettingsDialog(root: HTMLElement, isHost: () => boolean, o
   const sections = [...backdrop.querySelectorAll<HTMLElement>('.settings-sec')];
   let active: Section = 'view';
   let opener: HTMLElement | null = null;
+  /** PH1: the categories are lent to the phone's Me tab; there they all show at once (Film time for the host only). */
+  let inPage = false;
+  let redirect: ((section: SettingsSection) => boolean) | null = null;
 
   function show(asked: SettingsSection): void {
+    if (inPage) {
+      for (const sec of sections) {
+        sec.hidden = sec.dataset.sec === 'schedule' && !isHost();
+        if (!sec.hidden) onShow(sec.dataset.sec as Section);
+      }
+      return;
+    }
     let section: Section = asked === 'save' ? 'room' : asked;
     // Film time is the host's only.
     if (section === 'schedule' && !isHost()) section = 'rules';
@@ -50,6 +60,7 @@ export function createSettingsDialog(root: HTMLElement, isHost: () => boolean, o
 
   /** Opens at a category (⚙️: My screen; "⋯ More" items: theirs), the list of categories always beside it. */
   function open(section?: SettingsSection): void {
+    if (redirect?.(section ?? 'view')) return;
     opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     backdrop.hidden = false;
     render();
@@ -74,5 +85,21 @@ export function createSettingsDialog(root: HTMLElement, isHost: () => boolean, o
   addEventListener('langchange', () => (title.textContent = t(TITLES[active])));
   show('view');
 
-  return { open, close: hide, render };
+  return {
+    open,
+    close: hide,
+    render,
+    /** The categories, for the phone's Me tab (PH1). */
+    sections: () => sections,
+    /** PH1: on while the Me tab holds the categories (all shown), off when they go back into the window. */
+    setInPage(on: boolean): void {
+      inPage = on;
+      if (on) backdrop.classList.toggle('is-host', isHost());
+      show(active);
+    },
+    /** PH1: `open` asks this first; true means it was shown elsewhere (the phone's Me tab). */
+    setRedirect(fn: (section: SettingsSection) => boolean): void {
+      redirect = fn;
+    },
+  };
 }

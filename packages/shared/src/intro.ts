@@ -5,7 +5,7 @@
 // the light, "Enjoy the show!" rises, and everything fades (2.7 s). Reduced motion: one still frame fading in and out.
 // The site uses it in the room (also inside the extension's overlay, which is our site); a click closes it at once.
 
-import { playIntroSound } from './intro-sound.ts';
+import { playIntroSound, playIntroSoundOn } from './intro-sound.ts';
 import { createLogo, createMascot } from './logo.ts';
 
 /** Total time (ms); the element removes itself at the end. */
@@ -50,9 +50,10 @@ export const INTRO_CSS = `
 
 /**
  * Builds the intro element. The caller appends `.swm-intro` to a positioned box (and makes sure INTRO_CSS is loaded in
- * that document / shadow root). `sound: false` starts it silent.
+ * that document / shadow root). `sound: false` starts it silent; an AudioContext plays the sound on it, now, only if it
+ * is running (PH1: the picture and the sound from one clock, never the sound late).
  */
-export function createIntro(doc: Document, text: string, sound = true): HTMLElement {
+export function createIntro(doc: Document, text: string, sound: boolean | AudioContext = true): HTMLElement {
   const root = doc.createElement('div');
   root.className = 'swm-intro';
   root.setAttribute('role', 'status');
@@ -71,7 +72,8 @@ export function createIntro(doc: Document, text: string, sound = true): HTMLElem
   caption.className = 'swm-intro-text';
   caption.textContent = text;
   root.append(pair, caption);
-  if (sound) playIntroSound();
+  if (sound === true) playIntroSound();
+  else if (sound) playIntroSoundOn(sound);
   const remove = () => root.remove();
   root.addEventListener('click', remove);
   root.addEventListener('animationend', (event) => {

@@ -45,11 +45,9 @@ const good = (a, lang) => !!a && a.href === 'https://www.youtube.com/t/terms' &&
       await page.waitForSelector('.room');
       await page.waitForTimeout(1500);
 
-      // 1) The link box's search (on a phone it sits in the ＋ Add a video sheet).
+      // 1) The link box's search (on a phone it sits in the Search tab, PH1).
       if (!(await page.isVisible('#media-input'))) {
-        await page.click('#chat-plus');
-        await page.waitForTimeout(300);
-        await page.evaluate(() => [...document.querySelectorAll('.ph-sheet button')].find((b) => /video|Video/.test(b.textContent))?.click());
+        await page.click('#ph-tab-search');
         await page.waitForTimeout(400);
       }
       await page.fill('#media-input', 'sunset timelapse');

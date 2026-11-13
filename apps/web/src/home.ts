@@ -291,6 +291,7 @@ export function renderHome(app: HTMLElement): void {
             <button class="hm-btn primary" data-h="create"></button>
             <button id="join-toggle" type="button" class="hm-btn secondary" aria-expanded="false" data-h="join"></button>
           </form>
+          <p class="muted small touch-note" data-i18n="touchNote"></p>
           <form id="join" class="hm-join" hidden>
             <input id="join-input" data-i18n-placeholder="joinPlaceholder" autocomplete="off" />
             <button class="btn" data-i18n="join"></button>

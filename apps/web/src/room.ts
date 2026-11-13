@@ -87,7 +87,7 @@ import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
-import { playSound, setFilmPlaying } from './sound.ts';
+import { playSound, runningAudio, setFilmPlaying, unlockAudio } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
 import { debugHooks, debugTap, setDebugRoom, type RoomLab } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
@@ -201,6 +201,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
           <input id="name" maxlength="32" required autocomplete="nickname" data-i18n-placeholder="namePlaceholder" />
         </div>
         <button class="btn primary big" data-i18n="enterRoom"></button>
+        <p class="muted small touch-note" data-i18n="touchNote"></p>
         <p class="muted small" data-i18n="joinHint"></p>
       </form>
       <details class="join-info">
@@ -265,6 +266,8 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
     const name = cleanName(input.value);
     if (name === null) return;
     if (name !== load('name') || avatar !== load('avatar')) saveIdentity(name, avatar);
+    // PH1: wake the shared sound context inside this tap, so the intro's sound starts with its picture.
+    unlockAudio();
     window.removeEventListener('langchange', renderCode);
     startRoom(app, roomId, name, avatar);
   });
@@ -430,6 +433,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <li data-i18n="emptyBody"></li>
               </ol>
               <button id="sync-test" type="button" class="btn small-btn">🧪 <span data-i18n="syncTest"></span></button>
+              <div class="ph-empty-actions phone-only">
+                <button id="empty-search" type="button" class="btn primary">🔍 <span data-i18n="phone.searchVideo"></span></button>
+                <button id="empty-invite-ph" type="button" class="btn">🔗 <span data-i18n="phone.more.invite"></span></button>
+              </div>
             </div>
             <div id="external" class="overlay external" hidden>
               <p id="external-label" class="muted" data-i18n="externalTitle"></p>
@@ -558,13 +565,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
           <div class="together-strip">
             <div id="voice-people" class="voice-people"></div>
-            <div id="strip-voice" class="strip-voice phone-only" hidden>
-              <button id="strip-live" type="button" class="cam-ctl" hidden></button>
-              <button id="strip-mic" type="button" class="cam-ctl"></button>
-              <button id="strip-cam" type="button" class="cam-ctl"></button>
-              <button id="strip-flip" type="button" class="cam-ctl" hidden></button>
-            </div>
-            <button id="strip-more" type="button" class="cam-ctl strip-more phone-only" aria-haspopup="dialog" data-i18n-title="phone.more">⋯</button>
           </div>
           <div class="together-actions">
             <div id="voice-card" class="voice-row" hidden>
@@ -623,11 +623,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="chat-events" type="button" class="chat-events" aria-pressed="false"></button>
             <ul id="chat-list" class="chat-list" aria-live="polite" aria-relevant="additions"></ul>
             <form id="chat-form" class="chat-form">
-              <button type="button" id="chat-react" class="chat-tool phone-only" aria-haspopup="dialog" data-i18n-title="reactTray.hint">😀</button>
+              <button type="button" id="chat-invite" class="chat-tool phone-only" data-i18n-title="phone.more.invite">🔗</button>
               <input id="chat-input" autocomplete="off" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button type="button" class="chat-attach" id="chat-attach" data-i18n-title="chatImage.add"></button>
-              <button type="button" id="chat-plus" class="chat-tool phone-only" aria-haspopup="dialog" data-i18n-title="phone.plus">＋</button>
+              <div id="strip-voice" class="strip-voice phone-only">
+                <button id="strip-live" type="button" class="cam-ctl" hidden></button>
+                <button id="strip-mic" type="button" class="cam-ctl"></button>
+                <button id="strip-cam" type="button" class="cam-ctl"></button>
+                <button id="strip-flip" type="button" class="cam-ctl" hidden></button>
+              </div>
               <button class="chat-send" id="chat-send" data-i18n-title="send">➤</button>
+              <button type="button" id="chat-react" class="chat-tool phone-only" aria-haspopup="dialog" data-i18n-title="reactTray.hint">😀</button>
             </form>
           </div>
 
@@ -1120,7 +1126,19 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   const live = createLive(app, send, () => myId, isShell, () => amHost());
   // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
-  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({ root: app, openSettings: (section) => settingsDialog.open(section), myId: () => myId, moreItems: () => moreItems(false) });
+  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({
+    root: app,
+    openSettings: (section) => settingsDialog.open(section),
+    myId: () => myId,
+    settings: { sections: settingsDialog.sections, setInPage: settingsDialog.setInPage },
+    // PH1: the Me tab's head is my picture and name; a tap opens the profile menu (name, picture, theme).
+    meHead: () => {
+      const head = el('button', { type: 'button', class: 'ph-me-head' }, avatarNode(myAvatar, 'ph-me-avatar'), el('b', {}, myName));
+      head.addEventListener('click', () => document.querySelector<HTMLButtonElement>('.profile-btn')?.click());
+      return head;
+    },
+  });
+  if (phoneRoom) settingsDialog.setRedirect((section) => phoneRoom.openMe(section));
   phoneRoom?.setCams(seatCams);
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
   // "⋯ More → Games" on a computer (card 6): the games hall opens next to the 🎮 pressed, so an invisible one waits
@@ -1143,7 +1161,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let tipJar: { fill: number; size: number; boost: string | null } | null = null;
   /** Where a side-game note points: the games button that shows (the rail's 🎮 on a computer, else the toolbar's / ⋯). */
   const gamesAnchor = (): HTMLElement =>
-    ['#dock-game', '#game-btn', '#strip-more', '#ph-shorts-more'].map((sel) => document.querySelector<HTMLElement>(sel)).find((e) => e && e.getBoundingClientRect().width > 0) ?? $('#game-btn');
+    ['#dock-game', '#game-btn', '#ph-tab-games', '#ph-shorts-more'].map((sel) => document.querySelector<HTMLElement>(sel)).find((e) => e && e.getBoundingClientRect().width > 0) ?? $('#game-btn');
   function soloContext(): SoloRoom {
     const mine = members.find((m) => m.id === myId);
     const self = mine ? personOf(mine) : personOf({ name: myName, avatar: myAvatar });
@@ -1183,7 +1201,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
     // The Shorts bar's 🎮 (0.9.91.13): there a game opens as a free window.
-    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton],
+    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton, ...(phoneRoom ? [phoneRoom.gamesButton] : [])],
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
@@ -1402,9 +1420,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const playIntro = () => {
     if (!introPending || !intro) return;
     introPending = false;
-    introOver = intro.then(({ INTRO_CSS, createIntro }) => {
+    // PH1: the sound plays on the shared context (woken by the "Enter room" tap), started on the same frame as the
+    // picture; not running within 150 ms (no tap, a phone that refused) = the picture alone, never the sound late.
+    introOver = Promise.all([intro, runningAudio()]).then(([{ INTRO_CSS, createIntro }, audio]) => {
       if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
-      const node = createIntro(document, t('introText'));
+      const node = createIntro(document, t('introText'), audio ?? false);
       $('.player-wrap').append(node);
       return new Promise<void>((done) => {
         const gone = new MutationObserver(() => {
