@@ -95,13 +95,24 @@ if (!process.argv.includes('--live')) {
     }
   } else console.log('skip the extension (apps/extension/dist not built)');
 } else {
+  // A network error (no HTTP answer at all) is tried again up to twice, 3 s apart: on 13 Nov 2026 one fetch from the
+  // runner failed ("fetch failed") seconds after wait-live.mjs had read the same address 8 times. Any HTTP answer,
+  // right or wrong, counts at once.
   const get = async (url) => {
-    try {
-      const res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(15_000) });
-      return { status: res.status, text: await res.text() };
-    } catch (error) {
-      return { status: 0, text: String(error) };
+    let last = '';
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(15_000) });
+        return { status: res.status, text: await res.text() };
+      } catch (error) {
+        last = String(error);
+        if (attempt < 3) {
+          console.log(`  (${url}: ${last}; trying again)`);
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
     }
+    return { status: 0, text: last };
   };
   for (const origin of [site.origin, ...site.aliases]) {
     const version = await get(`${origin}/api/version`);

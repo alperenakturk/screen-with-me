@@ -1729,7 +1729,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **The site's address (card R3-3, `docs/internal/custom-domain.md`):** one value, `site.config.json` (`origin` +
   `aliases`), read by `scripts/site-config.mjs`; the extension build (`SITE_URL`, `isSiteOrigin`, `sitePatterns`,
   `homepage_url`, site matches), the site build (`%SITE_ORIGIN%` og:image, `__SITE__` in `site.ts`, the generated
-  `/domain.js` for the static pages), CI's live checks and the monitor follow it. Never write the address anywhere else
+  `/domain.js` for the static pages), CI's live checks (`check-domain.mjs --live`: a network error with no HTTP answer is tried twice more, 3 s apart) and the monitor follow it. Never write the address anywhere else
   (`check-domain.mjs` fails). On an alias (not the shell) `main.ts` → lazy `domain-move.ts` carries the browser's
   saves once in `#handoff=` (accepted only with an alias referrer, move keys merged, other keys fill empty ones) and
   moves to the main address; harness `domain-move`. Moving to an own domain = the steps in that doc.
