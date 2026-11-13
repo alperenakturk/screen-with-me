@@ -11649,6 +11649,11 @@ html.ph-room:not([data-ph-tab='room']) .room :is(.together-strip, .ph-cams, [dat
   display: none;
 }
 
+/* PH1: no camera size presets on a phone (the camera row keeps one size). */
+html.ph-room .person-pop-sizes {
+  display: none;
+}
+
 /* Only the phone essentials in the Me tab: no "move to another device", sound volume, devices window or the
    computer's links (extension, thanks, licences). */
 .ph-me :is(.set-row:has(#settings-move, #settings-devices), .sound-volume-row, li:has(#about-extension, #about-thanks, #about-licenses)) {

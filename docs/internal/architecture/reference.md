@@ -731,7 +731,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
   device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
   `settingsDialog.setRedirect(openMe)`: any "open settings" on a phone lands on the Me tab. Not on a phone (computers
-  and tablets keep them): ⏩ Speed, camera size presets (`phone-cams.ts` removed), ✨ Recap, setting ⏰ Film time,
+  and tablets keep them): ⏩ Speed, camera size presets (hidden: `.person-pop-sizes`), ✨ Recap, setting ⏰ Film time,
   editing 👑 Room rules, the font, the Shorts ⋯ ♾ Feed and 🔁 Loop, the first-time tips, starting a screen share
   (watching one stays). **Sideways with a video:** `.ph-turn` = ⛶ Watch fullscreen · `#ph-side-chat` 💬 (the chat
   sheet, with an unread count) · `#ph-side-mic` 🎙; the tabs and the input row hide. Before the first video sideways
