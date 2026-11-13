@@ -4,6 +4,7 @@
 // stylesheet, loaded only when the game opens. It never takes the room's keys or the focus: its buttons don't keep
 // the focus after a click (so 1–8, Enter, P, V still reach the room), and it has no key handlers of its own.
 
+import { isPhone } from '../device.ts';
 import './snack-bar.css';
 import { gameHint } from './hint.ts';
 import {
@@ -602,7 +603,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
 
   // ---- The scene: a tap serves a customer ----
   const decorated = scene
-    .replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')
+    // QA3 review (13), PH2: a phone's low counter box (80 px in the Games tab) keeps the drawing's top, the SNACK BAR
+    // sign, in view above the "closed" note.
+    .replace('<svg ', `<svg preserveAspectRatio="${isPhone() ? 'xMidYMin' : 'xMidYMid'} slice" `)
     .replace('<g id="side-light">', `${Object.entries(BACKDROPS).map(([id, svg]) => `<g id="place-${id}" style="display:none">${svg}</g>`).join('')}<g id="side-light">`)
     .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`)
     // NG2: the shop front (wall, counter, its stripes) takes the place's colours (`.sb[data-place]` in snack-bar.css).
