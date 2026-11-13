@@ -175,6 +175,11 @@ html.phone.sideways #game-stage .ff:not(.duel) .ff-tray { grid-area: tray; align
   #game-stage .ff:not(.duel) .ff-key.enter, #game-stage .ff:not(.duel) .ff-key.back { font-size: 14px; }
   #game-stage .ff:not(.duel) .ff-legend-item { gap: 3px; }
   #game-stage .ff:not(.duel) .ff-cell.ff-swatch { width: 18px; height: 18px; }
+  /* QA3 review (15b): the spare height went into one gap above the keys; the legend now sits in the middle of it (its
+     three marks in two even lines: 13 px text cannot fit them on one line here). */
+  #game-stage .ff:not(.duel) .ff-legend { flex: none; margin-block: auto; display: grid; grid-template-columns: auto auto; justify-content: center; column-gap: 10px; }
+  #game-stage .ff:not(.duel) .ff-legend-item:last-child { grid-column: 1 / -1; justify-self: center; }
+  #game-stage .ff:not(.duel) .ff-tray { margin-top: 0; }
 }
 @container game (max-height: 480px) and (max-aspect-ratio: 1 / 1) {
   #game-stage .ff:not(.duel) .ff-row { height: 30px; }

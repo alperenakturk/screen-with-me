@@ -206,7 +206,14 @@ html.phone.sideways #game-stage .wg-album-cell { aspect-ratio: auto; height: 44p
   #game-stage .wg-album-long { display: none; }
   #game-stage .wg-album-short { display: inline; }
   #game-stage .wg-bar > button { flex: none; }
+  #game-stage .wg-state-word { display: none; }
 }
+/* QA3 review (12): a phone's bar too: 🌙 alone, the short album count and the acorns whole (it showed "Albu…" and a
+   bare 🌰). */
+html.phone #game-stage .wg-state-word { display: none; }
+html.phone #game-stage .wg-album-long { display: none; }
+html.phone #game-stage .wg-album-short { display: inline; }
+html.phone #game-stage .wg-seeds { flex: none; overflow: visible; }
 
 /* 0.9.97.119: the body in Matinee (a light theme) takes the room's tokens, like the How-to cards (THEMEG); the window
    sill itself reads ART-L's variables. Dark themes keep the game's own night colours above. */

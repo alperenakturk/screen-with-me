@@ -503,7 +503,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
   function draw(): void {
     const ctx = room();
     // GW play-through: in Turkish "▶ Büyüyor" left the seed count cut to "🌰…": while the film plays the pill is just ▶.
-    state.textContent = ctx.playing ? '▶' : t('paused');
+    // QA3 review (12): the word goes in a narrow bar (garden.css); the scene's sign says "Resting until the film plays".
+    const [icon, ...word] = t('paused').split(' ');
+    if (ctx.playing) state.textContent = '▶';
+    else state.replaceChildren(el('span', {}, icon ?? ''), el('span', { class: 'wg-state-word' }, ` ${word.join(' ')}`));
     state.setAttribute('aria-label', ctx.playing ? t('growing') : t('paused'));
     state.classList.toggle('on', ctx.playing);
     state.title = ctx.playing ? t('growing') : t('restingTitle');
