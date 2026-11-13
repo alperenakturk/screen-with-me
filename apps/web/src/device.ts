@@ -89,20 +89,56 @@ export function unlockOrientation(): void {
  * worked out again when the width changes. `<html class="sideways">` follows it (phone.css uses it, never the
  * orientation media query).
  */
-let sidewaysNow = innerWidth > innerHeight;
+let realSideways = innerWidth > innerHeight;
+let sidewaysNow = realSideways;
 let lastWidth = innerWidth;
+/** PH2: while a game is open in the phone's Games tab, the room stays upright however the phone is held. */
+let heldUpright = false;
+/** The last upright page size: held sideways, the upright column is laid out at it and scaled to the height. */
+let upright = realSideways ? null : { w: innerWidth, h: innerHeight };
 const turnListeners = new Set<(sideways: boolean) => void>();
-function checkTurn(): void {
-  if (innerWidth === lastWidth) return;
-  lastWidth = innerWidth;
-  const next = innerWidth > innerHeight;
+function applyTurn(): void {
+  const root = document.documentElement;
+  const turned = heldUpright && realSideways;
+  root.classList.toggle('upright-turned', turned);
+  if (turned) {
+    // Never seen upright (opened sideways): the screen's own short and long sides, less the browser's bars.
+    const w = upright?.w ?? Math.min(screen.width, screen.height);
+    const h = upright?.h ?? Math.max(screen.width, screen.height) - (Math.min(screen.width, screen.height) - innerHeight);
+    root.style.setProperty('--up-w', `${w}px`);
+    root.style.setProperty('--up-h', `${h}px`);
+    root.style.setProperty('--up-s', String(Math.min(1, innerHeight / h)));
+  } else for (const v of ['--up-w', '--up-h', '--up-s']) root.style.removeProperty(v);
+  const next = realSideways && !heldUpright;
   if (next === sidewaysNow) return;
   sidewaysNow = next;
-  document.documentElement.classList.toggle('sideways', next);
+  root.classList.toggle('sideways', next);
   for (const listener of turnListeners) listener(next);
+}
+function checkTurn(): void {
+  if (innerWidth !== lastWidth) {
+    lastWidth = innerWidth;
+    realSideways = innerWidth > innerHeight;
+    // Only a turn changes the width (the keyboard and the browser's bars change the height), so its height then is
+    // the page's real upright height.
+    if (!realSideways) upright = { w: innerWidth, h: innerHeight };
+  }
+  applyTurn();
 }
 addEventListener('resize', checkTurn);
 screen.orientation?.addEventListener('change', () => setTimeout(checkTurn, 120));
+
+/**
+ * PH2 (owner, 13 Nov 2026: "nothing happens when the phone is turned"): while `on`, the room is upright whatever the
+ * phone does. `isSideways()` stays false and `<html class="sideways">` stays off. Held sideways, `<html
+ * class="upright-turned">` lays the upright column out at its upright size, centred and scaled to the height
+ * (room.css). Releasing it brings the real orientation back.
+ */
+export function holdUpright(on: boolean): void {
+  if (on === heldUpright) return;
+  heldUpright = on;
+  applyTurn();
+}
 
 export function isSideways(): boolean {
   return sidewaysNow;
