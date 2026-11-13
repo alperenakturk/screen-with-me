@@ -201,6 +201,7 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
           <input id="name" maxlength="32" required autocomplete="nickname" data-i18n-placeholder="namePlaceholder" />
         </div>
         <button class="btn primary big" data-i18n="enterRoom"></button>
+        <p class="muted small touch-note" data-i18n="touchNote"></p>
         <p class="muted small" data-i18n="joinHint"></p>
       </form>
       <details class="join-info">

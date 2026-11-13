@@ -107,11 +107,14 @@ const SIZES = [
           roomName: document.getElementById('settings-room-name')?.textContent ?? '',
           version: document.getElementById('settings-version')?.textContent ?? '',
         }));
-        check(JSON.stringify(me.order) === JSON.stringify(ORDER) && me.shown && !me.dialog, `${where}: the Me tab shows every category in order, no window`, me);
+        check(JSON.stringify(me.order) === JSON.stringify(['me', 'room', 'sound', 'about']) && me.shown && !me.dialog, `${where}: the Me tab shows me, room, sound and about, no window`, me);
         check(me.roomName.length > 0 && me.roomName === (await page.textContent('.room-title-name')) && /^v\d/.test(me.version), `${where}: Me tab → Room has the room's name, About the version`, me);
-        await page.click('#settings-move');
-        const moveOpen = await page.waitForFunction(() => [...document.querySelectorAll('.dialog-backdrop:not([hidden]), dialog[open]')].some((d) => d.id !== 'settings-dialog'), null, { timeout: 6000 }).then(() => true, () => false);
-        check(moveOpen, `${where}: Me tab → Move to another device opens its window`);
+        // The phone essentials only: no Speed, Recap, Film time, Room rules, font or "move to another device".
+        const extra = await page.evaluate(() => ['#opt-font', '#opt-start', '#opt-hostonly', '#settings-move', '#opt-soundvolume', '#recap-open'].filter((sel) => {
+          const n = document.querySelector(`.ph-me ${sel}`);
+          return !!n && n.getBoundingClientRect().height > 0;
+        }));
+        check(extra.length === 0, `${where}: the Me tab holds only the essentials`, extra);
         await ctx.close();
         continue;
       }

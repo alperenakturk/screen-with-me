@@ -1,6 +1,7 @@
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
+import { isPhoneLayout } from '../device.ts';
 
 /**
  * Three short tips the first time someone enters a room (0.9.91.20, owner's choice for PDF item 1 "first-time
@@ -14,12 +15,11 @@ interface Tip {
   text: 'tips.invite' | 'tips.add' | 'tips.voice';
 }
 
-// The second anchor of each is the phone's (PH1): 🔗 in the input row invites, the Search tab adds a video, the input
-// row's 🎙 joins voice.
+// A phone has no first-time tips (PH1, phone essentials: the bottom tabs say it all).
 const TIPS: Tip[] = [
-  { anchors: ['#invite-btn', '#chat-invite'], text: 'tips.invite' },
-  { anchors: ['#media-input', '#ph-tab-search'], text: 'tips.add' },
-  { anchors: ['#voice-join', '#strip-mic'], text: 'tips.voice' },
+  { anchors: ['#invite-btn'], text: 'tips.invite' },
+  { anchors: ['#media-input'], text: 'tips.add' },
+  { anchors: ['#voice-join'], text: 'tips.voice' },
 ];
 
 const KEY = 'tipsSeen';
@@ -31,7 +31,7 @@ function visible(element: Element | null): element is HTMLElement {
 }
 
 export function showFirstTips(): void {
-  if (load(KEY) === '1') return;
+  if (load(KEY) === '1' || isPhoneLayout()) return;
   let step = 0;
   let bubble: HTMLElement | null = null;
   const shown = () => TIPS.filter((tip) => tip.anchors.some((sel) => visible(document.querySelector(sel))));

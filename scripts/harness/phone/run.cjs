@@ -121,7 +121,7 @@ const sheetName = (page) => page.evaluate(() => {
     const strip = await rect(page, '.together-strip');
     const video = await rect(page, '#theater');
     const toolNames = await page.locator('.ph-strip-tools button').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label')));
-    check(!!strip && Math.abs(strip.y - video.b) <= 2 && toolNames.length === 4, 'phone: the strip under the video holds four video tools', JSON.stringify({ toolNames, strip, video }));
+    check(!!strip && Math.abs(strip.y - video.b) <= 2 && toolNames.length === 3, 'phone: the strip under the video holds 📌 🔄 ⏭ (no ⏩ Speed on a phone)', JSON.stringify({ toolNames, strip, video }));
     const row = await page.evaluate(() => ['#chat-invite', '#chat-input', '#strip-mic', '#strip-cam', '#chat-send', '#chat-react'].map((s) => {
       const r = document.querySelector(s)?.getBoundingClientRect();
       return r && r.width > 0 ? Math.round(r.left) : -1;
@@ -142,13 +142,6 @@ const sheetName = (page) => page.evaluate(() => {
     await page.waitForTimeout(300);
     check((await page.textContent('#chat-list')).includes('hello from the phone') && (await phoneState(page)).visible['#strip-mic'], 'phone: sent; 🎙 📷 are back');
     check(!(await page.isVisible('.voice-ptt')), 'phone: push-to-talk (V key) hidden');
-    // Speed from the strip opens as a bottom sheet; a tap outside closes it.
-    await page.getByRole('button', { name: /Hız/ }).first().click();
-    await page.waitForTimeout(400);
-    const speed = await rect(page, '#speed-pop');
-    check(!!speed && speed.x >= -1 && Math.abs(speed.r - vw) <= 1 && Math.abs(speed.b - vh) <= 1 && speed.h > 40, 'phone: ⏩ Speed opens as a bottom sheet', JSON.stringify(speed));
-    await page.mouse.click(vw / 2, 30);
-    await page.waitForTimeout(300);
     // 😀 opens the emoji tray as a bottom sheet with "🖼 Resim gönder" in it; 😀 again closes it.
     await page.click('#chat-react');
     await page.waitForTimeout(400);
@@ -172,7 +165,7 @@ const sheetName = (page) => page.evaluate(() => {
     const hall = await rect(page, '.ph-panel[data-ph-panel=games]');
     const inHall = await page.evaluate(() => !!document.querySelector('.ph-panel[data-ph-panel=games] #game-menu:not([hidden])'));
     check(!!hall && Math.abs(hall.b - tabsBox.y) <= 1 && Math.abs(hall.y - video.b) <= 2 && inHall && (await page.locator('.hub-game').count()) >= 3, 'phone: the Games tab shows the hall between the video and the tabs', JSON.stringify(hall));
-    // Me tab: me, then the settings as cards (Me, My screen, Sound & camera, Room, About…), Recap; no settings window.
+    // Me tab: the phone essentials only (me, Save the room, sounds + the voice check, About); no settings window.
     await tab(page, 'Ben').click();
     await page.waitForTimeout(500);
     const me = await page.evaluate(() => ({
@@ -180,8 +173,8 @@ const sheetName = (page) => page.evaluate(() => {
       cards: [...document.querySelectorAll('.ph-me-card [data-sec]')].map((s) => s.dataset.sec),
       dialog: !!document.querySelector('#settings-dialog[open]'),
     }));
-    check(me.head.includes('Alex') && me.cards.length >= 4 && me.cards.includes('view') && me.cards.includes('about') && !me.dialog, 'phone: the Me tab = me + every settings category as a card', JSON.stringify(me));
-    check(await page.locator('.ph-me').getByRole('button', { name: /Özet/ }).isVisible(), 'phone: the Me tab has ✨ Recap');
+    check(me.head.includes('Alex') && me.cards.join() === 'me,room,sound,about' && !me.dialog, 'phone: the Me tab = me + Room, Sound and About', JSON.stringify(me));
+    check(!(await page.locator('.ph-me').getByRole('button', { name: /Özet/ }).count()), 'phone: no ✨ Recap on a phone');
     // A setting opened from elsewhere (the person menu's "Settings", a lab command) lands on the Me tab too.
     await tab(page, 'Oda').click();
     await page.evaluate(() => document.querySelector('#settings-open')?.click());

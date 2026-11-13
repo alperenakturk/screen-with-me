@@ -16,6 +16,25 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.127 — 13 Nov
+
+- The room on a phone is now laid out like an app, with four tabs at the bottom: 🎬 Room, 🔍 Search, 🎮 Games and
+  👤 Me. The video stays on top on every tab, and a reload keeps the tab you were on.
+- Room tab: under the video, the faces (tap them for the people list and Invite) and 📌 Pin, 🔄 Sync and ⏭ Skip; then
+  the chat with the room's activity in it; then one row to write in: 🔗 Invite, the message box, 🎙 and 📷, and 😀.
+  While you type, ➤ takes the place of 🎙 and 📷. 😀 holds the reactions and "🖼 Send an image".
+- Search tab: search or paste a link, and "Up next" (the queue) under it. An empty room has a "🔍 Search a video"
+  button that goes there.
+- Games tab: the games hall. Me tab: your picture and name, saving the room, sounds, "check before joining voice",
+  help, feedback, privacy and terms.
+- Phones get the essentials. Speed, today's recap, setting a film time, changing the room rules, the font, the Shorts
+  feed and loop buttons, camera sizes, the first-time tips and starting a screen share stay on computers and
+  tablets. A short line on the join card and the home page says so on phones and tablets.
+- A phone held sideways shows the video with ⛶ Watch fullscreen, 💬 Chat (with a count of new messages) and 🎙 beside
+  it. In the Shorts view 💬 shows the count too.
+- The phone's home page no longer offers the browser extension (it only works on a computer).
+- Entering a room, the welcome sound starts together with the picture, never late.
+
 ### 0.9.97.125 — 13 Nov
 
 - Picture Palace: the film reel and its ribbon no longer peek out between the room's panels (they are gone), and the

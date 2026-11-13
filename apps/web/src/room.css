@@ -11673,6 +11673,12 @@ html.ph-room:not([data-ph-tab='room']) .room :is(.together-strip, .ph-cams, [dat
   display: none;
 }
 
+/* Only the phone essentials in the Me tab: no "move to another device", sound volume, devices window or the
+   computer's links (extension, thanks, licences). */
+.ph-me :is(.set-row:has(#settings-move, #settings-devices), .sound-volume-row, li:has(#about-extension, #about-thanks, #about-licenses)) {
+  display: none !important;
+}
+
 /* A list row (sheets, Me): icon · label · a value on the right; 48 px high, no tile, no shadow. */
 .ph-row {
   display: flex;
@@ -11734,7 +11740,7 @@ html.ph-room .room .ph-empty-actions .btn {
   border-radius: 10px;
 }
 
-html.ph-room .room .empty .empty-steps {
+html.ph-room .room .empty :is(.empty-steps, #sync-test) {
   display: none;
 }
 
@@ -12552,14 +12558,6 @@ html.phone #shorts-add-form .feed-topic-row .btn {
   order: 0 !important;
 }
 
-/* Sizes chosen in the person sheet (0.9.92.8). */
-.ph-cam[data-size='small'] {
-  width: 96px;
-}
-
-.ph-cam[data-size='large'] {
-  width: min(230px, 58vw);
-}
 
 /* ==== Sideways without fullscreen (0.9.92.8, owner: "upright, or sideways in fullscreen; nothing by itself"): the
    video left at the screen's height; on the right only ⛶ "Watch fullscreen" (or "hold the phone upright"). The

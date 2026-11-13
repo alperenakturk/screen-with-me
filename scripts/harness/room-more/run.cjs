@@ -182,8 +182,8 @@ const shown = (page, selector) =>
   const voiced = await voicePage.waitForFunction(() => document.querySelector('.voice-check, .ip-notice') || document.querySelector('#voice-leave:not([hidden])'), null, { timeout: 5000 }).then(() => true, () => false);
   check(voiced, '🎙 on the rail of an empty room starts joining voice (check window or in voice)');
 
-  // Phone (PH1): no ⋯ at all; the same things live in the bottom tabs: Games is a tab, the Me tab holds the settings
-  // (Save the room, Room rules…) and ✨ Recap.
+  // Phone (PH1, phone essentials): no ⋯ at all; Games is a tab and the Me tab holds Save the room; Recap, Room rules
+  // and Film time stay on computers and tablets.
   const phone = await enter(devices['iPhone 13'], 'Pat');
   const tabs = await phone.locator('.ph-tabs [role=tab] .ph-tab-label').allTextContents();
   await phone.getByRole('tab', { name: 'Me', exact: true }).click();
@@ -193,7 +193,7 @@ const shown = (page, selector) =>
     secs: [...document.querySelectorAll('.ph-me .settings-sec')].map((x) => x.dataset.sec),
     recap: [...document.querySelectorAll('.ph-me .ph-row')].some((b) => /Recap/.test(b.textContent ?? '')),
   }));
-  check(tabs.join('|') === 'Room|Search|Games|Me' && !meTab.more && meTab.secs.includes('room') && meTab.secs.includes('rules') && meTab.recap, 'phone: no ⋯; Games is a tab, the Me tab holds Room, Room rules and Recap', JSON.stringify({ tabs, meTab }));
+  check(tabs.join('|') === 'Room|Search|Games|Me' && !meTab.more && meTab.secs.includes('room') && !meTab.secs.includes('rules') && !meTab.secs.includes('schedule') && !meTab.recap, 'phone: no ⋯; Games is a tab, the Me tab holds Save the room (no rules, film time or recap)', JSON.stringify({ tabs, meTab }));
 
   // QA2-A #8 (Planner): the room fills the window's height on a computer, with and without a video, and the page never
   // scrolls (the card and the side panel end at the window's foot, not ~100 px above it).

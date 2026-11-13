@@ -82,6 +82,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   monitor's bigger Snack Bar keeps its size.
 - [ ] 27. [Q1–Q6, 0.9.97.93 and .95] On a hotspot or the backup connection, and with a background tab, an idle table and
   five tabs of one room for 10 minutes: no "reconnecting", nothing "too many connections".
+- [ ] 27a. [PH1, 0.9.97.127] On your own phone: the four tabs at the bottom (Room, Search, Games, Me) each one tap;
+  typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
+  sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
+  computers…" under "Enter room".
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

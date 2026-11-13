@@ -203,19 +203,19 @@ async function enterRoom(page, room, name = 'Robin') {
   check(!/Ctrl|⌘/.test(cmdLabel) && cmdLabel.includes('🔎'), 'iPhone 13: the command box button says what it is, no keyboard shortcut', cmdLabel);
 
   // LABFAB: in the room an upright phone has no floating 🐞 (it covered the player row, chat names and the Shorts
-  // video): ⋯ More has a 🐞 tile that opens the drawer, ⋯ is ringed red on errors; held sideways a small 🐞 waits in
+  // video): the Me tab has a 🐞 row that opens the drawer, the Me tab is ringed red on errors (PH1); held sideways a small 🐞 waits in
   // the bottom right corner, clear of the video, its own bar and the rail (also in fullscreen).
   await enterRoom(pp, `lab-fab-${Date.now().toString(36)}`, 'Robin');
   await pp.evaluate(() => { document.querySelector('.first-tip, .tip-bubble')?.remove(); });
   check(!(await shown(pp, '.debug-fab')), 'iPhone 13 room: no floating 🐞 while upright');
   await pp.evaluate(() => window.dispatchEvent(new Event('swm-debug-error')));
-  check(await pp.evaluate(() => getComputedStyle(document.querySelector('#strip-more')).boxShadow.includes('229, 72, 77')), 'iPhone 13 room: ⋯ is ringed red while the lab has errors');
-  await pp.tap('#strip-more');
-  const labTile = await until(() => pp.$('.ph-sheet .ph-lab-tile'));
-  check(!!labTile && (await labTile.evaluate((b) => b.classList.contains('has-error'))), 'iPhone 13 room: ⋯ More has a red-ringed 🐞 Test Lab tile');
-  check(!!labTile && /·/.test(await labTile.innerText()), 'iPhone 13 room: the tile says there are errors in words, not only red', labTile && (await labTile.innerText()));
+  check(await pp.evaluate(() => getComputedStyle(document.querySelector('#ph-tab-me')).boxShadow.includes('229, 72, 77')), 'iPhone 13 room: the Me tab is ringed red while the lab has errors');
+  await pp.tap('#ph-tab-me');
+  const labTile = await until(() => pp.$('.ph-me .ph-lab-row'));
+  check(!!labTile && (await labTile.evaluate((b) => b.classList.contains('has-error'))), 'iPhone 13 room: the Me tab has a red-ringed 🐞 Test Lab row');
+  check(!!labTile && /·/.test(await labTile.innerText()), 'iPhone 13 room: the row says there are errors in words, not only red', labTile && (await labTile.innerText()));
   if (labTile) await labTile.tap();
-  check(!!(await until(() => shown(pp, '.lab-drawer'))), 'iPhone 13 room: the tile opens the drawer');
+  check(!!(await until(() => shown(pp, '.lab-drawer'))), 'iPhone 13 room: the row opens the drawer');
   // LAB3: in a room the drawer also lists the room's lines (long names such as "Clock difference (…)").
   const roomCols = await pp.evaluate(() => {
     const drawer = document.querySelector('.lab-drawer').getBoundingClientRect();

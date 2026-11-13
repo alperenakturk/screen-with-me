@@ -3,7 +3,6 @@ import { canShareSheet, isPhoneLayout, onPhoneLayout, onTurn } from '../device.t
 import { t, type I18nKey } from '../i18n.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { flashHint } from './hint.ts';
-import { phoneCamSize } from './phone-cams.ts';
 import { switchNote, watchCamVideo } from './cam-watch.ts';
 import type { SettingsSection } from './room-more.ts';
 
@@ -31,6 +30,8 @@ export interface PhoneRoomDeps {
   meHead: () => HTMLElement;
 }
 
+/** The settings categories the Me tab holds (the phone essentials). */
+const ME_SECTIONS = ['me', 'room', 'sound', 'about'];
 type Borrowed = { node: Element; parent: Node; next: Node | null };
 type Tab = 'room' | 'search' | 'games' | 'me';
 const TABS: [Tab, string, I18nKey][] = [
@@ -41,10 +42,7 @@ const TABS: [Tab, string, I18nKey][] = [
 ];
 const SECTION_TITLES: Record<string, I18nKey> = {
   me: 'settings.secMe',
-  view: 'settings.secView',
   room: 'settings.secRoom',
-  rules: 'settings.secRules',
-  schedule: 'settings.secSchedule',
   sound: 'settings.secSound',
   about: 'settings.secAbout',
 };
@@ -304,7 +302,9 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
 
   // 👤 Me: my avatar and name, then every settings category as a card, then the room's extras.
   function fillMe(): void {
-    const sections = deps.settings.sections();
+    // Phone essentials (Planner, 13 Nov 2026): me, saving the room, sounds and the voice check, and About. Speed,
+    // Recap, Film time, editing the Room rules and the font stay on computers and tablets.
+    const sections = deps.settings.sections().filter((sec) => ME_SECTIONS.includes(sec.dataset.sec ?? ''));
     lent = borrow(sections);
     const cards: HTMLElement[] = [];
     for (const sec of sections) {
@@ -312,9 +312,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       const card = el('div', { class: 'ph-me-card', 'data-me-card': sec.dataset.sec ?? '' }, ...(key ? [el('h4', { class: 'ph-me-title' }, t(key))] : []), sec);
       cards.push(card);
     }
-    const extras: HTMLElement[] = [];
-    if ($('#recap-open')) extras.push(row('✨', t('phone.more.recap'), press('#recap-open')));
-    extras.push(...labRow());
+    const extras = labRow();
     meBody.replaceChildren(deps.meHead(), ...cards, ...(extras.length ? [el('div', { class: 'ph-me-card' }, ...extras)] : []));
     deps.settings.setInPage(true);
   }
@@ -334,14 +332,13 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     'div',
     { class: 'ph-strip-tools' },
     stripTool('📌', 'tool.pin', '#pin-btn'),
-    stripTool('⏩', 'phone.plus.speed', '#speed-btn'),
     stripTool('🔄', 'tool.sync', '#sync-all'),
     stripTool('⏭', 'skip', '#skip'),
   );
   $('.together-strip')?.append(stripTools);
   addEventListener('langchange', () => {
     for (const button of stripTools.querySelectorAll<HTMLElement>('.ph-strip-tool')) {
-      const key = ({ '#pin-btn': 'tool.pin', '#speed-btn': 'phone.plus.speed', '#sync-all': 'tool.sync', '#skip': 'skip' } as Record<string, I18nKey>)[button.dataset.press ?? ''];
+      const key = ({ '#pin-btn': 'tool.pin', '#sync-all': 'tool.sync', '#skip': 'skip' } as Record<string, I18nKey>)[button.dataset.press ?? ''];
       if (key) button.title = button.ariaLabel = t(key);
     }
     tabBar.setAttribute('aria-label', t('phone.tabs'));
@@ -452,7 +449,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
         });
       }
       if (tile.parentElement !== camRow) camRow.append(tile);
-      tile.dataset.size = phoneCamSize(id);
       const person = root.querySelector<HTMLElement>(`#voice-people .voice-face[data-voice-id="${CSS.escape(id)}"]`)?.closest<HTMLElement>('.together-person');
       const name = id === deps.myId() ? t('voice.me') : (person?.title.split(' · ')[0] ?? '');
       tile.querySelector('.ph-cam-name')!.textContent = name;
@@ -465,7 +461,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const people = $('#voice-people');
   // The voice card redraws the faces on every change: put the pictures back each time.
   if (people) new MutationObserver(placeCams).observe(people, { childList: true });
-  addEventListener('swm-phcam-size', () => placeCams());
 
   // Tapping a face opens the person menu (a bottom sheet here): their camera goes on top of it, big.
   let lastFace: string | null = null;
@@ -588,9 +583,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     const inviteRow = row('🔗', t('phone.more.invite'), () => invite($('#ph-shorts-more')!));
     rows.push(
       row('＋', t('shorts.add'), press('#shorts-add')),
-      row('♾', $('#shorts-feed-label')?.textContent || t('feed.short'), press('#shorts-feed')),
       row('🎮', t('tool.game'), press('#shorts-game')),
-      row('🔁', t('shorts.loop'), press('#shorts-loop'), roomLoop() ? '✓' : undefined),
       inviteRow,
       row('⚙️', t('tab.settings'), () => {
         closeSheet();
@@ -601,7 +594,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     );
     openSheet({ name: 'shorts-more', nodes: rows });
   }
-  const roomLoop = () => $('#shorts-loop')?.getAttribute('aria-pressed') === 'true';
 
   // The newest message from someone else shows in the bar for a few seconds (the chat itself is one tap away).
   let toastTimer = 0;

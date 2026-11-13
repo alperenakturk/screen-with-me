@@ -1,8 +1,7 @@
-// Card LAB3: a phone held sideways. (1) The first-time tips never cover "Watch fullscreen": held sideways they wait
-// hidden and come back when the phone is upright. (2) An iPhone SE's empty room fits sideways: "No video yet", the steps
-// and "Run a sync test" all inside the screen, nothing cut off, and the message box's hint whole. (3) QA2-A: the invite
-// window and Settings fit a sideways phone (iPhone SE, Galaxy S9+): the invite needs no scrolling, every Settings
-// category is inside its column, and the long settings list shows a fade at its foot.
+// Card LAB3 + PH1: a phone held sideways. (1) A phone has no first-time tips; sideways with a video shows "Watch
+// fullscreen". (2) An iPhone SE's empty room fits sideways: "No video yet" inside the screen, nothing cut off, and the
+// message box's hint whole. (3) QA2-A: the invite window fits a sideways phone (iPhone SE, Galaxy S9+) without
+// scrolling, and Settings opens the Me tab beside the video, inside the screen.
 //
 //   built site on wrangler dev (CI):  npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //                                     node scripts/harness/phone-sideways/run.cjs http://localhost:8787
@@ -55,7 +54,7 @@ async function enter(page, room, name, tips) {
     await page.waitForTimeout(800);
     const fit = await page.evaluate(() => {
       const wrap = document.querySelector('.player-wrap').getBoundingClientRect();
-      const parts = ['#sync-test', '.room .empty h2, .room .empty h3, .room .empty strong'].map((s) => document.querySelector(s)).filter(Boolean);
+      const parts = ['.room .empty h2, .room .empty h3, .room .empty strong'].map((s) => document.querySelector(s)).filter(Boolean);
       const box = (e) => e.getBoundingClientRect();
       const inside = parts.every((e) => {
         const r = box(e);
@@ -63,7 +62,7 @@ async function enter(page, room, name, tips) {
       });
       return { inside, parts: parts.length, wrap: [wrap.top, wrap.bottom].map(Math.round), vh: innerHeight, scroll: document.documentElement.scrollHeight <= innerHeight + 1 };
     });
-    check(fit.parts >= 1 && fit.inside, 'iPhone SE sideways, empty room: the heading and "Run a sync test" are inside the screen', JSON.stringify(fit));
+    check(fit.parts >= 1 && fit.inside, 'iPhone SE sideways, empty room: the heading is inside the screen', JSON.stringify(fit));
     check(fit.scroll, 'iPhone SE sideways, empty room: the page does not scroll', JSON.stringify(fit));
     const hint = await page.evaluate(() => {
       const i = document.querySelector('#chat-input');
@@ -77,7 +76,7 @@ async function enter(page, room, name, tips) {
     await ctx.close();
   }
 
-  // ---- (1) The tips wait while the phone is sideways ----
+  // ---- (1) A phone has no first-time tips (PH1, phone essentials); sideways with a video shows "Watch fullscreen" ----
   {
     const room = `side-tip-${Date.now().toString(36)}`;
     const friend = await browser.newContext();
@@ -86,7 +85,7 @@ async function enter(page, room, name, tips) {
     const ctx = await browser.newContext({ ...se });
     const page = await ctx.newPage();
     await enter(page, room, 'Alex', true);
-    check(!!(await until(() => tipShown(page))), 'upright: the first tip shows');
+    check(!(await until(() => tipShown(page), 3000)), 'phone: no first-time tip');
     // Something to watch, so sideways shows the video and "Watch fullscreen".
     await fp.evaluate(() => document.querySelector('#sync-test')?.click());
     await until(() => page.evaluate(() => !!document.querySelector('.room.has-item')));
@@ -99,10 +98,6 @@ async function enter(page, room, name, tips) {
       return r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
     });
     check(!!turn, 'sideways with a video: "Watch fullscreen" shows', turn);
-    check(!(await tipShown(page)), 'sideways: the tip waits hidden');
-    if (turn) check(await page.evaluate(({ x, y }) => !document.elementFromPoint(x, y)?.closest('.first-tip'), turn), 'sideways: nothing of the tip over "Watch fullscreen"');
-    await page.setViewportSize(se.viewport);
-    check(!!(await until(() => tipShown(page), 4000)), 'upright again: the tip comes back');
     await ctx.close();
     await friend.close();
   }
@@ -141,7 +136,7 @@ async function enter(page, room, name, tips) {
         dialog: !!document.querySelector('#settings-dialog[open]'),
       };
     });
-    check(set.tab === 'me' && set.secs >= 6 && !set.dialog && set.box && set.box.top >= 0 && set.box.bottom <= set.vh && set.box.right <= set.vw && set.box.left > set.vw / 3, `${label} sideways: Settings opens the Me tab beside the video, every category inside the screen`, JSON.stringify(set));
+    check(set.tab === 'me' && set.secs === 4 && !set.dialog && set.box && set.box.top >= 0 && set.box.bottom <= set.vh && set.box.right <= set.vw && set.box.left > set.vw / 3, `${label} sideways: Settings opens the Me tab beside the video, inside the screen`, JSON.stringify(set));
     await ctx.close();
   }
 

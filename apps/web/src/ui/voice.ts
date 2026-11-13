@@ -16,7 +16,6 @@ import { CAM_KEY, CAM_NAME, applySpeaker, devicePicks, openCam, openMic, remembe
 import { camStates, markSwitching, switchNote, watchCamVideo } from './cam-watch.ts';
 import { setIcon } from './icons.ts';
 import type { ExtVoice } from './voice-ext.ts';
-import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { debugHooks, labFail, labPeer, labText, type LabText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
@@ -518,8 +517,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
     for (const button of quick.map((q) => q.live)) {
       if (!button) continue;
-      // The phone's faces strip only shows it while someone streams (sharing a screen from a phone is rare).
-      button.hidden = !liveCard || liveCard.hidden || (!streamer && (!canShare || button.id === 'strip-live'));
+      // A phone only shows it while someone streams, to watch (PH1, phone essentials: no starting a screen share).
+      button.hidden = !liveCard || liveCard.hidden || (!streamer && (!canShare || isPhoneLayout() || button.id === 'strip-live'));
       setIcon(button, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
       button.classList.toggle('on', mine || !!me?.watching);
       // Phones held sideways show it only while someone streams (phone.css, 4B dock).
@@ -689,19 +688,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       items.push(el('label', { class: 'person-pop-volume' }, el('span', {}, `🔊 ${t('voice.volume')}`), range, value));
       items.push(button(s.m ? `🔊 ${t('voice.unmuteFor')}` : `🔇 ${t('voice.muteFor')}`, () => setSound(member, { m: !s.m })));
     }
-    if (isPhoneLayout() && member.voice?.cam) {
-      // A phone (0.9.92.8, owner: "the sizes did nothing"): the presets size this person's picture in the camera row.
-      const now = phoneCamSize(member.id);
-      const sizes = (['small', 'medium', 'large'] as const).map((size) => {
-        const b = el('button', { type: 'button', class: size === now ? 'person-pop-size on' : 'person-pop-size', 'aria-pressed': String(size === now) }, t(`voice.size.${size}`));
-        b.addEventListener('click', () => {
-          setPhoneCamSize(member.id, size);
-          closeMenu();
-        });
-        return b;
-      });
-      items.push(el('div', { class: 'person-pop-sizes', role: 'group', 'aria-label': t('voice.size') }, el('span', {}, `↔ ${t('voice.size')}`), ...sizes));
-    } else if (tiles.has(member.id) && camWindow.isFree()) {
+    // PH1 (phone essentials): a phone has no size presets for a camera; the camera row keeps one size.
+    if (!isPhoneLayout() && tiles.has(member.id) && camWindow.isFree()) {
       // Every camera has its own window: small / medium / large instead of "show big".
       const now = camWindow.sizeOf(key);
       const sizes = (['small', 'medium', 'large'] as const).map((size) => {
@@ -713,7 +701,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         return b;
       });
       items.push(el('div', { class: 'person-pop-sizes', role: 'group', 'aria-label': t('voice.size') }, el('span', {}, `↔ ${t('voice.size')}`), ...sizes));
-    } else if (tiles.has(member.id)) {
+    } else if (!isPhoneLayout() && tiles.has(member.id)) {
       // Me too (0.9.90.5): my own camera can be the big one.
       items.push(button(pinned === key ? `📌 ${t('voice.unpin')}` : `📌 ${t('voice.pin')}`, () => (pinned = pinned === key ? null : key)));
     }
