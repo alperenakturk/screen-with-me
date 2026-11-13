@@ -28,8 +28,8 @@ games' tip jar, cuttings and badges.
 - Window Garden: in a wide, low window (an upright tablet's panel under the video) and on a sideways phone the window
   sill stands beside the pot's card with the album underneath; Water and Stub's lamp stay inside their card. In a
   narrow bar the album count and the acorns show whole.
-- Snack Bar: the cinema line gets its own row in a narrow window, and a sideways phone shows the whole counter with
-  its sign.
+- Snack Bar: the cinema line gets its own row in a narrow window; on a sideways phone the counter keeps its sign in
+  view and the game shows at full size (it was scaled down, its text under 13 px).
 - Five Frames: in a tall, narrow window the legend sits in the middle of the free space above the keys.
 
 ### 0.9.97.125 — 13 Nov
