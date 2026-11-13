@@ -538,7 +538,9 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   }
 
   function personCard(seat: 0 | 1, person: GamePerson | null): void {
-    const box = app.querySelector<HTMLElement>(`#seat-${seat}`)!;
+    // 0.9.97.134: a state that arrives just after the table was closed finds no seat (state-matrix saw the page error).
+    const box = app.querySelector<HTMLElement>(`#seat-${seat}`);
+    if (!box) return;
     const mark = MARKS[seat];
     const turn = !!state && state.game.winner === null && state.game.turn === mark && state.seats.every((s) => s !== null);
     box.className = `xox-player mark-${mark}${turn ? ' turn' : ''}${person && !person.online ? ' away' : ''}${person?.bot ? ' bot' : ''}`;
