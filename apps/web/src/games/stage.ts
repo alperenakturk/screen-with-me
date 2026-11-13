@@ -857,7 +857,9 @@ export function createGameStage(opts: StageOptions) {
   };
   new ResizeObserver(queueFit).observe(frame);
   // A new phase (lobby → question → podium) changes what has to fit.
-  new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true });
+  // 0.9.97.134: something shown or hidden too (Snack Bar's `fitRows` hides the stands that do not fit after the window
+  // was scaled for more of them: without a new fit the game stayed shrunk, its text under 11 px on an upright tablet).
+  new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
   // Classics changed its screen (picker ↔ a board): the free window takes that screen's size.
   body.addEventListener('swm-game-size', () => {
     if (mode === 'float') placeFloat();
