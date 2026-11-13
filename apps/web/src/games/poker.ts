@@ -106,6 +106,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   /** A targeted move waiting for me to pick a rival. */
   let arming: PokerMove | null = null;
   let raiseTo = 0;
+  /** PH2: the raise amounts are open above the buttons (a phone's Games tab only; kept across renders). */
+  let amountsOpen = false;
   let lastTurnKey = '';
   let lastTick = 0;
   let lastPhase = '';
@@ -420,13 +422,30 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
         return b;
       };
       const raise = el('button', { type: 'button', class: 'btn pk-raise' }, raiseTo >= o.maxTo ? t('poker.allIn') : t('poker.raise', { n: raiseTo }));
-      raise.addEventListener('click', () => send({ t: 'act', a: 'raise', to: raiseTo }));
+      raise.addEventListener('click', () => {
+        amountsOpen = false;
+        send({ t: 'act', a: 'raise', to: raiseTo });
+      });
+      // PH2: on a phone's Games tab the amounts (quick chips + slider) open above the buttons from ± (poker.css);
+      // elsewhere `.pk-amounts` is `display: contents` and ± is hidden, so nothing changes there.
+      const amountsToggle = el('button', { type: 'button', class: 'btn pk-amount-open', 'aria-label': t('poker.raiseTo'), 'aria-expanded': String(amountsOpen) }, '±');
+      amountsToggle.addEventListener('click', () => {
+        amountsOpen = !amountsOpen;
+        row.classList.toggle('amounts-open', amountsOpen);
+        amountsToggle.setAttribute('aria-expanded', String(amountsOpen));
+      });
+      row.classList.toggle('amounts-open', amountsOpen);
       row.append(
+        amountsToggle,
         el(
           'div',
           { class: 'pk-raise-box' },
-          el('div', { class: 'pk-quick' }, quick(t('poker.min'), min), quick(t('poker.halfPot'), s.currentBet + Math.ceil(s.pot / 2)), quick(t('poker.potSize'), s.currentBet + s.pot), quick(t('poker.allIn'), o.maxTo)),
-          el('label', { class: 'pk-slider' }, slider, amount),
+          el(
+            'div',
+            { class: 'pk-amounts' },
+            el('div', { class: 'pk-quick' }, quick(t('poker.min'), min), quick(t('poker.halfPot'), s.currentBet + Math.ceil(s.pot / 2)), quick(t('poker.potSize'), s.currentBet + s.pot), quick(t('poker.allIn'), o.maxTo)),
+            el('label', { class: 'pk-slider' }, slider, amount),
+          ),
           raise,
         ),
       );

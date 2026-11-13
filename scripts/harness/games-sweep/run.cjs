@@ -45,6 +45,10 @@ const GAMES = {
   // ⚔️ Five Frames Duel: waiting alone, then racing with Sam (a socket from this script) on the board and the tray.
   duel: { table: 'duel' },
   duelPlay: { table: 'duel', race: true },
+  // PH2: the running tables (the lab's fake friend sits, I press Start; Draw & Guess: I pick a word and draw).
+  quizPlay: { table: 'quiz', start: true },
+  drawPlay: { table: 'draw', start: true, pick: true },
+  pokerPlay: { table: 'poker', start: true },
   snack: { solo: 'snack' },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
@@ -319,6 +323,29 @@ async function windowPasses(page, label, g, phone) {
           }
           check(playing, `${label}: the battle against Stub starts`);
           await wait(600);
+        }
+        if (g.start) {
+          // PH2: a fake friend sits (Test Lab, local server only), I press Start, the lobby goes; Draw & Guess: I pick
+          // the first word offered (the first drawer is the host).
+          await page.waitForFunction(() => window.__swmLab?.list?.().some((c) => c.id === 'games.friend'), null, { timeout: 15000 }).catch(() => {});
+          await run('games.friend').catch(() => null);
+          const started = await page
+            .waitForFunction(
+              () => {
+                if (!document.querySelector('#game-stage :is(.draw-lobby, .pk-lobby)')) return true;
+                document.querySelector('#game-stage :is(.lobby-setup .btn.primary, .pk-go):not(:disabled)')?.click();
+                return false;
+              },
+              null,
+              { timeout: 10000, polling: 400 },
+            )
+            .then(() => true, () => false);
+          check(started, `${label}: the game starts with the lab's fake friend`);
+          if (g.pick) {
+            await page.waitForFunction(() => !!document.querySelector('#game-stage .draw-overlay:not([hidden]) .btn.primary'), null, { timeout: 8000 }).catch(() => {});
+            await page.evaluate(() => document.querySelector('#game-stage .draw-overlay:not([hidden]) .btn.primary')?.click());
+          }
+          await wait(1500);
         }
         let sam = null;
         if (g.race) {
