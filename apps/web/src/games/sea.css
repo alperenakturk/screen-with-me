@@ -153,21 +153,6 @@
 @keyframes sea-enter { from { opacity: 0; transform: translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { .sea[data-phase='play'] .sea-sea { animation: none; } }
 
-/* GPRO (layout audit): a sideways phone shows one sea at a time at the full height on the left (the switch picks
-   which), the bar, the switch, Stub's line and the buttons in a column on its right. */
-html.phone.sideways #game-stage .sea {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'seas bar' 'seas switch' 'seas ref' 'seas actions'; gap: 6px 12px; padding: 6px 10px;
-}
-html.phone.sideways #game-stage .sea-bar { grid-area: bar; }
-html.phone.sideways #game-stage .sea-switch { grid-area: switch; }
-html.phone.sideways #game-stage .sea-ref { grid-area: ref; align-self: center; flex-wrap: wrap; }
-html.phone.sideways #game-stage .sea-actions { grid-area: actions; }
-html.phone.sideways #game-stage .sea-seas { grid-area: seas; height: 100%; aspect-ratio: 0.92; grid-template-columns: minmax(0, 1fr); }
-html.phone.sideways #game-stage .sea:not([data-phase='place']) .sea-switch, html.phone.sideways #game-stage .sea.watching .sea-switch { display: flex; }
-html.phone.sideways #game-stage .sea[data-view='mine'] .sea-theirs, html.phone.sideways #game-stage .sea[data-view='theirs'] .sea-mine { display: none; }
-html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-mine { display: flex; }
-
 /* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the seas take the
    full height on the left; the bar, Stub's line and the buttons stand in a column on the right. */
 @container game (min-aspect-ratio: 16 / 10) {

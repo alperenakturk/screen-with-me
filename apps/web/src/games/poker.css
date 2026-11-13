@@ -10,7 +10,7 @@
   .pk-moves > :first-child:not(.pk-move) { grid-column: 1 / -1; }
   /* The table's small print, a step bigger: in this box the game is about its own size, never above. */
   :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-quick .game-chip, .pk-moves-label, .pk-move-name, .pk-street) { font-size: 13px; }
-  .pk-move small { font-size: 12px; }
+  .pk-move small { font-size: 13px; }
 }
 /* The lobby card is as wide as the other tables' there (its two halves: lobby.css "one lobby family"). */
 @container game (min-aspect-ratio: 16 / 10) {
@@ -74,3 +74,5 @@
 /* Elsewhere the amounts stay where they were (their wrapper adds no box) and ± is not there. */
 .pk-amounts { display: contents; }
 .pk-amount-open { display: none; }
+/* The ♠ "hand ranks" help is a 24 px target with a 13 px glyph on a computer too (the running-table sweep, PH2). */
+.pk-help { min-width: 24px; min-height: 24px; font-size: 13px; }

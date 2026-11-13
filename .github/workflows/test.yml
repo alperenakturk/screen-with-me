@@ -310,6 +310,10 @@ jobs:
       - name: Game window head
         run: node scripts/harness/game-window-head/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
+      - name: Games sweep on a 360 × 640 phone (the Games tab, EN + TR)
+        # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
+        run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+
       - name: Snack Bar and motion
         run: |
           # Card SB3: Snack Bar's economy (migration, buy modes, upgrades, staff, eight stands, new places).

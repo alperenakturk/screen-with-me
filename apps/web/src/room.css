@@ -9215,8 +9215,6 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   font-size: 24px;
 }
 
-html.phone.sideways #game-stage .pk-lobby > .pk-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; max-width: none; }
-
 .pk-rules {
   max-width: 540px;
   margin: 0;
@@ -12459,7 +12457,6 @@ html.phone #shorts-add-form .feed-topic-row .btn {
 .ph-fs-side > * {
   order: 0 !important;
 }
-
 
 /* ==== Sideways without fullscreen (0.9.92.8, owner: "upright, or sideways in fullscreen; nothing by itself"): the
    video left at the screen's height; on the right only ⛶ "Watch fullscreen" (or "hold the phone upright"). The

@@ -34,20 +34,6 @@
 /* The top line (players n/8, category, timer) belongs to the running game; the lobby's faces row says who is here. */
 #game-stage .draw-page.draw-lobby .draw-top { display: none; }
 
-/* GPRO (layout audit): a sideways phone gives the lobby card the whole width, drops the big badge and keeps the rules
-   to three lines (the "?" has them all), so the card fits the low screen at a readable size. */
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left,
-html.phone.sideways #game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex-basis: 100%; width: 100%; max-width: none; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay .lobby-intro > h3::before,
-html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { display: none; }
-/* QA2 (2): the rules are not cut ("…streak bonus.…" lost the 50:50 sentence): they wrap in full, a step smaller. */
-html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: none; font-size: 14px; line-height: 1.3; }
-/* Draw & Guess's lobby on a sideways phone: the canvas box gives the card the full height. */
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { height: 100%; aspect-ratio: auto; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay { padding: 8px 12px; }
-/* Quiz's lobby is two columns already: less padding so it fits the low screen. */
-html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-main { padding: 6px 10px; }
-html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-block: 4px; row-gap: 2px; }
 /* GPRO: in the lobby the white drawing paper behind the card showed in its rounded corners. */
 #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { background: transparent; border: 0; border-radius: 20px; }
 
@@ -66,10 +52,6 @@ html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-b
   box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
 }
 #game-stage .pk-lobby .pk-rules { margin: 0; color: var(--muted); }
-html.phone.sideways #game-stage .pk-lobby { width: 100%; padding: 8px 12px; }
-html.phone.sideways #game-stage .pk-lobby .lobby-intro > h3::before { display: none; }
-html.phone.sideways #game-stage .pk-lobby { gap: 6px; }
-html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-height: 1.3; }
 
 /* Card PROP, QA3: in the video's place (a wide, short box) the Draw & Guess and Quiz lobby cards are as wide as the
    other tables' (their two halves side by side: "one lobby family" below). */
@@ -204,3 +186,5 @@ html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-heig
 }
 #game-stage.in-tab .draw-tools .draw-color { width: 44px; height: 44px; }
 #game-stage.in-tab .draw-page:not(.draw-lobby) .draw-left:has(> .draw-tools:not([hidden])) + .draw-side :is(.draw-form, .draw-feed) { display: none; }
+/* The eraser swatch's ⌫ reads at 13 px (the running-table sweep, PH2). */
+.draw-color { font-size: 13px; }
