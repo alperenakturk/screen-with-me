@@ -4,7 +4,6 @@
 // stylesheet, loaded only when the game opens. It never takes the room's keys or the focus: its buttons don't keep
 // the focus after a click (so 1–8, Enter, P, V still reach the room), and it has no key handlers of its own.
 
-import { isPhone } from '../device.ts';
 import './snack-bar.css';
 import { gameHint } from './hint.ts';
 import {
@@ -527,6 +526,7 @@ const BUY_MODE_KEY = 'snackBar:buyMode';
 /** Below this height (in the game's own pixels) only three upgrade rows show. */
 const COMPACT_H = 470;
 const ROWS_COMPACT = 3;
+const SHORT_H = 420;
 /** Room kept for the "+N more" line when fitting the rows. */
 const MORE_RESERVE = 20;
 /** One tab plays at a time (two tabs would earn twice and overwrite each other's save). */
@@ -603,9 +603,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
 
   // ---- The scene: a tap serves a customer ----
   const decorated = scene
-    // QA3 review (13), PH2: a phone's low counter box (80 px in the Games tab) keeps the drawing's top, the SNACK BAR
-    // sign, in view above the "closed" note.
-    .replace('<svg ', `<svg preserveAspectRatio="${isPhone() ? 'xMidYMin' : 'xMidYMid'} slice" `)
+    // QA3 review (13), PH2, 0.9.97.134: a low or narrow counter box keeps the drawing's top right whole, where the
+    // SNACK BAR sign hangs (a low box crops the bottom, a narrow one the left).
+    .replace('<svg ', '<svg preserveAspectRatio="xMaxYMin slice" ')
     .replace('<g id="side-light">', `${Object.entries(BACKDROPS).map(([id, svg]) => `<g id="place-${id}" style="display:none">${svg}</g>`).join('')}<g id="side-light">`)
     .replace('</svg>', `${DECOR.map((d) => `<g id="decor-${d.id}" style="display:none">${DECOR_ART[d.id]}</g>`).join('')}</svg>`)
     // NG2: the shop front (wall, counter, its stripes) takes the place's colours (`.sb[data-place]` in snack-bar.css).
@@ -822,7 +822,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       draw();
     },
   );
-  head.append(how.button);
+  // 0.9.97.134: the ? sits right after the rate, so in a narrow window the pills wrap to a second line, never the ? alone.
+  head.insertBefore(how.button, rate.nextSibling);
   foot.insertBefore(restart, prestige);
 
   // Buttons never keep the focus: the room's keys and the message box stay as they were.
@@ -1284,7 +1285,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const rowH = first.offsetHeight + gap;
     // Everything but the list and the "+N more" line, which gets a fixed reserve (so showing it never changes the sum).
     const others = box.scrollHeight - list.offsetHeight - (more.hidden ? 0 : more.offsetHeight) + MORE_RESERVE;
-    const next = Math.max(ROWS_COMPACT, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
+    // 0.9.97.134: a very short window (a sideways tablet's free window, under 420 px) keeps two stands rather than
+    // shrink the text below 13 px; the "+N more" line says the rest come with a bigger window.
+    const least = height < SHORT_H ? 2 : ROWS_COMPACT;
+    const next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
     if (next !== rowRoom) {
       rowRoom = next;
       draw();

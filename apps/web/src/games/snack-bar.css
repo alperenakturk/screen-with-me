@@ -29,20 +29,25 @@
 .sb button:disabled { cursor: default; }
 
 .sb-head { display: flex; align-items: center; gap: 8px; min-height: 30px; min-width: 0; }
+/* 0.9.97.134 (B2): in a narrow window the rate and the pills move to a second line instead of shrinking into "+0…". */
+.sb-head { flex-wrap: wrap; column-gap: 6px; row-gap: 4px; }
+.sb-head .sb-pill { padding-inline: 7px; }
 .sb-coin { display: inline-flex; width: 26px; height: 26px; flex: none; }
 .sb-coin.small { width: 16px; height: 16px; }
 .sb-coin svg, .sb-icon svg { width: 100%; height: 100%; display: block; }
 .sb-coins { flex: none; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-.sb-rate { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--sb-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+.sb-rate { flex: none; white-space: nowrap; color: var(--sb-gold); font-weight: 700; font-variant-numeric: tabular-nums; }
 .sb-gap { flex: 1; }
-.sb-pill { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--sb-muted); }
+.sb-pill { flex: none; font-size: 13px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: rgba(255, 255, 255, 0.08); color: var(--sb-muted); }
 /* GW: while the film plays the state pill is just ▶; it never shrinks into "…". */
 .sb-state { flex: none; }
 .sb-state.on { color: var(--sb-ink); background: var(--sb-gold); }
 .sb-together { color: #0d2a20; background: var(--sb-teal); }
 .sb-jar.on { color: var(--sb-ink); background: #ffd98a; }
 
-.sb-scene-box { position: relative; flex: none; }
+.sb-scene-box { position: relative; flex: 0 1 104px; min-height: 64px; }
+/* 0.9.97.134: the counter picture gives up height first (104 → 64 px) before the window scales the game's text down. */
+.sb-scene-box > .sb-scene { height: 100%; }
 .sb-scene {
   display: block; width: 100%; height: 104px; padding: 0; border: 0; border-radius: 10px; overflow: hidden;
   background: #120e27; box-shadow: inset 0 0 0 1px var(--sb-line);
@@ -196,7 +201,7 @@
   .sb-pop { display: none; }
 }
 /* A phone sheet: the scene bigger (the Design session's 108 px). */
-html.phone .sb-scene { height: 108px; }
+html.phone .sb-scene-box { flex-basis: 108px; }
 
 /* SB3: buy ×1 / ×10 / Max, the Upgrades panel (recipes and staff), the daily special and the menu bonus mark. */
 .sb-buybar { display: flex; align-items: center; gap: 8px; min-height: 30px; }
@@ -214,8 +219,9 @@ html.phone .sb-scene { height: 108px; }
 .sb-upgrades-open.ready::after {
   content: ''; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--sb-gold);
 }
-.sb-name-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.sb-name-line .sb-name { flex: 0 1 auto; }
+.sb-name-line { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6px; min-width: 0; }
+/* 0.9.97.134: a long name wraps (a -webkit-box flex item never did, it showed "Ice cream ca…"); the tag follows it. */
+.sb-name-line .sb-name { flex: 0 1 auto; min-width: 0; }
 .sb-tag { flex: none; font-size: 13px; font-weight: 800; color: var(--sb-gold); white-space: nowrap; }
 .sb-tag[hidden] { display: none; }
 .sb-row.special { box-shadow: inset 0 0 0 1px rgba(255, 198, 90, 0.5); background: rgba(255, 198, 90, 0.08); }
@@ -276,10 +282,9 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
   #game-stage .sb-badge { padding-block: 2px; }
 }
 @container game (max-width: 360px) and (max-height: 460px) {
-  #game-stage .sb-scene { height: 80px; }
+  #game-stage .sb-scene-box { flex-basis: 80px; }
   /* QA2: in the smallest window the stand names and lines stay on one line (two lines made the rows taller and the
      window then scaled the game's text below 13 px). */
-  #game-stage :is(.sb-name, .sb-level) { display: block; white-space: nowrap; text-overflow: ellipsis; }
   #game-stage .sb-row { min-height: 40px; gap: 8px; padding-block: 2px; }
   #game-stage .sb-price { min-height: 34px; min-width: 64px; padding-inline: 8px; }
   #game-stage .sb-panel { inset: 4px; padding: 10px 12px; gap: 4px; }
@@ -298,7 +303,7 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
 .sb-panel-upgrades > .sb-panel-close { position: sticky; top: 0; z-index: 1; flex: none; align-self: flex-end; margin: -6px -4px -32px 0; background: #2c2556; box-shadow: 0 2px 8px #0008; }
 
 @container game (max-width: 360px) and (max-height: 420px) {
-  #game-stage .sb-scene { height: 64px; }
+  #game-stage .sb-scene-box { flex-basis: 64px; }
   #game-stage .sb-row { min-height: 38px; }
 }
 
@@ -336,3 +341,13 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
 #game-stage.in-tab .sb .sb-scene { height: 80px; }
 /* The "closed" note keeps both lines but sits lower and thinner in that 80 px scene, under the SNACK BAR sign. */
 #game-stage.in-tab .sb .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }
+/* 0.9.97.134 (B2): in a short window the counter picture is at its lowest (64 px): the "closed" note keeps one line
+   and sits on the counter's edge, under the SNACK BAR sign. */
+@container game (max-height: 470px) {
+  #game-stage .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }
+  #game-stage .sb-rest small { display: none; }
+}
+/* ...and below 420 px the cinema line (its number and stars) gives its row to the stands. */
+@container game (max-height: 420px) {
+  #game-stage .sb-foot .sb-cinema { display: none; }
+}

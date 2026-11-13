@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.134 — 13 Nov
+
+- Snack Bar on a laptop and on a sideways tablet shows every text whole: the income per second and the 👥 bonus move
+  to a second line instead of ending in "…", long stand names wrap, and the SNACK BAR sign is never cut off at the top
+  or the side. In a very small window the game keeps two stands in view (the rest come with a bigger window) instead of
+  shrinking its text.
+
 ### 0.9.97.132 — 13 Nov
 
 - Sidelit as a home-screen app got better. On Android, share a video link from another app (YouTube's Share → Sidelit)

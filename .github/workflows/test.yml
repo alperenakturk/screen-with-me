@@ -333,6 +333,10 @@ jobs:
         # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
         run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
+      - name: Snack Bar whole on a laptop and a sideways tablet (EN + TR)
+        # 0.9.97.134 (B2): no text ends in "…" and the SNACK BAR sign is whole, idle and at its busiest.
+        run: GAMES=snack,snackBusy SIZES=laptop,tabland GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+
       # Card PWA1: the home-screen app (share target → a new room that plays the link, "Create room" shortcut, the screen
       # kept on while playing, the one-time iOS hint). Here for the webm the Tablets step serves on :5300.
       - name: Home-screen app
