@@ -1088,7 +1088,12 @@ export function createGameStage(opts: StageOptions) {
     if ((mode !== 'stage' && !stage.classList.contains('in-tab')) || !current || !opts.pauseVideo?.()) return;
     pausedAt = Date.now();
     // QA2: under the head, on the game's top (on the 🎮 it covered the tops of ?, 🎮 and Leave).
-    flashHint(head, t('game.pausedForGame'), 2800, true);
+    // 0.9.97.135: on a phone the Games tab shows a moment after the game opens (ui/phone-room.ts), so the note waits for
+    // its head to be on screen; before that it measured an empty box and fell over the video strip (never over a
+    // player: YouTube's rules).
+    const note = () => flashHint(head, t('game.pausedForGame'), 2800, true);
+    if (!stage.classList.contains('in-tab')) return note();
+    requestAnimationFrame(() => requestAnimationFrame(() => head.getBoundingClientRect().height > 0 && note()));
   }
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */

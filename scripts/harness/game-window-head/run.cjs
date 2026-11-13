@@ -574,6 +574,14 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     });
     check(where.videoAbove && where.tabsBelow, `${L} PH2: the video stays above the game, the tabs below it`, where);
     check(where.paused, `${L} PH2: the table paused the video`, where);
+    // 0.9.97.135: the "Video paused for the game" note shows under the game's head, never over the video strip.
+    const note = await page.evaluate(() => {
+      const n = [...document.querySelectorAll('.hint-bubble')].pop()?.getBoundingClientRect();
+      const v = document.querySelector('.player-wrap').getBoundingClientRect();
+      const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
+      return n ? { top: Math.round(n.top), video: Math.round(v.bottom), head: Math.round(h.bottom) } : null;
+    });
+    check(!note || (note.top >= note.video && note.top >= note.head - 1), `${L} 135: the paused note sits under the game's head, not over the video`, note);
     if (L === 'phone-land') {
       check(s.upright === 'held', 'phone-land PH2: opened sideways, the room is held upright', s);
       // 0.9.97.135 (B2 on .132): the strip shows, "▶ Back to video" under it (never over the player) goes back to the

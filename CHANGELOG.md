@@ -22,6 +22,7 @@ games' tip jar, cuttings and badges.
   "Play now".
 - A game opened while the phone is sideways: the small video above it is easy to see, and a "▶ Back to video" bar
   under it goes back to the room. The sides around the upright screen take your colour theme instead of black.
+- On a phone, "Video paused for the game" shows under the game's top bar, never over the small video.
 
 ### 0.9.97.132 — 13 Nov
 
