@@ -1685,6 +1685,25 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   unticked, its exact lines shown (`technicalInfo`: site / extension version, browser · OS · window, transport,
   `diagLast` from `/connection`). Privacy policy `#feedback`. Tests: unit `feedback.test.ts`, e2e `feedback.mjs` (live:
   refusals only), harness `scripts/harness/feedback/run.cjs`.
+- **Block for me and Report (card SAFE1, 0.9.97.131):** for anyone, on each other person (never on me or a TV):
+  the person menu (`voice.ts` `openPersonMenu`: `🔇 Block for me` / `🔈 Unblock`, `🚩 Report`, from `VoiceRoom.isBlocked`
+  / `toggleBlock` / `report`) and the People list rows (`people.ts` `PeopleSafety`: `.safety-block` with `aria-pressed`,
+  `.safety-report`; on a phone a face opens this list as the People sheet, so the rows are the phone's way in).
+  **Block** (`ui/blocks.ts` `createBlocks`) is local only: `block:<room>` in storage = `personOf(member)` → shown name
+  (the server's per-room person key, else name + avatar, so a reload or their second tab stays blocked); nothing is sent.
+  `room.ts` passes `blocks.has` to `createChatPanel`, which keeps a blocked person's lines in memory but never draws them
+  (unblock redraws; no unread count, toast, Shorts bubble or sound), and drops their `reaction`s. **Report** (lazy chunk
+  `ui/report.ts`, own `TEXT` EN / TR checked by `check-game-text.mjs`, styles from `feedback.css`): reason chips
+  `REPORT_REASONS` (spam / abuse / sexual / other), an optional note, "See what is sent", a link to
+  `terms.html#abuse`; posts `{kind:'report', reason, room, name, lines, note?}` to `/api/feedback` with the chat's
+  `linesBy(member, REPORT_LINES)` (their last 5 lines). The Worker tries `validateReport` first (room must match
+  `ROOM_ID_PATTERN`; name ≤ 40, lines ≤ 5 × 300, note ≤ 500; every other field dropped, so no `id` / `pk` / `cid` / IP
+  can pass) and `buildReportIssue` (everything fenced and `neutralise`d, labels `report` + `report:<reason>`), with the
+  same Origin check, body cap, burst binding and `FeedbackGate` counts as feedback. Privacy policy `#report`. Test Lab:
+  `safety.state` (status tab) writes the blocked names and the last report's result. Tests: unit `feedback.test.ts`,
+  harness `scripts/harness/safety/run.cjs` (CI `checks`: computer + phone in Turkish, a third person still sees
+  everything, reload, unblock, the report body, the Worker accepting / refusing, the 24-hour Turkish chat clock).
+  Chat times follow the site's language (`tr-TR` / `en-US`), not the browser's.
 - **The site's address (card R3-3, `docs/internal/custom-domain.md`):** one value, `site.config.json` (`origin` +
   `aliases`), read by `scripts/site-config.mjs`; the extension build (`SITE_URL`, `isSiteOrigin`, `sitePatterns`,
   `homepage_url`, site matches), the site build (`%SITE_ORIGIN%` og:image, `__SITE__` in `site.ts`, the generated

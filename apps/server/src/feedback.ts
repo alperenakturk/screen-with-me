@@ -6,8 +6,10 @@
 // - per address `FEEDBACK_PER_IP_HOUR` per hour and for everyone `FEEDBACK_PER_DAY` per UTC day (`FeedbackGate`, one
 //   small object), on top of the `FEEDBACK_LIMIT` burst binding; the address is only a short hash, kept for an hour;
 // - the text goes into a code fence with mentions / issue links neutralised (`buildIssue`); no IP, room or names.
+// - SAFE1: a 🚩 Report (`kind: 'report'`, `buildReportIssue`) adds the room id, the shown name and their last chat
+//   lines, never an id or IP; same Origin check, body cap and limits.
 import { DurableObject } from 'cloudflare:workers';
-import { FEEDBACK_BODY_MAX, FEEDBACK_PER_DAY, FEEDBACK_PER_IP_HOUR, buildIssue, validateFeedback, type FeedbackAnswer } from '@swm/shared/feedback';
+import { FEEDBACK_BODY_MAX, FEEDBACK_PER_DAY, FEEDBACK_PER_IP_HOUR, buildIssue, buildReportIssue, validateFeedback, validateReport, type FeedbackAnswer } from '@swm/shared/feedback';
 import { readCapped } from './fallback.ts';
 
 /**
@@ -40,8 +42,10 @@ export async function sendFeedback(request: Request, url: URL, env: Env, ipKey: 
   } catch {
     parsed = null;
   }
-  const feedback = validateFeedback(parsed);
-  if (!feedback) return answer({ error: 'bad' }, 400);
+  // SAFE1: a room's 🚩 Report takes the same path and the same limits, labelled `report`.
+  const report = validateReport(parsed);
+  const feedback = report ? null : validateFeedback(parsed);
+  if (!report && !feedback) return answer({ error: 'bad' }, 400);
   const key = await ipKey();
   if (env.FEEDBACK_LIMIT && !(await env.FEEDBACK_LIMIT.limit({ key })).success) return answer({ error: 'busy' }, 429);
   // Security R4-7: without the token nothing is counted (an "off" answer must not use up the day's slots).
@@ -49,7 +53,7 @@ export async function sendFeedback(request: Request, url: URL, env: Env, ipKey: 
   const gate = env.FEEDBACK.get(env.FEEDBACK.idFromName('gate'));
   const allowed = await gate.fetch('https://gate/take', { method: 'POST', body: key });
   if (allowed.status !== 200) return answer({ error: 'busy' }, 429);
-  const issue = buildIssue(feedback);
+  const issue = report ? buildReportIssue(report) : buildIssue(feedback!);
   const github = await fetch(`https://api.github.com/repos/${env.FEEDBACK_REPO}/issues`, {
     method: 'POST',
     headers: {

@@ -7,7 +7,14 @@ import { t } from '../i18n.ts';
  * Kişiler sekmesi: odadakiler, oda yöneticisi (👑), yönetici için "çıkar" butonu
  * ve çıkarılanlar listesi (yasağı kaldırmak için).
  */
-export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessage) => void, makeHost: (member: Member) => void = () => {}) {
+/** SAFE1: "Block for me" and "Report" on each other person's row (the People tab, and the phone's People sheet). */
+export interface PeopleSafety {
+  isBlocked: (member: Member) => boolean;
+  toggleBlock: (member: Member) => void;
+  report: (member: Member) => void;
+}
+
+export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessage) => void, makeHost: (member: Member) => void = () => {}, safety?: PeopleSafety) {
   const list = root.querySelector<HTMLUListElement>('#members')!;
   const hint = root.querySelector<HTMLElement>('#host-hint')!;
   const bansBox = root.querySelector<HTMLElement>('#bans')!;
@@ -29,6 +36,15 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
         // Hand the host role to them (0.9.93.2).
         const crown = el('button', { type: 'button', class: 'icon-btn make-host', title: t('makeHost'), 'aria-label': t('makeHost') }, '👑');
         crown.addEventListener('click', () => makeHost(member));
+        const blocked = !!safety?.isBlocked(member);
+        const blockLabel = t(blocked ? 'safety.unblock' : 'safety.block');
+        const block = el('button', { type: 'button', class: `icon-btn safety-block${blocked ? ' on' : ''}`, title: blockLabel, 'aria-label': `${blockLabel}: ${member.name}`, 'aria-pressed': String(blocked) }, blocked ? '🔈' : '🔇');
+        block.addEventListener('click', () => {
+          safety?.toggleBlock(member);
+          render();
+        });
+        const report = el('button', { type: 'button', class: 'icon-btn safety-report', title: t('safety.report'), 'aria-label': `${t('safety.report')}: ${member.name}` }, '🚩');
+        report.addEventListener('click', () => safety?.report(member));
         return el(
           'li',
           { class: isMe ? 'person me' : 'person', 'data-id': member.id },
@@ -40,6 +56,8 @@ export function createPeoplePanel(root: HTMLElement, send: (message: ClientMessa
           member.live ? el('span', { class: 'host-badge', title: t('live.badge') }, '🔴') : '',
           member.voice ? el('span', { class: 'host-badge', title: t('voice.inVoice') }, member.voice.mic ? '🎙' : '🔇') : '',
           iAmHost && !isMe && !member.tv ? crown : '',
+          safety && !isMe && !member.tv ? block : '',
+          safety && !isMe && !member.tv ? report : '',
           iAmHost && !isMe ? kick : '',
         );
       }),

@@ -16,6 +16,17 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.131 — 13 Nov
+
+- 🔇 **Block for me**: in a person's menu (tap their face; on a phone, the People list) you can now block someone for
+  yourself. Their messages, pictures and emojis disappear from your screen only; they are not told and still see
+  yours. It stays in place after a reload, for that room, and 🔈 Unblock in the same place brings everything back.
+- 🚩 **Report**: the same menu lets anyone report a person to the Sidelit team. Pick a reason, add a note if you like,
+  and see exactly what is sent first: the room, their shown name and their last few chat lines. Nothing else about
+  you or them. Reports are looked at within 72 hours. The privacy policy explains what a report holds and how long it
+  is kept.
+- On a Turkish screen, chat and room activity times show as 24-hour (14:05), whatever language the browser uses.
+
 ### 0.9.97.130 — 13 Nov
 
 - On a phone, games now play inside the 🎮 Games tab: the video stays on top and the tabs at the bottom. Another tab

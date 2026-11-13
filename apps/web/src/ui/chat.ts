@@ -1,7 +1,7 @@
-import { CHAT_MAX_LENGTH, cleanChatText, type ChatMessage, type ClientMessage, type Member } from '@swm/shared/protocol';
+import { CHAT_MAX_LENGTH, cleanChatText, personOf, type ChatMessage, type ClientMessage, type Member } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { avatarNode } from './avatar.ts';
-import { t, type I18nKey } from '../i18n.ts';
+import { lang, t, type I18nKey } from '../i18n.ts';
 import { confirmDialog } from './confirm.ts';
 import { load, save } from '../storage.ts';
 import { linkify } from './links.ts';
@@ -27,6 +27,8 @@ export function createChatPanel(
   onUnread: (count: number) => void,
   /** A link in a message was clicked (the room asks first, then opens a new tab). */
   openLink: (url: string) => void,
+  /** SAFE1: someone I blocked for me; their lines stay in memory (an unblock shows them again) but are not drawn. */
+  isBlocked: (by: Member) => boolean = () => false,
 ) {
   const list = root.querySelector<HTMLUListElement>('#chat-list')!;
   const form = root.querySelector<HTMLFormElement>('#chat-form')!;
@@ -191,7 +193,8 @@ export function createChatPanel(
     document.body.append(backdrop);
   }
 
-  const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // The site's language decides the clock, not the browser's (owner, 13 Nov 2026: a Turkish screen showed "12:18 PM").
+  const time = (at: number) => new Date(at).toLocaleTimeString(lang() === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 
   function node(line: Line, prev?: Line): HTMLLIElement {
     if (line.kind === 'system') {
@@ -245,14 +248,22 @@ export function createChatPanel(
   }
 
   function render(): void {
-    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...lines.map((line, i) => node(line, lines[i - 1])));
+    const visibleLines = lines.filter(shown);
+    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...visibleLines.map((line, i) => node(line, visibleLines[i - 1])));
     drawEvents();
     scrollToEnd();
   }
 
+  const shown = (line: Line) => line.kind !== 'chat' || line.message.by.id === myId() || !isBlocked(line.message.by);
+
   function push(line: Line, countsAsUnread: boolean): void {
+    if (!shown(line)) {
+      lines.push(line);
+      if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
+      return;
+    }
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
-    const prev = lines.at(-1);
+    const prev = [...lines].reverse().find(shown);
     lines.push(line);
     if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
     list.append(node(line, prev));
@@ -294,6 +305,13 @@ export function createChatPanel(
     render,
     /** R13: write to this person privately (the person menu's "Message privately"); null = the room chat again. */
     privateTo: setPrivate,
+    /** SAFE1: the last chat lines this person sent (for a report), oldest first; pictures read as 🖼️. */
+    linesBy(member: Member, count: number): string[] {
+      return lines
+        .filter((line): line is Extract<Line, { kind: 'chat' }> => line.kind === 'chat' && personOf(line.message.by) === personOf(member))
+        .slice(-count)
+        .map((line) => (line.message.image ? `🖼️ ${line.message.text}`.trim() : line.message.text));
+    },
     /** The private message could not go (they left): back to the room chat. */
     privateGone(): void {
       setPrivate(null);

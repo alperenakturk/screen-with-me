@@ -97,6 +97,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   computers…" under "Enter room".
 - [ ] 27b. [AV1, 0.9.97.129] On your phone: open the character picker (join card or profile), scroll down, tap a
   character: the list stays where it was and the one you tapped stays in view.
+- [ ] 27c. [SAFE1, 0.9.97.131] In a real room with a friend: tap their face → 🔇 Block for me; their new messages and
+  emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
+  back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in
+  the private feedback repository. On the phone the same two buttons are on their row in the People list.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

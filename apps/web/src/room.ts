@@ -94,6 +94,8 @@ import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
 import { createPhoneRoom } from './ui/phone-room.ts';
 import { loadChunk } from './ui/lazy.ts';
+import { createBlocks } from './ui/blocks.ts';
+import { REPORT_LINES } from '@swm/shared/feedback';
 import type { createTvRoom } from './ui/tv-room.ts';
 /** "Send feedback" (card 9): its own lazy chunk (texts, styles), so the room page stays within its size budget. */
 function openFeedbackDialog(opener: HTMLElement | null): void {
@@ -926,11 +928,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     edit: () => amHost() || !roomSettings.lockQueue,
   });
   const chatBadge = $('#chat-badge');
+  // SAFE1: "Block for me" (local, per room); the chat keeps their lines but draws none of them.
+  const blocks = createBlocks(roomId);
   const chat = createChatPanel(app, send, () => myId, (count) => {
     chatBadge.hidden = count === 0;
     chatBadge.textContent = count > 9 ? '9+' : String(count);
-  }, (url) => void openExternalLink(url, () => isShell && postToExtension({ type: 'open-ok' })));
-  const people = createPeoplePanel(app, send, (member) => void askMakeHost(member));
+  }, (url) => void openExternalLink(url, () => isShell && postToExtension({ type: 'open-ok' })), (by) => blocks.has(by));
+  blocks.onChange(() => {
+    chat.render();
+    people.render();
+  });
+  // SAFE1: the same two actions in the People tab / the phone's People sheet and in the person menu.
+  const safety = {
+    isBlocked: (member: Member) => blocks.has(member),
+    toggleBlock: (member: Member) => flashHint($('#chat-input'), t(blocks.toggle(member) ? 'safety.blocked' : 'safety.unblocked', { name: member.name }), 6000),
+    report: (member: Member) =>
+      void loadChunk(() => import('./ui/report.ts')).then((m) =>
+        m?.openReport({ room: roomId, name: member.name, lines: chat.linesBy(member, REPORT_LINES), blocked: blocks.has(member), done: (result) => blocks.reported(result) }),
+      ),
+  };
+  const people = createPeoplePanel(app, send, (member) => void askMakeHost(member), safety);
   /** Sağ üstteki profil düğmesi (kendi avatarım); kimlik değişince yeniden çizilir. */
   let drawProfileButton = () => {};
   // 👤 Profil sağ üstte (en sağda); basınca ad, avatar, tema ve özet düğmenin altında açılan menüde.
@@ -1106,6 +1123,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
     makeHost: (member) => void askMakeHost(member),
     messagePrivately: (member) => openPrivate(member),
+    ...safety,
   }, extVoiceModule?.ExtVoice ?? null);
   // Settings → Sound & camera (card SIMP1): the devices window and "check before joining voice" (`opt:voiceCheck`, the
   // same key as the check window's own box). Nothing here opens the microphone before "Join voice" is pressed.
@@ -1658,7 +1676,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         games.setTables(message.tables, { ...(message.opened ? { opened: message.opened } : {}), ...(message.closed ? { closed: message.closed } : {}), ...(message.by ? { by: message.by } : {}) });
         break;
       case 'reaction': {
-        if (!settings.options.showReactions) break;
+        // SAFE1: nothing from someone I blocked for me.
+        if (!settings.options.showReactions || (message.by.id !== myId && blocks.has(message.by))) break;
         // Shorts görünümünde emoji atanın avatarından yükselir (koltuğu yoksa videonun üstünde).
         // In the Shorts view emojis rise from the seats beside the video, never over it (YouTube's rules, 0.9.91.18).
         if (shortsOn) {
@@ -1676,6 +1695,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         break;
       case 'chat': {
         const { by } = message.message;
+        // SAFE1: someone I blocked: kept (an unblock shows it) but no bubble, toast, sound or unread.
+        if (by.id !== myId && blocks.has(by)) {
+          chat.add(message.message);
+          break;
+        }
         // Shorts bubbles and corner messages show a picture as 🖼️ (+ its caption).
         const plain = message.message.image ? `🖼️ ${message.message.text}`.trim() : message.message.text;
         const text = message.message.to ? `🔒 ${plain}` : plain;
