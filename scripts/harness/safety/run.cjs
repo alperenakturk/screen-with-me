@@ -54,6 +54,33 @@ const check = (ok, label, extra = '') => {
     return row;
   };
 
+  /**
+   * B2 on .132: the report dialog on a phone held sideways (a 390 px tall screen): the reason chips stay on one row (it
+   * scrolls sideways if needed) and the note box keeps room for at least two lines of text.
+   */
+  const sidewaysReport = async (page, lang) => {
+    const d = await page.evaluate(() => {
+      const dialog = document.querySelector('.report-dialog');
+      const area = dialog?.querySelector('textarea');
+      if (!dialog || !area) return null;
+      const r = dialog.getBoundingClientRect();
+      const cs = getComputedStyle(area);
+      const line = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.25;
+      const inner = area.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      const rows = new Set([...dialog.querySelectorAll('.fb-chip')].map((c) => Math.round(c.getBoundingClientRect().top))).size;
+      const send = dialog.querySelector('#report-send')?.getBoundingClientRect();
+      return {
+        sideways: document.documentElement.classList.contains('sideways'),
+        lines: Math.round((inner / line) * 10) / 10,
+        rows,
+        inView: r.top >= -1 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1,
+        send: !!send && send.bottom <= innerHeight + 1 && send.height >= 24,
+      };
+    });
+    await page.screenshot({ path: `${OUT}/safety-report-sideways-${lang}.png` });
+    check(!!d && d.sideways && d.rows === 1 && d.lines >= 2 && d.inView && d.send, `the report dialog on a sideways phone (${lang}): reasons on one row, the note box ≥ 2 lines, Send in view`, JSON.stringify(d));
+  };
+
   const alex = await enter('Alex');
   const sam = await enter('Sam');
   const pat = await enter('Pat');
@@ -98,6 +125,17 @@ const check = (ok, label, extra = '') => {
   await kim.screenshot({ path: `${OUT}/safety-report-phone-tr.png` });
   check(kimDialog?.title === 'Sam adlı kişiyi bildir' && kimDialog.inView && !kimDialog.sideways, 'the report dialog fits a phone (Turkish title)', JSON.stringify(kimDialog));
   check(kimDialog && !kimDialog.note && !kimDialog.tip, 'no leftover "blocked" note over it, and no "use Block" tip when Sam is already blocked', JSON.stringify(kimDialog));
+  // Turned sideways with the dialog open.
+  await kim.setViewportSize({ width: 844, height: 390 });
+  await kim.waitForFunction(() => document.documentElement.classList.contains('sideways'), null, { timeout: 5000 }).catch(() => {});
+  await kim.waitForTimeout(500);
+  await sidewaysReport(kim, 'tr');
+  // A small phone turned (an iPhone SE: 667 × 375): the Turkish reasons no longer fit one row and scroll instead.
+  await kim.setViewportSize({ width: 667, height: 375 });
+  await kim.waitForTimeout(500);
+  await sidewaysReport(kim, 'tr-se');
+  await kim.setViewportSize({ width: 390, height: 664 });
+  await kim.waitForTimeout(500);
   await kim.keyboard.press('Escape');
   await kim.keyboard.press('Escape');
   await kim.evaluate(() => document.querySelector('.hint-bubble')?.remove());
@@ -198,6 +236,16 @@ const check = (ok, label, extra = '') => {
   // TR clock (owner, 13 Nov 2026): a Turkish screen shows 24-hour times, whatever the browser's own language.
   const kimTimes = await kim.evaluate(() => [...document.querySelectorAll('#chat-list time')].map((t) => t.textContent));
   check(kimTimes.length > 0 && kimTimes.every((t) => /^\d{2}[:.]\d{2}$/.test(t)), 'a Turkish screen shows chat times as 24-hour "14:05"', JSON.stringify(kimTimes.slice(0, 3)));
+
+  // The same in English, on a phone that joins already held sideways (an iPhone 13 turned: 844 × 390).
+  const lee = await enter('Lee', { ...devices['iPhone 13 landscape'] });
+  await lee.waitForFunction(() => document.documentElement.classList.contains('sideways'), null, { timeout: 5000 }).catch(() => {});
+  await lee.evaluate(() => [...document.querySelectorAll('.together-person')].find((b) => b.textContent.includes('Pat'))?.click());
+  await lee.waitForSelector('#members .person .safety-report', { timeout: 5000 }).catch(() => {});
+  await lee.evaluate(() => [...document.querySelectorAll('#members .person')].find((li) => li.textContent.includes('Pat'))?.querySelector('.safety-report')?.click());
+  await lee.waitForSelector('.report-dialog', { timeout: 5000 }).catch(() => {});
+  await lee.waitForTimeout(400);
+  await sidewaysReport(lee, 'en');
 
   await browser.close();
   console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ Block for me and Report work');
