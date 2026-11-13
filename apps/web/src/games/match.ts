@@ -785,7 +785,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       clearTimeout(howTimer);
       if (screen !== 'picker' && HOW_ART[screen as GameKind])
         howTimer = setTimeout(() => {
-          if (page.dataset.board === screen && !how) how = tableHowTo(app, `classics:${screen}:howSeen`, () => howCards(screen as GameKind), app.querySelector<HTMLElement>('.mt-bar'));
+          if (page.dataset.board === screen && !how) how = tableHowTo(app, `classics:${screen}:howSeen`, () => howCards(screen as GameKind));
         }, 450);
       page.dispatchEvent(new Event('swm-game-size', { bubbles: true }));
     }

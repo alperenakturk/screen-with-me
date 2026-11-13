@@ -149,7 +149,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   });
   const head = el('div', { class: 'ff-head' }, title, dayLabel, streak, el('span', { class: 'ff-gap' }), el('span', { class: 'ff-langs', role: 'group' }, ...langButtons));
 
-  const board = el('div', { class: 'ff-board', tabindex: '0', role: 'group' });
+  const board = el('div', { class: 'ff-board', tabindex: '0', role: 'group', 'data-takes-keys': '' });
   const rows = Array.from({ length: MAX_TRIES }, (_, i) => {
     const cells = Array.from({ length: WORD_LENGTH }, () => el('span', { class: 'ff-cell' }));
     const row = el('div', { class: 'ff-row' }, el('span', { class: 'ff-stub' }, String(i + 1)), el('span', { class: 'ff-cells' }, ...cells));
@@ -452,6 +452,29 @@ export function mountFiveFrames(root: HTMLElement): () => void {
         where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
         available: () => !!answer || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
         run: () => `${wordLang}: ${answer}`,
+      },
+      {
+        // Owner bug (0.9.97.126): T on the board switched on cinema mode. The board is `[data-takes-keys]`, so the room's
+        // shortcuts treat it as typing; this presses T, M, F and Space on it and reports what the room did.
+        id: 'fiveFrames.keys',
+        title: { en: 'Five Frames: room shortcuts stay quiet on the board', tr: 'Beş Kare: tahtada oda kısayolları çalışmasın' },
+        help: { en: 'Presses T, M, F and Space on the word board: no cinema mode, no fullscreen, and T M F land in the word (then they are cleared).', tr: 'Kelime tahtasında T, M, F ve Boşluk tuşlarına basar: sinema modu ya da tam ekran açılmaz, T M F kelimeye yazılır (sonra silinir).' },
+        tab: 'games',
+        where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
+        available: () => (!!list && !finished(game(), answer)) || { en: 'needs an unfinished word', tr: 'bitmemiş bir kelime gerekir' },
+        run: () => {
+          const before = typed;
+          const room = () => [document.documentElement.classList.contains('cinema-on'), !!document.fullscreenElement || !!document.querySelector('.fake-fs')];
+          const [cinema0, full0] = room();
+          board.focus({ preventScroll: true });
+          for (const key of ['t', 'm', 'f', ' ']) board.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+          const [cinema, full] = room();
+          const landed = typed.slice(before.length).toUpperCase();
+          typed = before;
+          draw();
+          const leak = cinema !== cinema0 || full !== full0;
+          return `${leak ? 'LEAK' : 'ok'}: cinema ${cinema ? 'on' : 'off'}, fullscreen ${full ? 'on' : 'off'}${leak ? ' (changed)' : ''}, letters "${landed}"`;
+        },
       },
       {
         id: 'fiveFrames.day',

@@ -39,7 +39,7 @@ import draw2Art from './art/tutorial/draw-2-draw.svg?raw';
 import draw3Art from './art/tutorial/draw-3-guess.svg?raw';
 import { tableHowTo } from './how-to-play.ts';
 import { resultCard, resultStub, showPointsResult } from './result.ts';
-import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
+import { langChoices, lobbyPlayers, lobbySplit, podium, settingsPanel } from './ui.ts';
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
 import { silence } from './silent.ts';
@@ -410,6 +410,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     // Üstteki pencere (lobi, kelime seçimi, tur sonu).
     overlay.replaceChildren();
     overlay.hidden = s.phase === 'draw';
+    overlay.classList.toggle('lobby-card', s.phase === 'lobby' || s.phase === 'over');
     // Lobby and podium need no canvas: the card takes the canvas's place at its own height (BHG: it was shrunk to fit).
     app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
     if (s.phase === 'over') showPointsResult(result, `draw:${gameId}`, s.players, s.host, me, { win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') }, () => send({ t: 'start' }));
@@ -435,9 +436,9 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
         ],
         s.host === me || !host ? null : host.name,
       );
-      if (s.phase === 'over') overlay.append(el('h3', {}, t('games.over')), podium(s.players));
-      else overlay.append(el('h3', {}, t('games.draw.title')), el('p', { class: 'draw-rules' }, t('draw.rules')), lobbyPlayers(s.players, me, s.host));
-      overlay.append(settings, go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online })));
+      // QA3 (one lobby family): what the game is on one side, the setup (settings, Start, the hint under it) on the other.
+      const intro = s.phase === 'over' ? [el('h3', {}, t('games.over')), podium(s.players)] : [el('h3', {}, t('games.draw.title')), el('p', { class: 'draw-rules' }, t('draw.rules')), lobbyPlayers(s.players, me, s.host)];
+      overlay.append(...lobbySplit(intro, [settings, go, el('p', { class: 'muted small' }, online < 2 ? t('draw.needTwo') : t('draw.ready', { n: online }))]));
     } else if (s.phase === 'choose') {
       if (s.drawer === me && choices.length) {
         overlay.append(
@@ -645,7 +646,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     { art: draw1Art, title: tx('how1'), line: tx('how1Line') },
     { art: draw2Art, title: tx('how2'), line: tx('how2Line') },
     { art: draw3Art, title: tx('how3'), line: tx('how3Line') },
-  ], app.querySelector<HTMLElement>('.draw-top'));
+  ]);
   return () => {
     offLab();
     ref.destroy();

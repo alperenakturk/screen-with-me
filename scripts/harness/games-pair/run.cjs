@@ -296,7 +296,7 @@ async function poker(browser) {
   await run(alex.page, 'games.open.poker');
   await until(() => alex.page.evaluate(() => !!document.querySelector('#game-stage .pk')));
   check(await join(sam), 'poker: Sam gets the invite card');
-  check(!!(await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .pk-lobby-seats li').length >= 2))), 'poker: both are seated in the lobby');
+  check(!!(await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .pk-lobby .lobby-player:not(.lobby-free)').length >= 2))), 'poker: both are seated in the lobby');
   await until(() => alex.page.evaluate(() => {
     const b = [...document.querySelectorAll('#game-stage .pk-lobby .btn.primary')].find((b) => !b.disabled);
     b?.click();
