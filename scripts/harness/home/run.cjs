@@ -71,7 +71,8 @@ const ours = () => location.port === '8787' || location.port === '8789' || locat
           artBeside: art.left >= text.right - 1,
           artAbove: art.bottom <= text.top + 1,
           slogan: Math.round(parseFloat(getComputedStyle(document.querySelector('.hm-slogan')).fontSize)),
-          how: shown('#how .hm-steps') && shown('.hm-ext'),
+          how: shown('#how .hm-steps'),
+          ext: shown('.hm-ext'),
         };
       });
       check(m.featBottom <= m.vh && m.sw <= m.vw, `${where}: the first screen fits (feature row on screen, nothing sideways)`, m);
@@ -83,7 +84,9 @@ const ours = () => location.port === '8787' || location.port === '8789' || locat
       check(wide ? m.artBeside : m.artAbove, `${where}: ${wide ? 'text left, art right' : 'the art on top'}`, { beside: m.artBeside, above: m.artAbove });
       const want = { 1920: 64, 1366: 64, 1180: 64, 820: 72, 390: 40 }[name];
       check(m.slogan >= want && m.slogan <= want + 8, `${where}: slogan ${want} px`, m.slogan);
-      check(m.how, `${where}: "How it works" has the steps and the extension card`);
+      check(m.how, `${where}: "How it works" has the steps`);
+      // PH1: the extension card only where an extension can be installed (not on a phone).
+      check(m.ext === (name !== '390'), `${where}: the extension card ${name === '390' ? 'hidden on a phone' : 'shows'}`, m.ext);
       check(errors.length === 0, `${where}: no console errors`, errors);
       // Card 15c: a laptop, a tablet and a phone showing the same moment; three different themed faces, two in voice.
       const art = await page.evaluate(() => {

@@ -106,15 +106,15 @@ const check = (ok, label, extra = '') => {
   await help.waitForSelector('.feedback-dialog', { timeout: 8000 }).then(() => check(true, 'Help → "Send feedback" opens the dialog'), () => check(false, 'Help → "Send feedback" opens the dialog'));
   check(!(await help.evaluate(() => location.hash)), 'the #feedback mark is cleared from the address');
 
-  // Phone: ⋯ → Profile → "Send feedback" (R9), the dialog as a bottom sheet that fits.
+  // Phone: Me tab → my name (the profile menu) → "Send feedback" (R9, PH1), the dialog as a bottom sheet that fits.
   const phone = await page(devices['iPhone 13']);
   await enter(phone, 'Pat');
-  await phone.click('#strip-more');
+  await phone.getByRole('tab', { name: 'Me', exact: true }).click();
   await phone.waitForTimeout(400);
-  await phone.click('.ph-sheet .ph-tile:has-text("Profile")');
+  await phone.click('.ph-me-head');
   await phone.waitForTimeout(400);
   const tile = (await phone.isVisible('#profile-feedback')) ? await phone.$('#profile-feedback') : null;
-  check(!!tile, 'phone ⋯ → Profile: "Send feedback" is there');
+  check(!!tile, 'phone Me tab → profile: "Send feedback" is there');
   if (tile) {
     await tile.click();
     await phone.waitForSelector('.feedback-dialog');

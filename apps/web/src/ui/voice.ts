@@ -519,8 +519,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const label = mine ? t('live.stop') : streamer ? t(me?.watching ? 'live.unwatch' : 'live.watch') : t('live.screen');
     for (const button of quick.map((q) => q.live)) {
       if (!button) continue;
-      // The phone's faces strip only shows it while someone streams (sharing a screen from a phone is rare).
-      button.hidden = !liveCard || liveCard.hidden || (!streamer && (!canShare || button.id === 'strip-live'));
+      // A phone only shows it while someone streams, to watch (PH1, phone essentials: no starting a screen share).
+      button.hidden = !liveCard || liveCard.hidden || (!streamer && (!canShare || isPhoneLayout() || button.id === 'strip-live'));
       setIcon(button, mine ? 'screen-stop' : streamer && !me?.watching ? 'screen-watch' : 'screen');
       button.classList.toggle('on', mine || !!me?.watching);
       // Phones held sideways show it only while someone streams (phone.css, 4B dock).
@@ -690,6 +690,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       items.push(el('label', { class: 'person-pop-volume' }, el('span', {}, `🔊 ${t('voice.volume')}`), range, value));
       items.push(button(s.m ? `🔊 ${t('voice.unmuteFor')}` : `🔇 ${t('voice.muteFor')}`, () => setSound(member, { m: !s.m })));
     }
+    // PH1 (phone essentials): the presets stay in the code but are hidden on a phone (room.css `.person-pop-sizes`).
     if (isPhoneLayout() && member.voice?.cam) {
       // A phone (0.9.92.8, owner: "the sizes did nothing"): the presets size this person's picture in the camera row.
       const now = phoneCamSize(member.id);

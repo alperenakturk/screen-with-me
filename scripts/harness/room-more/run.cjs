@@ -1,6 +1,6 @@
 // Simplify the room (card 6, owner's picks C + D): a fresh room shows only add a video, invite, chat and join voice;
 // "⋯ More" in the top bar holds games, film time, save the room, recap, shortcuts, sync test and room rules, each
-// opening from there; ⚙️ is "My screen" only; the phone's ⋯ lists the same things in the same order; after the first
+// opening from there; ⚙️ is "My screen" only; a phone has no ⋯ (PH1: the bottom tabs and the Me tab hold them); after the first
 // video the rest comes back. Needs the built site on a local server and a local video file:
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   node scripts/harness/room-more/run.cjs [http://localhost:8787] [http://localhost:5300/video.webm]
@@ -182,14 +182,18 @@ const shown = (page, selector) =>
   const voiced = await voicePage.waitForFunction(() => document.querySelector('.voice-check, .ip-notice') || document.querySelector('#voice-leave:not([hidden])'), null, { timeout: 5000 }).then(() => true, () => false);
   check(voiced, '🎙 on the rail of an empty room starts joining voice (check window or in voice)');
 
-  // Phone: ⋯ lists the same things in the same order (after the phone's own invite / queue / people).
+  // Phone (PH1, phone essentials): no ⋯ at all; Games is a tab and the Me tab holds Save the room; Recap, Room rules
+  // and Film time stay on computers and tablets.
   const phone = await enter(devices['iPhone 13'], 'Pat');
-  await phone.click('#strip-more');
+  const tabs = await phone.locator('.ph-tabs [role=tab] .ph-tab-label').allTextContents();
+  await phone.getByRole('tab', { name: 'Me', exact: true }).click();
   await phone.waitForTimeout(400);
-  const tiles = await phone.evaluate(() => [...document.querySelectorAll('.ph-sheet .ph-tile .ph-tile-label')].map((n) => n.textContent.trim()));
-  const shared = ['Games', 'Save the room', "Today's recap", 'Sync test', 'Room rules'];
-  const order = shared.map((l) => tiles.indexOf(l));
-  check(order.every((i, n) => i >= 0 && (n === 0 || i > order[n - 1])), 'phone ⋯: the same items in the same order, Games included (no rail on a phone)', JSON.stringify(tiles));
+  const meTab = await phone.evaluate(() => ({
+    more: !!document.querySelector('#strip-more, #chat-plus'),
+    secs: [...document.querySelectorAll('.ph-me .settings-sec')].map((x) => x.dataset.sec),
+    recap: [...document.querySelectorAll('.ph-me .ph-row')].some((b) => /Recap/.test(b.textContent ?? '')),
+  }));
+  check(tabs.join('|') === 'Room|Search|Games|Me' && !meTab.more && meTab.secs.includes('room') && !meTab.secs.includes('rules') && !meTab.secs.includes('schedule') && !meTab.recap, 'phone: no ⋯; Games is a tab, the Me tab holds Save the room (no rules, film time or recap)', JSON.stringify({ tabs, meTab }));
 
   // QA2-A #8 (Planner): the room fills the window's height on a computer, with and without a video, and the page never
   // scrolls (the card and the side panel end at the window's foot, not ~100 px above it).
