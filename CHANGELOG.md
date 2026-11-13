@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.126 — 13 Nov
+
+- Picture Palace: the film reel and its ribbon no longer peek out between the room's panels (they are gone), and the
+  two wall lamps sit further in, so a tablet's picture shows them whole instead of as half lamps at the edges.
+
 ### 0.9.97.123 — 11 Nov
 - Games read better on phones and in other languages:
   - Tic-tac-toe and Four in a Row: the "Waiting for an opponent" line wraps in full.
