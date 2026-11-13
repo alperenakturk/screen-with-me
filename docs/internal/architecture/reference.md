@@ -1628,7 +1628,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the address cleaned. **Wake lock** (`ui/wake-lock.ts`): `room.ts` `applyState` calls `wakeLock.set(item && !paused)`
   (never in the shell), `pagehide` releases; it is asked for again when the page becomes visible and still plays; no
   API = nothing. **iOS hint** (`home.ts` `iosHint`, `device.ts` `isIOSSafari`): once on iOS Safari outside the
-  installed app, a card under the two start buttons (never over a button) with iOS's Share glyph, ✕ stores `iosHintSeen`. Test Lab `pwa.state` (status tab):
+  installed app, a card under the two start buttons (never over a button) with iOS's Share glyph, ✕ stores `iosHintSeen`. While it shows,
+  `html.ios-hint-on` hides PH1's "made for computers" `.touch-note` (one of the two at a time), and `html.is-standalone`
+  hides that note inside the installed app (`styles.css`). The home harness (`scripts/harness/home`, now in CI `site`)
+  checks the first screen still fits on an iPhone with the hint. Test Lab `pwa.state` (status tab):
   installed, the wake lock's state, the share target's action. Checks: `scripts/check-manifest.mjs` (CI `checks`:
   English, icon and screenshot sizes, shortcut, share target), harness `scripts/harness/pwa/run.cjs` (CI `games-more`,
   for the :5300 webm; the wake lock API is stubbed). Standalone notes: the in-app back button is the system one (no

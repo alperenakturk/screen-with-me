@@ -25,7 +25,9 @@ const check = (ok, label, detail) => {
   if (!ok) failed++;
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail === undefined ? '' : ` → ${JSON.stringify(detail)}`}`);
 };
-const ours = () => location.port === '8787' || location.port === '8789' || location.hostname.includes('swm-server') || location.port === '5173';
+// The site under test (not a YouTube frame or another page): any local port, or the live address. A fixed port list made
+// every check that seeds storage fail on another local port (PWA1).
+const ours = () => location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('swm-server');
 
 (async () => {
   const browser = await chromium.launch();

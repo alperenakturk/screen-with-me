@@ -458,7 +458,10 @@ function iosHint(app: HTMLElement): void {
   close.addEventListener('click', () => {
     save('iosHintSeen', '1');
     bar.remove();
+    document.documentElement.classList.remove('ios-hint-on');
   });
+  // Only one of the two shows: the hint hides the "made for computers" note until it is closed (Planner).
+  document.documentElement.classList.add('ios-hint-on');
   // In the page's flow under Create room / Join with a code (first look: a bar fixed at the bottom covered Join on an
   // iPhone SE), so it never sits over a button.
   app.querySelector('#start-form')?.after(bar);

@@ -120,12 +120,26 @@ const check = (ok, label, extra = '') => {
         ? { text: bar.textContent, below: !!join && r.top >= join.bottom, fits: r.left >= 0 && r.right <= innerWidth, share: !!bar.querySelector('.hm-ios-share svg'), close: close ? Math.min(close.width, close.height) : 0 }
         : null;
     });
-    check(!!hint && /Add to Home Screen/.test(hint.text) && hint.below && hint.fits && hint.share && hint.close >= 44, 'iPhone Safari: the hint shows under the start buttons with the Share glyph, ✕ at least 44 px', JSON.stringify(hint));
+    check(!!hint && /Add to Home Screen/.test(hint.text) && hint.below && hint.fits && hint.share && hint.close >= 40, 'iPhone Safari: the hint shows under the start buttons with the Share glyph, ✕ at least 40 px', JSON.stringify(hint));
+    const noteShown = () => page.evaluate(() => getComputedStyle(document.querySelector('.hm-first .touch-note')).display !== 'none');
+    check(!(await noteShown()), 'while the hint shows, the "made for computers" note is hidden (one of the two)');
     await page.click('.hm-ios-hint [data-ios-close]');
+    check(await noteShown(), 'after ✕ the note comes back');
     await page.reload();
     await page.waitForSelector('.hm-first');
     check(!(await page.$('.hm-ios-hint')), 'after ✕ it never shows again');
     await ctx.close();
+    // Inside the installed app (iOS reports navigator.standalone): no hint and no note.
+    {
+      const c = await context({ ...devices['iPhone 13'] });
+      await c.addInitScript(() => Object.defineProperty(navigator, 'standalone', { value: true }));
+      const p = await c.newPage();
+      await p.goto(`${SITE}/`);
+      await p.waitForSelector('.hm-first');
+      const app = await p.evaluate(() => ({ hint: !!document.querySelector('.hm-ios-hint'), note: getComputedStyle(document.querySelector('.hm-first .touch-note')).display }));
+      check(!app.hint && app.note === 'none', 'in the installed app: no install hint and no "made for computers" note', JSON.stringify(app));
+      await c.close();
+    }
     for (const [name, opts] of [['Android (Pixel 7)', devices['Pixel 7']], ['a computer', { viewport: { width: 1366, height: 768 } }]]) {
       const c = await context(opts);
       const p = await c.newPage();

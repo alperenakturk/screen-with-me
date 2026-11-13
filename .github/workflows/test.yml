@@ -247,6 +247,10 @@ jobs:
       - name: Avatar picker
         run: node scripts/harness/avatar-picker/run.cjs http://localhost:8787
 
+      # Card 15b + PWA1: the home page fits its first screen at every size (EN + TR), the iOS install hint included.
+      - name: Home page
+        run: node scripts/harness/home/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
