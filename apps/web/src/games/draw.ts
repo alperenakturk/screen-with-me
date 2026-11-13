@@ -646,7 +646,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     { art: draw1Art, title: tx('how1'), line: tx('how1Line') },
     { art: draw2Art, title: tx('how2'), line: tx('how2Line') },
     { art: draw3Art, title: tx('how3'), line: tx('how3Line') },
-  ], app.querySelector<HTMLElement>('.draw-top'));
+  ]);
   return () => {
     offLab();
     ref.destroy();

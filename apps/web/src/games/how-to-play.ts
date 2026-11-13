@@ -134,15 +134,15 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
  * "Change game"), on a phone too (QA2); the game's own top bar (`bar`) only when there is no window head.
  * Automated browsers see them only with `opt:tableHow` = '1' (the other harnesses would be covered).
  */
-export function tableHowTo(app: HTMLElement, key: string, cards: () => HowCard[], bar?: HTMLElement | null): HowToPlay {
+export function tableHowTo(app: HTMLElement, key: string, cards: () => HowCard[]): HowToPlay {
   const auto = !navigator.webdriver || load('opt:tableHow') === '1';
   const how = howToPlay(app, key, cards, auto);
   how.button.classList.add('btn', 'small-btn', 'htp-head');
-  // QA2 (B2's sweep): the "?" is in the head on phones too (it sat in each game's body, alone in a row on some); the
-  // game's own bar is only the fallback when there is no game window.
+  // QA2 (B2's sweep), QA2-W (0.9.97.124): the "?" is in the game window's head on every device (it sat in each game's
+  // body, alone in a row on some); with no game window around it (a test page) it goes at the top of the game.
   const slot = app.closest('#game-stage')?.querySelector('.game-head-slot');
   if (slot) slot.prepend(how.button);
-  else bar?.prepend(how.button);
+  else app.prepend(how.button);
   const destroy = how.destroy;
   return {
     ...how,

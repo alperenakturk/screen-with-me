@@ -715,7 +715,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     { art: how1, title: tx('how1'), line: tx('how1Line') },
     { art: how2, title: tx('how2'), line: tx('how2Line') },
     { art: how3, title: tx('how3'), line: tx('how3Line') },
-  ], bar);
+  ]);
   const offKeys = keepKeys(box, board);
   return () => {
     offKeys();
