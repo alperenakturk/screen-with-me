@@ -527,6 +527,7 @@ const BUY_MODE_KEY = 'snackBar:buyMode';
 const COMPACT_H = 470;
 const ROWS_COMPACT = 3;
 const SHORT_H = 420;
+const HEAD_ONE_LINE = 48;
 /** Room kept for the "+N more" line when fitting the rows. */
 const MORE_RESERVE = 20;
 /** One tab plays at a time (two tabs would earn twice and overwrite each other's save). */
@@ -1285,9 +1286,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const rowH = first.offsetHeight + gap;
     // Everything but the list and the "+N more" line, which gets a fixed reserve (so showing it never changes the sum).
     const others = box.scrollHeight - list.offsetHeight - (more.hidden ? 0 : more.offsetHeight) + MORE_RESERVE;
-    // 0.9.97.134: a very short window (a sideways tablet's free window, under 420 px) keeps two stands rather than
-    // shrink the text below 13 px; the "+N more" line says the rest come with a bigger window.
-    const least = height < SHORT_H ? 2 : ROWS_COMPACT;
+    // 0.9.97.134: a very short window (a sideways tablet's free window, under 420 px), or a head on two lines (the
+    // rate and the 👥 pill of a busy bar), keeps two stands rather than shrink the text below 13 px or a phone's
+    // targets below 44 px; the "+N more" line says the rest come with a bigger window.
+    const least = height < SHORT_H || head.offsetHeight > HEAD_ONE_LINE ? 2 : ROWS_COMPACT;
     const next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
     if (next !== rowRoom) {
       rowRoom = next;

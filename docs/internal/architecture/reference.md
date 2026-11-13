@@ -1305,7 +1305,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   rate, so the pills take the second line), names wrap beside their tag, the counter picture is `xMaxYMin slice` (the
   sign at its top right is never cropped) and shrinks 104 → 64 px (`.sb-scene-box` flex basis) before the window
   scales; under 470 px the "closed" note is one line on the counter's edge, under 420 px the cinema line hides and
-  `fitRows` may keep two stands (`SHORT_H`); `fit` is 312 × 380. games-sweep `snack` / `snackBusy` (three friends,
+  `fitRows` may keep two stands (`SHORT_H`, or a head on two lines: `HEAD_ONE_LINE`); `fit` is 312 × 380. games-sweep `snack` / `snackBusy` (three friends,
   the film playing, every stand at level 30) check `whole`: no "…" and the sign inside the picture, at laptop and
   `tabland` (1180 × 820). A 1440 × 900 screen (column 341 px) also gets the column. Snack Bar's badge wall has 14 columns in the wide
   box. Harnesses `game-window-head`, `snack-bar-3`, `snack-bar-ng2` follow the new home. Snack Bar's Upgrades panel
