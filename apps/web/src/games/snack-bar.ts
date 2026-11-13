@@ -1285,7 +1285,21 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
     const rowH = first.offsetHeight + gap;
     // Everything but the list and the "+N more" line, which gets a fixed reserve (so showing it never changes the sum).
-    const others = box.scrollHeight - list.offsetHeight - (more.hidden ? 0 : more.offsetHeight) + MORE_RESERVE;
+    // 0.9.97.134: the blocks added up one by one (a box with room to spare reports its own height as `scrollHeight`, which
+    // left a big window showing three stands); the counter picture counts at the height it has now (it gives up height to
+    // the stands down to 64 px before the window scales).
+    const bs = getComputedStyle(box);
+    let others = parseFloat(bs.paddingTop) + parseFloat(bs.paddingBottom) + MORE_RESERVE;
+    let blocks = 0;
+    for (const child of box.children) {
+      const cs = getComputedStyle(child);
+      // Layers over the game (How to play, the panels) take no place in the column.
+      if (!(child instanceof HTMLElement) || child === more || cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') continue;
+      blocks++;
+      if (child === list) continue;
+      others += child.offsetHeight;
+    }
+    others += (parseFloat(bs.rowGap) || 0) * blocks;
     // 0.9.97.134: a very short window (a sideways tablet's free window, under 420 px), or a head on two lines (the
     // rate and the 👥 pill of a busy bar), keeps two stands rather than shrink the text below 13 px or a phone's
     // targets below 44 px; the "+N more" line says the rest come with a bigger window.
@@ -1305,6 +1319,8 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     fitRows();
   });
   fit.observe(root);
+  // 0.9.97.134: the head wrapping to two lines (the 👥 pill of a busy bar) changes how many stands fit.
+  fit.observe(head);
   const onHide = () => persist();
   addEventListener('pagehide', onHide);
   const onLang = () => draw();
