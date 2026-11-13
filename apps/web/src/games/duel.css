@@ -82,9 +82,9 @@ html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
 /* QA3 (one lobby look): while the table waits the card stands on the window like Quiz's, with no night panel around it
    (two frames, one inside the other). */
 #game-stage .ff.duel[data-phase='wait'] { background: transparent; box-shadow: none; color: var(--text); --ff-muted: var(--muted); }
-.duel-lobby h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 22px; }
+.duel-lobby h3 { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 0; font-size: 24px; }
 .duel-lobby h3::before {
-  content: ''; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; rotate: -6deg;
+  content: ''; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; rotate: -6deg;
   background: url('./art/badges/duel.svg') center / 100% no-repeat; box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 22%, transparent);
 }
 .duel-lobby-rules { max-width: 46ch; margin: 0; font-size: 14px; line-height: 1.4; color: var(--ff-muted); }
@@ -139,7 +139,6 @@ html.phone.sideways #game-stage .ff.duel .ff-tray { gap: 3px; }
   #game-stage .ff.duel .ff-key { min-height: 46px; font-size: 18px; }
   /* QA2 (7): the lobby in the wide, low box: the settings in one row and a smaller badge, so the card fits whole. */
   #game-stage .duel-lobby { width: min(100%, 820px); padding: 12px 16px 14px; }
-  #game-stage .duel-lobby h3::before { width: 34px; height: 34px; }
 }
 
 /* QA3 review (one lobby family): the Duel's lobby has the other tables' two halves and settings box (lobby.css). Its
@@ -148,3 +147,5 @@ html.phone.sideways #game-stage .ff.duel .ff-tray { gap: 3px; }
 .duel-lobby .lobby-setup .duel-lobby-body { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .duel-lobby .duel-lobby-label { color: var(--muted); }
 html.phone #game-stage .duel[data-phase='wait'] .duel-bar { display: none; }
+/* Stub's line under Ready is the lobby's hint (the others' "You need at least 2 players"): the same small muted text. */
+.duel-lobby .duel-ref, .duel-lobby .duel-ref :is(p, span, b, strong) { font-size: 13px; font-weight: 400; color: var(--muted); }
