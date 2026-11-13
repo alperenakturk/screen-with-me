@@ -1301,7 +1301,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`@container game (max-width: 360px)`, height ≤ 420–540) slims Five Frames' rows (33 px), cells and keys, hides its
   title (the window's head shows it) and wraps its legend; Snack Bar's cinema line takes its own row, the scene is
   80 px, rows 40 px and the Upgrades rows 34 px (three stand rows, "+N more"); Window Garden's bar is tighter (a short
-  "📖 n/24" album chip). A 1440 × 900 screen (column 341 px) also gets the column. Snack Bar's badge wall has 14 columns in the wide
+  "📖 n/24" album chip). **0.9.97.134 (B2):** Snack Bar shows every text whole: its head wraps (the ? right after the
+  rate, so the pills take the second line; under 360 px the paused pill is just ⏸, `.sb-state-word`), names wrap beside their tag, the counter picture is `xMaxYMin slice` (the
+  sign at its top right is never cropped) and shrinks 104 → 64 px (`.sb-scene-box` flex basis) before the window
+  scales; under 470 px the "closed" note is one line on the counter's edge, under 420 px the cinema line hides and
+  `fitRows` may keep two stands (`SHORT_H`, or a head on two lines: `HEAD_ONE_LINE`), drops one more while the
+  column still overflows (a taller stand further down; `rowCap` keeps that count for the height; the stands never
+  shrink, `.sb-rows { flex-shrink: 0 }`) and adds the column's blocks up
+  one by one (a box with room to spare reports its own height as `scrollHeight`: a big busy window showed three stands); `fit` is 312 × 380; the stage also refits when something in the game is shown or hidden (`hidden` in its
+  MutationObserver: rows hidden after a scale-down otherwise left the game shrunk). games-sweep `snack` / `snackBusy` (three friends,
+  the film playing, every stand at level 30) check `whole`: no "…" and the sign inside the picture, at laptop and
+  `tabland` (1180 × 820). A 1440 × 900 screen (column 341 px) also gets the column. Snack Bar's badge wall has 14 columns in the wide
   box. Harnesses `game-window-head`, `snack-bar-3`, `snack-bar-ng2` follow the new home. Snack Bar's Upgrades panel
   (`.sb-panel-upgrades`) scrolls inside with a sticky ✕ when the list is long (snack-bar-3 checks it with every stand).
   "How to play" (`how-to-play.css`) in a wide box (`@container game (min-aspect-ratio: 16 / 10)`): picture left at the

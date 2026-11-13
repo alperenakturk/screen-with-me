@@ -24,6 +24,8 @@ const SIZES = {
   pixel: devices['Pixel 7'],
   // PH2: the smallest phone the Games tab is built for, 360 × 640 (the game gets about 360 × 254 under the video).
   small: devices['Galaxy S5'],
+  // A sideways tablet (an iPad Air, 1180 × 820): the game sits in the video's place, beside the side panel.
+  tabland: { ...devices['iPad Pro 11 landscape'], viewport: { width: 1180, height: 820 } },
 };
 // A table kind and, for the Classics, the board to put on it.
 const GAMES = {
@@ -50,9 +52,12 @@ const GAMES = {
   quizPlay: { table: 'quiz', start: true },
   drawPlay: { table: 'draw', start: true, pick: true },
   pokerPlay: { table: 'poker', start: true },
-  snack: { solo: 'snack' },
+  snack: { solo: 'snack', whole: true },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
+  // 0.9.97.134 (B2): Snack Bar at its busiest: three friends in the room (the 👥 bonus pill), the film "plays" (the
+  // rate), every stand at level 30 and billions of coins (the longest numbers). Last, as the friends stay in the room.
+  snackBusy: { solo: 'snack', whole: true, busy: true },
 };
 // Card GW: each game's smallest and largest free window, read from the catalog (the harness may run on the built site).
 const CATALOG = fs.readFileSync(path.join(__dirname, '../../../packages/shared/src/games/catalog.ts'), 'utf8');
@@ -85,7 +90,7 @@ const check = (ok, label, extra = '') => {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** Measures the open game: inner scrollbars, small text, cut-off controls, page scroll. */
-function measure({ mayScroll, minTarget }) {
+function measure({ mayScroll, minTarget, whole }) {
   const stage = document.querySelector('#game-stage');
   if (!stage || stage.hidden) return { missing: true };
   const box = stage.getBoundingClientRect();
@@ -180,8 +185,29 @@ function measure({ mayScroll, minTarget }) {
     if (el.matches('.bg-point') && r.height >= 2 * minTarget - 0.5 && r.width >= 22) continue;
     if (side < minTarget - 0.5) tiny.push(`${name(el)} ${Math.round(r.width)}×${Math.round(r.height)}`);
   }
+  // 0.9.97.134: a game marked `whole` shows every text whole: nothing clipped into "…" or under its own box's edge.
+  const trunc = [];
+  let sign = '';
+  if (whole) {
+    for (const el of stage.querySelectorAll('*')) {
+      if (!visible(el) || el.closest('svg, [aria-hidden="true"]') || !el.textContent.trim()) continue;
+      const s = getComputedStyle(el);
+      if (!/(hidden|clip)/.test(s.overflowX + s.overflowY) || el.matches('button.sb-scene')) continue;
+      if (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) trunc.push(`${name(el)} "${el.textContent.trim().slice(0, 24)}" ${el.scrollWidth}×${el.scrollHeight} in ${el.clientWidth}×${el.clientHeight}`);
+    }
+    // Snack Bar: the SNACK BAR sign is whole inside the counter picture.
+    const scene = stage.querySelector('.sb-scene');
+    const art = stage.querySelector('.sb-scene-art svg [id$="sign"]');
+    if (scene && art) {
+      const a = scene.getBoundingClientRect();
+      const b = art.getBoundingClientRect();
+      if (b.left < a.left - 1 || b.top < a.top - 1 || b.right > a.right + 1 || b.bottom > a.bottom + 1) sign = `sign [${Math.round(b.left)},${Math.round(b.top)} – ${Math.round(b.right)},${Math.round(b.bottom)}] in the picture [${Math.round(a.left)},${Math.round(a.top)} – ${Math.round(a.right)},${Math.round(a.bottom)}]`;
+    }
+  }
   const page = document.scrollingElement;
   return {
+    trunc: [...new Set(trunc)].slice(0, 6),
+    sign,
     tiny: [...new Set(tiny)],
     tinyCount: tiny.length,
     stage: [Math.round(box.width), Math.round(box.height)],
@@ -388,23 +414,34 @@ async function windowPasses(page, label, g, phone) {
           await page.evaluate(() => ['a', 'b'].forEach((k) => document.querySelector(`#game-stage .ff-key[data-key="${k}"]`)?.click()));
           await wait(2000);
         }
+        if (g.busy) {
+          for (let i = 0; i < 3; i++) await run('friends.add');
+          await run('games.playing');
+          await page.waitForFunction(() => window.__swmLab?.list?.().some((c) => c.id === 'snackBar.levels'), null, { timeout: 10000 }).catch(() => {});
+          await run('snackBar.levels');
+          await run('snackBar.coins', '5000000000');
+          await wait(3000);
+        }
         const phone = size === 'iphone' || size === 'pixel' || size === 'small';
-        const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
+        const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24, whole: !!g.whole });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {
           check(false, `${label}: the game window shows`);
           continue;
         }
         check(m.scrollers.length === 0, `${label}: no scrollbar inside (${m.stage.join('×')})`, m.scrollers.join(' | '));
-        check(m.small.length === 0, `${label}: no text under 13 px`, m.small.join(' | '));
+        // The busy Snack Bar may be scaled a little to fit (stage.ts `refit`); what it must never do is cut a text.
+        if (!g.busy) check(m.small.length === 0, `${label}: no text under 13 px`, m.small.join(' | '));
         check(m.cut.length === 0, `${label}: nothing cut off`, m.cut.join(' | '));
+        if (g.whole) check(m.trunc.length === 0, `${label}: every text whole (no "…")`, m.trunc.join(' | '));
+        if (g.whole) check(!m.sign, `${label}: the SNACK BAR sign is whole`, m.sign);
         check(!m.board, `${label}: the board is a fair size`, m.board);
         check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
         sam?.close();
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
         // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
-        if (!phone && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
+        if (!phone && !g.busy && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
       }
       await ctx.close();
     }
