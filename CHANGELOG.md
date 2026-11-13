@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.135 — 13 Nov
+
+- On a tablet held sideways, a side game's window now starts just under the link box, so it never covers the edge of
+  "Play now".
+- A game opened while the phone is sideways: the small video above it is easy to see, and a "▶ Back to video" bar
+  under it goes back to the room. The sides around the upright screen take your colour theme instead of black.
+
 ### 0.9.97.132 — 13 Nov
 
 - Sidelit as a home-screen app got better. On Android, share a video link from another app (YouTube's Share → Sidelit)

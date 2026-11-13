@@ -503,6 +503,13 @@ export function createGameStage(opts: StageOptions) {
         // (It keeps the game's smallest readable width even where that reaches a few px over the link box's edge on a
         // 1366 laptop: narrowing it for a gap to "Play now" made its text too small, QA2.)
         const left = Math.max(page.left + EDGE, (yt ? video : wrap.getBoundingClientRect()).right + EDGE / 2, panel.right - width);
+        // 0.9.97.135 (B2 on .132): a sideways tablet has no 4 px to spare over "Play now": the window starts under the
+        // link row instead (shorter, still fitted; the 1366 laptop keeps option 1).
+        const link = document.getElementById('media-form')?.getBoundingClientRect();
+        if (isTablet() && link && link.height > 1 && link.right > left && link.bottom > panel.top && link.top < panel.top + height) {
+          const top = Math.round(link.bottom + EDGE / 2);
+          return { left: Math.round(left), top, width: Math.round(panel.right - left), height: Math.round(panel.top + height - top) };
+        }
         return { left: Math.round(left), top: Math.round(panel.top), width: Math.round(panel.right - left), height };
       }
       // Under the video (an upright tablet): the panel's column beside the chat (Together, the queue), its full height,

@@ -42,6 +42,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
+- [ ] 15d. [W135, 0.9.97.135] Tablet sideways, a video: Snack Bar's window starts under the link box ("Şimdi aç" whole).
+  Phone held sideways, open a game: the small video shows on top with "▶ Videoya dön" under it (a tap goes back to the
+  room); the sides of the upright screen are the theme's colour, not black.
 - [ ] 15c. [PH2, 0.9.97.130] Phone, upright: open Snack Bar, then a table with a friend (Quiz or Dama): it plays in
   the Oyunlar tab, the video a strip on top (a tap on it goes back to the room), nothing cut off or tiny. Turn the
   phone mid-game: nothing changes. Draw & Guess: draw with the tools and 🎨. Tavla: a tap just beside a point counts.

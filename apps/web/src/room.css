@@ -12856,7 +12856,8 @@ html.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .f
   aspect-ratio: auto;
   /* The game gets 450 px on every phone 640 px tall or more (an 8 × 8 board at 44 px plus two 44 px rows): about
      108 px of video on an iPhone 13, 84 px at 360 × 640, more on taller phones. */
-  height: clamp(80px, calc(100dvh - 556px), 180px);
+  /* Less the 28 px "▶ Back to video" bar under it (0.9.97.135). */
+  height: clamp(52px, calc(100dvh - 584px), 152px);
   min-height: 0;
   overflow: hidden;
   cursor: pointer;
@@ -12877,7 +12878,27 @@ html.ph-game-tab[data-ph-tab='games'] .room .theater:not(:fullscreen, .fake-fs, 
    height (device.ts `holdUpright`). */
 html.upright-turned {
   overflow: hidden;
-  background: #000;
+  background: var(--bg);
+}
+/* Opened sideways the page is short: the strip takes its size from the upright page it is laid out at. */
+html.upright-turned.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
+  height: clamp(52px, calc(var(--up-h) - 584px), 152px);
+}
+/* "▶ Back to video" under the strip (ui/phone-room.ts): only while a game shows in the Games tab. */
+.ph-strip-back {
+  display: none;
+}
+html.ph-game-tab[data-ph-tab='games'] .ph-strip-back {
+  display: block;
+  flex: none;
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: 600 13px/1.2 inherit;
+  text-align: left;
 }
 html.upright-turned body {
   width: var(--up-w);
