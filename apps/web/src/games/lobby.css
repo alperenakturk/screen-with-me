@@ -34,20 +34,6 @@
 /* The top line (players n/8, category, timer) belongs to the running game; the lobby's faces row says who is here. */
 #game-stage .draw-page.draw-lobby .draw-top { display: none; }
 
-/* GPRO (layout audit): a sideways phone gives the lobby card the whole width, drops the big badge and keeps the rules
-   to three lines (the "?" has them all), so the card fits the low screen at a readable size. */
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-left,
-html.phone.sideways #game-stage .draw-page.draw-lobby.quiz-page .quiz-main { flex-basis: 100%; width: 100%; max-width: none; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay .lobby-intro > h3::before,
-html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-intro > h3::before { display: none; }
-/* QA2 (2): the rules are not cut ("…streak bonus.…" lost the 50:50 sentence): they wrap in full, a step smaller. */
-html.phone.sideways #game-stage .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { max-width: none; font-size: 14px; line-height: 1.3; }
-/* Draw & Guess's lobby on a sideways phone: the canvas box gives the card the full height. */
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { height: 100%; aspect-ratio: auto; }
-html.phone.sideways #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-overlay { padding: 8px 12px; }
-/* Quiz's lobby is two columns already: less padding so it fits the low screen. */
-html.phone.sideways #game-stage .quiz-page.draw-lobby .quiz-main { padding: 6px 10px; }
-html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-block: 4px; row-gap: 2px; }
 /* GPRO: in the lobby the white drawing paper behind the card showed in its rounded corners. */
 #game-stage .draw-page.draw-lobby:not(.quiz-page) .draw-canvas-wrap { background: transparent; border: 0; border-radius: 20px; }
 
@@ -66,10 +52,6 @@ html.phone.sideways #game-stage .draw-page.draw-lobby .game-settings { padding-b
   box-shadow: 0 8px 20px color-mix(in srgb, var(--lobby-tint) 25%, transparent);
 }
 #game-stage .pk-lobby .pk-rules { margin: 0; color: var(--muted); }
-html.phone.sideways #game-stage .pk-lobby { width: 100%; padding: 8px 12px; }
-html.phone.sideways #game-stage .pk-lobby .lobby-intro > h3::before { display: none; }
-html.phone.sideways #game-stage .pk-lobby { gap: 6px; }
-html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-height: 1.3; }
 
 /* Card PROP, QA3: in the video's place (a wide, short box) the Draw & Guess and Quiz lobby cards are as wide as the
    other tables' (their two halves side by side: "one lobby family" below). */
@@ -127,3 +109,83 @@ html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-heig
    the window's "Video paused for the game" note covered its edge). */
 #game-stage .pk:has(> .pk-lobby) { justify-content: safe center; }
 #game-stage .pk > .pk-lobby { margin-block: auto; }
+
+/* ==== PH2 (0.9.97.130): the lobby cards in a phone's Games tab (`#game-stage.in-tab`, about 360 × 450). The badge sits
+   beside the title instead of above it, and the card, its halves and its rows space themselves tighter; the rules,
+   faces, settings (44 px rows), Start and its hint all stay. ==== */
+#game-stage.in-tab .draw-page.draw-lobby :is(.draw-overlay .lobby-intro, .quiz-intro) > h3,
+#game-stage.in-tab :is(.pk-lobby, .duel-lobby) .lobby-intro > h3 { flex-direction: row; justify-content: center; gap: 10px; font-size: 20px; }
+#game-stage.in-tab .draw-page.draw-lobby:not(.quiz-page) .draw-overlay .lobby-intro > h3::before,
+#game-stage.in-tab .quiz-page.draw-lobby .quiz-intro > h3::before,
+#game-stage.in-tab :is(.pk-lobby, .duel-lobby) .lobby-intro > h3::before { width: 34px; height: 34px; border-radius: 10px; flex: none; }
+#game-stage.in-tab .lobby-card { gap: 6px; }
+#game-stage.in-tab .lobby-card :is(.lobby-intro, .lobby-setup) { gap: 6px; }
+#game-stage.in-tab .draw-page.draw-lobby :is(.draw-rules, .quiz-rules) { margin-top: 0; font-size: 13px; line-height: 1.3; }
+#game-stage.in-tab .lobby-players { margin: 2px 0 0; }
+#game-stage.in-tab .draw-page.draw-lobby :is(.draw-overlay, .quiz-main) { padding: 8px 10px; }
+/* The lobby card keeps a margin from the screen's edges (its rounded corners showed cut). */
+#game-stage.in-tab .draw-page.draw-lobby .draw-main { padding: 4px 6px; box-sizing: border-box; }
+#game-stage.in-tab .draw-page.draw-lobby .quiz-main { margin: 0; height: 100%; box-sizing: border-box; }
+#game-stage.in-tab .draw-page.draw-lobby .quiz-body { padding: 0; }
+#game-stage.in-tab .lobby-card .game-settings { padding: 4px 8px; row-gap: 4px; }
+#game-stage.in-tab .pk-lobby { margin: 0 auto; padding: 8px 10px; }
+/* The Duel's lobby: the board's frame and the card give back their padding in the tab. */
+#game-stage.in-tab .ff.duel[data-phase='wait'] { padding: 4px 6px; }
+#game-stage.in-tab .duel-lobby { padding: 8px 10px; }
+
+/* ==== PH2 (0.9.97.130): Quiz and Draw & Guess running in a phone's Games tab. The card spaces itself tighter, every
+   button is 44 px, and the players' list under it takes what is left (it scrolls when the table is full: a list that
+   grows). ==== */
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-main { gap: 6px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) { gap: 6px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) :is(.quiz-main, .draw-side) { padding: 8px 10px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-side { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-players { gap: 4px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-player { padding: 4px 8px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-top { min-height: 44px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-top .small { font-size: 13px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-main { gap: 6px; flex: 0 0 auto; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { font-size: 13px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-joker { min-height: 44px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-body { gap: 6px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-question { font-size: 18px; margin: 0; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-options { gap: 6px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-option { min-height: 44px; padding: 4px 12px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-note:empty { display: none; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .draw-top { flex-wrap: nowrap; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A long question or answer wraps inside the card (the card grew wider than the phone and the game shrank to fit). */
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-main { min-width: 0; width: 100%; box-sizing: border-box; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) :is(.quiz-question, .quiz-text) { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+/* Draw & Guess running: the canvas keeps its 4:3 shape in the height that is left; the players are a row of chips;
+   the guesses scroll in a short feed above the 44 px guess box. */
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-main { height: 100%; flex-direction: column; flex-wrap: nowrap; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-left { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 4px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-top { min-height: 32px; padding: 0 8px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-canvas-wrap { flex: 1 1 0; min-height: 0; height: auto; width: auto; max-width: 100%; aspect-ratio: 4 / 3; align-self: center; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-side { flex: 0 0 auto; overflow: visible; gap: 6px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-players { flex-direction: row; flex-wrap: wrap; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-player { flex: 0 1 auto; min-width: 0; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-feed { max-height: 64px; min-height: 0; overflow-y: auto; padding: 4px 8px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby):not(.quiz-page) .draw-overlay { padding: 8px; gap: 6px; }
+/* The drawer's tools: the 🎨 colour button exists only in the tab (draw.ts). In the tab: one row ✏️ 🧽 🪣 🎨 ↶ ↷ 🗑, the
+   sizes under it, every button 44 px; the 20 colours open over the canvas from 🎨. While I draw, the guess box and the
+   feed (mine to read later in the chat) give the canvas their room; the faces still show who has guessed. */
+.draw-color-open { display: none; }
+#game-stage.in-tab .draw-tools:not([hidden]) { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 0 4px; }
+#game-stage.in-tab .draw-tools .draw-tool-pick { display: contents; }
+#game-stage.in-tab .draw-tools .draw-tool-pick:last-child > * { order: 1; }
+#game-stage.in-tab .draw-tools .draw-sizes { order: 2; flex-basis: 100%; display: flex; justify-content: center; gap: 4px; }
+#game-stage.in-tab .draw-tools :is(.draw-tool, .draw-size, .btn) { min-width: 44px; min-height: 44px; height: 44px; padding: 0; display: grid; place-items: center; }
+#game-stage.in-tab .draw-tools .draw-tool-word { display: none; }
+#game-stage.in-tab .draw-tools .draw-color-open { display: grid; }
+#game-stage.in-tab .draw-color-open i { width: 24px; height: 24px; border-radius: 50%; background: var(--c, #000); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--border); }
+#game-stage.in-tab .draw-tools .draw-colors { display: none; }
+#game-stage.in-tab .draw-tools.colors-open .draw-colors {
+  display: grid; grid-template-columns: repeat(5, 44px); gap: 4px; position: absolute; bottom: calc(100% + 6px); left: 50%; translate: -50% 0;
+  z-index: 6; padding: 8px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+#game-stage.in-tab .draw-tools .draw-color { width: 44px; height: 44px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-left:has(> .draw-tools:not([hidden])) + .draw-side :is(.draw-form, .draw-feed) { display: none; }
+/* The eraser swatch's ⌫ reads at 13 px (the running-table sweep, PH2). */
+.draw-color { font-size: 13px; }

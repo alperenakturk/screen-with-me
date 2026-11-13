@@ -22,8 +22,8 @@ const SIZES = {
   desktop: { viewport: { width: 1920, height: 1080 } },
   iphone: devices['iPhone 13'],
   pixel: devices['Pixel 7'],
-  // GPRO (layout audit): a phone held sideways, 844 × 340 or so after the browser's bars.
-  side: devices['iPhone 13 landscape'],
+  // PH2: the smallest phone the Games tab is built for, 360 × 640 (the game gets about 360 × 254 under the video).
+  small: devices['Galaxy S5'],
 };
 // A table kind and, for the Classics, the board to put on it.
 const GAMES = {
@@ -34,6 +34,9 @@ const GAMES = {
   chess: { table: 'classics', board: 'chess' },
   backgammon: { table: 'classics', board: 'backgammon' },
   reversi: { table: 'classics', board: 'reversi' },
+  // PH2: a board in play against Stub (Easy), where its squares and points can be tapped.
+  chessPlay: { table: 'classics', board: 'chess', bot: true },
+  backgammonPlay: { table: 'classics', board: 'backgammon', bot: true },
   draw: { table: 'draw' },
   quiz: { table: 'quiz' },
   poker: { table: 'poker' },
@@ -43,6 +46,10 @@ const GAMES = {
   // ⚔️ Five Frames Duel: waiting alone, then racing with Sam (a socket from this script) on the board and the tray.
   duel: { table: 'duel' },
   duelPlay: { table: 'duel', race: true },
+  // PH2: the running tables (the lab's fake friend sits, I press Start; Draw & Guess: I pick a word and draw).
+  quizPlay: { table: 'quiz', start: true },
+  drawPlay: { table: 'draw', start: true, pick: true },
+  pokerPlay: { table: 'poker', start: true },
   snack: { solo: 'snack' },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
@@ -167,6 +174,10 @@ function measure({ mayScroll, minTarget }) {
     // enough, at least 26 wide) and Sea Battle's 10 × 10 cells (the owner's question on how a phone aims is open).
     if (el.matches('.ff-key') && r.height >= minTarget - 0.5 && r.width >= 26) continue;
     if (el.matches('.sea-cell')) continue;
+    // PH2 (Planner, 13 Nov 2026): backgammon's 12 points and the bar can't be 44 px wide across a phone; a point counts
+    // as a target when it is at least 88 px tall and 22 px wide (like the keys above), and a near miss snaps to a legal
+    // point (match.ts `SNAP_PX`).
+    if (el.matches('.bg-point') && r.height >= 2 * minTarget - 0.5 && r.width >= 22) continue;
     if (side < minTarget - 0.5) tiny.push(`${name(el)} ${Math.round(r.width)}×${Math.round(r.height)}`);
   }
   const page = document.scrollingElement;
@@ -293,6 +304,12 @@ async function windowPasses(page, label, g, phone) {
           }
           if (shown) await wait(600);
           check(shown, `${label}: the ${g.board} board is on the table`);
+          if (g.bot) {
+            await page.evaluate(() => document.querySelector('#game-stage .cl-bot-level')?.click());
+            const playing = await page.waitForFunction(() => !document.querySelector('#game-stage .cl-ref-mascot.wait'), null, { timeout: 8000 }).then(() => true, () => false);
+            check(playing, `${label}: the game against Stub starts`);
+            await wait(1200);
+          }
         }
         if (g.play) {
           // Stub's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):
@@ -317,6 +334,29 @@ async function windowPasses(page, label, g, phone) {
           }
           check(playing, `${label}: the battle against Stub starts`);
           await wait(600);
+        }
+        if (g.start) {
+          // PH2: a fake friend sits (Test Lab, local server only), I press Start, the lobby goes; Draw & Guess: I pick
+          // the first word offered (the first drawer is the host).
+          await page.waitForFunction(() => window.__swmLab?.list?.().some((c) => c.id === 'games.friend'), null, { timeout: 15000 }).catch(() => {});
+          await run('games.friend').catch(() => null);
+          const started = await page
+            .waitForFunction(
+              () => {
+                if (!document.querySelector('#game-stage :is(.draw-lobby, .pk-lobby)')) return true;
+                document.querySelector('#game-stage :is(.lobby-setup .btn.primary, .pk-go):not(:disabled)')?.click();
+                return false;
+              },
+              null,
+              { timeout: 10000, polling: 400 },
+            )
+            .then(() => true, () => false);
+          check(started, `${label}: the game starts with the lab's fake friend`);
+          if (g.pick) {
+            await page.waitForFunction(() => !!document.querySelector('#game-stage .draw-overlay:not([hidden]) .btn.primary'), null, { timeout: 8000 }).catch(() => {});
+            await page.evaluate(() => document.querySelector('#game-stage .draw-overlay:not([hidden]) .btn.primary')?.click());
+          }
+          await wait(1500);
         }
         let sam = null;
         if (g.race) {
@@ -348,7 +388,7 @@ async function windowPasses(page, label, g, phone) {
           await page.evaluate(() => ['a', 'b'].forEach((k) => document.querySelector(`#game-stage .ff-key[data-key="${k}"]`)?.click()));
           await wait(2000);
         }
-        const phone = size === 'iphone' || size === 'pixel' || size === 'side';
+        const phone = size === 'iphone' || size === 'pixel' || size === 'small';
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24 });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {

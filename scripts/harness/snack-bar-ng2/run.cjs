@@ -171,7 +171,20 @@ const weekNow = () => Math.floor((Math.floor(Date.now() / 86_400_000) + 3) / 7);
   const small = await pam.evaluate(() =>
     [...document.querySelectorAll('#game-stage .sb-up.sb-season .sb-up-buy')].filter((b) => b.getBoundingClientRect().height < 43.5).length,
   );
-  check(small === 0 && (await fits(pam)).length === 0, 'phone: Upgrades with the seasonal stand fits, its button is a 44 px target', (await fits(pam)).join('; '));
+  // PH2 (0.9.97.130): in a phone's Games tab the Upgrades list is a list that grows, and it may scroll inside its panel
+  // (as with every stand, snack-bar-3); everything else fits, ✕ stays in sight and the seasonal stand's button is
+  // reachable inside the panel.
+  const upgrades = await pam.evaluate(() => {
+    const panel = document.querySelector('#game-stage .sb-panel-upgrades');
+    const buy = panel?.querySelector('.sb-up.sb-season .sb-up-buy');
+    const close = panel?.querySelector('.sb-panel-close');
+    if (!panel || !buy || !close) return null;
+    buy.scrollIntoView({ block: 'nearest' });
+    const p = panel.getBoundingClientRect(), b = buy.getBoundingClientRect(), c = close.getBoundingClientRect();
+    return { buyInside: b.top >= p.top - 1 && b.bottom <= p.bottom + 1, closeInside: c.top >= p.top - 1 && c.bottom <= p.bottom + 1 };
+  });
+  const rest = (await fits(pam)).filter((f) => !f.startsWith('#game-stage .sb-panel '));
+  check(small === 0 && rest.length === 0 && !!upgrades?.buyInside && !!upgrades?.closeInside, 'phone: Upgrades with the seasonal stand fits (its list may scroll), ✕ in sight, its button a 44 px target', JSON.stringify({ small, rest, upgrades }));
   await pam.screenshot({ path: __dirname + '/ng2-phone-upgrades.png' });
 
   await browser.close();

@@ -5615,7 +5615,14 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   white-space: nowrap;
 }
 
-/* R10: a table's title is the game's name (never cut) and "· started by …" (cut first) side by side. */
+/* R10: a table's title is the game's name (never cut) and "· started by …" (cut first) side by side. In a window too narrow for the
+   name beside the icons, the head wraps and the title takes its own row (stage.ts `head-wrap`). */
+.game-stage.head-wrap .game-stage-head {
+  flex-wrap: wrap;
+}
+.game-stage.head-wrap .game-stage-title {
+  flex: 1 0 100%;
+}
 .game-stage-title-text:has(.game-stage-title-name) {
   display: flex;
   min-width: 0;
@@ -9215,8 +9222,6 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   font-size: 24px;
 }
 
-html.phone.sideways #game-stage .pk-lobby > .pk-rules { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; max-width: none; }
-
 .pk-rules {
   max-width: 540px;
   margin: 0;
@@ -11864,10 +11869,8 @@ html.sideways.phone .theater:is(:fullscreen, .fake-fs).dock-mode .dock-btn .ico 
   height: 21px;
 }
 
-/* ==== Games on a phone (0.9.92.5, pick 10A): the game takes the whole screen (games/stage.ts `full`, `ph-game`). The
-   room's video keeps playing as a small preview at the left of the game's head (the theater itself, moved with CSS
-   only so the player is never reloaded); a tap on it goes back to the video. The head: "‹ Back to video", the faces
-   strip's 🎙 / 📷 (borrowed by ui/phone-room.ts), the games hall, leave and end. */
+/* ==== Games on a phone: since PH2 (0.9.97.130) they play inside the Games tab (`ph-game-tab`, end of this file); the
+   whole screen (`full`, `ph-game`) is left only for a phone-narrow window outside the phone room (the TV). */
 html.phone .game-stage .game-place {
   display: none;
 }
@@ -11883,60 +11886,34 @@ html.ph-game .game-stage-head {
   gap: 6px;
 }
 
-html.ph-game:has(.room.has-item) .game-stage-head {
-  padding-left: calc(8px + 92px + 10px + env(safe-area-inset-left));
-}
-
-/* QA2 (Planner's pick 1): the game's name, cut with "…"; the video thumbnail is "back" ("‹" on it), so no button. */
-html.ph-game .game-stage-head .game-stage-title {
+/* QA2 (Planner's pick 1): the game's name, cut with "…". */
+html:is(.ph-game, .ph-game-tab) .game-stage-head .game-stage-title {
   flex: 1 1 auto;
   min-width: 0;
 }
-html.ph-game .game-stage-title-name {
+html:is(.ph-game, .ph-game-tab) .game-stage-title-name {
   flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-html.ph-game .game-stage-title-by,
-html.ph-game:not(.sideways) .game-stage-title-icon,
-html.ph-game:has(.room.has-item) .game-stage .game-minimize {
+html:is(.ph-game, .ph-game-tab) .game-stage-title-by,
+html:is(.ph-game, .ph-game-tab):not(.sideways) .game-stage-title-icon {
   display: none;
 }
 
-html.ph-game .game-stage-head .btn {
+html:is(.ph-game, .ph-game-tab) .game-stage-head .btn {
   min-width: 44px;
   height: 44px;
   padding: 0 8px;
 }
 
-html.ph-game .game-stage .game-minimize {
-  flex: 0 1 auto;
-  min-width: 0;
-  height: auto;
-  min-height: 44px;
-  padding: 3px 10px 3px 6px;
-  white-space: normal;
-  font-size: 13px;
-  line-height: 1.15;
-  text-align: left;
-}
-
-html.ph-game .game-stage .game-minimize > span[aria-hidden] {
-  display: none;
-}
-
-html.ph-game .game-stage .game-minimize .game-head-text::before {
-  content: '‹ ';
-  font-size: 15px;
-}
-
-html.ph-game .game-stage-head #strip-voice:not([hidden]) {
+html:is(.ph-game, .ph-game-tab) .game-stage-head #strip-voice:not([hidden]) {
   display: flex;
   gap: 6px;
 }
 
-html.ph-game .game-stage-head #strip-voice .cam-ctl {
+html:is(.ph-game, .ph-game-tab) .game-stage-head #strip-voice .cam-ctl {
   width: 44px;
   height: 44px;
   border-radius: 10px;
@@ -11963,20 +11940,9 @@ html.phone #game-stage .mt :is(.cl-bot .btn, .mt-watch-open),
 html.phone #game-stage .sb .sb-badges-open {
   min-height: 44px;
 }
-/* The game window's head stays one row on a phone (a second row took the board's height): "‹ Back to video" gives
-   way with "…" instead. The Classics bar likewise: one row, tighter chips (the score, the "?", Stub's levels, 👁). */
-html.ph-game .game-stage-head {
+/* The game window's head stays one row on a phone (a second row took the board's height). The Classics bar likewise: one row, tighter chips (the score, the "?", Stub's levels, 👁). */
+html:is(.ph-game, .ph-game-tab) .game-stage-head {
   flex-wrap: nowrap;
-}
-html.ph-game .game-stage .game-minimize {
-  min-width: 44px;
-  overflow: hidden;
-}
-html.ph-game .game-stage .game-minimize .game-head-text {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 html.phone #game-stage .mt .mt-bar {
   flex-wrap: nowrap;
@@ -12006,48 +11972,8 @@ html.phone #game-stage .wg-bar .wg-pill {
 }
 
 /* Only 🎙 here (the camera and the stream stay in the room's strip). */
-html.ph-game .game-stage-head :is(#strip-cam, #strip-live, #strip-flip) {
+html:is(.ph-game, .ph-game-tab) .game-stage-head :is(#strip-cam, #strip-live, #strip-flip) {
   display: none;
-}
-
-html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs) {
-  position: fixed;
-  z-index: 1101;
-  top: calc(10px + env(safe-area-inset-top));
-  left: calc(8px + env(safe-area-inset-left));
-  width: 92px;
-  height: 52px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.18);
-  cursor: pointer;
-}
-
-html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
-  width: 100%;
-  height: 100%;
-  aspect-ratio: auto;
-}
-
-html.ph-game .room .theater > :not(.player-wrap),
-html.ph-game .room .player-wrap > :not(.player) {
-  visibility: hidden !important;
-}
-
-/* Over the player: a tap reaches the page (not the YouTube frame) and goes back to the video. */
-html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs)::after {
-  content: '‹';
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  padding: 8px;
-  font: 800 28px/1 sans-serif;
-  color: #fff;
-  background: rgb(0 0 0 / 0.4);
-}
-
-html.ph-game .room:not(.has-item) .theater {
-  visibility: hidden;
 }
 
 /* ==== Shorts on a phone (0.9.92.4, pick 5A): the video takes the screen; one slim bar under it holds the seats
@@ -12539,7 +12465,6 @@ html.phone #shorts-add-form .feed-topic-row .btn {
   order: 0 !important;
 }
 
-
 /* ==== Sideways without fullscreen (0.9.92.8, owner: "upright, or sideways in fullscreen; nothing by itself"): the
    video left at the screen's height; on the right only ⛶ "Watch fullscreen" (or "hold the phone upright"). The
    chat, faces and cameras stay for upright / the fullscreen side panel. ==== */
@@ -12901,4 +12826,63 @@ html.phone:not(.sideways) .settings-nav h3 {
   display: block;
   flex: 1 0 100%;
   margin: 2px 6px 4px;
+}
+
+/* ==== PH2 (owner, 13 Nov 2026): a phone's game plays inside the 🎮 Games tab (games/stage.ts `in-tab`, `ph-game-tab`):
+   the video on top, the tabs at the bottom, one-row head (name · ? · 🎙 · ⋯ with Leave / Close; a side game's ✕). ==== */
+html.ph-game-tab .room .ph-panel[data-ph-panel='games'] {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+html.ph-game-tab .ph-games-wrap,
+.game-stage.in-tab .game-hub-open,
+.game-stage.in-tab:not(.solo-game) .game-minimize {
+  display: none !important;
+}
+html.ph-room .game-stage.in-tab {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 0;
+}
+/* PH2 (Planner, 13 Nov): while a game shows in the Games tab the video is a strip (~84–120 px), so the game gets 450 px
+   on any phone 640 px tall or more and every game fits at 13 px text and 44 px targets. It keeps playing; nothing of
+   ours lies over it (the player only stops taking taps), and a tap on the strip goes back to the Room tab
+   (ui/phone-room.ts), where the video is full size again. */
+html.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
+  aspect-ratio: auto;
+  /* The game gets 450 px on every phone 640 px tall or more (an 8 × 8 board at 44 px plus two 44 px rows): about
+     108 px of video on an iPhone 13, 84 px at 360 × 640, more on taller phones. */
+  height: clamp(80px, calc(100dvh - 556px), 180px);
+  min-height: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+html.ph-game-tab[data-ph-tab='games'] .room .theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap * {
+  pointer-events: none;
+}
+/* The game's own layout spaces itself in the tab (every pixel of height counts there). */
+#game-stage.in-tab .game-fit {
+  padding: 0;
+}
+.game-stage.in-tab .game-stage-head {
+  min-height: 52px;
+  padding: 4px max(8px, env(safe-area-inset-right)) 4px max(10px, env(safe-area-inset-left));
+  gap: 6px;
+}
+/* Held sideways with a game open, the upright column stays: laid out at its upright size, centred, scaled to the
+   height (device.ts `holdUpright`). */
+html.upright-turned {
+  overflow: hidden;
+  background: #000;
+}
+html.upright-turned body {
+  width: var(--up-w);
+  height: var(--up-h);
+  margin: 0 auto;
+  transform: scale(var(--up-s));
+  transform-origin: top center;
 }

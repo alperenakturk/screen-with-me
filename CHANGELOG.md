@@ -16,6 +16,18 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.130 — 13 Nov
+
+- On a phone, games now play inside the 🎮 Games tab: the video stays on top and the tabs at the bottom. Another tab
+  keeps the game running, with a dot on 🎮. Turning the phone while a game is open changes nothing; when it closes, the
+  room turns again. Tables still pause the video.
+- While a game is open there, the video becomes a small strip so the game has room; a tap on it goes back to the full
+  video. Every game fits a phone's screen as it is, with readable text and buttons big enough for a finger: the
+  boards, the lobbies, Quiz, Draw & Guess, Last Heart, Sea Battle, the Duel, Five Frames, Snack Bar and Window Garden.
+- Draw & Guess on a phone: the drawing tools are two rows of big buttons, and the colours open from 🎨.
+- Last Heart on a phone: the raise amounts open from ± beside Fold, Call and Raise.
+- Backgammon on a phone: a tap just beside a point you can move to counts for that point.
+
 ### 0.9.97.129 — 13 Nov
 
 - Choosing a character no longer jumps the list back to the top: the list stays where you scrolled, and the one you

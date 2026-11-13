@@ -114,7 +114,13 @@ const tab = (page, id) => page.evaluate((x) => document.querySelector(`#game-men
         const old = st.getAttribute('style') ?? '';
         st.style.width = '260px';
         st.style.right = 'auto';
-        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        // The window refits a frame after its size changes (a ResizeObserver, then requestAnimationFrame): wait for it
+        // (up to 1 s) rather than a fixed two frames.
+        for (let i = 0; i < 20; i++) {
+          await new Promise((r) => setTimeout(r, 50));
+          const nm = st.querySelector('.game-stage-title-name'), tt = st.querySelector('.game-stage-title');
+          if (nm && tt && nm.getBoundingClientRect().right <= tt.getBoundingClientRect().right + 1) break;
+        }
         const name = st.querySelector('.game-stage-title-name');
         const by = st.querySelector('.game-stage-title-by');
         const box = st.querySelector('.game-stage-title').getBoundingClientRect();

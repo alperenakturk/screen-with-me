@@ -16,7 +16,7 @@
 import { slideIn } from './motion.ts';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
-import { hasMouse, isPhoneLayout, isSideways, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
+import { hasMouse, holdUpright, isPhoneLayout, isSideways, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -82,6 +82,10 @@ const CHROME_W = 2;
 const CHROME_H = 52;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
+/** PH2: the game's height on a phone's whole screen (a 390 × 664 page less the head), for games laid out for it. */
+const TAB_H = 600;
+/** PH2: the games with a layout of their own for the phone's Games tab: they fill the panel as it is (Game Studio). */
+const TAB_LAYOUT = new Set<string>(['classics', 'quiz', 'poker', 'duel', 'draw', 'sea', 'word', 'snack', 'garden']);
 /** Boxes inside a game that clip what doesn't fit: they count when fitting the game. */
 const FIT_INSIDE = '.draw-overlay, .quiz-main, .pk-fit, .sb, .sb-rows, .wg, .ff';
 const readPair = (key: string): { x: number; y: number } | null => {
@@ -220,6 +224,12 @@ export function createGameStage(opts: StageOptions) {
    * space right of the video and remembers that, so it stays free back in the room view until I pin it again.
    */
   const shortsView = () => document.documentElement.classList.contains('shorts-view');
+  /**
+   * PH2 (owner, 13 Nov 2026): in the phone room (`ph-room`, not the Shorts view) a game plays inside the bottom bar's
+   * 🎮 Games tab: the video stays on top, the tabs at the bottom, and the room stays upright while it is open.
+   */
+  const phoneTab = () => document.documentElement.classList.contains('ph-room') && !shortsView();
+  const gamesPanel = () => document.querySelector<HTMLElement>('.ph-panel[data-ph-panel="games"]');
   /** Cinema mode (card 14): the side panel hidden, the video as large as the page allows. */
   const cinemaOn = () => document.documentElement.classList.contains('cinema-on');
   /** The placement in use now. */
@@ -272,15 +282,20 @@ export function createGameStage(opts: StageOptions) {
       }
     }
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
-    const parent = narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
+    const inTab = phoneTab() && !!gamesPanel();
+    const parent = inTab ? gamesPanel()! : narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
     for (const m of ['float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
+    stage.classList.toggle('in-tab', inTab);
     // For the games' own CSS (card .113): the placement in use, also as an attribute.
     stage.dataset.place = mode;
     // On the film page the free window is a window of its own over the film (inside the video box it is one anyway).
     document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
     // phone.css: the room's video becomes a small preview in the game's head (it keeps playing, a tap goes back).
-    document.documentElement.classList.toggle('ph-game', isPhoneLayout() && mode === 'full' && !stage.hidden && !shortsView());
+    document.documentElement.classList.toggle('ph-game', isPhoneLayout() && mode === 'full' && !stage.hidden && !shortsView() && !inTab);
+    // PH2: the game in the Games tab (ui/phone-room.ts shows that tab); turning the phone changes nothing meanwhile.
+    document.documentElement.classList.toggle('ph-game-tab', inTab && !stage.hidden);
+    holdUpright(inTab && !stage.hidden);
     phoneHead();
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
@@ -762,9 +777,13 @@ export function createGameStage(opts: StageOptions) {
   /** QA2 (B2's sweep): the head's buttons show their words whenever they fit beside the game's name, else icons only. */
   function fitHeadLabels(): void {
     stage.classList.add('head-labels');
+    stage.classList.remove('head-wrap');
     const name = titleText.querySelector<HTMLElement>('.game-stage-title-name') ?? titleText;
     // An upright phone's head is icons only (pick 1); held sideways it has room for "Leave table" / "Close table".
     if ((isPhoneLayout() && !isSideways()) || head.scrollWidth > head.clientWidth + 1 || name.scrollWidth > name.clientWidth + 1) stage.classList.remove('head-labels');
+    // R10: a window too narrow for the game's name beside the icons gives the name its own row of the head (a phone's
+    // Games tab keeps one row: its height goes to the game).
+    if (!stage.classList.contains('in-tab') && name.getBoundingClientRect().right > title.getBoundingClientRect().right + 1) stage.classList.add('head-wrap');
   }
   function refit(): void {
     const kind = shownKind();
@@ -790,6 +809,12 @@ export function createGameStage(opts: StageOptions) {
         scale = up;
         own = [iw, ih];
       }
+    } else if (stage.classList.contains('in-tab') && !TAB_LAYOUT.has(kind)) {
+      // PH2: a game without its own Games-tab layout yet (Game Studio adds them, `TAB_LAYOUT`) lays out at the height it
+      // had on the phone's whole screen and is scaled into the panel, so nothing in it is squeezed.
+      const ih = Math.max(H, TAB_H);
+      scale = H / ih;
+      own = [Math.round(W / scale), ih];
     } else if (!narrow.matches && mode === 'stage') {
       // PROP (owner: "the same experience in both modes"): in the video's place the game keeps its own shape too, scaled
       // to the box like the free window, from the shape that suits the box best: its own (`size`) or its wide one (`wide`).
@@ -1053,7 +1078,7 @@ export function createGameStage(opts: StageOptions) {
    * stays in view), never for side games (the free window), and closing the table doesn't play it again.
    */
   function autoPause(): void {
-    if (mode !== 'stage' || !current || !opts.pauseVideo?.()) return;
+    if ((mode !== 'stage' && !stage.classList.contains('in-tab')) || !current || !opts.pauseVideo?.()) return;
     pausedAt = Date.now();
     // QA2: under the head, on the game's top (on the 🎮 it covered the tops of ?, 🎮 and Leave).
     flashHint(head, t('game.pausedForGame'), 2800, true);
@@ -1139,15 +1164,39 @@ export function createGameStage(opts: StageOptions) {
   async function endTable(id: string): Promise<void> {
     if (await sure('end')) send({ t: 'table', close: id });
   }
-  minimizeButton.node.addEventListener('click', minimize);
+  // PH2: in the phone's Games tab another tab already puts the game away, so a side game's ✕ closes it (its progress is
+  // kept) and the hall shows there again.
+  minimizeButton.node.addEventListener('click', () => (stage.classList.contains('in-tab') && !current ? leave(false) : minimize()));
   leaveButton.node.addEventListener('click', async () => {
     const table = current;
     if (table && (await sure('leave')) && current?.id === table.id) leave();
   });
   endButton.node.addEventListener('click', () => current && void endTable(current.id));
+  /** PH2: what the phone's Games tab shows (the Test Lab's `phoneGames.state`, the harnesses). */
+  function phoneGamesState() {
+    const html = document.documentElement;
+    const panel = gamesPanel()?.getBoundingClientRect();
+    const box = stage.getBoundingClientRect();
+    const scale = Number(/scale\(([\d.]+)\)/.exec(body.style.transform)?.[1] ?? 1);
+    return {
+      tab: html.dataset.phTab ?? null,
+      game: shownKind(),
+      shown: !stage.hidden,
+      inTab: stage.classList.contains('in-tab'),
+      waiting: document.getElementById('ph-tab-games')?.classList.contains('game-waiting') ?? false,
+      upright: html.classList.contains('upright-turned') ? 'held' : isSideways() ? 'sideways' : 'upright',
+      fit: {
+        panel: panel ? [Math.round(panel.width), Math.round(panel.height)] : null,
+        window: [Math.round(box.width), Math.round(box.height)],
+        scale: Math.round(scale * 100) / 100,
+        inPanel: !!panel && box.top >= panel.top - 1 && box.bottom <= panel.bottom + 1 && box.left >= panel.left - 1 && box.right <= panel.right + 1,
+        cut: frame.scrollHeight > frame.clientHeight + 1 || frame.scrollWidth > frame.clientWidth + 1,
+      },
+    };
+  }
   /** An upright phone with a table: Leave / Close live behind ⋯ (QA2). */
   function tightHead(): boolean {
-    return isPhoneLayout() && !isSideways() && !!current;
+    return isPhoneLayout() && (!isSideways() || phoneTab()) && !!current;
   }
   // While the head is tight, Leave / Close wait in the menu (a phone sheet, `.live-menu`, out of the page until ⋯).
   function closeMore(): void {
@@ -1292,6 +1341,17 @@ export function createGameStage(opts: StageOptions) {
         tab: 'games',
         available: () => (!moreButton.node.hidden && !stage.hidden ? true : { en: 'no ⋯ in the head (an upright phone with a table only)', tr: 'başlıkta ⋯ yok (yalnız dik telefonda, masa açıkken)' }),
         run: () => moreButton.node.click(),
+      },
+      {
+        id: 'phoneGames.state',
+        tab: 'games',
+        title: { en: 'Phone games: the tab, the game and its fit', tr: 'Telefonda oyunlar: sekme, oyun ve sığması' },
+        help: {
+          en: 'Writes the open tab, the game in the Games tab, whether it fits the panel (its scale, anything cut off) and whether the room is held upright into the log.',
+          tr: 'Açık sekmeyi, Oyunlar sekmesindeki oyunu, panele sığıp sığmadığını (ölçeği, kesilen bir şey) ve odanın dik tutulup tutulmadığını kayda yazar.',
+        },
+        available: () => phoneTab() || { en: 'not the phone room', tr: 'telefon odası değil' },
+        run: () => JSON.stringify(phoneGamesState()),
       },
     ],
     status: () => {
