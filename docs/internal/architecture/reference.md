@@ -692,7 +692,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fullscreen (4B):** on a phone in landscape the dock is a slim column (52 px + safe area) beside the video, never on it
   (`.player` / `.fs-catcher` end at its edge, so the player's own bar stays free), always visible, only 💬 😀 🎙 📷 and
   exit (🖥️ only while someone streams: `data-idle` on `#dock-live`); its windows open left of it (`overflow: visible`).
-  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
+  **Step 3 (0.9.92.5; replaced on phones by PH2 below):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
   the Shorts view); phone.css shrinks the theater itself (CSS only, the player is never reloaded) to a 92×52 preview
   at the left of the game's head; `::after` over it catches the tap, `phone-room.ts` turns it into the head's
   `.game-minimize`; the strip's `#strip-voice` moves into the head while `ph-game` (only 🎙 shows there) and back
@@ -726,7 +726,25 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   The empty room shows `.ph-empty-actions` 🔍 Search a video (→ Search tab) and 🔗 Invite; the steps and the sync test
   are hidden. **Search:** borrows `#media-form`, `#media-done` and the queue panel under "Up next"; "Play now" goes back
   to the Room tab. **Games:** a hidden `#ph-games-open` trigger (passed to `createGameStage`'s `extraButtons`) opens the
-  hall inside the panel; picking a game goes back to Room; a waiting table puts a dot on the tab. **Me:** `meHead`
+  hall inside the panel; a waiting table puts a dot on the tab. **PH2 (0.9.97.130): games play inside the Games tab.**
+  In `ph-room` (not the Shorts view) `stage.ts` `place()` moves `#game-stage` into `.ph-panel[data-ph-panel="games"]`
+  (class `in-tab`, still `full` / `data-place="full"`) and sets `html.ph-game-tab` instead of `ph-game`. The video
+  stays on top and the tabs at the bottom; `room.css` (end) drops the panel's padding and hides the hall's wrap, the
+  head's 🎮 and a table's ✕. The head is one row: name, `.game-head-slot` "?", 🎙 (borrowed by `phone-room.ts`), ⋯
+  with Leave / Close (`tightHead`). A side game's ✕ closes it (`leave(false)`; its progress is in storage) and the
+  hall comes back. `phone-room.ts`: `ph-game-tab` turning on opens the Games tab, the hall's "closed without a game →
+  Room" step waits while a game shows, coming back to 🎮 shows the game (not the hall), and `syncGamesDot` puts the
+  dot on 🎮 for a minimized table or a game left running on another tab. Tables pause the video here too (`autoPause`).
+  Fit: a game not in `TAB_LAYOUT` (Game Studio adds each one with its own tab layout) lays out at `TAB_H` (600 px, its
+  height on the phone's whole screen) and is scaled into the panel; one in it fills the panel and only overflow shrinks
+  it. Upright only: `device.ts` `holdUpright(on)` while the window shows in the tab keeps `isSideways()` false and
+  `html.sideways` off; held sideways, `html.upright-turned` lays `body` out at the last upright size (`--up-w`,
+  `--up-h`), centred and scaled to the height (`--up-s`); closing the game releases it. The whole-screen `ph-game` is
+  left only for a phone-narrow window outside the phone room (the TV); its video-thumbnail rules are gone. Test Lab:
+  `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / held / sideways, the panel and window sizes, the
+  scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone / phone-land: in the tab, video above
+  and tabs below, paused, ⋯, the dot, back to the game, turning changes nothing, leaving brings sideways back) and
+  `phone` (a table in the Games tab, the dot). **Me:** `meHead`
   (avatar + name, a tap opens the profile menu: name, picture, colour theme, language) and the settings sections
   `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
   device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
