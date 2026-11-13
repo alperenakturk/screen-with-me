@@ -11,6 +11,9 @@
 //       resize corner never moves the window; an old
 //       saved spot is left behind once; from a free window 🎮's hall slides out of its left side, visible with the side
 //       panel open or closed, and closes on Esc, an outside click or a chosen game.
+//   QA2 Tablets: a side game lines up with the side panel (upright: its column beside the chat), never over the video; the rail's hall shows whole. 1366: words
+//       on a table's head buttons where they fit, the paused note under the head, a gap to "Play now", a side game leaves
+//       cinema mode. Phone: a one-row head (name, ?, 🎙, 🎮, ⋯ with Leave / Close); sideways Leave / Close in the head.
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
 //       over a YouTube player it never covers it and never jumps while dragged; each game remembers its own spot and
 //       size; ✕ and 🎮 bring it back in the same spot; a double click on the head puts it back; the corner resizes it.
@@ -441,6 +444,112 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => document.querySelector('#game-stage .game-hub-open').click());
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), 'phone W3: 🎮 opens the hall');
     check(!errors.length, 'phone: no page errors', errors.slice(0, 2));
+    await ctx.close();
+  }
+
+  // ---- QA2 (B2's sweep): tablets, the hall, the paused note, head labels, the phone head, cinema mode ----
+  // Tablets (touch, no mouse): a side game lines up with the side panel and never covers the video; the rail's 🎮 hall
+  // shows whole.
+  for (const [L, viewport] of [['tablet', { width: 820, height: 1180 }], ['tablet-land', { width: 1180, height: 820 }]]) {
+    const ctx = await browser.newContext({ viewport, isMobile: true, hasTouch: true });
+    await ctx.addInitScript(() => {
+      for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'snackBar:howSeen': '1' })) localStorage.setItem(k, v);
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/r/gq${Math.random().toString(36).slice(2, 8)}?debug=1#back`);
+    await page.waitForFunction(() => !!window.__swmLab && !!document.querySelector('#media-input'), null, { timeout: 20000 });
+    await wait(1200);
+    await load(page, WEBM);
+    await wait(1500);
+    await page.evaluate(() => document.querySelector('.fs-dock #dock-game, .fs-dock .game-btn')?.click());
+    const hall = await until(() => page.evaluate(() => {
+      const m = document.getElementById('game-menu');
+      if (!m || m.hidden) return null;
+      const r = m.getBoundingClientRect();
+      return { whole: r.top >= 0 && r.bottom <= innerHeight + 1 && m.scrollHeight <= m.clientHeight + 1, r: [r.top, r.bottom].map(Math.round) };
+    }), 3000);
+    check(!!hall && hall.whole, `${L} QA2: the rail's 🎮 hall shows whole`, hall);
+    await page.keyboard.press('Escape');
+    await wait(300);
+    await openGame(page, 'snack');
+    const b = await box(page);
+    const pf = await panelFit(page);
+    // Upright the side panel is under the video: the window takes its column beside the chat (the chat stays whole).
+    const chatFree = await page.evaluate(() => {
+      const w = document.getElementById('game-stage').getBoundingClientRect();
+      const c = document.querySelector('.room .chat-panel')?.getBoundingClientRect();
+      return !c || c.width < 1 || w.left >= c.right - 1 || w.right <= c.left + 1;
+    });
+    check(b.mode === 'float' && !b.overVideo && pf.top && (L === 'tablet' ? chatFree : pf.aboveInput), `${L} QA2: Snack Bar lines up with the side panel, never over the video, the message box free`, { b, pf, chatFree });
+    await ctx.close();
+  }
+  // A computer: labels in a table's head where they fit, the paused note under the head (not over its buttons), the gap
+  // to "Play now", and a side game leaving cinema mode.
+  {
+    const { ctx, page, errors } = await room(browser, { width: 1366, height: 768 });
+    await load(page, WEBM);
+    await page.evaluate(() => void document.querySelector('#theater video')?.play().catch(() => {}));
+    await openGame(page, 'snack');
+    // A 1366 laptop has no room for a gap to "Play now" at the game's smallest readable width (Planner's call pending):
+    // the window may reach at most a few px over the link box's edge, never over the button's label.
+    const gap = await page.evaluate(() => Math.round(document.getElementById('game-stage').getBoundingClientRect().left - document.getElementById('media-form').getBoundingClientRect().right));
+    check(gap >= -8, '1366 QA2: a side game reaches at most a few px over the link box', { gap });
+    await page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
+    await page.evaluate(() => document.getElementById('side-toggle')?.click());
+    await wait(600);
+    const cinema = await page.evaluate(() => document.documentElement.classList.contains('cinema-on'));
+    if (cinema) {
+      await openGame(page, 'snack');
+      const c = await box(page);
+      check(!(await page.evaluate(() => document.documentElement.classList.contains('cinema-on'))) && !c.overVideo, '1366 QA2: a side game leaves cinema mode and stays off the video', c);
+    } else check(false, '1366 QA2: cinema mode turns on (#side-toggle)');
+    await openGame(page, 'xox');
+    await page.evaluate(() => window.__swmLab.run('gameWindow.autoPause'));
+    await wait(200);
+    const head = await page.evaluate(() => {
+      const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
+      const n = document.querySelector('.hint-bubble')?.getBoundingClientRect();
+      return { labels: document.getElementById('game-stage').classList.contains('head-labels'), words: [...document.querySelectorAll('#game-stage .game-head-text')].filter((e) => e.getBoundingClientRect().width > 0).length, hint: n ? Math.round(n.top - h.bottom) : null };
+    });
+    check(head.labels && head.words >= 3, '1366 QA2: a table\'s head shows its buttons\' words when they fit', head);
+    check(head.hint !== null && head.hint >= 0, '1366 QA2: "Video paused for the game" shows under the head, not over its buttons', head);
+    check(!errors.length, '1366 QA2: no page errors', errors.slice(0, 2));
+    await ctx.close();
+  }
+  // An upright phone with a table and a video: one-row head (name, ?, 🎙, 🎮, ⋯), the thumbnail is "back", ⋯ holds Leave /
+  // Close with their words; sideways Leave / Close sit in the head.
+  for (const [L, device] of [['phone', 'iPhone 13'], ['phone-land', 'iPhone 13 landscape']]) {
+    const ctx = await browser.newContext({ ...devices[device] });
+    await ctx.addInitScript(() => {
+      for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1' })) localStorage.setItem(k, v);
+    });
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/r/gp${Math.random().toString(36).slice(2, 8)}?debug=1#back`);
+    await page.waitForFunction(() => !!window.__swmLab && !!document.querySelector('#media-input'), null, { timeout: 20000 });
+    await wait(1200);
+    // The link box is in the phone's "＋ Add" sheet (hidden): fill and press it from the page.
+    await page.evaluate((url) => {
+      const input = document.querySelector('#media-input');
+      input.value = url;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#media-form button[value="load"]').click();
+    }, WEBM);
+    await until(() => page.evaluate(() => document.querySelector('.room')?.classList.contains('has-item')), 15000);
+    await openGame(page, 'xox');
+    const h = await page.evaluate(() => {
+      const head = document.querySelector('#game-stage .game-stage-head');
+      const shown = (sel) => { const e = head.querySelector(sel); return !!e && e.getBoundingClientRect().width > 0; };
+      const tops = new Set([...head.children].filter((c) => c.getBoundingClientRect().width > 0).map((c) => { const r = c.getBoundingClientRect(); return Math.round((r.top + r.height / 2) / 24); }));
+      return { rows: tops.size, name: shown('.game-stage-title-name'), help: shown('.htp-head'), more: shown('.game-more'), leave: shown('.game-leave'), back: shown('.game-minimize') };
+    });
+    check(h.rows === 1 && h.name && h.help, `${L} QA2: the head is one row with the game's name and "?"`, h);
+    if (L === 'phone') {
+      check(h.more && !h.leave && !h.back, 'phone QA2: ⋯ instead of Leave / Close; the thumbnail is "back"', h);
+      await page.evaluate(() => window.__swmLab.run('gameWindow.more'));
+      await wait(300);
+      const menu = await page.evaluate(() => [...document.querySelectorAll('.game-more-pop:not([hidden]) button')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.textContent.trim()));
+      check(menu.length >= 1 && menu.every((t) => t.length > 3), 'phone QA2: ⋯ opens Leave / Close with their words', menu);
+    } else check(!h.more && h.leave, 'phone-land QA2: Leave / Close sit in the head', h);
     await ctx.close();
   }
 

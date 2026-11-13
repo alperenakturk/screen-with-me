@@ -21,6 +21,15 @@ games' tip jar, cuttings and badges.
 - Picture Palace: the film reel and its ribbon no longer peek out between the room's panels (they are gone), and the
   two wall lamps sit further in, so a tablet's picture shows them whole instead of as half lamps at the edges.
 
+### 0.9.97.124 — 11 Nov
+- On a tablet a side game never covers the video: held sideways it sits in the right column, upright it takes the
+  column beside the chat under the video. Over a YouTube video too. Opening a side game in cinema mode leaves cinema
+  mode so the game has its place.
+- The games hall shows whole on a tablet, and on a phone held sideways all six tables fit in one row.
+- "Video paused for the game" shows under the game window's top bar instead of over its buttons, and the buttons show
+  their names ("Game hall", "Leave table", "Close table", "Back to video") whenever there is room.
+- On a phone the game's top bar is one tidy row: the small video (tap it to go back), the game's name, ?, the
+  microphone, 🎮 and ⋯, which holds "Leave table" and "Close table". Every table's "?" is up there now.
 ### 0.9.97.123 — 11 Nov
 - Games read better on phones and in other languages:
   - Tic-tac-toe and Four in a Row: the "Waiting for an opponent" line wraps in full.

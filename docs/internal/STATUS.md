@@ -42,6 +42,13 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
+- [ ] 16c. [QW1–QW5, 0.9.97.124] Tablet upright and sideways, a video playing: Snack Bar never covers the video
+  (sideways the right column down to the message box, upright the column beside the chat); the rail's 🎮 hall shows
+  whole; a sideways phone's hall shows all six tables in a row. Laptop, chess with a video playing: "Video paused for
+  the game" under the window's top bar, its buttons read "Game hall · Leave table · Close table · Back to video".
+  Phone upright, a table: one top row (the small video with "‹" = back, the name, ?, 🎙, 🎮, ⋯ holding Leave / Close,
+  Close asks first); sideways Leave / Close sit in that row. Cinema mode (T) then Snack Bar: cinema mode ends, the
+  window sits off the video.
 - [ ] 16. [QA2, 0.9.97.123] Games on phones: sideways Quiz / Last Heart rules read in full, the Duel card fits; XOX
   shows "Stub'a (bota) karşı oyna" with Kolay / Orta and "👁 0 izliyor"; Snack Bar sideways lists the popcorn machine; in
   Turkish Snack Bar numbers read 0,5 / 6 B; Matinee: the games hall covers are warm posters.
@@ -75,6 +82,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   monitor's bigger Snack Bar keeps its size.
 - [ ] 27. [Q1–Q6, 0.9.97.93 and .95] On a hotspot or the backup connection, and with a background tab, an idle table and
   five tabs of one room for 10 minutes: no "reconnecting", nothing "too many connections".
+
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
 - [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the

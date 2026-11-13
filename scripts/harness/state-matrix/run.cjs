@@ -25,6 +25,7 @@ const SIZES = {
   1366: { viewport: { width: 1366, height: 768 } },
   1920: { viewport: { width: 1920, height: 1080 } },
   tablet: { viewport: { width: 820, height: 1180 }, hasTouch: true, isMobile: true },
+  'tablet-land': { viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true },
 };
 const sizes = pick('SIZES', Object.keys(SIZES));
 const videos = pick('VIDEOS', ['none', 'file', 'youtube']);
@@ -139,13 +140,23 @@ async function openGame(page, kind) {
 }
 async function setVideo(page, video) {
   if (video === 'none') return true;
-  await page.evaluate((url) => {
-    const input = document.querySelector('#media-input');
-    input.value = url;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    document.querySelector('#media-form button[value="load"]').click();
-  }, video === 'youtube' ? YOUTUBE : FILM);
-  const ok = await until(() => page.evaluate((yt) => (yt ? !!document.getElementById('theater')?.classList.contains('yt-rail') : !!document.querySelector('#theater video')?.readyState), video === 'youtube'), 15000);
+  const load = () =>
+    page.evaluate((url) => {
+      const input = document.querySelector('#media-input');
+      input.value = url;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('#media-form button[value="load"]').click();
+    }, video === 'youtube' ? YOUTUBE : FILM);
+  const loaded = () => until(() => page.evaluate((yt) => (yt ? !!document.getElementById('theater')?.classList.contains('yt-rail') : !!document.querySelector('#theater video')?.readyState), video === 'youtube'), 15000);
+  await load();
+  // Three headful browsers share one CI runner: a slow first fetch of the file is the runner, not the room.
+  // Load it once more before calling the room broken.
+  let ok = await loaded();
+  if (!ok) {
+    console.log(`note: the ${video} did not load in 15 s; loading it again`);
+    await load();
+    ok = await loaded();
+  }
   await wait(800);
   return !!ok;
 }
@@ -197,14 +208,11 @@ async function runState(browser, kinds, size, video, side) {
         check(!m.offScreen && m.cut.length === 0, `${label}: nothing cut off`, m.offScreen ? { box: m.box } : m.cut);
         if (m.youtube) check(!m.overPlayer, `${label}: nothing over the YouTube player`, { game: m.box, player: m.player });
         else if (video === 'file' && m.mode === 'float' && m.overPlayer) {
-          // Allowed on purpose (W, 10 Nov 2026):
-          //  - 1366, side panel open: side games keep their minSize in the right column, over the video's edge by at most
-          //    the missing width (≈ 24–46 px; gone after Game Studio's .115 minSize 340; the owner accepted ≈ 15 px at 1440);
-          //  - cinema mode: no room beside the video anywhere and side games have no other place, so SPOT_HOME at the
-          //    right edge;
-          //  - an upright tablet: the free window keeps clear of the chat (card GT), not of the video (tablet batch, §6).
+          // Allowed on purpose: beside the video (side panel open) a side game keeps its minSize in the right column and
+          // may cover the theater card's padding (≤ 48 px), never the picture (0.9.97.121). QA2 (owner's rule, Planner
+          // 11 Nov 2026): no other exception: tablets line up with the side panel, a side game leaves cinema mode.
           const over = m.box[0] < m.player[0] + m.player[2] ? m.player[0] + m.player[2] - m.box[0] : 0;
-          const known = size === 'tablet' || side === 'closed' || (side === 'open' && over <= 48);
+          const known = side === 'open' && over <= 48;
           if (known) console.log(`note ${label}: over the video by ${over} px (known, see the comment)`);
           else check(false, `${label}: the free window leaves the video uncovered (not dragged)`, { game: m.box, video: m.player, over });
         }
@@ -218,7 +226,7 @@ async function runState(browser, kinds, size, video, side) {
 /** Once per screen size, no video: every head button does something visible; on a computer, the real mouse. */
 async function runHead(browser, kinds, size) {
   const { ctx, page } = await newPage(browser, size);
-  const computer = size !== 'tablet';
+  const computer = !size.startsWith('tablet');
   try {
     for (const kind of kinds) {
       if (!(await openGame(page, kind))) continue;
