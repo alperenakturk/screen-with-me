@@ -204,6 +204,35 @@ html.phone .fb-buttons > * {
   flex: 1;
 }
 
+/* B2 on .132: a phone held sideways is only ~390 px tall. The report's reason chips stay on one row (it scrolls sideways
+   when they don't fit, as Turkish ones don't) and the note box never shrinks below two lines of text. */
+html.phone.sideways .report-dialog,
+html.phone.sideways .report-dialog .fb-form {
+  min-width: 0;
+  max-width: 100%;
+}
+
+html.phone.sideways .report-dialog .fb-chips {
+  max-width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  /* A soft fade at the right edge says the row goes on (first look). */
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
+html.phone.sideways .report-dialog .fb-chip {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+html.phone.sideways .report-dialog textarea {
+  flex-shrink: 0;
+  line-height: 1.4;
+  height: calc(2.8em + 22px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   #fb-send.sending::before {
     animation: none;

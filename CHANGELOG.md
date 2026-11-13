@@ -23,6 +23,13 @@ games' tip jar, cuttings and badges.
   or the side. In a very small window the game keeps two stands in view (the rest come with a bigger window) instead of
   shrinking its text.
 
+### 0.9.97.133 — 13 Nov
+
+- On a computer, a new chat message no longer goes unseen while a side game's window covers the chat: it shows as a
+  short note beside the game window.
+- On a phone held sideways, the Report window keeps its reasons on one row (slide it for more) so the note box has
+  room for two lines.
+
 ### 0.9.97.132 — 13 Nov
 
 - Sidelit as a home-screen app got better. On Android, share a video link from another app (YouTube's Share → Sidelit)
