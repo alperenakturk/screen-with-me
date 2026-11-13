@@ -266,10 +266,7 @@ jobs:
 
       - name: Games sweep (laptop + iPhone, EN + TR; window sizes and fullscreen)
         # Card GW: the window passes (smallest, largest, fullscreen) in Turkish only, to keep this job near the others.
-        # 0.9.97.128: Snack Bar also on a sideways phone (its stand list once scaled it to 33 px buttons and 11 px text).
-        run: |
-          SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
-          GAMES=snack SIZES=side GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+        run: SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Games resume, Sea Battle, How to play, result card
         run: |

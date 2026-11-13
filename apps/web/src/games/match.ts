@@ -387,6 +387,22 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   let built: GameKind | null = null;
   /** Dama / chess: the piece I picked to move. */
   let picked: number | null = null;
+  // PH2 (Planner): backgammon's points are narrow on a phone (about 23 px). With a checker picked, a tap that lands on a
+  // point it can't go to, or between points, goes to the nearest legal one in that row when it is within 12 px; any other
+  // stray tap does nothing (a disabled point lets taps through to the board, classics.css).
+  const SNAP_PX = 12;
+  board.addEventListener('click', (event) => {
+    if (kind !== 'backgammon' || picked === null || event.target instanceof Element && event.target.closest('button:not(:disabled)')) return;
+    let best: { i: number; d: number } | null = null;
+    cells.forEach((cell, i) => {
+      if (cell.disabled || !cell.classList.contains('target')) return;
+      const r = cell.getBoundingClientRect();
+      if (event.clientY < r.top || event.clientY > r.bottom) return;
+      const d = event.clientX < r.left ? r.left - event.clientX : event.clientX > r.right ? event.clientX - r.right : 0;
+      if (d <= SNAP_PX && (!best || d < best.d)) best = { i, d };
+    });
+    if (best) press((best as { i: number }).i);
+  });
   /** Dama, chess and reversi share the 8 × 8 board. */
   const grid8 = () => kind === 'dama' || kind === 'chess' || kind === 'reversi';
   const four = () => kind === 'four';

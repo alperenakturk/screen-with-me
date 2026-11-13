@@ -34,6 +34,9 @@ const GAMES = {
   chess: { table: 'classics', board: 'chess' },
   backgammon: { table: 'classics', board: 'backgammon' },
   reversi: { table: 'classics', board: 'reversi' },
+  // PH2: a board in play against Stub (Easy), where its squares and points can be tapped.
+  chessPlay: { table: 'classics', board: 'chess', bot: true },
+  backgammonPlay: { table: 'classics', board: 'backgammon', bot: true },
   draw: { table: 'draw' },
   quiz: { table: 'quiz' },
   poker: { table: 'poker' },
@@ -171,6 +174,10 @@ function measure({ mayScroll, minTarget }) {
     // enough, at least 26 wide) and Sea Battle's 10 × 10 cells (the owner's question on how a phone aims is open).
     if (el.matches('.ff-key') && r.height >= minTarget - 0.5 && r.width >= 26) continue;
     if (el.matches('.sea-cell')) continue;
+    // PH2 (Planner, 13 Nov 2026): backgammon's 12 points and the bar can't be 44 px wide across a phone; a point counts
+    // as a target when it is at least 88 px tall and 22 px wide (like the keys above), and a near miss snaps to a legal
+    // point (match.ts `SNAP_PX`).
+    if (el.matches('.bg-point') && r.height >= 2 * minTarget - 0.5 && r.width >= 22) continue;
     if (side < minTarget - 0.5) tiny.push(`${name(el)} ${Math.round(r.width)}×${Math.round(r.height)}`);
   }
   const page = document.scrollingElement;
@@ -297,6 +304,12 @@ async function windowPasses(page, label, g, phone) {
           }
           if (shown) await wait(600);
           check(shown, `${label}: the ${g.board} board is on the table`);
+          if (g.bot) {
+            await page.evaluate(() => document.querySelector('#game-stage .cl-bot-level')?.click());
+            const playing = await page.waitForFunction(() => !document.querySelector('#game-stage .cl-ref-mascot.wait'), null, { timeout: 8000 }).then(() => true, () => false);
+            check(playing, `${label}: the game against Stub starts`);
+            await wait(1200);
+          }
         }
         if (g.play) {
           // Stub's seat and the Ready button come a moment later on a slow runner (CI once ran out of a 10 s wait):

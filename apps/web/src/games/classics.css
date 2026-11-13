@@ -469,3 +469,6 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 #game-stage.in-tab .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 8px) / 2); }
 #game-stage.in-tab .mt .cl-card-line { display: none; }
 #game-stage.in-tab .mt .cl-card-art svg { max-height: 64px; }
+/* PH2: a point that can't be played lets a tap through to the board, which snaps a near miss to a legal point
+   (match.ts `SNAP_PX`) and ignores the rest. */
+.bg-board .bg-point:disabled { pointer-events: none; }

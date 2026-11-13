@@ -744,7 +744,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / held / sideways, the panel and window sizes, the
   scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone / phone-land: in the tab, video above
   and tabs below, paused, ⋯, the dot, back to the game, turning changes nothing, leaving brings sideways back) and
-  `phone` (a table in the Games tab, the dot). **Me:** `meHead`
+  `phone` (a table in the Games tab, the dot). **Game layouts in the tab (Game Studio):** every game is in
+  `TAB_LAYOUT`. While a game shows (`html.ph-game-tab[data-ph-tab='games']`) the video is a strip
+  `clamp(80px, 100dvh − 556px, 180px)` tall (room.css; the player takes no taps, a tap on `#theater` goes back to the
+  Room tab), so the game gets 450 px on any phone 640 px tall or more; `#game-stage.in-tab .game-fit` has no padding.
+  Each game's tab rules sit at the end of its stylesheet (`#game-stage.in-tab …`): Classics (players in one row, the
+  board at 44 px a square, one status row with Stub's level / ✕ / 👁 on its right; waiting: the bar on its own row;
+  `data-n` on 👁 hides an empty one; the picker 2 × 3 without descriptions), lobby.css (lobby cards: badge beside the
+  title; running Quiz: 44 px answers, the card wraps, the scoreboard scrolls; running Draw & Guess: the 4:3 canvas in
+  the height left, players as chips, the drawer's tools in two 44 px rows with the 20 colours behind 🎨
+  `.draw-color-open`, the guess box and feed hidden while I draw), poker.css (one-line seats, the pot beside the
+  shared cards, Fold · Call · ± · Raise in one row, the amounts `.pk-amounts` open from ± `.pk-amount-open`
+  (`amountsOpen` in poker.ts), the moves in one row), sea.css (one-row bar), five-frames.css (44 px keys, the rows
+  give way), snack-bar.css (44 px modes, an 80 px scene). Backgammon's points are about 23 px wide on a phone: the
+  sweep counts a `.bg-point` ≥ 88 px tall and ≥ 22 px wide (Planner, 13 Nov), and with a checker picked a tap within
+  12 px of a legal point goes to it (match.ts `SNAP_PX`; a disabled point lets taps through to the board). Games have
+  no sideways-phone rules any more. Checks: games-sweep at `iphone` and `small` (360 × 640) with the running tables
+  (`quizPlay`, `drawPlay`, `pokerPlay`, `chessPlay`, `backgammonPlay`). **Me:** `meHead`
   (avatar + name, a tap opens the profile menu: name, picture, colour theme, language) and the settings sections
   `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
   device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
