@@ -262,7 +262,10 @@ jobs:
 
       - name: Games sweep (laptop + iPhone, EN + TR; window sizes and fullscreen)
         # Card GW: the window passes (smallest, largest, fullscreen) in Turkish only, to keep this job near the others.
-        run: SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
+        # 0.9.97.128: Snack Bar also on a sideways phone (its stand list once scaled it to 33 px buttons and 11 px text).
+        run: |
+          SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
+          GAMES=snack SIZES=side GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Games resume, Sea Battle, How to play, result card
         run: |
@@ -270,6 +273,8 @@ jobs:
           node scripts/harness/sea/run.cjs http://localhost:8787
           # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
           node scripts/harness/table-how/run.cjs http://localhost:8787
+          # 0.9.97.128: on a phone the head's ⋯ sheet (Leave / Close table) sits above every table's lobby.
+          node scripts/harness/game-more/run.cjs http://localhost:8787
           # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
