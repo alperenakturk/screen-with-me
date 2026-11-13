@@ -1359,6 +1359,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
       the grid is `'bar bar' 'scene action' 'album album'`, the pot's card a column, the album one row of eight
       (44 px cells on a phone); a narrow or phone bar shows `🌙` without its word and the short album count. Checks:
       garden ("wide, low window", "the album stays inside the window", "Water / Stub's lamp stay inside").
+  - 0.9.97.128: the head's ⋯ sheet (`.game-more-pop`, "Leave table" / "Close table" on an upright phone) is appended
+    to `body`, so on a phone it takes `z-index: 1150` (room.css) above the full-screen stage (1100); the other sheets'
+    980 left it under every table's lobby. Checks: game-more (every lab "Open a table" kind on an iPhone: ⋯ and both
+    sheet buttons on top, Leave leaves); games-sweep `GAMES=snack SIZES=side` in CI (Snack Bar's sideways stands).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the
@@ -1980,6 +1984,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Avatar choice:** on the site "Avatarı değiştir" → a large centered dialog (`openAvatarDialog`); since 0.9.87 a pick
   is only applied (and seen by others) with "Tamam" or a double-click; ✕ / Esc / outside cancel. In the extension a
   panel covering the whole window. Hover wobbles, the selected one floats (CSS; off with `prefers-reduced-motion`).
+  Since 0.9.97.129 a pick only moves `aria-checked` in place (`renderAvatarPicker`): the grid is not redrawn, so its
+  scroll and the focus stay where they were (owner's phone bug; `avatar-picker` harness in CI's `site` job).
 - **Avatar lists have no pages:** with many avatars in a tab the grid scrolls (no ‹ ›; the user didn't want them).
 - **CI (`.github/workflows/test.yml`):** on every push/PR: typecheck, unit tests, build, local server with `wrangler
   dev` + `npm run e2e`. On push to `main` (or Actions → "Run workflow"), if tests pass, the `deploy` job: build →

@@ -31,9 +31,10 @@ export function renderAvatarPicker(
           { type: 'button', class: 'avatar-option', role: 'radio', 'aria-checked': String(option === current()), title: label, 'aria-label': label },
           avatarNode(option, 'avatar-glyph'),
         );
+        // A pick only moves the mark (owner, 0.9.97.129): redrawing the grid sent its scroll back to the top on a phone.
         button.addEventListener('click', () => {
           onPick(option);
-          draw();
+          for (const other of grid.querySelectorAll('.avatar-option')) other.setAttribute('aria-checked', String(other === button));
         });
         if (onDouble) button.addEventListener('dblclick', onDouble);
         return button;

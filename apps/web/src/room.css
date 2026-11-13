@@ -12530,6 +12530,11 @@ html.phone.sideways .game-menu.gallery:not([hidden]) {
 html.phone.sideways .game-menu.gallery .hub-cards {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
+/* 0.9.97.128: the game head's ⋯ sheet ("Leave table", "Close table") opens on the page, so it sits above the game
+   stage (z-index 1100 on a phone); at the sheets' 980 every table's lobby covered it. */
+html.phone .live-menu.game-more-pop:not([hidden]) {
+  z-index: 1150 !important;
+}
 
 /* Sweep-1 #4: the join card on a sideways phone fits the screen (no scroll): the title is smaller and the button sits
    beside the name. QA2-A #9: the room's name and the avatar hint stay (they fit; without them the card didn't say which
