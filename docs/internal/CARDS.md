@@ -120,6 +120,39 @@ Two sessions never edit the same lines; the Planner splits work by files.
   Help); layout option A of `phone-room.md`, 13 Nov 2026. Kept on purpose: 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save
   room.
 
+### PH2. Games on a phone: played inside the Games tab, upright only (owner, 13 Nov 2026; W + Game Studio, after PH1)
+- Why: the owner wants the phone's games to live in the bottom bar's 🎮 Games tab: pick an idle game (Snack Bar, Window
+  Garden, Five Frames) or an online table and play it right there, upright. His words: "every game fits upright; none
+  has a landscape mode; nothing happens when the phone is turned."
+- What:
+  - **W (stage, `games/stage.ts` + the game-window rules in `room.css`):**
+    - On a phone (`html.ph-room`) a game opens **inside the Games tab panel**: the video stays on top, and the tab bar
+      stays at the bottom. It no longer takes the full screen with a small video in its head.
+    - Leaving the tab keeps the game running (a dot on 🎮); coming back shows it again.
+    - Tables still pause the video for everyone with the note.
+    - The head shrinks to one row: name, "?", Leave / Close in ⋯.
+    - **Turning the phone does nothing while a game is open.** No landscape game layout and no sideways room layout;
+      the upright column stays, centred and scaled to the height.
+    - When the game closes, the room's normal sideways behaviour comes back.
+  - **Game Studio (every game's own layout):**
+    - Every game (Classics, Sea Battle, Draw & Guess, Quiz, Last Heart, the Duel, Snack Bar, Window Garden, Five
+      Frames) has one upright layout that fits the Games tab panel at 360×640 and up, without scrolling (only lists
+      that grow scroll).
+    - Every game's landscape-only phone rules go (`html.sideways` game rules).
+    - The 44 px phone targets and the 13 px text floor hold.
+  - Computers and tablets are unchanged.
+- Done when:
+  - On a phone, every game opens and plays inside the Games tab with the video above and the tabs below.
+  - Turning the phone with a game open changes nothing.
+  - games-sweep passes at phone sizes for every game.
+  - Test Lab hook `phoneGames.state` reports the tab, the open game and its fit.
+- Tests:
+  - `game-window-head` / `state-matrix` get a phone Games-tab section and a "rotate with a game open" check.
+  - games-sweep and game-proportions run at 360×640 and 390×844.
+  - Owner's hand test: Snack Bar and one table with a friend on his phone, turning it mid-game.
+- Owner's pick: "games in a bottom tab, upright; no landscape mode; nothing happens when the phone is turned" (Planner
+  chat, 13 Nov 2026).
+
 ### SAFE1. Report a person and "block for me" in the room (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; lane A, after PH1)
 - Why: a room has no way to report someone or to stop seeing one person's messages. This matters for safety at 1.0,
   and app stores require it (Apple 1.2). The owner said "yes, before 1.0".
