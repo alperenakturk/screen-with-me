@@ -123,7 +123,9 @@ async function gameChecks(page, where, chatSel) {
       // Drawings (svg, aria-hidden art such as Snack Bar's sign) are pictures, not text: the same rule as games-sweep.
       const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => !e.closest('[aria-hidden="true"], svg') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
       const px = texts.map((e) => parseFloat(getComputedStyle(e).fontSize) * fit);
-      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), form: box(document.getElementById('chat-form')), video: box(document.querySelector('.player-wrap')), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0 };
+      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), form: box(document.getElementById('chat-form')), video: box(document.querySelector('.player-wrap')), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0,
+        // What the game's column is made of (heights in its own pixels), shown when its text gets too small.
+        fit, blocks: [...(s.querySelector('.game-stage-body .sb, .game-stage-body .wg, .game-stage-body .ff')?.children ?? [])].filter((e) => e.offsetHeight).map((e) => `${e.className.split(' ')[0]} ${e.offsetHeight}`).join(', ') };
     }, chatSel);
     await page.screenshot({ path: `${OUT}/${where.replace(/ /g, '-')}-${kind}.png` });
     const s = g.stage;
@@ -143,7 +145,7 @@ async function gameChecks(page, where, chatSel) {
       { w: g.vw, h: c.t - g.bar }, { w: g.vw, h: g.vh - c.b }, { w: c.l, h: g.vh - g.bar }, { w: g.vw - c.r, h: g.vh - g.bar },
     ].filter((b) => s.w <= b.w && s.h <= b.h).map((b) => Math.min(b.w - s.w, b.h - s.h));
     if (!sideways) check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
-    check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText);
+    check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText >= 11 ? g.minText : { minText: g.minText, fit: g.fit, blocks: g.blocks });
     check(g.sh <= g.vh + 1, `${where}, ${kind}: the page never scrolls`, { sh: g.sh, vh: g.vh });
     if (kind === 'snack') {
       // G98 (lane A): the window moves by its head and stays on screen; card GT: and it still keeps off the chat.
