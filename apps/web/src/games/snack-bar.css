@@ -250,8 +250,7 @@ html.phone.sideways #game-stage .sb {
 }
 html.phone.sideways #game-stage .sb-head { grid-area: head; }
 html.phone.sideways #game-stage .sb-scene-box { grid-area: scene; }
-/* QA3 review (13): the whole counter scene (its 340 × 110 drawing) so the SNACK BAR sign is not cut off at the top. */
-html.phone.sideways #game-stage .sb-scene { height: auto; aspect-ratio: 340 / 110; }
+html.phone.sideways #game-stage .sb-scene { height: 96px; }
 html.phone.sideways #game-stage .sb-buybar { grid-area: buy; }
 html.phone.sideways #game-stage .sb-rows { grid-area: rows; overflow: hidden; contain: size; }
 html.phone.sideways #game-stage .sb-more { grid-area: more; align-self: center; }
