@@ -122,30 +122,6 @@
   font-size: clamp(32px, 7vw, 48px);
 }
 
-.tagline {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 18px;
-  /* Satırlar dengeli kırılsın (tek kelime alt satırda yalnız kalmasın). */
-  text-wrap: balance;
-}
-
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
 /* Tek başınayken senkron düğmeleri soluk (basınca uyarı balonu) */
 .alone {
   opacity: 0.5;
@@ -289,10 +265,6 @@
 .tab[aria-selected='true'] {
   color: var(--text);
   border-bottom-color: var(--accent);
-}
-
-.tab-icon {
-  flex: 0 0 48px;
 }
 
 .tab .count {
@@ -471,16 +443,6 @@
   font-size: 18px;
 }
 
-.theme-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.theme-grid .theme-option {
-  background: var(--surface-2);
-}
-
 .check-row {
   display: flex;
   gap: 10px;
@@ -527,24 +489,6 @@ html:not(.shell) .shell-only {
 }
 
 /* Yönetici ayarlarında seçim kutusu (ör. emoji sıklığı) */
-.select-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-}
-
-.select-row select {
-  max-width: 60%;
-  padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-}
 
 .check-row input {
   margin-top: 3px;
@@ -652,11 +596,6 @@ html:not(.shell) .shell-only {
 .join-card {
   max-width: 400px;
   margin: 8vh auto 0;
-}
-
-.join-card.avatar-card {
-  max-width: 760px;
-  margin-top: 4vh;
 }
 
 /* 0.9.91.20: one join screen: who is waiting, then the avatar (tap to change) next to the name. */
@@ -867,14 +806,6 @@ html:not(.shell) .shell-only {
   margin: 7%;
 }
 
-.avatar-preview .avatar-glyph {
-  display: inline-block;
-  width: 1.6em;
-  height: 1.6em;
-  vertical-align: middle;
-  text-align: center;
-}
-
 .avatar-option {
   /* Sallanma/süzülme animasyonu kutunun içinde kalsın: dışarı taşıp kaydırma çubuğu açmasın */
   overflow: hidden;
@@ -906,21 +837,9 @@ html:not(.shell) .shell-only {
   margin: 0;
 }
 
-.avatar-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  text-align: center;
-}
-
 .avatar-picker.big .avatar-option {
   font-size: 34px;
   border-radius: 14px;
-}
-
-.avatar-preview {
-  font-size: 18px;
-  font-weight: 600;
 }
 
 .link-btn {
@@ -1367,12 +1286,6 @@ html:not(.shell) .shell-only {
   margin-left: 6px;
 }
 
-.ok-note {
-  margin: 6px 0 0;
-  color: var(--ok);
-  font-size: 13px;
-}
-
 /* Başka sitedeki video kartı */
 .external-host {
   margin: -6px 0 0;
@@ -1434,12 +1347,6 @@ html:not(.shell) .shell-only {
 
 .person.banned .person-name {
   opacity: 0.7;
-}
-
-.big-icon {
-  width: 38px;
-  height: 38px;
-  font-size: 18px;
 }
 
 /* ---- "Herkes hazır" bekleme bandı ---- */
@@ -2146,12 +2053,6 @@ html:not(.shell) .shell-only {
   background: rgb(255 255 255 / 0.14);
 }
 /* Avatar sekmesi 20'yi geçerse ‹ 1 / 2 › */
-.avatar-pager {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
 
 /* Planlı başlangıç bandı (videonun üstünde) */
 .schedule-banner {
@@ -2211,12 +2112,6 @@ html:not(.shell) .shell-only {
 }
 
 /* Ana sayfa: oda kur + benim odam yan yana, altında son odalar */
-.create-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
 
 /* Senkron testi: sitenin çizdiği sayaç ve "aynı yerdesiniz" rozeti */
 .test-player {
@@ -2369,38 +2264,6 @@ html:not(.shell) .shell-only {
   position: relative;
 }
 
-.sticker-panel {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 8px);
-  z-index: 8;
-  width: min(320px, calc(100vw - 32px));
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--surface-2, #1c1f33);
-  border: 1px solid var(--border);
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
-}
-
-.sticker-panel[hidden] {
-  display: none;
-}
-
-.sticker-panel p {
-  margin: 0;
-}
-
-.sticker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
-  gap: 6px;
-  max-height: 160px;
-  overflow-y: auto;
-}
-
 /* The add-a-GIF / photo line icon (0.9.91.5, instead of 🖼️). */
 .sticker-open .ico {
   width: 20px;
@@ -2501,11 +2364,6 @@ html:not(.shell) .shell-only {
     font-size: 13px;
   }
 
-  .sticker-panel {
-    left: auto;
-    right: 0;
-  }
-
   .end-stats {
     grid-template-columns: 1fr;
   }
@@ -2519,9 +2377,6 @@ html:not(.shell) .shell-only {
     flex-wrap: wrap;
   }
 
-  .create-row .btn {
-    flex: 1 1 100%;
-  }
 }
 
 @media (max-width: 560px) {
@@ -2705,25 +2560,6 @@ html:not(.shell) .shell-only {
 }
 
 /* Yönetici kutusundaki kayıt alanı */
-.save-box {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 0 2px;
-}
-
-.save-box p {
-  margin: 0;
-}
-
-.save-box #save-name {
-  flex: 1;
-  min-width: 0;
-}
-
-.save-box #save-off {
-  align-self: flex-start;
-}
 
 /* Oturum özeti: Spotify "blend"i gibi art arda kartlar */
 .recap-backdrop {
@@ -3872,7 +3708,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   color: #fff;
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.8);
 }
-
 
 /* XOX maç sayfası */
 .xox-page {
@@ -10219,14 +10054,14 @@ html.ph-shorts .room #player-error:not([hidden]) {
 
 /* The join card (name + avatar) is bigger on a computer (0.9.92.7, owner: "too small"). */
 @media (min-width: 700px) {
-  .join-card:not(.avatar-card) {
+  .join-card {
     max-width: 580px;
     margin-top: 9vh;
     padding: 32px 34px;
     font-size: 17px;
   }
 
-  .join-card:not(.avatar-card) .step-title {
+  .join-card .step-title {
     font-size: 30px;
   }
 
@@ -10774,7 +10609,6 @@ html:not(.phone) .theater.side-rail.dock-mode .dock-group + .dock-group {
   opacity: 0.45;
   cursor: default;
 }
-
 
 /* What moved into "⋯ More" leaves the profile menu (the buttons stay in the page for the menus to press). */
 .profile-pop :is(#recap-open, #profile-keys) {
@@ -11430,41 +11264,42 @@ html.ph-room .room .voice-face.has-cam .voice-avatar {
   transform: scaleX(-1);
 }
 
-html.ph-room .room .strip-voice:not([hidden]) {
+/* PH1 "fast": one button shape on the phone room (44 px, radius 10, no shadow): the strip's tools, the input row. */
+html.ph-room .room :is(.chat-tool, .chat-send, .strip-voice .cam-ctl, .ph-strip-tool) {
+  position: static;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 19px;
+  box-shadow: none;
+}
+
+html.ph-room .room .ph-strip-tool:disabled,
+html.ph-room .room .ph-strip-tool[aria-disabled='true'] {
+  opacity: 0.45;
+}
+
+/* The strip's right side: 📌 ⏩ 🔄 ⏭, only while something plays (an empty room shows only the faces). */
+html.ph-room .room .ph-strip-tools {
   display: flex;
   gap: 6px;
 }
 
-html.ph-room .room .together-strip .cam-ctl {
-  width: 40px;
-  height: 40px;
-  font-size: 18px;
+html.ph-room .room:not(.has-item) .ph-strip-tools,
+.ph-strip-tools {
+  display: none;
 }
 
-html.ph-room .room .strip-more {
-  display: grid;
-  position: relative;
-  font-weight: 700;
-}
-
-/* The connection's state (no top bar here): a yellow / red dot on ⋯ while not connected. */
-html.ph-room .room .strip-more:is([data-status='connecting'], [data-status='reconnecting'], [data-status='closed'])::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--warn);
-  box-shadow: 0 0 0 2px var(--surface);
-}
-
-html.ph-room .room .strip-more[data-status='closed']::after {
-  background: var(--danger);
-}
-
-/* ---- The chat fills the rest; the message box sits at the bottom with 😀 and ＋ ---- */
+/* ---- The chat fills the rest (with the room's activity inline); the one input row sits at the bottom ---- */
 html.ph-room .room [data-panel='chat'] {
   order: 4;
   flex: 1 1 auto;
@@ -11476,7 +11311,7 @@ html.ph-room .room [data-panel='chat'] {
 }
 
 html.ph-room .room .chat-panel .chat-list {
-  padding: 10px 12px;
+  padding: 32px 12px 10px;
   gap: 6px;
   overscroll-behavior: contain;
 }
@@ -11487,45 +11322,33 @@ html.ph-room .room .chat-events {
   font-size: 11.5px;
 }
 
-html.ph-room .room .chat-panel .chat-list {
-  padding-top: 32px;
-}
-
+/* 🔗 · box · 🎙 · 📷 · 😀; while typing ➤ takes the place of 🎙 📷 (CSS only). */
 html.ph-room .room .chat-form {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  padding: 6px max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
+  border-top: 1px solid var(--border);
   background: var(--surface);
 }
 
 html.ph-room .room .chat-form #chat-input {
   flex: 1 1 auto;
   min-width: 0;
-  height: 42px;
-  border-radius: 999px;
-  padding-inline: 16px;
-  padding-right: 16px;
+  height: 44px;
+  border-radius: 10px;
+  padding-inline: 12px;
 }
 
-html.ph-room .room .chat-form .chat-attach {
+html.ph-room .room .chat-form .chat-attach,
+html.ph-room .room .chat-form:has(#chat-input:not(:placeholder-shown)) .strip-voice,
+html.ph-room .room .chat-form:has(#chat-input:placeholder-shown) .chat-send {
   display: none;
 }
 
-html.ph-room .room .chat-tool {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 20px;
-  cursor: pointer;
+html.ph-room .room .strip-voice {
+  display: flex;
+  gap: 6px;
 }
 
 html.ph-room .room .chat-tool[aria-expanded='true'] {
@@ -11533,13 +11356,9 @@ html.ph-room .room .chat-tool[aria-expanded='true'] {
 }
 
 html.ph-room .room .chat-send {
-  position: static;
-  transform: none;
-  font-size: 17px;
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent, #fff);
 }
 
 /* Bubbles a little tighter on a small screen (6B). */
@@ -11551,7 +11370,7 @@ html.ph-room .chat-list .chat-body {
 html.sideways.ph-room .room {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   padding-left: env(safe-area-inset-left);
 }
 
@@ -11570,15 +11389,19 @@ html.sideways.ph-room .room .together-strip {
   grid-row: 1;
 }
 
-html.sideways.ph-room .room [data-panel='chat'] {
+html.sideways.ph-room .room :is([data-panel='chat'], .ph-panel) {
   grid-column: 2;
   grid-row: 2;
+}
+
+html.sideways.ph-room .room .ph-tabs {
+  grid-column: 2;
+  grid-row: 3;
 }
 
 html.sideways.ph-room .room :is(#schedule-banner, #player-error, .net-hint) {
   display: none;
 }
-
 
 /* ---- Our bottom sheets (ui/phone-room.ts): ＋, ⋯ More, Add a video, People ---- */
 .ph-backdrop {
@@ -11604,7 +11427,6 @@ html.sideways.ph-room .room :is(#schedule-banner, #player-error, .net-hint) {
   border: 1px solid var(--border);
   border-bottom: 0;
   background: var(--surface);
-  box-shadow: 0 -14px 44px rgb(0 0 0 / 0.55);
   padding-bottom: env(safe-area-inset-bottom);
   animation: sheet-up 0.18s ease-out;
   transition: translate 0.12s;
@@ -11618,15 +11440,6 @@ html.sideways.ph-room .room :is(#schedule-banner, #player-error, .net-hint) {
 .ph-sheet[hidden],
 .ph-backdrop[hidden] {
   display: none;
-}
-
-.ph-grip {
-  flex: 0 0 auto;
-  width: 40px;
-  height: 4px;
-  margin: 8px auto 0;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--text) 30%, transparent);
 }
 
 .ph-sheet-head {
@@ -11662,79 +11475,6 @@ html.sideways.ph-room .room :is(#schedule-banner, #player-error, .net-hint) {
   gap: 12px;
 }
 
-.ph-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 10px;
-}
-
-.ph-tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 84px;
-  padding: 10px 6px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-}
-
-.ph-tile:active {
-  transform: scale(0.97);
-}
-
-.ph-tile-ico {
-  font-size: 26px;
-  line-height: 1;
-}
-
-.ph-tile-count {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.ph-room-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-}
-
-.ph-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--ok);
-  flex: 0 0 auto;
-}
-
-.ph-dot:is([data-status='connecting'], [data-status='reconnecting']) {
-  background: var(--warn);
-}
-
-.ph-dot[data-status='closed'] {
-  background: var(--danger);
-}
-
-.ph-playing {
-  margin: -6px 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .ph-sub {
   margin: 4px 0 0;
   font-size: 14px;
@@ -11742,33 +11482,10 @@ html.sideways.ph-room .room :is(#schedule-banner, #player-error, .net-hint) {
 }
 
 /* The room's own panels inside a sheet. */
-.ph-sheet :is([data-panel='queue'], [data-panel='people']) {
+.ph-sheet [data-panel='people'] {
   display: block !important;
   padding: 0;
   overflow: visible;
-}
-
-.ph-sheet #media-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  position: static;
-}
-
-.ph-sheet #media-form input {
-  flex: 1 1 100%;
-  min-width: 0;
-}
-
-.ph-sheet #media-form > .btn {
-  flex: 1 1 0;
-}
-
-.ph-sheet #media-form .search-results {
-  flex: 1 1 100%;
-  position: static;
-  max-height: none;
-  box-shadow: none;
 }
 
 /* The person sheet with their camera big (7A). CAM1: in a box that carries the picture's note; never taller than a
@@ -11789,6 +11506,264 @@ html.sideways.ph-room .room :is(#schedule-banner, #player-error, .net-hint) {
   max-height: 34dvh;
   object-fit: cover;
   background: #000;
+}
+
+/* ==== PH1: the bottom tabs 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me (ui/phone-room.ts; `data-ph-tab` on <html>).
+   The video stays on top on every tab; the other tabs take the place of the strip, the chat and the input row. ==== */
+.ph-tabs,
+.ph-panel {
+  display: none;
+}
+
+html.ph-room .room .ph-tabs {
+  order: 9;
+  flex: 0 0 auto;
+  display: flex;
+  border-top: 1px solid var(--border);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--surface);
+}
+
+.ph-tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 0;
+  border-top: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ph-tab[aria-selected='true'] {
+  color: var(--text);
+  border-top-color: var(--accent);
+}
+
+.ph-tab-ico {
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* Dots on a tab: the connection's state on Room (yellow while connecting, red cut off), a waiting table on Games. */
+.ph-tab:is([data-status='connecting'], [data-status='reconnecting'], [data-status='closed'], .game-waiting)::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: calc(50% + 12px);
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.ph-tab[data-status='closed']::after {
+  background: var(--danger);
+}
+
+.ph-tab.game-waiting::after {
+  background: var(--accent);
+}
+
+html.ph-room .room .ph-panel:not([hidden]) {
+  order: 4;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left));
+}
+
+html.ph-room:not([data-ph-tab='room']) .room :is(.together-strip, .ph-cams, [data-panel='chat'], .pin-strip) {
+  display: none !important;
+}
+
+.ph-panel h4,
+.ph-me-title {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant: small-caps;
+  letter-spacing: 0.04em;
+}
+
+/* Search: the room's own link / search box, its results as a list, "Up next" = the queue. */
+.ph-panel #media-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: static;
+}
+
+.ph-panel #media-form input {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+}
+
+.ph-panel #media-form .search-results {
+  flex: 1 1 100%;
+  position: static;
+  max-height: none;
+  box-shadow: none;
+}
+
+.ph-panel [data-panel='queue'] {
+  display: block !important;
+  padding: 0;
+  overflow: visible;
+}
+
+/* Games: the hall in the panel (games/stage.ts opens it beside the hidden 🎮). */
+.ph-games-open {
+  display: none;
+}
+
+.ph-games-wrap .game-menu.gallery:not([hidden]) {
+  position: static;
+  inset: auto;
+  width: auto;
+  max-height: none;
+  border: 0;
+  background: none;
+  animation: none;
+}
+
+/* Me: my picture and name, then the settings as cards (each a list of rows), Recap and the Test Lab last. */
+.ph-me {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ph-me-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+  text-align: left;
+}
+
+.ph-me-head .ph-me-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 28px;
+}
+
+.ph-me-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.ph-me-card .settings-sec {
+  display: flex !important;
+  flex-direction: column;
+  padding: 0;
+}
+
+.ph-me-card .settings-sec > h3 {
+  display: none;
+}
+
+/* A list row (sheets, Me): icon · label · a value on the right; 48 px high, no tile, no shadow. */
+.ph-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 4px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+}
+
+.ph-row:last-child {
+  border-bottom: 0;
+}
+
+.ph-row-ico {
+  width: 28px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.ph-row-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.ph-row-end {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.react-tray .ph-tray-image {
+  margin-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.ph-tray-image {
+  display: none;
+}
+
+html.ph-room .react-tray .ph-tray-image {
+  display: flex;
+}
+
+/* The empty room: 🔍 Search a video and 🔗 Invite, two buttons in the box. */
+html.ph-room .room .ph-empty-actions {
+  display: flex;
+  gap: 8px;
+}
+
+html.ph-room .room .ph-empty-actions .btn {
+  min-height: 44px;
+  border-radius: 10px;
+}
+
+html.ph-room .room .empty .empty-steps {
+  display: none;
+}
+
+/* An unread count on 💬 (Shorts' bar, the sideways column). */
+.ph-unread {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.ph-unread[hidden] {
+  display: none;
 }
 
 /* Settings: a full page on a phone (9A). */
@@ -11916,7 +11891,6 @@ html.sideways.phone .theater:is(:fullscreen, .fake-fs).dock-mode .dock-btn .ico 
   width: 21px;
   height: 21px;
 }
-
 
 /* ==== Games on a phone (0.9.92.5, pick 10A): the game takes the whole screen (games/stage.ts `full`, `ph-game`). The
    room's video keeps playing as a small preview at the left of the game's head (the theater itself, moved with CSS
@@ -12102,19 +12076,6 @@ html.ph-game .room.has-item .theater:not(:fullscreen, .fake-fs, .pseudo-fs)::aft
 
 html.ph-game .room:not(.has-item) .theater {
   visibility: hidden;
-}
-
-/* A minimized table: a dot on ⋯ (games live only in ⋯, 0.9.92.8). */
-html.ph-room .room .strip-more.game-waiting::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface);
 }
 
 /* ==== Shorts on a phone (0.9.92.4, pick 5A): the video takes the screen; one slim bar under it holds the seats
@@ -12394,7 +12355,6 @@ html.sideways.ph-shorts .ph-toast {
   display: none;
 }
 
-
 /* The chat in its sheet (💬 in Shorts). */
 .ph-sheet [data-panel='chat'] {
   flex: 1 1 auto;
@@ -12513,11 +12473,6 @@ html.ph-room .room .ph-cams:not([hidden]) {
 
 /* ==== Fullscreen on a phone (0.9.92.6, owner): ⛶ in the faces strip while something plays; sideways in fullscreen
    💬 opens a side panel (faces, cameras, chat, message box) right of the dock, closed the video fills the screen. ==== */
-html.ph-room .room.has-item #strip-fs {
-  display: grid;
-  font-size: 19px;
-}
-
 .ph-fs-side[hidden] {
   display: none;
 }
@@ -12612,10 +12567,6 @@ html.phone #shorts-add-form .feed-topic-row .btn {
   order: 0 !important;
 }
 
-.ph-fs-side #strip-fs {
-  display: none !important;
-}
-
 /* Sizes chosen in the person sheet (0.9.92.8). */
 .ph-cam[data-size='small'] {
   width: 96px;
@@ -12632,7 +12583,7 @@ html.phone #shorts-add-form .feed-topic-row .btn {
   display: none;
 }
 
-html.sideways.ph-room .room.has-item :is(.together-strip, .ph-cams, [data-panel='chat'], #chat-form, .pin-strip):not(.ph-fs-side *) {
+html.sideways.ph-room .room.has-item :is(.together-strip, .ph-cams, [data-panel='chat'], #chat-form, .pin-strip, .ph-tabs, .ph-panel):not(.ph-fs-side *) {
   display: none !important;
 }
 
@@ -12664,38 +12615,15 @@ html.sideways.ph-room .room.has-item .ph-turn {
   text-align: center;
 }
 
-html.sideways.ph-room .room.has-item .ph-turn-fs {
-  min-height: 64px;
-  padding: 0 22px;
-  border-radius: 18px;
-  font-size: 18px;
+html.sideways.ph-room .room.has-item .ph-turn .btn {
+  position: relative;
+  width: 100%;
+  min-height: 44px;
+  border-radius: 10px;
 }
 
-html.sideways.ph-room .room .ph-turn-fs[hidden] {
+html.sideways.ph-room .room .ph-turn .btn[hidden] {
   display: none;
-}
-
-/* ⋯ → Language: one big button per language, the current one marked. */
-.ph-langs {
-  display: grid;
-  gap: 10px;
-  padding: 4px 0 8px;
-}
-
-.ph-lang {
-  min-height: 52px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.ph-lang.on {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
 }
 
 /* Games gallery on a phone (card GG): the sheet is as tall as its content, never scrolls. */
@@ -12714,37 +12642,37 @@ html.phone.sideways .game-menu.gallery .hub-cards {
    beside the name. QA2-A #9: the room's name and the avatar hint stay (they fit; without them the card didn't say which
    room it was), the hint in small type, and the button sits level with the name box. */
 @media (max-height: 500px) {
-  .join-card:not(.avatar-card) {
+  .join-card {
     padding: 14px 18px;
   }
 
-  .join-card:not(.avatar-card) .join-playing {
+  .join-card .join-playing {
     display: none;
   }
 
-  .join-card:not(.avatar-card) [data-i18n='joinHint'] {
+  .join-card [data-i18n='joinHint'] {
     margin: 8px 0 0;
     font-size: 13px;
   }
 
-  .join-card:not(.avatar-card) .join-waiting {
+  .join-card .join-waiting {
     margin: 0 0 4px;
     font-size: 1rem;
   }
 
-  .join-card:not(.avatar-card) #name-form {
+  .join-card #name-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 6px 10px;
   }
 
-  .join-card:not(.avatar-card) #name-form > .step-title {
+  .join-card #name-form > .step-title {
     grid-column: 1 / -1;
     margin: 0;
   }
 
-  .join-card:not(.avatar-card) #name-form > .btn.big {
+  .join-card #name-form > .btn.big {
     padding: 12px 18px;
   }
 }
@@ -12924,7 +12852,6 @@ html.in-room .room-title :is(.room-title-name, .room-title-count) {
 #settings-who-sees {
   white-space: nowrap;
 }
-
 
 /* YT5 batch: cinema mode's way out for a mouse or a touch, in the page's empty bottom-left corner (never over the
    video; chat lines come in under the video on the right); the one way-out hint (Planner: readable size + full text colour). `hidden` outside cinema. */

@@ -664,8 +664,9 @@ html.phone .hm-steps {
   grid-template-columns: 1fr;
 }
 
+/* PH1: the extension is for a computer's browser; a phone's home page doesn't offer it. */
 html.phone .hm-ext {
-  flex-wrap: wrap;
+  display: none;
 }
 
 /* A sideways phone (short): the art beside the text, smaller. */

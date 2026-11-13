@@ -14,10 +14,11 @@ interface Tip {
   text: 'tips.invite' | 'tips.add' | 'tips.voice';
 }
 
-// The second anchor of each is the phone's (0.9.92.3): ⋯ holds Invite, ＋ adds a video, the strip's 🎙 joins voice.
+// The second anchor of each is the phone's (PH1): 🔗 in the input row invites, the Search tab adds a video, the input
+// row's 🎙 joins voice.
 const TIPS: Tip[] = [
-  { anchors: ['#invite-btn', '#strip-more'], text: 'tips.invite' },
-  { anchors: ['#media-input', '#chat-plus'], text: 'tips.add' },
+  { anchors: ['#invite-btn', '#chat-invite'], text: 'tips.invite' },
+  { anchors: ['#media-input', '#ph-tab-search'], text: 'tips.add' },
   { anchors: ['#voice-join', '#strip-mic'], text: 'tips.voice' },
 ];
 
