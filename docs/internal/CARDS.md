@@ -39,6 +39,60 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## Ready
 
+### PH1. A lighter phone room: 🔍 search, fewer duplicates, invite forward, chat sideways (owner, 13 Nov 2026; lane A)
+- Why: on a phone, searching for a video takes 2 taps behind ＋ or ⋯, and the ⋯ / ＋ sheets repeat things Settings and
+  the strip already have. The owner asked which phone features are needed. The council (5 advisors) and the Planner
+  reviewed `ui/phone-room.ts` and `ui/room-more.ts`, and the owner picked the following. Every removal is **phone
+  only, by hiding**: the computer room is unchanged and no feature code is deleted.
+- What:
+  1. **🔍 Search a video** (`#chat-search`, `.phone-only`) sits in the chat row beside ＋ and calls `openAdd()`: one tap
+     to the search / add sheet. Its title and aria-label are in `i18n.ts` and `i18n-tr.ts`.
+  2. **＋ sheet:**
+     - Gone: 🎬 Video (🔍 does it now), 🖼 Image (🖼 is already in the chat row), ⛶ Fullscreen (it is on the strip)
+       and 🧪 Sync test.
+     - Kept while a video plays: 📌 Pin, ⏩ Speed, 🔄 Sync and ⏭ Skip.
+     - With nothing to show, ＋ is hidden.
+  3. **⋯ sheet on phones:**
+     - Gone: 🎵 Queue (the search sheet already holds the queue), ⏰ Film time and 👑 Room rules (both are in Settings),
+       ✨ Recap (its history stays in Profile) and 🧪 Sync test (the Test Lab keeps it).
+     - Kept: 🔗 Invite, 👥 People, 🎮 Games, 💾 Save room, 👤 Profile, ⚙️ Settings.
+     - New: **❓ Help**, which opens `help.html` in the page language.
+     - Hide these on the phone through `roomMoreItems`' `desktop` flag, never by dropping them from the shared list.
+  4. **Empty room on a phone:** the "＋ below" card becomes two big buttons, **🔍 Search a video** (`openAdd`) and
+     **🔗 Invite** (`#invite-btn`). The first-time tip for adding a video points at 🔍.
+  5. **Sideways, not fullscreen, with a video:** next to "⛶ Watch fullscreen" add **💬** (the chat as a side sheet,
+     the same `.ph-fs-side` the fullscreen rail uses) and **🎙**, so turning the phone no longer leaves you stuck.
+     Nothing goes over YouTube's player.
+  6. **Home page on a phone:** the extension box is hidden (the extension is for computers only; the extension page
+     already says so).
+  7. **Join sound in step on phones** (owner: "the join sound comes out of sync"). Today `playIntro()` runs on the
+     server's `welcome`, and `intro-sound.ts` makes a fresh `AudioContext` that waits at most 250 ms for `resume()`. So
+     on a phone the sound comes late or not at all while the animation plays. Fix:
+     - unlock or reuse the shared audio context on the "Enter room" tap;
+     - start the animation and the sound from the same clock: once the context is running, or the picture alone, never
+       the sound late;
+     - say in the PR what was measured.
+- Done when:
+  - On a phone 🔍 opens the search sheet in one tap.
+  - ＋ and ⋯ show exactly the tiles above, upright and in Turkish.
+  - The empty room shows the two buttons.
+  - Sideways with a video shows ⛶, 💬 and 🎙, and the chat sheet opens and closes.
+  - The phone home page has no extension box.
+  - The intro sound starts with the picture or not at all.
+  - A Test Lab hook `phoneRoom.tiles` reports the ＋ / ⋯ tiles and the 🔍 state.
+  - Nothing changes on a computer or a tablet.
+- Tests:
+  - `scripts/harness/phone/run.cjs`: use text-based tile selectors instead of `nth=N` indexes, and add 🔍 in one tap,
+    the tile lists, the empty-room buttons and the sideways 💬 / 🎙.
+  - `shorts-rail` uses `#chat-search` in place of "＋ → tile 0".
+  - `room-more` gets the phone label list.
+  - Run `settings`, `phone-sideways`, `check-texts`, the size budget and the first look (`shots.cjs` phone and
+    phone-land, EN + TR).
+  - Owner's hand test: the phone room on his own phone.
+- Owner's pick: council + Planner review, owner's answers in the Planner chat, 13 Nov 2026 (remove: duplicates + test,
+  ⋯ settings duplicates; 🔍 beside the message box; promote: empty-room buttons, chat sideways, no extension box on the
+  home page, ❓ Help in ⋯). Kept on purpose: ⏩ Speed, 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save room, the Shorts ⋯.
+
 ### QA1. Faster CI and fewer bugs reaching the owner (owner, 10 Nov 2026: "why do tests take so long, weren't we cutting them? and how are there so many bugs with this many tests?"; B2, ops)
 - Why: a PR's CI takes ~15–20 min (the `site` job ~15 min, ~4–5 min of it installing), each main run (deploy + live e2e) ~25 min, and
   releases go one after another, so a small fix needs ~45 min to be live. Harnesses grew with every card. Meanwhile the
