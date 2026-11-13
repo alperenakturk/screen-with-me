@@ -149,3 +149,28 @@ html.phone.sideways #game-stage .pk-lobby .pk-rules { font-size: 14px; line-heig
 /* The Duel's lobby: the board's frame and the card give back their padding in the tab. */
 #game-stage.in-tab .ff.duel[data-phase='wait'] { padding: 4px 6px; }
 #game-stage.in-tab .duel-lobby { padding: 8px 10px; }
+
+/* ==== PH2 (0.9.97.130): Quiz and Draw & Guess running in a phone's Games tab. The card spaces itself tighter, every
+   button is 44 px, and the players' list under it takes what is left (it scrolls when the table is full: a list that
+   grows). ==== */
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-main { gap: 6px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) { gap: 6px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) :is(.quiz-main, .draw-side) { padding: 8px 10px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-side { flex: 1 1 0; min-height: 0; overflow-y: auto; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-players { gap: 4px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-player { padding: 4px 8px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-top { min-height: 44px; }
+#game-stage.in-tab .draw-page:not(.draw-lobby) .draw-top .small { font-size: 13px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-main { gap: 6px; flex: 0 0 auto; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { font-size: 13px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-joker { min-height: 44px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-body { gap: 6px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-question { font-size: 18px; margin: 0; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-options { gap: 6px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-option { min-height: 44px; padding: 4px 12px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-note:empty { display: none; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .draw-top { flex-wrap: nowrap; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A long question or answer wraps inside the card (the card grew wider than the phone and the game shrank to fit). */
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-main { min-width: 0; width: 100%; box-sizing: border-box; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) :is(.quiz-question, .quiz-text) { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
