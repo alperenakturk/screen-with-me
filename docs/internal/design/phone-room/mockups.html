@@ -1,0 +1,287 @@
+<!doctype html><html class="ph-room sideways" lang="en"><head><meta charset="utf-8"><title>PH1 phone room mockups</title><style>.phone[data-theme=matinee] .empty{--text:#f1e8d8;--surface-2:#3a3128;--border:#54483a;color:var(--text)}
+*{box-sizing:border-box}body{margin:0;font:15px/1.4 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.phone{position:relative;width:390px;height:844px;overflow:hidden;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.phone.side{width:844px;height:390px;flex-direction:row}
+input{font:inherit;color:var(--text);background:var(--surface-2);border:1px solid var(--field-border);outline:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-weight:600}
+.btn.primary{background:var(--accent-btn,var(--accent));border-color:var(--accent-btn,var(--accent));color:var(--on-accent)}
+.video{flex:0 0 auto;width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#d9603b,#6b3fa0 60%,#1d2e6b);position:relative}
+.video.empty-v{background:radial-gradient(ellipse 70% 75% at 50% 42%,var(--screen-lit),var(--screen) 80%)}
+.together-strip{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.voice-people{flex:1;display:flex;gap:6px}.voice-avatar{width:38px;height:38px;border-radius:50%;background:#f0b86a;display:grid;place-items:center;font-size:20px}
+.voice-avatar.b{background:#7ab8f0}
+.chat{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;justify-content:flex-end}
+.msg{display:flex;gap:8px;align-items:flex-end}.msg b{font-size:13px;color:var(--muted)}.bubble{padding:8px 12px;border-radius:12px;background:var(--surface-2);max-width:82%}
+.msg.me{flex-direction:row-reverse}.msg.me .bubble{background:var(--accent-btn,var(--accent));color:var(--on-accent)}
+.room{display:contents}.empty{position:absolute;inset:0}
+.empty h2{margin:0;font-size:16px}
+.chat-form #chat-input::placeholder{color:var(--muted)}
+.side-col{flex:0 0 200px;display:grid;place-content:center;justify-items:center;gap:12px;padding:12px;background:var(--bg)}
+.side-col .btn{white-space:nowrap}
+.side-col .muted{color:var(--muted);font-size:13px}
+.label{font-size:13px;font-weight:700;color:var(--muted);margin:10px 6px 4px}
+.toggle-row{display:flex;align-items:center;gap:10px;justify-content:space-between;min-height:44px;padding:0 6px;font-size:14px}
+.sw{width:42px;height:24px;border-radius:12px;background:var(--accent-btn,var(--accent));position:relative}.sw::after{content:'';position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.note{color:var(--muted);font-size:13px;padding:0 6px}
+.addrow{display:flex;gap:6px;margin:8px 6px}.addrow input{flex:1;min-width:0;height:44px;border-radius:12px;padding:0 12px}
+.addbtns{display:grid;grid-template-columns:44px 1fr 1fr;gap:6px;margin:0 6px}
+.dot{width:9px;height:9px;border-radius:50%;background:#3ccf8e;display:inline-block;margin-right:8px}
+.sheet-sub{color:var(--muted);font-weight:400}
+
+/* PH1 (Design, 13 Nov 2026): the phone room's look, in the computer room's language. Notes: ../phone-room.md.
+   These rules replace the matching blocks of room.css's phone section; every value comes from the computer room:
+   buttons and menu rows radius 10, the message box and cards 12, the ⋯ menu panel 14, 44 px targets, the theme tokens.
+   No blur, no shadows on sheets, no new images or fonts. */
+
+/* ---- One button shape for every round thing in the room's chrome: chat tools, 🎙 📷 ⛶ ⋯ (was: 40–42 px circles) ---- */
+html.ph-room :is(.chat-tool, .chat-attach, .chat-send, .together-strip .cam-ctl, .strip-more, .strip-fs) {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 19px;
+  line-height: 1;
+}
+html.ph-room .chat-send {
+  border-color: var(--accent-btn, var(--accent));
+  background: var(--accent-btn, var(--accent));
+  color: var(--on-accent);
+}
+
+/* ---- The message row: 😀 [ Say something… ] 🖼 🔍 ＋, and ➤ in place of 🔍 ＋ once there is text (CSS only) ---- */
+html.ph-room .chat-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+html.ph-room #chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+/* 🖼 is a button of the row on a phone (it was hidden); the box keeps ~170 px at 390 px wide, ~140 px at 360 px. */
+html.ph-room .chat-form .chat-attach {
+  position: static;
+  display: grid;
+}
+html.ph-room .chat-form:has(#chat-input:placeholder-shown) .chat-send,
+html.ph-room .chat-form:has(#chat-input:not(:placeholder-shown)) :is(#chat-search, #chat-plus) {
+  display: none;
+}
+
+/* ---- Sheets: the computer's ⋯ menu, from the bottom. A list of rows, no tiles, no shadow, no blur ---- */
+.ph-sheet {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: 975;
+  max-height: 80dvh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ph-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 970;
+  background: rgb(0 0 0 / 0.5);
+}
+.ph-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 4px 6px 4px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.ph-sheet-head h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+}
+.ph-sheet-close {
+  width: 44px;
+  height: 44px;
+}
+.ph-sheet-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+}
+.ph-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  text-align: start;
+}
+.ph-row:active {
+  background: var(--surface-2);
+}
+.ph-row-ico {
+  width: 24px;
+  font-size: 19px;
+  text-align: center;
+}
+.ph-row-end {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---- The empty room: two big buttons in the video's box. In Matinee the box keeps NP1's own dark palette (room.css
+   ':root[data-theme=matinee] .player-wrap > .empty'), so the heading and the 🔗 button read on the screen tone. ---- */
+html.ph-room .room .empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+}
+html.ph-room .room .empty .ph-empty-actions {
+  display: grid;
+  gap: 8px;
+  width: min(280px, 100%);
+}
+html.ph-room .room .empty .ph-empty-actions .btn {
+  min-height: 44px;
+}
+
+/* ---- Sideways with a video (not fullscreen): ⛶ Watch fullscreen, then 💬 and 🎙 ---- */
+/* The right column keeps at least 200 px, so "⛶ Watch fullscreen" stays on one line; the video takes the rest. */
+html.sideways.ph-room .room {
+  grid-template-columns: minmax(0, 1fr) minmax(200px, auto);
+}
+html.sideways.ph-room .ph-side-actions {
+  display: grid;
+  grid-template-columns: 44px 44px;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ---- Matinee on a phone: the same framed screen as the computer (MATINEE2), never a #000 slab ---- */
+html.ph-room[data-theme='matinee'] .room .theater:not(:fullscreen, .fake-fs, .pseudo-fs),
+html.ph-room[data-theme='matinee'] .room .player-wrap {
+  background: var(--screen);
+}
+
+.ph-sheet,.ph-backdrop{position:absolute}</style></head><body><div style="display:flex;flex-wrap:wrap;gap:16px;padding:16px;background:#333"><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · room</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · typing</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value="Starting in 5!"><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · empty</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video empty-v"><div class="room"><div class="empty"><h2>No video yet</h2><div class="ph-empty-actions"><button class="btn primary">🔍 Search a video</button><button class="btn">🔗 Invite</button></div></div></div></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-more">⋯</button></div>
+<div class="chat"></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · more</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3><span class="dot"></span>Snug Veranda <span class="sheet-sub">· 1 person</span></h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">🔗</span>Invite</button><button class="ph-row"><span class="ph-row-ico">👥</span>People<span class="ph-row-end">2</span></button><button class="ph-row"><span class="ph-row-ico">🎮</span>Games</button><button class="ph-row"><span class="ph-row-ico">💾</span>Save the room</button><button class="ph-row"><span class="ph-row-ico">👤</span>Profile</button><button class="ph-row"><span class="ph-row-ico">⚙️</span>Settings</button><button class="ph-row"><span class="ph-row-ico">❓</span>Help</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · plus</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>▶ Weekend trip.webm</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">📌</span>Pin</button><button class="ph-row"><span class="ph-row-ico">⏩</span>Speed<span class="ph-row-end">1×</span></button><button class="ph-row"><span class="ph-row-ico">🔄</span>Sync</button><button class="ph-row"><span class="ph-row-ico">⏭</span>Skip</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · search</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>Add a video</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><div class="addrow"><input placeholder="Search YouTube or paste a link"></div><div class="addbtns"><button class="btn">🔍</button><button class="btn primary">Add to queue</button><button class="btn">Play now</button></div><div class="label">Queue</div><div class="toggle-row">Play the next video automatically<span class="sw"></span></div><p class="note">The queue is empty. Paste a link and press "Add to queue".</p></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · en · sideways</figcaption><div class="phone side" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000"><div class="video" style="flex:1 1 auto;width:auto;height:auto;align-self:center;aspect-ratio:16/9"></div><div class="side-col"><button class="btn primary">⛶ Watch fullscreen</button><div class="ph-side-actions"><button class="chat-tool">💬</button><button class="chat-tool">🎙</button></div><span class="muted">or hold the phone upright</span></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · room</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">Bu mu? 🍿</span></div><div class="msg me"><span class="bubble">Evet, başlat!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Bir şey yaz…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · typing</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">Bu mu? 🍿</span></div><div class="msg me"><span class="bubble">Evet, başlat!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Bir şey yaz…" value="5 saniyeye başlıyor!"><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · empty</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video empty-v"><div class="room"><div class="empty"><h2>Henüz video yok</h2><div class="ph-empty-actions"><button class="btn primary">🔍 Video ara</button><button class="btn">🔗 Davet et</button></div></div></div></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-more">⋯</button></div>
+<div class="chat"></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Bir şey yaz…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · more</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">Bu mu? 🍿</span></div><div class="msg me"><span class="bubble">Evet, başlat!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Bir şey yaz…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3><span class="dot"></span>Alacakaranlık Avlu <span class="sheet-sub">· 1 kişi</span></h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">🔗</span>Davet et</button><button class="ph-row"><span class="ph-row-ico">👥</span>Kişiler<span class="ph-row-end">2</span></button><button class="ph-row"><span class="ph-row-ico">🎮</span>Oyunlar</button><button class="ph-row"><span class="ph-row-ico">💾</span>Odayı kaydet</button><button class="ph-row"><span class="ph-row-ico">👤</span>Profil</button><button class="ph-row"><span class="ph-row-ico">⚙️</span>Ayarlar</button><button class="ph-row"><span class="ph-row-ico">❓</span>Yardım</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · plus</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">Bu mu? 🍿</span></div><div class="msg me"><span class="bubble">Evet, başlat!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Bir şey yaz…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>▶ Hafta sonu gezisi.webm</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">📌</span>Pin</button><button class="ph-row"><span class="ph-row-ico">⏩</span>Hız<span class="ph-row-end">1×</span></button><button class="ph-row"><span class="ph-row-ico">🔄</span>Eşitle</button><button class="ph-row"><span class="ph-row-ico">⏭</span>Geç</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · search</figcaption><div class="phone" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">Bu mu? 🍿</span></div><div class="msg me"><span class="bubble">Evet, başlat!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Bir şey yaz…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>Video ekle</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><div class="addrow"><input placeholder="YouTube'da ara ya da link yapıştır"></div><div class="addbtns"><button class="btn">🔍</button><button class="btn primary">Sıraya ekle</button><button class="btn">Hemen oynat</button></div><div class="label">Sıra</div><div class="toggle-row">Sıradaki video kendiliğinden başlasın<span class="sw"></span></div><p class="note">Sıra boş. Bir link yapıştırıp "Sıraya ekle"ye bas.</p></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">gece · tr · sideways</figcaption><div class="phone side" data-theme="gece" style="--bg:#0b0d1f;--surface:#151a2e;--surface-2:#1e2440;--border:#2a3152;--field-border:color-mix(in srgb, #9aa0c2 60%, #151a2e);--text:#eceefa;--muted:#9aa0c2;--accent:#8b6cff;--accent-btn:#6a4cf2;--on-accent:#ffffff;--screen:#000;--screen-lit:#000"><div class="video" style="flex:1 1 auto;width:auto;height:auto;align-self:center;aspect-ratio:16/9"></div><div class="side-col"><button class="btn primary">⛶ Tam ekran izle</button><div class="ph-side-actions"><button class="chat-tool">💬</button><button class="chat-tool">🎙</button></div><span class="muted">ya da telefonu dik tut</span></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · room</figcaption><div class="phone" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · typing</figcaption><div class="phone" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value="Starting in 5!"><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · empty</figcaption><div class="phone" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c">
+<div class="video empty-v"><div class="room"><div class="empty"><h2>No video yet</h2><div class="ph-empty-actions"><button class="btn primary">🔍 Search a video</button><button class="btn">🔗 Invite</button></div></div></div></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-more">⋯</button></div>
+<div class="chat"></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · more</figcaption><div class="phone" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3><span class="dot"></span>Snug Veranda <span class="sheet-sub">· 1 person</span></h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">🔗</span>Invite</button><button class="ph-row"><span class="ph-row-ico">👥</span>People<span class="ph-row-end">2</span></button><button class="ph-row"><span class="ph-row-ico">🎮</span>Games</button><button class="ph-row"><span class="ph-row-ico">💾</span>Save the room</button><button class="ph-row"><span class="ph-row-ico">👤</span>Profile</button><button class="ph-row"><span class="ph-row-ico">⚙️</span>Settings</button><button class="ph-row"><span class="ph-row-ico">❓</span>Help</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · plus</figcaption><div class="phone" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>▶ Weekend trip.webm</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">📌</span>Pin</button><button class="ph-row"><span class="ph-row-ico">⏩</span>Speed<span class="ph-row-end">1×</span></button><button class="ph-row"><span class="ph-row-ico">🔄</span>Sync</button><button class="ph-row"><span class="ph-row-ico">⏭</span>Skip</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · search</figcaption><div class="phone" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>Add a video</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><div class="addrow"><input placeholder="Search YouTube or paste a link"></div><div class="addbtns"><button class="btn">🔍</button><button class="btn primary">Add to queue</button><button class="btn">Play now</button></div><div class="label">Queue</div><div class="toggle-row">Play the next video automatically<span class="sw"></span></div><p class="note">The queue is empty. Paste a link and press "Add to queue".</p></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">matinee · en · sideways</figcaption><div class="phone side" data-theme="matinee" style="--bg:#e8dfcf;--surface:#f1eadd;--surface-2:#e2d7c5;--border:#c9b99f;--field-border:#7d6c56;--text:#26201a;--muted:#564b3e;--accent:#9a3517;--on-accent:#ffffff;--screen:#231c16;--screen-lit:#43382c"><div class="video" style="flex:1 1 auto;width:auto;height:auto;align-self:center;aspect-ratio:16/9"></div><div class="side-col"><button class="btn primary">⛶ Watch fullscreen</button><div class="ph-side-actions"><button class="chat-tool">💬</button><button class="chat-tool">🎙</button></div><span class="muted">or hold the phone upright</span></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · room</figcaption><div class="phone" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · typing</figcaption><div class="phone" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value="Starting in 5!"><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · empty</figcaption><div class="phone" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000">
+<div class="video empty-v"><div class="room"><div class="empty"><h2>No video yet</h2><div class="ph-empty-actions"><button class="btn primary">🔍 Search a video</button><button class="btn">🔗 Invite</button></div></div></div></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-more">⋯</button></div>
+<div class="chat"></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · more</figcaption><div class="phone" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3><span class="dot"></span>Snug Veranda <span class="sheet-sub">· 1 person</span></h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">🔗</span>Invite</button><button class="ph-row"><span class="ph-row-ico">👥</span>People<span class="ph-row-end">2</span></button><button class="ph-row"><span class="ph-row-ico">🎮</span>Games</button><button class="ph-row"><span class="ph-row-ico">💾</span>Save the room</button><button class="ph-row"><span class="ph-row-ico">👤</span>Profile</button><button class="ph-row"><span class="ph-row-ico">⚙️</span>Settings</button><button class="ph-row"><span class="ph-row-ico">❓</span>Help</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · plus</figcaption><div class="phone" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>▶ Weekend trip.webm</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><button class="ph-row"><span class="ph-row-ico">📌</span>Pin</button><button class="ph-row"><span class="ph-row-ico">⏩</span>Speed<span class="ph-row-end">1×</span></button><button class="ph-row"><span class="ph-row-ico">🔄</span>Sync</button><button class="ph-row"><span class="ph-row-ico">⏭</span>Skip</button></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · search</figcaption><div class="phone" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000">
+<div class="video"></div>
+<div class="together-strip"><div class="voice-people"><span class="voice-avatar">🧑</span><span class="voice-avatar b">👩</span></div><button class="cam-ctl">🎙</button><button class="cam-ctl">📷</button><button class="strip-fs">⛶</button><button class="strip-more">⋯</button></div>
+<div class="chat"><div class="msg"><span class="bubble">This one? 🍿</span></div><div class="msg me"><span class="bubble">Yes, go!</span></div></div>
+<form class="chat-form" onsubmit="return false"><button type="button" class="chat-tool">😀</button><input id="chat-input" placeholder="Say something…" value=""><button type="button" class="chat-attach">🖼</button><button type="button" class="chat-tool" id="chat-search">🔍</button><button type="button" class="chat-tool" id="chat-plus">＋</button><button class="chat-send">➤</button></form><div class="ph-backdrop"></div><div class="ph-sheet"><div class="ph-sheet-head"><h3>Add a video</h3><button class="btn ph-sheet-close">✕</button></div><div class="ph-sheet-body"><div class="addrow"><input placeholder="Search YouTube or paste a link"></div><div class="addbtns"><button class="btn">🔍</button><button class="btn primary">Add to queue</button><button class="btn">Play now</button></div><div class="label">Queue</div><div class="toggle-row">Play the next video automatically<span class="sw"></span></div><p class="note">The queue is empty. Paste a link and press "Add to queue".</p></div></div></div></figure><figure style="margin:0"><figcaption style="color:#ddd;font:12px system-ui;margin:0 0 4px">okyanus · en · sideways</figcaption><div class="phone side" data-theme="okyanus" style="--bg:#051726;--surface:#0b2338;--surface-2:#123049;--border:#1c405e;--field-border:color-mix(in srgb, #8db0c4 60%, #0b2338);--text:#e6f4fb;--muted:#8db0c4;--accent:#2ec5e8;--on-accent:#032130;--screen:#000;--screen-lit:#000"><div class="video" style="flex:1 1 auto;width:auto;height:auto;align-self:center;aspect-ratio:16/9"></div><div class="side-col"><button class="btn primary">⛶ Watch fullscreen</button><div class="ph-side-actions"><button class="chat-tool">💬</button><button class="chat-tool">🎙</button></div><span class="muted">or hold the phone upright</span></div></div></figure></div></body></html>

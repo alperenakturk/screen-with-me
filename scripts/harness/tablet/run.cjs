@@ -90,8 +90,9 @@ function uprightChecks(where, m) {
 }
 
 /**
- * Card GT (A's G98): a game's free window on a tablet opens clear of the chat (upright its own column, sideways the
- * side panel), whole on screen, as big as the space beside the chat allows, and the page never scrolls.
+ * Card GT (A's G98) + QA2: a game's free window on a tablet never covers the video; upright it opens clear of the chat
+ * (the column beside it), as big as that space allows; sideways it lines up with the side panel with the message box
+ * free; always whole on screen, readable, and the page never scrolls.
  */
 /** The windows' own widths (catalog `size`): a window may stop growing there. */
 const OWN_WIDTH = { snack: 400, garden: 400 };
@@ -109,6 +110,8 @@ async function gameChecks(page, where, chatSel) {
     await page.waitForTimeout(300);
     await page.evaluate((k) => document.querySelector(`#game-menu [data-solo="${k}"]`)?.click(), kind);
     await page.waitForSelector('#game-stage:not([hidden])', { timeout: 5000 }).catch(() => {});
+    // Each check is of a window at its home: a double click on the head forgets a spot an earlier round's drag left (W5).
+    await page.evaluate(() => document.querySelector('#game-stage .game-stage-title')?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
     await page.waitForTimeout(1200);
     const g = await page.evaluate((sel) => {
       const box = (e) => {
@@ -120,21 +123,26 @@ async function gameChecks(page, where, chatSel) {
       // Drawings (svg, aria-hidden art such as Snack Bar's sign) are pictures, not text: the same rule as games-sweep.
       const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => !e.closest('[aria-hidden="true"], svg') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
       const px = texts.map((e) => parseFloat(getComputedStyle(e).fontSize) * fit);
-      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0 };
+      return { float: s.classList.contains('float'), stage: box(s), chat: box(document.querySelector(sel)), form: box(document.getElementById('chat-form')), video: box(document.querySelector('.player-wrap')), bar: Math.round(document.querySelector('.topbar')?.getBoundingClientRect().bottom ?? 0), vw: innerWidth, vh: innerHeight, sh: document.documentElement.scrollHeight, minText: px.length ? Math.round(Math.min(...px) * 10) / 10 : 0 };
     }, chatSel);
     await page.screenshot({ path: `${OUT}/${where.replace(/ /g, '-')}-${kind}.png` });
     const s = g.stage;
     const c = g.chat;
-    const apart = !c || s.r <= c.l + 1 || s.l >= c.r - 1 || s.b <= c.t + 1 || s.t >= c.b - 1;
+    const clear = (o) => !o || s.r <= o.l + 1 || s.l >= o.r - 1 || s.b <= o.t + 1 || s.t >= o.b - 1;
+    const sideways = where.includes('sideways');
     check(g.float, `${where}, ${kind}: the game opens in its small window`, g.float);
-    check(apart, `${where}, ${kind}: the window never covers the chat`, { stage: s, chat: c });
+    // QA2 (Planner, 11 Nov 2026: never over the video): upright the window takes the column beside the chat; sideways it
+    // lines up with the side panel like a computer's (over it, down to the message box, which stays free).
+    check(clear(g.video), `${where}, ${kind}: the window never covers the video`, { stage: s, video: g.video });
+    if (sideways) check(clear(g.form) && Math.abs(s.r - c.r) <= 2 && Math.abs(s.t - c.t) <= 2, `${where}, ${kind}: the window lines up with the side panel and leaves the message box free`, { stage: s, panel: c, form: g.form });
+    else check(clear(c), `${where}, ${kind}: the window never covers the chat`, { stage: s, chat: c });
     check(s.t >= g.bar - 1, `${where}, ${kind}: the window leaves the top bar free`, { stage: s, bar: g.bar });
     check(s.l >= 0 && s.t >= 0 && s.r <= g.vw && s.b <= g.vh, `${where}, ${kind}: the window is whole on screen`, { stage: s, vw: g.vw, vh: g.vh });
     // Sized to the space: it touches the free strip's limit on one side (it can't grow without covering the chat or leaving the screen).
     const room = !c ? null : [
       { w: g.vw, h: c.t - g.bar }, { w: g.vw, h: g.vh - c.b }, { w: c.l, h: g.vh - g.bar }, { w: g.vw - c.r, h: g.vh - g.bar },
     ].filter((b) => s.w <= b.w && s.h <= b.h).map((b) => Math.min(b.w - s.w, b.h - s.h));
-    check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
+    if (!sideways) check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
     check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText);
     check(g.sh <= g.vh + 1, `${where}, ${kind}: the page never scrolls`, { sh: g.sh, vh: g.vh });
     if (kind === 'snack') {
