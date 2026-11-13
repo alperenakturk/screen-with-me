@@ -791,6 +791,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     }
     // QA2 (12): the chip says what the eye counts (people watching, not playing).
     watchOpen.textContent = tc('watchShort', { n: watchers.length });
+    // PH2: the phone's Games tab hides a 👁 nobody is behind (its one status row is short of room).
+    watchOpen.dataset.n = String(watchers.length);
     watchOpen.title = tc('watchers', { n: watchers.length });
     watchOpen.setAttribute('aria-label', watchOpen.title);
     const list = app.querySelector<HTMLElement>('#xox-watchers')!;

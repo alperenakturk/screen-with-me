@@ -12839,19 +12839,25 @@ html.ph-room .game-stage.in-tab {
   min-height: 0;
   padding: 0 0 0;
 }
-/* PH2 (Planner, 13 Nov): while a game shows in the Games tab the video is a ~120 px strip, so the game gets ~440 px
-   (iPhone 13) / ~410 px (360 × 640) and every game fits at 13 px text and 44 px targets. It keeps playing; nothing of
+/* PH2 (Planner, 13 Nov): while a game shows in the Games tab the video is a strip (~84–120 px), so the game gets 450 px
+   on any phone 640 px tall or more and every game fits at 13 px text and 44 px targets. It keeps playing; nothing of
    ours lies over it (the player only stops taking taps), and a tap on the strip goes back to the Room tab
    (ui/phone-room.ts), where the video is full size again. */
 html.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
   aspect-ratio: auto;
-  height: 120px;
+  /* The game gets 450 px on every phone 640 px tall or more (an 8 × 8 board at 44 px plus two 44 px rows): about
+     108 px of video on an iPhone 13, 84 px at 360 × 640, more on taller phones. */
+  height: clamp(80px, calc(100dvh - 556px), 180px);
   min-height: 0;
   overflow: hidden;
   cursor: pointer;
 }
 html.ph-game-tab[data-ph-tab='games'] .room .theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap * {
   pointer-events: none;
+}
+/* The game's own layout spaces itself in the tab (every pixel of height counts there). */
+#game-stage.in-tab .game-fit {
+  padding: 0;
 }
 .game-stage.in-tab .game-stage-head {
   min-height: 52px;
