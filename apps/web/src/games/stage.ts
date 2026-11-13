@@ -777,9 +777,13 @@ export function createGameStage(opts: StageOptions) {
   /** QA2 (B2's sweep): the head's buttons show their words whenever they fit beside the game's name, else icons only. */
   function fitHeadLabels(): void {
     stage.classList.add('head-labels');
+    stage.classList.remove('head-wrap');
     const name = titleText.querySelector<HTMLElement>('.game-stage-title-name') ?? titleText;
     // An upright phone's head is icons only (pick 1); held sideways it has room for "Leave table" / "Close table".
     if ((isPhoneLayout() && !isSideways()) || head.scrollWidth > head.clientWidth + 1 || name.scrollWidth > name.clientWidth + 1) stage.classList.remove('head-labels');
+    // R10: a window too narrow for the game's name beside the icons gives the name its own row of the head (a phone's
+    // Games tab keeps one row: its height goes to the game).
+    if (!stage.classList.contains('in-tab') && name.getBoundingClientRect().right > title.getBoundingClientRect().right + 1) stage.classList.add('head-wrap');
   }
   function refit(): void {
     const kind = shownKind();

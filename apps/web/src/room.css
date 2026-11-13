@@ -5615,7 +5615,14 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   white-space: nowrap;
 }
 
-/* R10: a table's title is the game's name (never cut) and "· started by …" (cut first) side by side. */
+/* R10: a table's title is the game's name (never cut) and "· started by …" (cut first) side by side. In a window too narrow for the
+   name beside the icons, the head wraps and the title takes its own row (stage.ts `head-wrap`). */
+.game-stage.head-wrap .game-stage-head {
+  flex-wrap: wrap;
+}
+.game-stage.head-wrap .game-stage-title {
+  flex: 1 0 100%;
+}
 .game-stage-title-text:has(.game-stage-title-name) {
   display: flex;
   min-width: 0;
