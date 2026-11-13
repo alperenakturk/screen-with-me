@@ -42,10 +42,15 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Turkish. Does buying in Snack Bar feel like a choice?
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
+- [ ] 15c. [PH2, 0.9.97.130] Phone, upright: open Snack Bar, then a table with a friend (Quiz or Dama): it plays in
+  the Oyunlar tab, the video a strip on top (a tap on it goes back to the room), nothing cut off or tiny. Turn the
+  phone mid-game: nothing changes. Draw & Guess: draw with the tools and 🎨. Tavla: a tap just beside a point counts.
 - [ ] 15a. [QA3, 0.9.97.126] The four table lobbies look alike: 👑 / "(sen)", the "Bekleniyor…" chair, the grey
   "Oyunu başlat" (Duel: "Hazır") with its hint under it. In Five Frames typing T / M / F / Boşluk writes letters, no
   cinema mode. Matinee: Five Frames and Snack Bar are light. Window Garden on an upright tablet and a sideways phone:
   the album under the window sill, Sula / Stub'un ışığı inside their card.
+- [ ] 15b. [0.9.97.128] Phone, upright: open any table (Draw & Guess, Quiz, Sea Battle…), tap ⋯ in its top bar:
+  "Masadan kalk" and "Masayı kapat" can be tapped, and "Masadan kalk" leaves the table.
 - [ ] 16c. [QW1–QW5, 0.9.97.124] Tablet upright and sideways, a video playing: Snack Bar never covers the video
   (sideways the right column down to the message box, upright the column beside the chat); the rail's 🎮 hall shows
   whole; a sideways phone's hall shows all six tables in a row. Laptop, chess with a video playing: "Video paused for
@@ -90,6 +95,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27b. [AV1, 0.9.97.129] On your phone: open the character picker (join card or profile), scroll down, tap a
+  character: the list stays where it was and the one you tapped stays in view.
 - [ ] 27c. [SAFE1, 0.9.97.131] In a real room with a friend: tap their face → 🔇 Block for me; their new messages and
   emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
   back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in

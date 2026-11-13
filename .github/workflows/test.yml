@@ -244,6 +244,10 @@ jobs:
       - name: Phone held sideways
         run: node scripts/harness/phone-sideways/run.cjs http://localhost:8787
 
+      # R27 + 0.9.97.129: the avatar picker is one fixed grid, and a pick never sends it back to the top.
+      - name: Avatar picker
+        run: node scripts/harness/avatar-picker/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
@@ -275,6 +279,8 @@ jobs:
           node scripts/harness/sea/run.cjs http://localhost:8787
           # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
           node scripts/harness/table-how/run.cjs http://localhost:8787
+          # 0.9.97.128: on a phone the head's ⋯ sheet (Leave / Close table) sits above every table's lobby.
+          node scripts/harness/game-more/run.cjs http://localhost:8787
           # GP2: the one result card (Classics; Sea's in the sea harness) and Glowbeam the referee's reactions.
           node scripts/harness/game-result/run.cjs http://localhost:8787
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
@@ -314,6 +320,10 @@ jobs:
       # (needs the webm the Tablets step serves on :5300).
       - name: Game window head
         run: node scripts/harness/game-window-head/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+
+      - name: Games sweep on a 360 × 640 phone (the Games tab, EN + TR)
+        # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
+        run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Snack Bar and motion
         run: |

@@ -153,21 +153,6 @@
 @keyframes sea-enter { from { opacity: 0; transform: translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { .sea[data-phase='play'] .sea-sea { animation: none; } }
 
-/* GPRO (layout audit): a sideways phone shows one sea at a time at the full height on the left (the switch picks
-   which), the bar, the switch, Stub's line and the buttons in a column on its right. */
-html.phone.sideways #game-stage .sea {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'seas bar' 'seas switch' 'seas ref' 'seas actions'; gap: 6px 12px; padding: 6px 10px;
-}
-html.phone.sideways #game-stage .sea-bar { grid-area: bar; }
-html.phone.sideways #game-stage .sea-switch { grid-area: switch; }
-html.phone.sideways #game-stage .sea-ref { grid-area: ref; align-self: center; flex-wrap: wrap; }
-html.phone.sideways #game-stage .sea-actions { grid-area: actions; }
-html.phone.sideways #game-stage .sea-seas { grid-area: seas; height: 100%; aspect-ratio: 0.92; grid-template-columns: minmax(0, 1fr); }
-html.phone.sideways #game-stage .sea:not([data-phase='place']) .sea-switch, html.phone.sideways #game-stage .sea.watching .sea-switch { display: flex; }
-html.phone.sideways #game-stage .sea[data-view='mine'] .sea-theirs, html.phone.sideways #game-stage .sea[data-view='theirs'] .sea-mine { display: none; }
-html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-mine { display: flex; }
-
 /* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the seas take the
    full height on the left; the bar, Stub's line and the buttons stand in a column on the right. */
 @container game (min-aspect-ratio: 16 / 10) {
@@ -187,3 +172,13 @@ html.phone.sideways #game-stage .sea[data-phase='place']:not(.watching) .sea-min
    ("Benim denizim" had wrapped in a narrowed head). */
 html.phone .sea-bot-label { flex-basis: auto; }
 .sea-head :is(b, small, span) { white-space: nowrap; }
+
+/* PH2 (0.9.97.130): Sea Battle in a phone's Games tab (about 360 × 450): the bar is one row (the score, Stub's label in
+   two lines beside its levels; 👁 only when someone watches), so the sea gets the height. Its cells keep their own rule
+   (10 × 10 can't be 44 px on a phone; the sea zooms for aiming). */
+#game-stage.in-tab .sea { padding: 4px 8px 6px; gap: 6px; }
+#game-stage.in-tab .sea-bar { flex-wrap: nowrap; gap: 6px; min-height: 44px; }
+#game-stage.in-tab .sea-bot { flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; order: 0; flex-basis: auto; }
+#game-stage.in-tab .sea-bot-label { white-space: normal; min-width: 0; flex: 0 1 auto; line-height: 1.2; }
+#game-stage.in-tab .sea-watch-open[data-n='0'] { display: none; }
+#game-stage.in-tab .sea-score { flex: none; white-space: nowrap; }

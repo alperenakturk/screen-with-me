@@ -189,31 +189,7 @@
   grid-template-areas: 'bar' 'top' 'board' 'bottom' 'tray' 'status' 'actions'; gap: 8px;
 }
 #game-stage .xox-page.mt > .mt-table[hidden], #game-stage .xox-page.mt > .cl-picker[hidden] { display: none; }
-/* GPRO (layout audit): a sideways phone puts the board on the left at the full height, the bar, players, status and
-   buttons in a column on its right (the board was squeezed to a sliver between them). */
-html.phone.sideways #game-stage .xox-page.mt > .mt-table {
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'board bar' 'board top' 'board bottom' 'board tray' 'board .' 'board status' 'board actions'; gap: 4px 12px;
-}
-html.phone.sideways #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); }
-/* QA2 (12): the label stays on phones ("Easy" / "Medium" need it); the chips wrap under it when short of room. */
-/* QA2 review: on a sideways phone the bar runs across the full width in one line, so "Play against Stub (our bot)" and
-   its levels fit beside the score (the label was dropped and "Medium" slid under the players). */
-html.phone.sideways #game-stage .xox-page.mt > .mt-table {
-  grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'bar bar' 'board top' 'board bottom' 'board tray' 'board .' 'board .' 'board status' 'board actions';
-}
-html.phone.sideways #game-stage .mt .mt-bar { flex-wrap: nowrap; }
-html.phone.sideways #game-stage .mt .cl-bot { flex-wrap: nowrap; }
 #game-stage .mt .cl-bot-label { white-space: nowrap; }
-html.phone:not(.sideways) #game-stage .mt .mt-bar { flex-wrap: wrap; row-gap: 6px; }
-html.phone:not(.sideways) #game-stage .mt .cl-bot { order: 3; flex-basis: 100%; justify-content: flex-start; flex-wrap: wrap; }
-html.phone:not(.sideways) #game-stage .mt .mt-watch-open { margin-left: auto; }
-html.phone.sideways #game-stage .mt .xox-player { padding: 2px 10px; }
-html.phone.sideways #game-stage .xox-page.mt { padding: 6px 10px; }
-html.phone.sideways #game-stage .mt .mt-taken { font-size: 13px; flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em; overflow: hidden; text-overflow: ellipsis; }
 #game-stage .mt .xox-players { display: contents; }
 #game-stage .mt #seat-1 { grid-area: top; }
 #game-stage .mt #seat-0 { grid-area: bottom; }
@@ -314,15 +290,6 @@ html.phone.sideways #game-stage .mt .xox-name { flex: 0 1 auto; min-width: 4.5em
   #game-stage .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 10px) / 2); }
   #game-stage .mt .cl-card-players { display: none; }
 }
-/* QA2 (4): an upright phone's 2 × 3 grid ends above the bottom edge (smaller pictures, a little room below). */
-html.phone:not(.sideways) #game-stage .mt .cl-picker { justify-content: safe center; padding-bottom: 12px; box-sizing: border-box; }
-html.phone:not(.sideways) #game-stage .mt .cl-card-art svg { max-height: 72px; }
-/* GPRO (layout audit): a sideways phone shows all six cards in one row (names only), so nothing is cut off. */
-html.phone.sideways #game-stage .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; gap: 6px; }
-html.phone.sideways #game-stage .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
-html.phone.sideways #game-stage .mt .cl-card-line, html.phone.sideways #game-stage .mt .cl-card-players { display: none; }
-html.phone.sideways #game-stage .mt .cl-card-art svg { max-height: 64px; }
-html.phone.sideways #game-stage .mt .cl-picker-line { margin-bottom: 4px; }
 /* A narrow window (a phone): score and 👁 on the bar's first line, Stub's chips on the next. */
 @container game (max-width: 440px) {
   #game-stage .mt .mt-gap { display: none; }
@@ -435,3 +402,75 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 .bg-die.used { opacity: 0.3; text-decoration: line-through; text-decoration-thickness: 3px; }
 /* (m) The tray's dark checker has a light rim, so it shows on the dark wood. */
 .bg-off-o { filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff8); }
+
+/* ==== PH2 (0.9.97.130): a phone's Games tab (`#game-stage.in-tab`, about 360–390 × 450 under the video strip).
+   Playing: both players in one row, the board at 44 px a square (8 × 44 = 352), one row for the status with Stub's
+   level, ✕ and 👁 on its right. Waiting for an opponent (`.cl-ref-mascot.wait`: no square can be played, so the board
+   may be smaller): the bar with "Play against Stub" gets its own row and the buttons of the moment come back. ==== */
+#game-stage.in-tab .xox-page.mt { padding: 0; }
+#game-stage.in-tab .xox-page.mt > .mt-table {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  grid-template-areas: 'players players' 'board board' 'tray tray' 'status bar' 'actions actions';
+  gap: 0 8px;
+}
+/* No row gaps (an empty tray or actions row would still take one): the rows space themselves. */
+#game-stage.in-tab .mt .xox-players { margin: 0 6px 4px; }
+#game-stage.in-tab .mt :is(.cl-ref, .mt-bar, .bg-tray) { margin-top: 4px; }
+#game-stage.in-tab .mt .cl-ref { margin-left: 6px; }
+#game-stage.in-tab .mt .mt-bar { margin-right: 6px; }
+#game-stage.in-tab .mt .xox-actions { margin-top: 4px; }
+#game-stage.in-tab .mt :is(.xox-board, .dama-board) { padding: 2px; border-radius: 6px; }
+#game-stage.in-tab .xox-page.mt > .mt-table:has(.cl-ref-mascot.wait) {
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'players players' 'bar bar' 'board board' 'tray tray' 'status actions';
+}
+#game-stage.in-tab .mt .xox-players { display: flex; grid-area: players; gap: 6px; }
+#game-stage.in-tab .mt .xox-players > .xox-player { flex: 1 1 0; min-width: 0; min-height: 40px; gap: 6px; padding: 2px 8px; }
+#game-stage.in-tab .mt #seat-1 { order: 0; }
+#game-stage.in-tab .mt #seat-0 { order: 1; }
+#game-stage.in-tab .mt.flip #seat-1 { order: 1; }
+#game-stage.in-tab .mt .xox-player .xox-avatar { width: 28px; height: 28px; flex: none; }
+#game-stage.in-tab .mt .xox-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+#game-stage.in-tab .mt .mt-taken { display: none; }
+#game-stage.in-tab .mt .mt-wins { padding: 2px 6px; font-size: 14px; min-width: 0; }
+#game-stage.in-tab .mt .mt-score { display: none; }
+#game-stage.in-tab .mt .mt-gap { display: none; }
+#game-stage.in-tab .mt .mt-bar { flex-wrap: nowrap; justify-content: flex-end; gap: 6px; min-height: 44px; }
+#game-stage.in-tab .mt .cl-bot { order: 0; flex-basis: auto; flex-wrap: nowrap; }
+#game-stage.in-tab .mt .mt-watch-open { margin-left: 0; }
+#game-stage.in-tab .mt .mt-table:not(:has(.cl-ref-mascot.wait)) .cl-bot-level:not(.on) { display: none; }
+#game-stage.in-tab .mt .mt-watch-open[data-n='0'] { display: none; }
+#game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .mt-bar { justify-content: center; margin-inline: 6px; }
+#game-stage.in-tab .mt .cl-ref { justify-content: flex-start; min-height: 44px; gap: 6px; }
+#game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .bg-tray { display: none; }
+#game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .xox-actions { margin: 4px 6px 0 0; align-self: center; }
+#game-stage.in-tab .mt .cl-ref-mascot { width: 26px; height: 26px; }
+#game-stage.in-tab .mt .xox-status { font-size: 14px; }
+#game-stage.in-tab .mt .xox-actions:not(:has(> :not([hidden]))) { display: none; }
+#game-stage.in-tab .mt .four-board { margin-bottom: 6px; }
+/* The board's row takes what the others leave (its `height: 100%` sized the row from the board instead). */
+#game-stage.in-tab .mt .xox-board-wrap { height: auto; }
+/* "Play against Stub (our bot)" wraps to two lines beside its levels on a 360 px phone (one line pushed the bar wider
+   than the screen, and the whole game was shrunk to fit). */
+#game-stage.in-tab .mt .cl-bot { min-width: 0; flex: 0 1 auto; }
+#game-stage.in-tab .mt .cl-bot-label { white-space: normal; min-width: 0; flex: 0 1 auto; line-height: 1.2; }
+/* Decorations past the edge (Four in a Row's stand) don't widen the game in the tab (they shrank it by 1 %). */
+#game-stage.in-tab .xox-page.mt { overflow: clip; }
+/* Backgammon's phone rules give its name and pips line room of their own; in the tab's half-width seat the name
+   shrinks and the pips line goes (the tray under the board carries the dice and moves). */
+#game-stage.in-tab .mt[data-board='backgammon'] .xox-name { flex: 1 1 auto; }
+#game-stage.in-tab .mt[data-board='backgammon'] .mt-taken { display: none; }
+/* The picker in the tab: 2 × 3 cards with their picture and name (the one-line description goes; the "?" says it). */
+#game-stage.in-tab .mt .cl-picker { padding: 6px 8px; justify-content: safe center; }
+#game-stage.in-tab .mt .cl-picker-title { font-size: 20px; }
+#game-stage.in-tab .mt .cl-picker-line { margin-bottom: 6px; font-size: 13px; }
+#game-stage.in-tab .mt .cl-picker-grid { gap: 8px; }
+#game-stage.in-tab .mt .cl-picker-grid > .cl-card { flex-basis: calc((100% - 8px) / 2); }
+#game-stage.in-tab .mt .cl-card-line { display: none; }
+#game-stage.in-tab .mt .cl-card-art svg { max-height: 64px; }
+/* PH2: a point that can't be played lets a tap through to the board, which snaps a near miss to a legal point
+   (match.ts `SNAP_PX`) and ignores the rest. */
+.bg-board .bg-point:disabled { pointer-events: none; }
+/* Four in a Row keeps a margin from the screen's edges (its board is narrower than an 8 × 8 one). */
+#game-stage.in-tab .mt .four-board { width: min(100cqw - 16px, (100cqh - 14px) * 7 / 6); }

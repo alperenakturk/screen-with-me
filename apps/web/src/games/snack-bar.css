@@ -242,24 +242,6 @@ html.phone .sb-scene { height: 108px; }
 /* A phone's targets are 44 px (GP2; the games sweep checks it). */
 html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-price) { min-height: 44px; }
 
-/* GPRO (layout audit): a sideways phone gets two columns: coins, the counter and the footer on the left; the buy bar
-   and as many stand rows as the height holds on the right (`fitRows`), so nothing is scaled below a readable size. */
-html.phone.sideways #game-stage .sb {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'head buy' 'scene rows' 'note rows' 'foot more'; gap: 6px 12px;
-}
-html.phone.sideways #game-stage .sb-head { grid-area: head; }
-html.phone.sideways #game-stage .sb-scene-box { grid-area: scene; }
-/* QA3 review: a little lower (the drawing keeps its top, the sign, in view) so two stands fit beside it at full size. */
-html.phone.sideways #game-stage .sb-scene { height: 74px; }
-html.phone.sideways #game-stage .sb-buybar { grid-area: buy; }
-html.phone.sideways #game-stage .sb-rows { grid-area: rows; overflow: hidden; contain: size; }
-html.phone.sideways #game-stage .sb-more { grid-area: more; align-self: center; }
-html.phone.sideways #game-stage .sb-foot { grid-area: foot; flex-wrap: wrap; row-gap: 4px; }
-/* QA2 review: the cinema line takes its own row under the buttons here too (it showed "Cinema…"). */
-html.phone.sideways #game-stage .sb-cinema { order: 2; flex: 1 0 100%; }
-html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
-
 /* NG2 (owner's pick 8.1): each place has its own shop-front colours: the panel, the back wall, the shelf, the counter
    and its stripes (the scene reads them through `var()` fills, snack-bar.ts `decorated`). The lobby keeps the defaults. */
 .sb[data-place='drive-in'] { --sb-panel: #152844; --sb-night: #0b1426; --sb-wall-a: #1a2f52; --sb-wall-b: #0a1424; --sb-shelf: #0b1830; --sb-counter-a: #46566e; --sb-counter-b: #1f2836; --sb-stripe: #ff8f3a; }
@@ -320,11 +302,6 @@ html.phone.sideways #game-stage .sb-note { grid-area: note; align-self: start; }
   #game-stage .sb-row { min-height: 38px; }
 }
 
-/* 0.9.97.12x (QA2): an upright phone gives the cinema line its own row under the buttons too (it showed "#1 · …"). */
-html.phone:not(.sideways) #game-stage .sb-foot { flex-wrap: wrap; row-gap: 4px; }
-html.phone:not(.sideways) #game-stage .sb-cinema { order: 2; flex: 1 0 100%; }
-html.phone:not(.sideways) #game-stage .sb-foot > :not(.sb-cinema):last-child { margin-left: auto; }
-
 /* Card (b) after QA2: Snack Bar's body in Matinee takes the room's tokens, like Window Garden; the counter scene keeps its
    drawn place colours. Dark themes keep the game's own night colours above. */
 :root[data-theme='matinee'] .sb,
@@ -348,7 +325,14 @@ html.phone:not(.sideways) #game-stage .sb-foot > :not(.sb-cinema):last-child { m
 :root[data-theme='matinee'] .sb .sb-upgrades-open.ready { background: rgb(154 53 23 / 0.08); box-shadow: inset 0 0 0 1px var(--accent); }
 :root[data-theme='matinee'] .sb :is(.sb-prestige, .sb-badges-open) { border-color: var(--border); }
 :root[data-theme='matinee'] .sb .sb-badge.got .sb-badge-glyph { color: #26201a; }
-/* QA3 review: the lower counter on a sideways phone: the closed note keeps its first line only, at the counter's foot,
-   clear of the sign at its top (the second line is in the window's "?" and returns on a bigger screen). */
-html.phone.sideways #game-stage .sb-rest small { display: none; }
-html.phone.sideways #game-stage .sb-rest { padding-block: 3px; }
+
+/* PH2 (0.9.97.130): Snack Bar in a phone's Games tab: ×1 / ×10 / Max each a full 44 px target (they shared 122 px). */
+#game-stage.in-tab .sb .sb-mode { min-width: 44px; }
+/* Tighter gaps in the Games tab, so eight stands fit unscaled and every target stays 44 px. */
+#game-stage.in-tab .sb { gap: 5px; padding: 6px 10px 8px; }
+/* The counter's picture keeps the 80 px it has on a 360 px phone (wider phones made it taller, and three stands no
+   longer fitted under it). */
+#game-stage.in-tab .sb .sb-scene-box { height: 80px; max-height: 80px; }
+#game-stage.in-tab .sb .sb-scene { height: 80px; }
+/* The "closed" note keeps both lines but sits lower and thinner in that 80 px scene, under the SNACK BAR sign. */
+#game-stage.in-tab .sb .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }

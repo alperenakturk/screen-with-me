@@ -13,7 +13,8 @@
 //       panel open or closed, and closes on Esc, an outside click or a chosen game.
 //   QA2 Tablets: a side game lines up with the side panel (upright: its column beside the chat), never over the video; the rail's hall shows whole. 1366: words
 //       on a table's head buttons where they fit, the paused note under the head, a gap to "Play now", a side game leaves
-//       cinema mode. Phone: a one-row head (name, ?, 🎙, 🎮, ⋯ with Leave / Close); sideways Leave / Close in the head.
+//       cinema mode. Phone (PH2): games play inside the Games tab; a one-row head (name, ?, 🎙, ⋯ with Leave / Close); turning the phone
+//       with a game open changes nothing.
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
 //       over a YouTube player it never covers it and never jumps while dragged; each game remembers its own spot and
 //       size; ✕ and 🎮 bring it back in the same spot; a double click on the head puts it back; the corner resizes it.
@@ -93,6 +94,8 @@ const box = (page) =>
       inVideo: s.parentElement?.classList.contains('player-wrap') ?? false,
     };
   });
+/** PH2: the Test Lab's `phoneGames.state` (the tab, the game in the Games tab, its fit, upright or held). */
+const phoneGames = (page) => page.evaluate(async () => JSON.parse((await window.__swmLab.run('phoneGames.state')).text.replace(/^\S+\s/, '')));
 const visible = (page, sel) =>
   page.evaluate((q) => {
     const e = document.querySelector(q);
@@ -434,15 +437,16 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await ctx.close();
   }
 
-  // ---- A phone: side games play full, no ⛶, 🎮 opens the hall ----
+  // ---- A phone (PH2): side games play inside the Games tab, no ⛶; ✕ puts it away and the hall shows there ----
   {
     const { ctx, page, errors } = await room(browser, null, { phone: true });
     await openGame(page, 'snack');
-    const b = await box(page);
-    check(b.mode === 'full', 'phone: Snack Bar plays on the whole screen', b);
+    const s = await phoneGames(page);
+    check(s.tab === 'games' && s.inTab && s.fit.inPanel, 'phone PH2: Snack Bar plays inside the Games tab', s);
+    check(await visible(page, '.ph-tabs'), 'phone PH2: the tab bar stays at the bottom');
     check(!(await page.$('#game-stage .game-full')), 'phone: no ⛶');
-    await page.evaluate(() => document.querySelector('#game-stage .game-hub-open').click());
-    check(!!(await until(() => visible(page, '#game-menu'), 3000)), 'phone W3: 🎮 opens the hall');
+    await page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
+    check(!!(await until(() => visible(page, '#game-menu'), 3000)), 'phone PH2: a side game’s ✕ closes it and the hall shows in the Games tab');
     check(!errors.length, 'phone: no page errors', errors.slice(0, 2));
     await ctx.close();
   }
@@ -516,8 +520,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     check(!errors.length, '1366 QA2: no page errors', errors.slice(0, 2));
     await ctx.close();
   }
-  // An upright phone with a table and a video: one-row head (name, ?, 🎙, 🎮, ⋯), the thumbnail is "back", ⋯ holds Leave /
-  // Close with their words; sideways Leave / Close sit in the head.
+  // PH2: a phone with a table and a video: the table plays in the Games tab under the video (paused, with the note), its
+  // head one row (name, ?, 🎙, ⋯) with Leave / Close in ⋯; another tab keeps it running with a dot on 🎮; turning the
+  // phone changes nothing while it is open, and closing it brings sideways back. Opened sideways it is held upright too.
   for (const [L, device] of [['phone', 'iPhone 13'], ['phone-land', 'iPhone 13 landscape']]) {
     const ctx = await browser.newContext({ ...devices[device] });
     await ctx.addInitScript(() => {
@@ -543,13 +548,47 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       return { rows: tops.size, name: shown('.game-stage-title-name'), help: shown('.htp-head'), more: shown('.game-more'), leave: shown('.game-leave'), back: shown('.game-minimize') };
     });
     check(h.rows === 1 && h.name && h.help, `${L} QA2: the head is one row with the game's name and "?"`, h);
+    check(h.more && !h.leave && !h.back, `${L} PH2: ⋯ instead of Leave / Close, no ✕ on a table`, h);
+    const s = await phoneGames(page);
+    check(s.tab === 'games' && s.inTab && s.fit.inPanel, `${L} PH2: the table plays inside the Games tab`, s);
+    const where = await page.evaluate(() => {
+      const v = document.querySelector('.player-wrap').getBoundingClientRect();
+      const g = document.getElementById('game-stage').getBoundingClientRect();
+      const tabs = document.querySelector('.ph-tabs').getBoundingClientRect();
+      return { videoAbove: v.bottom <= g.top + 1 && v.height > 20, tabsBelow: tabs.top >= g.bottom - 1, paused: !!document.querySelector('#theater video')?.paused };
+    });
+    check(where.videoAbove && where.tabsBelow, `${L} PH2: the video stays above the game, the tabs below it`, where);
+    check(where.paused, `${L} PH2: the table paused the video`, where);
+    if (L === 'phone-land') check(s.upright === 'held', 'phone-land PH2: opened sideways, the room is held upright', s);
+    await page.evaluate(() => window.__swmLab.run('gameWindow.more'));
+    await wait(300);
+    const menu = await page.evaluate(() => [...document.querySelectorAll('.game-more-pop:not([hidden]) button')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.textContent.trim()));
+    check(menu.length >= 1 && menu.every((t) => t.length > 3), `${L} PH2: ⋯ opens Leave / Close with their words`, menu);
+    await page.keyboard.press('Escape');
     if (L === 'phone') {
-      check(h.more && !h.leave && !h.back, 'phone QA2: ⋯ instead of Leave / Close; the thumbnail is "back"', h);
+      await page.click('#ph-tab-room');
+      await wait(400);
+      const away = await phoneGames(page);
+      check(away.tab === 'room' && away.game === 'xox' && away.waiting, 'phone PH2: on another tab the table keeps running with a dot on 🎮', away);
+      await page.click('#ph-tab-games');
+      await wait(400);
+      const back = await phoneGames(page);
+      check(back.tab === 'games' && back.shown && !(await visible(page, '#game-menu')), 'phone PH2: back on 🎮 the table shows again (not the hall)', back);
+      // Turning the phone with the table open changes nothing: no sideways layout, the upright column stays.
+      await page.setViewportSize({ width: 844, height: 340 });
+      await wait(800);
+      const turned = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways') }));
+      const t2 = await phoneGames(page);
+      check(!turned.sideways && t2.upright === 'held' && t2.inTab && t2.fit.inPanel, 'phone PH2: turning the phone with a table open changes nothing', { ...turned, ...t2 });
+      // Closing it brings the room's sideways layout back.
       await page.evaluate(() => window.__swmLab.run('gameWindow.more'));
       await wait(300);
-      const menu = await page.evaluate(() => [...document.querySelectorAll('.game-more-pop:not([hidden]) button')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.textContent.trim()));
-      check(menu.length >= 1 && menu.every((t) => t.length > 3), 'phone QA2: ⋯ opens Leave / Close with their words', menu);
-    } else check(!h.more && h.leave, 'phone-land QA2: Leave / Close sit in the head', h);
+      await page.evaluate(() => document.querySelector('.game-more-pop .game-leave').click());
+      await until(() => page.evaluate(() => document.getElementById('game-stage').hidden), 4000);
+      await wait(400);
+      const after = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways'), held: document.documentElement.classList.contains('upright-turned') }));
+      check(after.sideways && !after.held, 'phone PH2: leaving the table brings the sideways layout back', after);
+    }
     await ctx.close();
   }
 

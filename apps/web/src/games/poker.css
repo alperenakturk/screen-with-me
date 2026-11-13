@@ -10,9 +10,69 @@
   .pk-moves > :first-child:not(.pk-move) { grid-column: 1 / -1; }
   /* The table's small print, a step bigger: in this box the game is about its own size, never above. */
   :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-quick .game-chip, .pk-moves-label, .pk-move-name, .pk-street) { font-size: 13px; }
-  .pk-move small { font-size: 12px; }
+  .pk-move small { font-size: 13px; }
 }
 /* The lobby card is as wide as the other tables' there (its two halves: lobby.css "one lobby family"). */
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .pk-lobby { width: min(100%, 820px); }
 }
+
+/* ==== PH2 (0.9.97.130): Last Heart running in a phone's Games tab (about 360 × 450). One compact line each for the
+   status and every opponent (two side by side; more scroll sideways, the one list that grows), the pot beside the
+   shared cards, my hand beside my life, then two rows of 44 px actions (Fold · Call · Raise to, the quick amounts beside
+   the slider) and the four special moves as a 2 × 2 grid. ==== */
+#game-stage.in-tab .pk { gap: 4px; padding: 2px 4px; min-height: 0; height: 100%; box-sizing: border-box; }
+#game-stage.in-tab .pk-status { padding: 4px 8px 4px; row-gap: 2px; }
+#game-stage.in-tab .pk-status-text { font-size: 15px; }
+#game-stage.in-tab .pk-secs { font-size: 15px; }
+#game-stage.in-tab .pk-timer { height: 3px; }
+#game-stage.in-tab .pk-seats { display: flex; gap: 4px; overflow-x: auto; flex: none; }
+#game-stage.in-tab .pk-seat {
+  flex: 0 0 calc(50% - 2px); min-width: 0; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'top cards' 'life cards' 'status cards'; gap: 0 6px; padding: 4px 8px; align-items: center;
+}
+#game-stage.in-tab .pk-seats > .pk-seat:only-child { flex-basis: 100%; }
+#game-stage.in-tab .pk-seat-top { grid-area: top; min-width: 0; }
+#game-stage.in-tab .pk-seat .pk-life { grid-area: life; }
+#game-stage.in-tab .pk-seat-cards { grid-area: cards; }
+#game-stage.in-tab .pk-seat .pk-seat-status { grid-area: status; }
+#game-stage.in-tab .pk-seat .pk-card { width: 26px; }
+#game-stage.in-tab .pk-middle { padding: 4px 8px; gap: 10px; flex: none; grid-template-columns: auto minmax(0, 1fr); justify-items: start; }
+#game-stage.in-tab .pk-flask { width: 40px; height: auto; }
+#game-stage.in-tab .pk-center { gap: 4px; }
+#game-stage.in-tab .pk-board { gap: 4px; }
+#game-stage.in-tab .pk-board .pk-card { width: 34px; }
+#game-stage.in-tab .pk-feed { max-height: 18px; overflow: hidden; }
+#game-stage.in-tab .pk-me { padding: 6px 8px; gap: 6px; flex: none; }
+#game-stage.in-tab .pk-me-top { gap: 10px; }
+#game-stage.in-tab .pk-me .pk-card.big { width: 38px; }
+#game-stage.in-tab .pk-actions { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px minmax(0, 1fr); gap: 4px; }
+#game-stage.in-tab .pk-actions > .btn, #game-stage.in-tab .pk-raise-box > .btn { min-height: 44px; min-width: 0; padding: 4px 6px; }
+#game-stage.in-tab .pk-raise-box { display: contents; }
+#game-stage.in-tab .pk-actions > .pk-amount-open { display: grid; place-items: center; grid-column: 3; grid-row: 1; padding: 0; font-size: 18px; }
+#game-stage.in-tab .pk-raise-box .pk-raise { grid-column: 4; grid-row: 1; min-height: 44px; padding: 4px 6px; }
+#game-stage.in-tab .pk-amounts { display: none; }
+#game-stage.in-tab .pk-actions.amounts-open .pk-amounts {
+  display: flex; flex-direction: column; gap: 6px; position: absolute; left: 0; right: 0; bottom: calc(100% + 6px); z-index: 6; padding: 8px;
+  border-radius: 14px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+}
+#game-stage.in-tab .pk-quick { display: flex; flex-wrap: wrap; gap: 4px; }
+#game-stage.in-tab .pk-quick .game-chip { min-width: 44px; min-height: 44px; padding: 0 10px; }
+#game-stage.in-tab .pk-slider { min-height: 44px; min-width: 0; }
+#game-stage.in-tab .pk-slider input { min-width: 0; width: 100%; }
+#game-stage.in-tab .pk-moves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+#game-stage.in-tab .pk-moves-label { display: none; }
+#game-stage.in-tab .pk-move { min-height: 44px; padding: 2px 4px; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'name' 'cost'; justify-items: center; align-items: center; row-gap: 0; text-align: center; }
+#game-stage.in-tab .pk-move-icon { display: none; }
+#game-stage.in-tab .pk-move-name { grid-area: name; }
+#game-stage.in-tab .pk-move small { grid-area: cost; }
+#game-stage.in-tab :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-street, .pk-move small, .pk-life b, .pk-help, .pk-quick .game-chip, .pk-move-name) { font-size: 13px; }
+/* The ♠ "hand ranks" help keeps its small look but gets a 44 px target (negative margins keep its line's height). */
+#game-stage.in-tab .pk-help { min-width: 44px; min-height: 44px; margin: -12px -10px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+#game-stage.in-tab .pk-slider input { min-height: 44px; }
+
+/* Elsewhere the amounts stay where they were (their wrapper adds no box) and ± is not there. */
+.pk-amounts { display: contents; }
+.pk-amount-open { display: none; }
+/* The ♠ "hand ranks" help is a 24 px target with a 13 px glyph on a computer too (the running-table sweep, PH2). */
+.pk-help { min-width: 24px; min-height: 24px; font-size: 13px; }

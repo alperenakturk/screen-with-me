@@ -692,7 +692,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fullscreen (4B):** on a phone in landscape the dock is a slim column (52 px + safe area) beside the video, never on it
   (`.player` / `.fs-catcher` end at its edge, so the player's own bar stays free), always visible, only 💬 😀 🎙 📷 and
   exit (🖥️ only while someone streams: `data-idle` on `#dock-live`); its windows open left of it (`overflow: visible`).
-  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
+  **Step 3 (0.9.92.5; replaced on phones by PH2 below):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
   the Shorts view); phone.css shrinks the theater itself (CSS only, the player is never reloaded) to a 92×52 preview
   at the left of the game's head; `::after` over it catches the tap, `phone-room.ts` turns it into the head's
   `.game-minimize`; the strip's `#strip-voice` moves into the head while `ph-game` (only 🎙 shows there) and back
@@ -726,7 +726,41 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   The empty room shows `.ph-empty-actions` 🔍 Search a video (→ Search tab) and 🔗 Invite; the steps and the sync test
   are hidden. **Search:** borrows `#media-form`, `#media-done` and the queue panel under "Up next"; "Play now" goes back
   to the Room tab. **Games:** a hidden `#ph-games-open` trigger (passed to `createGameStage`'s `extraButtons`) opens the
-  hall inside the panel; picking a game goes back to Room; a waiting table puts a dot on the tab. **Me:** `meHead`
+  hall inside the panel; a waiting table puts a dot on the tab. **PH2 (0.9.97.130): games play inside the Games tab.**
+  In `ph-room` (not the Shorts view) `stage.ts` `place()` moves `#game-stage` into `.ph-panel[data-ph-panel="games"]`
+  (class `in-tab`, still `full` / `data-place="full"`) and sets `html.ph-game-tab` instead of `ph-game`. The video
+  stays on top and the tabs at the bottom; `room.css` (end) drops the panel's padding and hides the hall's wrap, the
+  head's 🎮 and a table's ✕. The head is one row: name, `.game-head-slot` "?", 🎙 (borrowed by `phone-room.ts`), ⋯
+  with Leave / Close (`tightHead`). A side game's ✕ closes it (`leave(false)`; its progress is in storage) and the
+  hall comes back. `phone-room.ts`: `ph-game-tab` turning on opens the Games tab, the hall's "closed without a game →
+  Room" step waits while a game shows, coming back to 🎮 shows the game (not the hall), and `syncGamesDot` puts the
+  dot on 🎮 for a minimized table or a game left running on another tab. Tables pause the video here too (`autoPause`).
+  Fit: a game not in `TAB_LAYOUT` (Game Studio adds each one with its own tab layout) lays out at `TAB_H` (600 px, its
+  height on the phone's whole screen) and is scaled into the panel; one in it fills the panel and only overflow shrinks
+  it. Upright only: `device.ts` `holdUpright(on)` while the window shows in the tab keeps `isSideways()` false and
+  `html.sideways` off; held sideways, `html.upright-turned` lays `body` out at the last upright size (`--up-w`,
+  `--up-h`), centred and scaled to the height (`--up-s`); closing the game releases it. The whole-screen `ph-game` is
+  left only for a phone-narrow window outside the phone room (the TV); its video-thumbnail rules are gone. Test Lab:
+  `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / held / sideways, the panel and window sizes, the
+  scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone / phone-land: in the tab, video above
+  and tabs below, paused, ⋯, the dot, back to the game, turning changes nothing, leaving brings sideways back) and
+  `phone` (a table in the Games tab, the dot). **Game layouts in the tab (Game Studio):** every game is in
+  `TAB_LAYOUT`. While a game shows (`html.ph-game-tab[data-ph-tab='games']`) the video is a strip
+  `clamp(80px, 100dvh − 556px, 180px)` tall (room.css; the player takes no taps, a tap on `#theater` goes back to the
+  Room tab), so the game gets 450 px on any phone 640 px tall or more; `#game-stage.in-tab .game-fit` has no padding.
+  Each game's tab rules sit at the end of its stylesheet (`#game-stage.in-tab …`): Classics (players in one row, the
+  board at 44 px a square, one status row with Stub's level / ✕ / 👁 on its right; waiting: the bar on its own row;
+  `data-n` on 👁 hides an empty one; the picker 2 × 3 without descriptions), lobby.css (lobby cards: badge beside the
+  title; running Quiz: 44 px answers, the card wraps, the scoreboard scrolls; running Draw & Guess: the 4:3 canvas in
+  the height left, players as chips, the drawer's tools in two 44 px rows with the 20 colours behind 🎨
+  `.draw-color-open`, the guess box and feed hidden while I draw), poker.css (one-line seats, the pot beside the
+  shared cards, Fold · Call · ± · Raise in one row, the amounts `.pk-amounts` open from ± `.pk-amount-open`
+  (`amountsOpen` in poker.ts), the moves in one row), sea.css (one-row bar), five-frames.css (44 px keys, the rows
+  give way), snack-bar.css (44 px modes, an 80 px scene). Backgammon's points are about 23 px wide on a phone: the
+  sweep counts a `.bg-point` ≥ 88 px tall and ≥ 22 px wide (Planner, 13 Nov), and with a checker picked a tap within
+  12 px of a legal point goes to it (match.ts `SNAP_PX`; a disabled point lets taps through to the board). Games have
+  no sideways-phone rules any more. Checks: games-sweep at `iphone` and `small` (360 × 640) with the running tables
+  (`quizPlay`, `drawPlay`, `pokerPlay`, `chessPlay`, `backgammonPlay`). **Me:** `meHead`
   (avatar + name, a tap opens the profile menu: name, picture, colour theme, language) and the settings sections
   `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
   device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
@@ -1341,6 +1375,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
       the grid is `'bar bar' 'scene action' 'album album'`, the pot's card a column, the album one row of eight
       (44 px cells on a phone); a narrow or phone bar shows `🌙` without its word and the short album count. Checks:
       garden ("wide, low window", "the album stays inside the window", "Water / Stub's lamp stay inside").
+  - 0.9.97.128: the head's ⋯ sheet (`.game-more-pop`, "Leave table" / "Close table" on an upright phone) is appended
+    to `body`, so on a phone it takes `z-index: 1150` (room.css) above the full-screen stage (1100); the other sheets'
+    980 left it under every table's lobby. Checks: game-more (every lab "Open a table" kind on an iPhone: ⋯ and both
+    sheet buttons on top, Leave leaves); games-sweep `GAMES=snack SIZES=side` in CI (Snack Bar's sideways stands).
 - **🐞 Test Lab (card DL, lane B leads; DL1 0.9.97.44; grows from card 12):** `?debug=1` once in a tab switches it on
   (it survives reloads; `?debug=0` or "Turn the lab off" removes it). **Locked (card LABLOCK):** on a local server
   (localhost / 127.0.0.1, all harnesses) `?debug=1` opens it as before; anywhere else only `?debug=<code>` does: the
@@ -1981,6 +2019,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Avatar choice:** on the site "Avatarı değiştir" → a large centered dialog (`openAvatarDialog`); since 0.9.87 a pick
   is only applied (and seen by others) with "Tamam" or a double-click; ✕ / Esc / outside cancel. In the extension a
   panel covering the whole window. Hover wobbles, the selected one floats (CSS; off with `prefers-reduced-motion`).
+  Since 0.9.97.129 a pick only moves `aria-checked` in place (`renderAvatarPicker`): the grid is not redrawn, so its
+  scroll and the focus stay where they were (owner's phone bug; `avatar-picker` harness in CI's `site` job).
 - **Avatar lists have no pages:** with many avatars in a tab the grid scrolls (no ‹ ›; the user didn't want them).
 - **CI (`.github/workflows/test.yml`):** on every push/PR: typecheck, unit tests, build, local server with `wrangler
   dev` + `npm run e2e`. On push to `main` (or Actions → "Run workflow"), if tests pass, the `deploy` job: build →

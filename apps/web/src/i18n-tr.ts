@@ -314,6 +314,7 @@ export const tr: Record<I18nKey, string> = {
   'draw.send': 'Gönder',
   'draw.color': '{n}. renk',
   'draw.eraser': 'Silgi',
+  'draw.colors': 'Renkler',
   'draw.size': '{n}. kalınlık',
   'draw.clear': '🗑 Temizle',
   'draw.pen': 'Kalem',

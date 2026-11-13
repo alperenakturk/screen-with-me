@@ -312,6 +312,7 @@ const en = {
   'draw.send': 'Send',
   'draw.color': 'Color {n}',
   'draw.eraser': 'Eraser',
+  'draw.colors': 'Colors',
   'draw.size': 'Size {n}',
   'draw.clear': '🗑 Clear',
   'draw.pen': 'Pen',
