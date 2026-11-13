@@ -77,6 +77,30 @@ for (const type of ['pointerdown', 'keydown'] as const) {
   );
 }
 
+/**
+ * PH1: called from a tap (the join card's "Enter room"): creates or wakes the shared context inside that gesture, so
+ * the room's intro can start its sound with the picture instead of waiting for a context to resume.
+ */
+export function unlockAudio(): AudioContext | null {
+  gestured = true;
+  const audio = context();
+  if (audio?.state === 'suspended') void audio.resume().catch(() => {});
+  return audio;
+}
+
+/**
+ * The shared context running, for the intro (PH1): created if the page may play sound (an earlier tap here or on the
+ * page before), woken if needed, but waited for at most `waitMs`; null means the intro stays silent.
+ */
+export async function runningAudio(waitMs = 150): Promise<AudioContext | null> {
+  const audio = context();
+  if (!audio) return null;
+  if (audio.state !== 'running') {
+    await Promise.race([audio.resume().catch(() => {}), new Promise((done) => setTimeout(done, waitMs))]);
+  }
+  return audio.state === 'running' ? audio : null;
+}
+
 export function soundsOn(): boolean {
   const stored = load('opt:sounds');
   return stored === null ? SOUND_DEFAULT_ON : stored !== '0';

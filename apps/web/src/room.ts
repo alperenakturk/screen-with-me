@@ -87,7 +87,7 @@ import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
 import { flashHint } from './ui/hint.ts';
 import { createToasts } from './ui/toasts.ts';
-import { playSound, setFilmPlaying } from './sound.ts';
+import { playSound, runningAudio, setFilmPlaying, unlockAudio } from './sound.ts';
 import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
 import { debugHooks, debugTap, setDebugRoom, type RoomLab } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
@@ -265,6 +265,8 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
     const name = cleanName(input.value);
     if (name === null) return;
     if (name !== load('name') || avatar !== load('avatar')) saveIdentity(name, avatar);
+    // PH1: wake the shared sound context inside this tap, so the intro's sound starts with its picture.
+    unlockAudio();
     window.removeEventListener('langchange', renderCode);
     startRoom(app, roomId, name, avatar);
   });
@@ -1402,9 +1404,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const playIntro = () => {
     if (!introPending || !intro) return;
     introPending = false;
-    introOver = intro.then(({ INTRO_CSS, createIntro }) => {
+    // PH1: the sound plays on the shared context (woken by the "Enter room" tap), started on the same frame as the
+    // picture; not running within 150 ms (no tap, a phone that refused) = the picture alone, never the sound late.
+    introOver = Promise.all([intro, runningAudio()]).then(([{ INTRO_CSS, createIntro }, audio]) => {
       if (!document.getElementById('swm-intro-css')) document.head.append(el('style', { id: 'swm-intro-css' }, INTRO_CSS));
-      const node = createIntro(document, t('introText'));
+      const node = createIntro(document, t('introText'), audio ?? false);
       $('.player-wrap').append(node);
       return new Promise<void>((done) => {
         const gone = new MutationObserver(() => {
