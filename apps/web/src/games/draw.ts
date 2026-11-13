@@ -245,17 +245,32 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     color = 1;
     renderTools();
   });
-  const undoButton = el('button', { type: 'button', class: 'btn small-btn', title: `${t('draw.undo')} · Ctrl+Z` }, `↶ ${t('draw.undo')}`);
+  // PH2: the words sit in their own span (a phone's Games tab shows the glyphs only; the name stays for screen readers).
+  const undoButton = el('button', { type: 'button', class: 'btn small-btn', title: `${t('draw.undo')} · Ctrl+Z`, 'aria-label': t('draw.undo') }, '↶', el('span', { class: 'draw-tool-word' }, ` ${t('draw.undo')}`));
   undoButton.addEventListener('click', () => send({ t: 'undo' }));
   const redoButton = el('button', { type: 'button', class: 'btn small-btn', title: `${t('draw.redo')} · Ctrl+Y`, 'aria-label': t('draw.redo') }, '↷');
   redoButton.addEventListener('click', () => send({ t: 'redo' }));
-  const clearButton = el('button', { type: 'button', class: 'btn small-btn' }, t('draw.clear'));
+  const clearLabel = t('draw.clear').replace(/^🗑\s*/u, '');
+  const clearButton = el('button', { type: 'button', class: 'btn small-btn', 'aria-label': clearLabel }, '🗑', el('span', { class: 'draw-tool-word' }, ` ${clearLabel}`));
   clearButton.addEventListener('click', () => {
     clearCanvas();
     send({ t: 'clear' });
   });
+  // PH2: on a phone's Games tab the 20 colours open from one 🎨 button (styles in lobby.css; hidden elsewhere), so the
+  // tools are two rows of 44 px buttons and the canvas keeps its room.
+  const colorOpen = el('button', { type: 'button', class: 'draw-tool draw-color-open', 'aria-label': t('draw.colors'), 'aria-expanded': 'false' }, el('i'));
+  colorOpen.addEventListener('click', () => {
+    const open = !tools.classList.contains('colors-open');
+    tools.classList.toggle('colors-open', open);
+    colorOpen.setAttribute('aria-expanded', String(open));
+  });
+  for (const b of colorButtons)
+    b.addEventListener('click', () => {
+      tools.classList.remove('colors-open');
+      colorOpen.setAttribute('aria-expanded', 'false');
+    });
   tools.append(
-    el('div', { class: 'draw-tool-pick' }, penButton, eraserButton, fillButton),
+    el('div', { class: 'draw-tool-pick' }, penButton, eraserButton, fillButton, colorOpen),
     el('div', { class: 'draw-colors' }, ...colorButtons),
     el('div', { class: 'draw-sizes' }, ...sizeButtons),
     el('div', { class: 'draw-tool-pick' }, undoButton, redoButton, clearButton),
@@ -265,6 +280,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     eraserButton.classList.toggle('on', tool === 'pen' && color === 1);
     fillButton.classList.toggle('on', tool === 'fill');
     colorButtons.forEach((b) => b.classList.toggle('on', Number(b.dataset.i) === color));
+    colorOpen.style.setProperty('--c', DRAW_COLORS[color] ?? '#000');
     sizeButtons.forEach((b) => b.classList.toggle('on', tool === 'pen' && Number(b.dataset.i) === size));
     canvas.classList.toggle('filling', tool === 'fill');
   }

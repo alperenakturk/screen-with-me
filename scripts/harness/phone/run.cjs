@@ -284,34 +284,27 @@ const sheetName = (page) => page.evaluate(() => {
     await page.waitForTimeout(400);
     check(!kb.sideways && !kb.fs, 'phone: the keyboard opening does not count as turning sideways (no fullscreen, no layout jump)', JSON.stringify(kb));
     await page.evaluate(() => document.activeElement?.blur());
-    // 10A: a table takes the whole screen; the video keeps playing as a small preview in its head.
+    // PH2 (owner, 13 Nov 2026): a table plays inside the Games tab, under the video, above the tabs.
     await tab(page, 'Oyunlar').click();
     await page.waitForTimeout(500);
     await page.click('.hub-game >> nth=0');
     await page.waitForTimeout(1500);
     const game = await rect(page, '#game-stage');
-    const thumb = await rect(page, '#theater');
+    const above = await rect(page, '#theater');
+    const tabs = await rect(page, '.ph-tabs');
     const inHead = await page.evaluate(() => !!document.querySelector('#game-stage .game-stage-head #strip-voice'));
-    check(!!game && game.w >= vw - 1 && game.h >= vh - 1 && (await phoneState(page)).tab === 'room', 'game: it takes the whole screen (back on the Room tab)', JSON.stringify(game));
-    check(!!thumb && thumb.w <= 110 && thumb.w >= 60 && thumb.y < 40 && thumb.x < 30 && inHead, 'game: the video is a small preview in its head, 🎙 beside it', JSON.stringify(thumb));
-    await page.mouse.click(thumb.x + thumb.w / 2, thumb.y + thumb.h / 2);
+    check(!!game && !!above && !!tabs && game.y >= above.b - 1 && game.b <= tabs.y + 1 && game.w >= vw - 1 && (await phoneState(page)).tab === 'games', 'game: it plays inside the Games tab, the video above, the tabs below', JSON.stringify({ game, above, tabs }));
+    check(inHead, 'game: 🎙 sits in its head (the strip is on the Room tab)');
+    await tab(page, 'Oda').click();
     await page.waitForTimeout(500);
-    const back = await rect(page, '#theater');
-    check(!(await page.evaluate(() => document.documentElement.classList.contains('ph-game'))) && back.w >= vw - 1 && (await page.evaluate(() => document.getElementById('ph-tab-games').classList.contains('game-waiting'))), 'game: a tap on the preview goes back to the video, a dot on the Games tab', JSON.stringify(back));
+    const away = await page.evaluate(() => ({
+      dot: document.getElementById('ph-tab-games').classList.contains('game-waiting'),
+      voice: !!document.querySelector('#chat-form #strip-voice'),
+    }));
+    check(away.dot, 'game: the Room tab keeps the table running, a dot on the Games tab', JSON.stringify(away));
     await tab(page, 'Oyunlar').click();
     await page.waitForTimeout(500);
-    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game')), 'game: the Games tab brings the table back');
-    // Back to the video from the table's preview: 🎙 📷 go back into the input row. (Leaving the table from the head's ⋯
-    // is Game Studio's check: in the Draw & Guess lobby the ⋯ menu opens under the drawing layer, reported to them.)
-    const thumb2 = await rect(page, '#theater');
-    await page.mouse.click(thumb2.x + thumb2.w / 2, thumb2.y + thumb2.h / 2);
-    await page.waitForTimeout(500);
-    const left = await page.evaluate(() => ({
-      game: document.documentElement.classList.contains('ph-game'),
-      voice: !!document.querySelector('#chat-form #strip-voice'),
-      dot: document.getElementById('ph-tab-games').classList.contains('game-waiting'),
-    }));
-    check(!left.game && left.voice && left.dot, 'game: back to the video puts 🎙 📷 back in the input row, the Games tab keeps its dot', JSON.stringify(left));
+    check(await page.evaluate(() => document.documentElement.classList.contains('ph-game-tab') && !document.getElementById('game-stage').hidden), 'game: the Games tab shows the table again');
     check(errors.length === 0, 'phone: no page errors', errors.join(' | '));
     await ctx.close();
   }

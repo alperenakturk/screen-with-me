@@ -4,6 +4,8 @@
 // message can never ping anyone or link issues; the optional e-mail only goes into the issue body; nothing about the
 // room (id, names, chat) and no IP is ever part of it.
 
+import { ROOM_ID_PATTERN } from './protocol.ts';
+
 /** The longest message (characters). */
 export const FEEDBACK_TEXT_MAX = 2000;
 /** The longest e-mail address. */
@@ -98,4 +100,59 @@ export function buildIssue(feedback: Feedback, now = new Date()): { title: strin
   }
   lines.push('', `_Sent ${now.toISOString().slice(0, 16).replace('T', ' ')} UTC through the in-site form._`);
   return { title: `${feedback.kind === 'bug' ? 'Bug' : feedback.kind === 'idea' ? 'Idea' : 'Feedback'}: ${first || 'no subject'}`, body: lines.join('\n'), labels: ['feedback', `feedback:${feedback.kind}`] };
+}
+
+/**
+ * SAFE1 (owner, 13 Nov 2026): "🚩 Report" from the person menu goes through the same `/api/feedback` path, labelled
+ * `report`. It carries only what everyone in the room already saw: the room id, the reported person's shown name, the
+ * last few chat lines they sent, a reason and an optional note. Never a browser id (`cid`), person key, IP or e-mail.
+ */
+export const REPORT_REASONS = ['spam', 'abuse', 'sexual', 'other'] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+const REASON_LABEL: Record<ReportReason, string> = { spam: '📢 Spam or flooding', abuse: '😠 Harassment or hate', sexual: '🔞 Sexual or shocking content', other: '💬 Something else' };
+/** The note, the shown name and each chat line (characters); how many of their last lines go along. */
+export const REPORT_NOTE_MAX = 500;
+export const REPORT_NAME_MAX = 40;
+export const REPORT_LINE_MAX = 300;
+export const REPORT_LINES = 5;
+
+export interface Report {
+  kind: 'report';
+  reason: ReportReason;
+  room: string;
+  name: string;
+  lines: string[];
+  note?: string;
+}
+
+/** Validates a report and copies it into a new object (the server never trusts the shape). Null when unusable. */
+export function validateReport(input: unknown): Report | null {
+  if (!input || typeof input !== 'object') return null;
+  const raw = input as Record<string, unknown>;
+  if (raw.kind !== 'report') return null;
+  const reason = REPORT_REASONS.find((r) => r === raw.reason);
+  if (!reason) return null;
+  if (typeof raw.room !== 'string' || !ROOM_ID_PATTERN.test(raw.room)) return null;
+  const name = clean(raw.name, REPORT_NAME_MAX).replace(/\s+/g, ' ');
+  if (!name) return null;
+  const lines = Array.isArray(raw.lines)
+    ? raw.lines
+        .slice(-REPORT_LINES)
+        .map((line) => clean(line, REPORT_LINE_MAX))
+        .filter(Boolean)
+    : [];
+  const out: Report = { kind: 'report', reason, room: raw.room, name, lines };
+  const note = clean(raw.note, REPORT_NOTE_MAX);
+  if (note) out.note = note;
+  return out;
+}
+
+/** The issue for a validated report: everything fenced and neutralised, labelled `report`. */
+export function buildReportIssue(report: Report, now = new Date()): { title: string; body: string; labels: string[] } {
+  const fence = (text: string) => ['```text', neutralise(text), '```'];
+  const lines = [`**Report from a room** · ${REASON_LABEL[report.reason]}`, '', `Room: \`${report.room}\``, '', 'Reported person (shown name):', ...fence(report.name)];
+  lines.push('', `Their last chat lines (${report.lines.length}):`, ...fence(report.lines.length ? report.lines.join('\n') : '(none)'));
+  if (report.note) lines.push('', 'Note from the reporter:', ...fence(report.note));
+  lines.push('', `_Sent ${now.toISOString().slice(0, 16).replace('T', ' ')} UTC through the room's 🚩 Report. Handle within 72 hours (terms.html#abuse); delete this issue within 90 days._`);
+  return { title: `Report: ${report.reason} in room ${report.room}`, body: lines.join('\n'), labels: ['report', `report:${report.reason}`] };
 }

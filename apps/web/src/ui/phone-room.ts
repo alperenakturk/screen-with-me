@@ -244,6 +244,11 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const meBody = el('div', { class: 'ph-me' });
   panels.get('me')?.append(meBody);
 
+  function syncGamesDot(): void {
+    const waiting = !!$('#game-btn')?.classList.contains('game-waiting') || (html.classList.contains('ph-game-tab') && tab !== 'games');
+    tabButtons.get('games')?.classList.toggle('game-waiting', waiting);
+  }
+
   function setTab(next: Tab, remember = true): void {
     if (next !== 'room' && !html.classList.contains('ph-room')) next = 'room';
     const was = tab;
@@ -275,8 +280,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     if (panel) panel.hidden = false;
     if (next === 'search') fillSearch(panel!);
     else if (next === 'me') fillMe();
-    else if (next === 'games' && $('#game-menu')?.hidden) requestAnimationFrame(() => gamesButton.click());
+    // PH2: a game open in the Games tab shows there (not the hall over it).
+    else if (next === 'games' && $('#game-menu')?.hidden && !html.classList.contains('ph-game-tab')) requestAnimationFrame(() => gamesButton.click());
     if (next !== 'room') closeSheet();
+    syncGamesDot();
   }
 
   // 🔍 Search: the room's link box, its results and "Up next" (the queue).
@@ -292,11 +299,12 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     if (tab === 'search') setTimeout(() => setTab('room'), 0);
   });
 
-  // 🎮 Games: the hall shows in the panel; picking a game (it opens full screen) goes back to the Room tab.
+  // 🎮 Games: the hall shows in the panel; picking a game (PH2: it plays in this panel) keeps the tab, closing the hall
+  // without one goes back to the Room tab.
   const gameMenu = $('#game-menu');
   if (gameMenu) {
     new MutationObserver(() => {
-      if (tab === 'games' && gameMenu.hidden) requestAnimationFrame(() => tab === 'games' && $('#game-menu')?.hidden && setTab('room'));
+      if (tab === 'games' && gameMenu.hidden) requestAnimationFrame(() => tab === 'games' && $('#game-menu')?.hidden && !html.classList.contains('ph-game-tab') && setTab('room'));
       // Opened from anywhere else (the Test Lab, a link): it shows in the Games tab too, never over the tabs. Not from a
       // table's own 🎮 (a game on the whole screen keeps its hall over it).
       else if (!gameMenu.hidden && html.classList.contains('ph-room') && !html.classList.contains('ph-game') && !gameMenu.closest('.ph-games-wrap')) {
@@ -637,31 +645,51 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   const stripVoiceHome = stripVoice ? { parent: stripVoice.parentElement!, next: stripVoice.nextSibling } : null;
   const gameMinimize = () => document.querySelector<HTMLButtonElement>('#game-stage .game-minimize');
   let inGame = false;
+  // PH2: a game in the Games tab (`ph-game-tab`): it opens that tab; the 🎙 goes into its head (the strip is on Room).
+  let inTabGame = false;
   new MutationObserver(() => {
     const now = html.classList.contains('ph-game');
-    if (now === inGame) return;
+    const nowTab = html.classList.contains('ph-game-tab');
+    if (now === inGame && nowTab === inTabGame) return;
+    const opened = nowTab && !inTabGame;
+    const gone = !nowTab && inTabGame;
     inGame = now;
+    inTabGame = nowTab;
     if (now) {
       closeSheet();
       if (tab !== 'room') setTab('room');
     }
+    if (opened) {
+      closeSheet();
+      setTab('games');
+    }
+    // The game closed or was put away on the Games tab: the hall shows there again.
+    if (gone && tab === 'games' && $('#game-menu')?.hidden) requestAnimationFrame(() => gamesButton.click());
+    syncGamesDot();
     const head = document.querySelector('#game-stage .game-stage-head');
     if (!stripVoice || !stripVoiceHome) return;
-    if (now && head) head.querySelector('.game-hub-open')?.before(stripVoice);
-    else if (!now && stripVoice.parentElement !== stripVoiceHome.parent) stripVoiceHome.parent.insertBefore(stripVoice, stripVoiceHome.next);
+    if ((now || nowTab) && head) head.querySelector('.game-hub-open')?.before(stripVoice);
+    else if (!now && !nowTab && stripVoice.parentElement !== stripVoiceHome.parent) stripVoiceHome.parent.insertBefore(stripVoice, stripVoiceHome.next);
   }).observe(html, { attributes: true, attributeFilter: ['class'] });
   $('#theater')?.addEventListener('click', (event) => {
+    // PH2: the video is a strip over a game in the Games tab (room.css): a tap on it goes back to the full video.
+    if (inTabGame && tab === 'games') {
+      event.preventDefault();
+      event.stopPropagation();
+      setTab('room');
+      return;
+    }
     if (!inGame) return;
     event.preventDefault();
     event.stopPropagation();
     gameMinimize()?.click();
   }, true);
-  // A minimized table puts a dot on the Games tab, which brings it back.
+  // A minimized table puts a dot on the Games tab, which brings it back; so does a game left running in the Games tab
+  // while another tab shows (PH2).
   const gameButton = $<HTMLButtonElement>('#game-btn');
   if (gameButton) {
-    const sync = () => tabButtons.get('games')?.classList.toggle('game-waiting', gameButton.classList.contains('game-waiting'));
-    new MutationObserver(sync).observe(gameButton, { attributes: true, attributeFilter: ['class'] });
-    sync();
+    new MutationObserver(syncGamesDot).observe(gameButton, { attributes: true, attributeFilter: ['class'] });
+    syncGamesDot();
   }
 
   // ---- Fullscreen on a phone (0.9.92.6, owner; PH1: ⛶ Watch fullscreen is in the sideways column) ----

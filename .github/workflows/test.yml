@@ -101,7 +101,7 @@ jobs:
       - name: Game texts (EN = TR keys)
         run: |
           node --test scripts/check-game-text.test.mjs
-          node scripts/check-game-text.mjs
+          node scripts/check-game-text.mjs apps/web/src/games apps/web/src/ui/report.ts
 
       # Card SB3: Snack Bar's balance (10 h of film: no strategy dominates, the first new cinema in time).
       - name: Snack Bar balance
@@ -154,6 +154,11 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright@1.63.0
           bash scripts/ci-playwright.sh
           node scripts/harness/help/run.cjs http://localhost:8787
+
+      # Card SAFE1: "Block for me" hides a person for one viewer only (computer + phone), survives a reload and is undone;
+      # "Report" sends the room, the shown name and their last lines (no id) and the Worker validates it.
+      - name: Block for me and Report
+        run: node scripts/harness/safety/run.cjs http://localhost:8787
 
       # Only its end: the whole log of every run buried the failing step's own output.
       - name: Server log (on failure)
@@ -274,10 +279,7 @@ jobs:
 
       - name: Games sweep (laptop + iPhone, EN + TR; window sizes and fullscreen)
         # Card GW: the window passes (smallest, largest, fullscreen) in Turkish only, to keep this job near the others.
-        # 0.9.97.128: Snack Bar also on a sideways phone (its stand list once scaled it to 33 px buttons and 11 px text).
-        run: |
-          SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
-          GAMES=snack SIZES=side GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+        run: SIZES=laptop,iphone GW_LANGS=tr node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Games resume, Sea Battle, How to play, result card
         run: |
@@ -326,6 +328,10 @@ jobs:
       # (needs the webm the Tablets step serves on :5300).
       - name: Game window head
         run: node scripts/harness/game-window-head/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+
+      - name: Games sweep on a 360 × 640 phone (the Games tab, EN + TR)
+        # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
+        run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       # Card PWA1: the home-screen app (share target → a new room that plays the link, "Create room" shortcut, the screen
       # kept on while playing, the one-time iOS hint). Here for the webm the Tablets step serves on :5300.

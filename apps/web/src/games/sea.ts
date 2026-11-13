@@ -503,6 +503,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     }
     // QA2 (12): the chip says what the eye counts (people watching, not playing).
     watchOpen.textContent = tx('watchShort', { n: s.watchers.length });
+    // PH2: the phone's Games tab hides a 👁 nobody is behind (its bar is one row there).
+    watchOpen.dataset.n = String(s.watchers.length);
     watchOpen.setAttribute('aria-label', `${tx('watchers')}: ${s.watchers.length}`);
     watchPop.replaceChildren(
       el('b', {}, tx('watchers')),

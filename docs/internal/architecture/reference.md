@@ -695,7 +695,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   fullscreen (4B):** on a phone in landscape the dock is a slim column (52 px + safe area) beside the video, never on it
   (`.player` / `.fs-catcher` end at its edge, so the player's own bar stays free), always visible, only 💬 😀 🎙 📷 and
   exit (🖥️ only while someone streams: `data-idle` on `#dock-live`); its windows open left of it (`overflow: visible`).
-  **Step 3 (0.9.92.5):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
+  **Step 3 (0.9.92.5; replaced on phones by PH2 below):** games (10A): on a phone `games/stage.ts` always uses `full` (also held sideways wider than 860 px: `narrow` counts `isPhoneLayout()`, LAYOUT1); a free window (computers, tablets) starts at `min(width / 1366, height / 768)` of the game's size, at least 1 and at most its largest size, until resized (`floatZoom`, LAYOUT1 B2); dialogs (`.dialog-backdrop > *`, not settings or the image viewer) get `zoom` 1.2 from 2200 × 1100 and 1.35 from 2500 × 1300 (`styles.css`, LAYOUT1 E) and sets `html.ph-game` (not in
   the Shorts view); phone.css shrinks the theater itself (CSS only, the player is never reloaded) to a 92×52 preview
   at the left of the game's head; `::after` over it catches the tap, `phone-room.ts` turns it into the head's
   `.game-minimize`; the strip's `#strip-voice` moves into the head while `ph-game` (only 🎙 shows there) and back
@@ -729,7 +729,41 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   The empty room shows `.ph-empty-actions` 🔍 Search a video (→ Search tab) and 🔗 Invite; the steps and the sync test
   are hidden. **Search:** borrows `#media-form`, `#media-done` and the queue panel under "Up next"; "Play now" goes back
   to the Room tab. **Games:** a hidden `#ph-games-open` trigger (passed to `createGameStage`'s `extraButtons`) opens the
-  hall inside the panel; picking a game goes back to Room; a waiting table puts a dot on the tab. **Me:** `meHead`
+  hall inside the panel; a waiting table puts a dot on the tab. **PH2 (0.9.97.130): games play inside the Games tab.**
+  In `ph-room` (not the Shorts view) `stage.ts` `place()` moves `#game-stage` into `.ph-panel[data-ph-panel="games"]`
+  (class `in-tab`, still `full` / `data-place="full"`) and sets `html.ph-game-tab` instead of `ph-game`. The video
+  stays on top and the tabs at the bottom; `room.css` (end) drops the panel's padding and hides the hall's wrap, the
+  head's 🎮 and a table's ✕. The head is one row: name, `.game-head-slot` "?", 🎙 (borrowed by `phone-room.ts`), ⋯
+  with Leave / Close (`tightHead`). A side game's ✕ closes it (`leave(false)`; its progress is in storage) and the
+  hall comes back. `phone-room.ts`: `ph-game-tab` turning on opens the Games tab, the hall's "closed without a game →
+  Room" step waits while a game shows, coming back to 🎮 shows the game (not the hall), and `syncGamesDot` puts the
+  dot on 🎮 for a minimized table or a game left running on another tab. Tables pause the video here too (`autoPause`).
+  Fit: a game not in `TAB_LAYOUT` (Game Studio adds each one with its own tab layout) lays out at `TAB_H` (600 px, its
+  height on the phone's whole screen) and is scaled into the panel; one in it fills the panel and only overflow shrinks
+  it. Upright only: `device.ts` `holdUpright(on)` while the window shows in the tab keeps `isSideways()` false and
+  `html.sideways` off; held sideways, `html.upright-turned` lays `body` out at the last upright size (`--up-w`,
+  `--up-h`), centred and scaled to the height (`--up-s`); closing the game releases it. The whole-screen `ph-game` is
+  left only for a phone-narrow window outside the phone room (the TV); its video-thumbnail rules are gone. Test Lab:
+  `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / held / sideways, the panel and window sizes, the
+  scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone / phone-land: in the tab, video above
+  and tabs below, paused, ⋯, the dot, back to the game, turning changes nothing, leaving brings sideways back) and
+  `phone` (a table in the Games tab, the dot). **Game layouts in the tab (Game Studio):** every game is in
+  `TAB_LAYOUT`. While a game shows (`html.ph-game-tab[data-ph-tab='games']`) the video is a strip
+  `clamp(80px, 100dvh − 556px, 180px)` tall (room.css; the player takes no taps, a tap on `#theater` goes back to the
+  Room tab), so the game gets 450 px on any phone 640 px tall or more; `#game-stage.in-tab .game-fit` has no padding.
+  Each game's tab rules sit at the end of its stylesheet (`#game-stage.in-tab …`): Classics (players in one row, the
+  board at 44 px a square, one status row with Stub's level / ✕ / 👁 on its right; waiting: the bar on its own row;
+  `data-n` on 👁 hides an empty one; the picker 2 × 3 without descriptions), lobby.css (lobby cards: badge beside the
+  title; running Quiz: 44 px answers, the card wraps, the scoreboard scrolls; running Draw & Guess: the 4:3 canvas in
+  the height left, players as chips, the drawer's tools in two 44 px rows with the 20 colours behind 🎨
+  `.draw-color-open`, the guess box and feed hidden while I draw), poker.css (one-line seats, the pot beside the
+  shared cards, Fold · Call · ± · Raise in one row, the amounts `.pk-amounts` open from ± `.pk-amount-open`
+  (`amountsOpen` in poker.ts), the moves in one row), sea.css (one-row bar), five-frames.css (44 px keys, the rows
+  give way), snack-bar.css (44 px modes, an 80 px scene). Backgammon's points are about 23 px wide on a phone: the
+  sweep counts a `.bg-point` ≥ 88 px tall and ≥ 22 px wide (Planner, 13 Nov), and with a checker picked a tap within
+  12 px of a legal point goes to it (match.ts `SNAP_PX`; a disabled point lets taps through to the board). Games have
+  no sideways-phone rules any more. Checks: games-sweep at `iphone` and `small` (360 × 640) with the running tables
+  (`quizPlay`, `drawPlay`, `pokerPlay`, `chessPlay`, `backgammonPlay`). **Me:** `meHead`
   (avatar + name, a tap opens the profile menu: name, picture, colour theme, language) and the settings sections
   `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
   device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
@@ -1673,6 +1707,25 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   unticked, its exact lines shown (`technicalInfo`: site / extension version, browser · OS · window, transport,
   `diagLast` from `/connection`). Privacy policy `#feedback`. Tests: unit `feedback.test.ts`, e2e `feedback.mjs` (live:
   refusals only), harness `scripts/harness/feedback/run.cjs`.
+- **Block for me and Report (card SAFE1, 0.9.97.131):** for anyone, on each other person (never on me or a TV):
+  the person menu (`voice.ts` `openPersonMenu`: `🔇 Block for me` / `🔈 Unblock`, `🚩 Report`, from `VoiceRoom.isBlocked`
+  / `toggleBlock` / `report`) and the People list rows (`people.ts` `PeopleSafety`: `.safety-block` with `aria-pressed`,
+  `.safety-report`; on a phone a face opens this list as the People sheet, so the rows are the phone's way in).
+  **Block** (`ui/blocks.ts` `createBlocks`) is local only: `block:<room>` in storage = `personOf(member)` → shown name
+  (the server's per-room person key, else name + avatar, so a reload or their second tab stays blocked); nothing is sent.
+  `room.ts` passes `blocks.has` to `createChatPanel`, which keeps a blocked person's lines in memory but never draws them
+  (unblock redraws; no unread count, toast, Shorts bubble or sound), and drops their `reaction`s. **Report** (lazy chunk
+  `ui/report.ts`, own `TEXT` EN / TR checked by `check-game-text.mjs`, styles from `feedback.css`): reason chips
+  `REPORT_REASONS` (spam / abuse / sexual / other), an optional note, "See what is sent", a link to
+  `terms.html#abuse`; posts `{kind:'report', reason, room, name, lines, note?}` to `/api/feedback` with the chat's
+  `linesBy(member, REPORT_LINES)` (their last 5 lines). The Worker tries `validateReport` first (room must match
+  `ROOM_ID_PATTERN`; name ≤ 40, lines ≤ 5 × 300, note ≤ 500; every other field dropped, so no `id` / `pk` / `cid` / IP
+  can pass) and `buildReportIssue` (everything fenced and `neutralise`d, labels `report` + `report:<reason>`), with the
+  same Origin check, body cap, burst binding and `FeedbackGate` counts as feedback. Privacy policy `#report`. Test Lab:
+  `safety.state` (status tab) writes the blocked names and the last report's result. Tests: unit `feedback.test.ts`,
+  harness `scripts/harness/safety/run.cjs` (CI `checks`: computer + phone in Turkish, a third person still sees
+  everything, reload, unblock, the report body, the Worker accepting / refusing, the 24-hour Turkish chat clock).
+  Chat times follow the site's language (`tr-TR` / `en-US`), not the browser's.
 - **The site's address (card R3-3, `docs/internal/custom-domain.md`):** one value, `site.config.json` (`origin` +
   `aliases`), read by `scripts/site-config.mjs`; the extension build (`SITE_URL`, `isSiteOrigin`, `sitePatterns`,
   `homepage_url`, site matches), the site build (`%SITE_ORIGIN%` og:image, `__SITE__` in `site.ts`, the generated
@@ -2054,11 +2107,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   **QA1 part 4 (canary rooms, `scripts/e2e/canary.mjs`):** idle room connections that say hello and send the free
   keepalive; the server never closes one by itself, so a close not ours means objects were restarted. Of the last 30
   live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once
-  10–12 min after it. `wait-live.mjs` now also waits for 60 s with no canary drop (at most 4 min more, then a warning);
+  10–12 min after it. `wait-live.mjs` now also waits for 120 s with no drop of 4 canaries (at most 4 min more, then a
+  warning; 60 s until 13 Nov 2026, when .130's rooms restarted 41 s after a 60 s quiet spell);
   `run.mjs` keeps 2 canaries open beside the live suite and, when a file fails, prints whether the server dropped
   canaries meanwhile ("objects were restarting"), whether its own connection got a 1006 from the server (objects
   restart one at a time, so a canary in another room can miss it: "an object restart or a crash in that object"), or
-  neither ("the cause is likely the code or the test").
+  neither ("the cause is likely the code or the test"). After a restart (the first two), the file's one retry waits
+  until the canaries have been quiet for 45 s (at most 4 min) so it doesn't land in the same wave; after "likely the
+  code" it retries at once.
   **For people, not only tests:** a deploy restarts room and game objects one at a time for several minutes (seen 2.5–5
   min after it, once 10–12 min), so a real person in a room during a release can see one reconnect too (the site
   reconnects by itself). Every release deploys, so an owner's hand test right after a release may meet one; that is a

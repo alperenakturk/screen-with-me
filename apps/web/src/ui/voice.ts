@@ -67,6 +67,10 @@ export interface VoiceRoom {
   makeHost?: (member: Member) => void;
   /** R13: open the chat writing to this person only. */
   messagePrivately?: (member: Member) => void;
+  /** SAFE1: "Block for me" (local only) and "Report" for someone else. */
+  isBlocked?: (member: Member) => boolean;
+  toggleBlock?: (member: Member) => void;
+  report?: (member: Member) => void;
   /** The cameras on screen right now (member → picture; hidden ones and "hide myself" left out): Shorts seats. */
   onCams?: (cams: Map<string, MediaStream>) => void;
 }
@@ -757,6 +761,12 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (!isMe && !member.tv && room.messagePrivately) items.push(button(`🔒 ${t('chat.private')}`, () => room.messagePrivately!(member)));
     if (!isMe && room.isHost() && room.makeHost && !member.tv) items.push(button(`👑 ${t('makeHost')}`, () => room.makeHost!(member)));
     if (!isMe && room.isHost()) items.push(button(`🚪 ${t('voice.kick')}`, () => room.kick(member), 'danger'));
+    // SAFE1 (owner, 13 Nov 2026): for everyone, not only the host.
+    if (!isMe && room.toggleBlock && room.isBlocked) {
+      const blocked = room.isBlocked(member);
+      items.push(button(blocked ? `🔈 ${t('safety.unblock')}` : `🔇 ${t('safety.block')}`, () => room.toggleBlock!(member), 'safety-block'));
+    }
+    if (!isMe && room.report) items.push(button(`🚩 ${t('safety.report')}`, () => room.report!(member), 'safety-report'));
     if (items.length === 1) items.push(el('p', { class: 'person-pop-note' }, t(member.voice ? 'voice.menuNothing' : 'voice.notInVoice')));
     menu = el('div', { class: 'person-pop', role: 'menu', 'data-island': '', 'data-member': member.id }, ...items);
     document.body.append(menu);

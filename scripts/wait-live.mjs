@@ -22,7 +22,11 @@ const STABLE = 8;
 const GAP_MS = 3000;
 const LIMIT_MS = 4 * 60_000;
 const SETTLE_MS = 120_000;
-const QUIET_MS = 60_000;
+// 13 Nov 2026 (.130): canaries were quiet for 60 s, then rooms restarted 41 s later (8 drops over two minutes, 3.5–5.5
+// min after the deploy). 120 s with four canaries catches a wave like that; a later one (seen 8 and 10.5 min after
+// a deploy) is met by run.mjs, whose one retry after a restart waits for the canaries to go quiet.
+const QUIET_MS = 120_000;
+const CANARIES = 4;
 const QUIET_LIMIT_MS = 4 * 60_000;
 const started = Date.now();
 let streak = 0;
@@ -53,7 +57,7 @@ if (rest > 0) {
 }
 console.log(`… waiting for ${QUIET_MS / 1000} s with no canary room dropped (at most ${QUIET_LIMIT_MS / 60_000} min)`);
 const ws = base.replace(/^http/, 'ws');
-const calm = await waitQuiet(ws, { quietMs: QUIET_MS, limitMs: QUIET_LIMIT_MS });
+const calm = await waitQuiet(ws, { quietMs: QUIET_MS, limitMs: QUIET_LIMIT_MS, count: CANARIES });
 if (!calm.quiet) console.log(`::warning::Canary rooms were still being dropped ${Math.round(calm.waited / 1000)} s after the settle (${calm.drops} drops); running the e2e anyway (a file that fails while a canary drops says so).`);
 console.log(`✓ Live runs version ${want} (Worker and Durable Object, ${STABLE} times in a row; canary rooms quiet for ${QUIET_MS / 1000} s; ${Math.round((Date.now() - started) / 1000)} s after the deploy, ${calm.drops} canary drops on the way)`);
 process.exit(0);

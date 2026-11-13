@@ -44,3 +44,10 @@ html.phone #game-stage .gr-card .btn { min-height: 48px; height: auto; min-width
   .gr-card.wide:has(.gr-extra:not(:empty)) > :not(.gr-extra) { grid-column: 1; }
   .gr-card.wide:has(.gr-extra:not(:empty)) > .gr-extra { grid-column: 2; grid-row: 1 / span 5; }
 }
+
+/* PH2 (0.9.97.130): in a phone's Games tab (about 450 px) the card with a podium fits: a smaller Stub, tighter
+   spacing, 44 px buttons. */
+#game-stage.in-tab .gr-layer { padding: 4px; }
+#game-stage.in-tab .gr-card { padding: 10px 12px; gap: 6px; }
+#game-stage.in-tab .gr-mascot { width: 48px; height: 48px; }
+#game-stage.in-tab .gr-card .btn { min-height: 44px; }

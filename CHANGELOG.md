@@ -27,6 +27,29 @@ games' tip jar, cuttings and badges.
 - On a computer, chat messages shown over the video (cinema mode, fullscreen) move aside instead of covering an open
   game window.
 
+### 0.9.97.131 — 13 Nov
+
+- 🔇 **Block for me**: in a person's menu (tap their face; on a phone, the People list) you can now block someone for
+  yourself. Their messages, pictures and emojis disappear from your screen only; they are not told and still see
+  yours. It stays in place after a reload, for that room, and 🔈 Unblock in the same place brings everything back.
+- 🚩 **Report**: the same menu lets anyone report a person to the Sidelit team. Pick a reason, add a note if you like,
+  and see exactly what is sent first: the room, their shown name and their last few chat lines. Nothing else about
+  you or them. Reports are looked at within 72 hours. The privacy policy explains what a report holds and how long it
+  is kept.
+- On a Turkish screen, chat and room activity times show as 24-hour (14:05), whatever language the browser uses.
+
+### 0.9.97.130 — 13 Nov
+
+- On a phone, games now play inside the 🎮 Games tab: the video stays on top and the tabs at the bottom. Another tab
+  keeps the game running, with a dot on 🎮. Turning the phone while a game is open changes nothing; when it closes, the
+  room turns again. Tables still pause the video.
+- While a game is open there, the video becomes a small strip so the game has room; a tap on it goes back to the full
+  video. Every game fits a phone's screen as it is, with readable text and buttons big enough for a finger: the
+  boards, the lobbies, Quiz, Draw & Guess, Last Heart, Sea Battle, the Duel, Five Frames, Snack Bar and Window Garden.
+- Draw & Guess on a phone: the drawing tools are two rows of big buttons, and the colours open from 🎨.
+- Last Heart on a phone: the raise amounts open from ± beside Fold, Call and Raise.
+- Backgammon on a phone: a tap just beside a point you can move to counts for that point.
+
 ### 0.9.97.129 — 13 Nov
 
 - Choosing a character no longer jumps the list back to the top: the list stays where you scrolled, and the one you
