@@ -90,6 +90,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27c. [SAFE1, 0.9.97.132] In a real room with a friend: tap their face → 🔇 Block for me; their new messages and
+  emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
+  back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in
+  the private feedback repository. On the phone the same two buttons are on their row in the People list.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
