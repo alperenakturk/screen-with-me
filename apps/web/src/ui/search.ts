@@ -2,6 +2,7 @@ import { formatDuration, normalizeQuery, parseSearchAnswer, type SearchAnswer, t
 import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
+import { loadChunk } from './lazy.ts';
 
 export type AddMode = 'enqueue' | 'load';
 
@@ -131,6 +132,44 @@ export function createSearch(
     if (mine === current) show(raw.trim(), answer);
   }
 
+  /**
+   * Card SRC1: the same words searched on Vimeo (the ⠿ Sources picker): its list is a lazy chunk; a pick goes to
+   * `podcast`'s path (any media with a title). `done` gets the outcome ("off", "3 results", …).
+   */
+  async function vimeo(raw: string, done: (result: string) => void): Promise<void> {
+    const query = normalizeQuery(raw);
+    if (query === null || !podcast) return;
+    lastQuery = raw.trim();
+    const mine = ++current;
+    const x = el('button', { type: 'button', class: 'icon-btn search-close', title: t('searchClose'), 'aria-label': t('searchClose') }, '✕');
+    x.addEventListener('click', () => {
+      close();
+      input.focus();
+    });
+    panel.replaceChildren(el('div', { class: 'search-head' }, el('span', { class: 'muted small' }, t('searching')), x));
+    panel.hidden = false;
+    const chunk = await loadChunk(() => import('./vimeo-results.ts'));
+    if (mine !== current) return;
+    if (!chunk) {
+      panel.replaceChildren(el('div', { class: 'search-head' }, el('span', { class: 'muted small' }, t('searchFor', { q: raw.trim() })), x), el('p', { class: 'search-note' }, t('searchError.failed')));
+      done('failed');
+      return;
+    }
+    await chunk.showVimeo(
+      panel,
+      query,
+      raw.trim(),
+      x,
+      (media, title, mode) => {
+        close();
+        input.value = '';
+        podcast(media, title, mode);
+      },
+      () => mine !== current,
+      done,
+    );
+  }
+
   // Arrow keys move between the input and the results, Esc closes (the box keeps its words).
   function buttons(): HTMLButtonElement[] {
     return [...panel.querySelectorAll<HTMLButtonElement>('.search-main')];
@@ -165,5 +204,5 @@ export function createSearch(
     if (!panel.hidden && !form.contains(event.target as Node)) close();
   });
 
-  return { search, close };
+  return { search, vimeo, close };
 }

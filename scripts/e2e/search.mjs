@@ -29,6 +29,24 @@ if (live) {
   ok(answer.error === 'off' || Array.isArray(answer.items), `Local answer has a known shape (${answer.error ?? 'items'})`);
 }
 
+// Card SRC1: Vimeo search (the ⠿ Sources picker). The same input rules; without the VIMEO_TOKEN secret it answers
+// `off` (locally always, live until the owner adds it), and an answer never carries the token or extra fields.
+const vimeo = (q, init = {}) => fetch(`${http}/api/vimeo/search`, { method: 'POST', body: new URLSearchParams({ q }), ...init });
+ok((await vimeo('   ')).status === 400, 'Vimeo: an empty query is refused');
+ok((await vimeo('nature', { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Vimeo: another site may not use our search');
+ok((await fetch(`${http}/api/vimeo/search?q=nature`)).status === 405, 'Vimeo: only POST (words never in the address)');
+ok((await vimeo('x'.repeat(4000))).status === 400, 'Vimeo: a body above the limit gives no words (400)');
+const vimeoAnswer = await (await vimeo('nature timelapse')).json();
+if (live) {
+  ok(['off', 'busy', 'failed'].includes(vimeoAnswer.error) || Array.isArray(vimeoAnswer.items), `Vimeo: live answer has a known shape (${vimeoAnswer.error ?? vimeoAnswer.items.length + ' results'})`);
+  if (vimeoAnswer.items) ok(vimeoAnswer.items.every((i) => /^\d{1,12}$/.test(i.id) && typeof i.title === 'string' && Object.keys(i).every((k) => ['id', 'title', 'user', 'duration', 'thumb'].includes(k))), 'Vimeo: every result has a numeric id, a title and nothing else');
+} else {
+  ok(vimeoAnswer.error === 'off', `Vimeo: without the token the answer is "off" (${JSON.stringify(vimeoAnswer)})`);
+}
+ok(!/bearer|token/i.test(JSON.stringify(vimeoAnswer)), 'Vimeo: the answer never carries the token');
+const vimeoStatus = await (await fetch(`${http}/api/vimeo/status`)).json();
+ok(typeof vimeoStatus.on === 'boolean' && Object.keys(vimeoStatus).length === 1 && (live || vimeoStatus.on === false), `Vimeo status: only on / off (${JSON.stringify(vimeoStatus)})`);
+
 // Card 10: Discover by region and the ♾ feed from one channel. Only input checks live (no YouTube call is made for
 // a refused request); locally without a key the valid ones answer `off`.
 ok((await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=ZZ`)).status === 400, 'Discover: an unknown region is refused');

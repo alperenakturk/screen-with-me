@@ -33,6 +33,8 @@ interface Env {
   CONNECT_LIMIT?: RateLimit;
   /** YouTube Data API v3 key (repo secret, passed by the deploy job): without it the link box only takes links. */
   YOUTUBE_API_KEY?: string;
+  /** Card SRC1: the Vimeo API token (an unauthenticated app token, scope `public`) for `/api/vimeo/search`; unset = off. */
+  VIMEO_TOKEN?: string;
   /** YouTube searches per IP and minute that reach YouTube (cache hits are free). */
   SEARCH_LIMIT?: RateLimit;
   /** Feedback (card 9): a fine-grained GitHub token (Issues: write on this repository only); without it feedback is off. */

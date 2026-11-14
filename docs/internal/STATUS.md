@@ -100,6 +100,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27f. [SRC1, 0.9.97.136] In a room (computer, then the phone's 🔍 Search tab): press ⠿ → Vimeo, type a few
+  words + Enter: Vimeo videos come up and one plays (once the VIMEO_TOKEN secret is in; before that the tile says
+  "Not available yet"). ⠿ → Search the web: a new tab opens with your words; come back, the box asks for the link.
 - [ ] 27e. [0.9.97.133] On a laptop with a friend: play a video, open Snack Bar from 🎮; when the friend writes, the
   message shows as a note beside the game window. On a phone held sideways: open 🚩 Report; the reasons are one row
   you can slide, the note box shows two lines.

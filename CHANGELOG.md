@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.136 — 14 Nov
+
+- ⠿ **Sources** beside the search box (on a phone, in the 🔍 Search tab) picks where your words search: **YouTube**
+  (as before), **Vimeo** (films and clips; they play right in the room), or **Search the web**, which opens a new tab
+  with your words; come back and paste the video's link. Your pick is remembered on this device.
+- Vimeo search says "Not available yet" until it is switched on; pasted links keep working everywhere.
+
 ### 0.9.97.135 — 13 Nov
 
 - On a tablet held sideways, a side game's window now starts just right of the link box, so it never covers the edge of

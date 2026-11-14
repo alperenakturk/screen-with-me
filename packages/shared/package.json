@@ -10,6 +10,7 @@
     "./themes": "./src/themes.ts",
     "./waiting": "./src/waiting.ts",
     "./media": "./src/media.ts",
+    "./vimeo-search": "./src/vimeo-search.ts",
     "./embed": "./src/embed.ts",
     "./shell": "./src/shell.ts",
     "./level-meter": "./src/level-meter.ts",

@@ -317,6 +317,28 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "show · episode" (the server now keeps a client title for film pages and these). CSP `img-src` + `*.mzstatic.com`
   (`media-src` was already open). Privacy policy "Podcasts", help page. Tests: unit `podcasts.test.ts`, e2e
   `podcasts.mjs`, harness `scripts/harness/podcasts/run.cjs` (11, stand-in answers + a generated WAV).
+- **⠿ Sources picker (card SRC1, 0.9.97.136):** a ⠿ button after the link box (`#media-sources`, computer room and
+  the phone's 🔍 Search tab, since `#media-form` moves there) opens three tiles (`ui/sources.ts`, a `role=radiogroup`;
+  their styles are `ui/sources.css`, loaded with the tiny `ui/sources-pop.ts` chunk on the first open for the room
+  CSS budget). The pick is per device (`localStorage` `searchSource`: `youtube` default, `vimeo`, `web`) and sets the
+  box's placeholder (`sources.ts` owns it; `#media-input` has no `data-i18n-placeholder`, `langchange` relabels).
+  `room.ts` `searchWords` sends typed words where ⠿ points:
+  - **YouTube:** today's `search.search` (unchanged).
+  - **Vimeo:** `search.vimeo` → lazy chunk `ui/vimeo-results.ts` (own `TEXT`, checked by `check-game-text.mjs`, the
+    YouTube rows' classes) → `POST /api/vimeo/search` (words in the body) → Worker `vimeo.ts`: Origin check,
+    `normalizeQuery`, no `VIMEO_TOKEN` → `{error:'off'}`, a day's cache by the words, `SEARCH_LIMIT` for real calls,
+    then `api.vimeo.com/videos` with the token only in the `Authorization` header (`vimeoSearchUrl`, `fields` limited);
+    `parseVimeoSearch` (`packages/shared/src/vimeo-search.ts`) keeps only `privacy.view=anybody`,
+    `privacy.embed=public`, playable videos, max 12, id / title / user / duration / an `i.vimeocdn.com` thumbnail
+    (CSP `img-src`). A pick plays as `{kind:'vimeo', id}` in our Vimeo player. `GET /api/vimeo/status` → `{on}` lets the
+    tile say "Not available yet" before a search; a search answering `off` says the same and points to ⠿.
+  - **Search the web:** `window.open('https://duckduckgo.com/?q=<words>', '_blank', 'noopener')` (one engine, no site
+    filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
+    "Found a video? Paste its link here." hint. No in-page browser, no scraping.
+  Test Lab `sources.state` (source, Vimeo on, last search). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
+  Vimeo app token, scope public) goes up with the other Worker secrets. Tests: `vimeo-search.test.ts`, e2e
+  `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
+  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile).
 - **Media kinds:** `youtube`, `html5`, `tiktok`, `vimeo` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is

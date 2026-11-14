@@ -75,6 +75,7 @@ import { showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
+import { createSources } from './ui/sources.ts';
 import type { Recap } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -332,7 +333,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     <div class="room fresh">
       <div class="stage">
         <form id="media-form" class="media-form">
-          <input id="media-input" autocomplete="off" data-i18n-placeholder="mediaPlaceholder" data-i18n-title="mediaLabel" />
+          <input id="media-input" autocomplete="off" data-i18n-title="mediaLabel" />
+          <button type="button" id="media-sources" class="btn media-sources">⠿</button>
           <button class="btn media-search" value="search" data-i18n-title="searchButton"></button>
           <button class="btn primary" value="enqueue" data-i18n="addToQueue"></button>
           <button class="btn" value="load" data-i18n="playNow"></button>
@@ -3280,7 +3282,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
 
   const mediaForm = $<HTMLFormElement>('#media-form');
-  mediaForm.querySelector('.media-search')?.append(icon('search'));
+  mediaForm.querySelector('.media-search[value="search"]')?.append(icon('search'));
   // Words instead of a link: search YouTube (the results open under the box).
   const search = createSearch(
     mediaForm,
@@ -3291,6 +3293,23 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // "🎧 Podcasts" on the results (card P2): an episode is an audio file with its cover art.
     (media, title, mode) => addMedia(media, mode, title),
   );
+  // Card SRC1: ⠿ picks what typed words search (YouTube, Vimeo or the web).
+  const sources = createSources(mediaForm, mediaInput, $<HTMLButtonElement>('#media-sources'));
+  /** Words in the link box: searched where ⠿ points. */
+  function searchWords(raw: string): void {
+    if (sources.source === 'web') {
+      search.close();
+      sources.web(raw);
+    } else if (sources.source === 'vimeo') {
+      void search.vimeo(raw, (result) => {
+        sources.note('vimeo', raw.trim(), result);
+        if (result === 'off') sources.vimeoOff();
+      });
+    } else {
+      sources.note('youtube', raw.trim(), 'searched');
+      void search.search(raw);
+    }
+  }
   // Phones (0.9.91.2): while something plays the link box folds into ＋ under the video, the video and chat get the room.
   const addToggle = $<HTMLButtonElement>('#add-toggle');
   const setAdding = (on: boolean) => {
@@ -3321,7 +3340,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
     const media = parseMediaInput(mediaInput.value);
     if (media === null) {
-      if (mediaInput.value.trim()) void search.search(mediaInput.value);
+      if (mediaInput.value.trim()) searchWords(mediaInput.value);
       // 🔍 with an empty box (0.9.92.8): it says what to type.
       else mediaInput.focus();
       return;
