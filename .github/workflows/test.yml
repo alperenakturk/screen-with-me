@@ -101,7 +101,7 @@ jobs:
       - name: Game texts (EN = TR keys)
         run: |
           node --test scripts/check-game-text.test.mjs
-          node scripts/check-game-text.mjs apps/web/src/games apps/web/src/ui/report.ts
+          node scripts/check-game-text.mjs apps/web/src/games apps/web/src/ui/report.ts apps/web/src/ui/vimeo-results.ts
 
       # Card SB3: Snack Bar's balance (10 h of film: no strategy dominates, the first new cinema in time).
       - name: Snack Bar balance
@@ -255,6 +255,11 @@ jobs:
       # Card 15b + PWA1: the home page fits its first screen at every size (EN + TR), the iOS install hint included.
       - name: Home page
         run: node scripts/harness/home/run.cjs http://localhost:8787
+
+      # Card SRC1: the ⠿ Sources picker (YouTube, Vimeo, search the web) on a computer (EN) and a phone (TR); Vimeo's
+      # answers are stubbed in the browser, and without the secret the real route says "not available yet".
+      - name: Sources picker
+        run: node scripts/harness/sources/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()
@@ -531,7 +536,7 @@ jobs:
           npm ci
           npm run build
           # R3-2 guard: no deploy secret may be in this step's environment.
-          if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN|LAB_CODE)='; then
+          if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|VIMEO_TOKEN|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN|LAB_CODE)='; then
             echo "::error::A deploy secret is in the install / build environment."; exit 1
           fi
 
@@ -542,6 +547,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # YouTube search in the link box (optional): uploaded as a Worker secret with every deploy.
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          # Card SRC1 (optional): Vimeo search in the ⠿ Sources picker (an unauthenticated app token, scope public);
+          # uploaded as a Worker secret like the YouTube key. Without it the Vimeo tile says "not available yet".
+          VIMEO_TOKEN: ${{ secrets.VIMEO_TOKEN }}
           # "Send feedback" (card 9, optional): a fine-grained token, Issues: write on this repository only. Only this
           # step sees it (security review 3 R3-2); it goes to the Worker as a secret like the YouTube key.
           FEEDBACK_GITHUB_TOKEN: ${{ secrets.FEEDBACK_GITHUB_TOKEN }}
@@ -560,10 +568,11 @@ jobs:
           [ -n "$YOUTUBE_API_KEY" ] || echo "::warning::YOUTUBE_API_KEY is missing, YouTube search stays off."
           [ -n "$FEEDBACK_GITHUB_TOKEN" ] && [ -n "$FEEDBACK_REPO" ] || echo "::warning::FEEDBACK_GITHUB_TOKEN or the FEEDBACK_REPO variable is missing, feedback answers 'off'."
           [ -n "$LAB_CODE" ] || echo "::warning::LAB_CODE is missing, the Test Lab stays shut on the live site."
-          if [ -n "$YOUTUBE_API_KEY$FEEDBACK_GITHUB_TOKEN$FEEDBACK_REPO$USAGE_TOKEN$LAB_CODE" ]; then
+          [ -n "$VIMEO_TOKEN" ] || echo "::warning::VIMEO_TOKEN is missing, Vimeo search says 'not available yet'."
+          if [ -n "$YOUTUBE_API_KEY$VIMEO_TOKEN$FEEDBACK_GITHUB_TOKEN$FEEDBACK_REPO$USAGE_TOKEN$LAB_CODE" ]; then
             # The keys go from the environment into a temporary file outside the repo, never into the log; only the
             # ones that are set (an empty value would overwrite a working secret).
-            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "FEEDBACK_GITHUB_TOKEN", "FEEDBACK_REPO", "USAGE_TOKEN", "LAB_CODE"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
+            node -e 'const e = process.env, s = {}; for (const k of ["YOUTUBE_API_KEY", "VIMEO_TOKEN", "FEEDBACK_GITHUB_TOKEN", "FEEDBACK_REPO", "USAGE_TOKEN", "LAB_CODE"]) if (e[k]) s[k] = e[k]; require("fs").writeFileSync(process.argv[1], JSON.stringify(s))' "$RUNNER_TEMP/secrets.json"
             npm run deploy -w @swm/server -- --secrets-file "$RUNNER_TEMP/secrets.json" | tee "$RUNNER_TEMP/deploy.log"
             rm -f "$RUNNER_TEMP/secrets.json"
           else

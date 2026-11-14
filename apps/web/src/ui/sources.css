@@ -1,0 +1,65 @@
+/* Card SRC1: the ⠿ Sources picker's tiles. Loaded with its lazy chunk (ui/sources-pop.ts) on the first open, so the
+   room page's CSS stays within its budget. */
+.sources-pop:not([hidden]) {
+  position: absolute;
+  z-index: 41;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  width: min(380px, calc(100vw - 32px));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+}
+
+.sources-title {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.sources-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 88px;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 14px/1.25 inherit;
+  cursor: pointer;
+}
+
+.sources-tile[aria-checked='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-2));
+}
+
+.sources-icon {
+  font-size: 22px;
+}
+
+.sources-note {
+  font-weight: 400;
+}
+
+.sources-tile.off > :not(.sources-note) {
+  opacity: 0.6;
+}
+
+/* The phone's 🔍 Search tab: the tiles sit in the panel's flow under the box. */
+.ph-panel #media-form .sources-pop {
+  position: static;
+  flex: 1 1 100%;
+  width: auto;
+  margin: 0;
+  box-shadow: none;
+}

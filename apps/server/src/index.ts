@@ -14,6 +14,7 @@ import { tiktokResolve } from './tiktok.ts';
 import { podcasts } from './podcasts.ts';
 import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 import { youtubeUsage } from './usage.ts';
+import { vimeoSearch, vimeoStatus } from './vimeo.ts';
 import { ipKey } from './ip-key.ts';
 import { runUptime } from './uptime.ts';
 import { meterRead } from './meter.ts';
@@ -242,6 +243,12 @@ async function route(request: Request, env: Env): Promise<Response> {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
       const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : url.pathname.endsWith('/channel') ? youtubeChannel : youtubeSearch;
       return handler(request, url, env, () => ipKey(request, env));
+    }
+    // Card SRC1: Vimeo search from the ⠿ Sources picker (the VIMEO_TOKEN secret never leaves the Worker).
+    if (url.pathname === '/api/vimeo/status') return vimeoStatus(env);
+    if (url.pathname === '/api/vimeo/search') {
+      if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
+      return vimeoSearch(request, url, env, () => ipKey(request, env));
     }
     // Podcasts from the link box (Apple's iTunes Search + the show's RSS feed, card P2).
     if (url.pathname === '/api/podcasts/search' || url.pathname === '/api/podcasts/episodes') {
