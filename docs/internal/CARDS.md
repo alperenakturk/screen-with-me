@@ -39,6 +39,35 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## Ready
 
+### SRC1. A "⠿ Sources" picker beside 🔍 Search: YouTube, Vimeo, search the web (owner, 14 Nov 2026; lane A)
+- Why: the owner wants people to find a video without leaving Sidelit. Research (`research/competitors-how.md`) checked
+  which sources are legal. The owner picked only these three: "only Vimeo, YouTube and search the internet; no archive
+  stuff". Voice/camera servers (SFU) stay for later.
+- What:
+  - A ⠿ button beside the search box (computer room and the phone's 🔍 Search tab) opens a small grid of three tiles.
+    The chosen source sticks per device.
+  - **YouTube:** today's search (Data API), unchanged.
+  - **Vimeo:** results from the Vimeo API (title, thumbnail, length) through a Worker route that holds the
+    `VIMEO_TOKEN` secret. Never call Vimeo from the browser with the token. Rate-limit the route like the other search
+    routes. Results play in our existing Vimeo player; only embeddable videos are shown.
+  - **Search the web:** opens a new browser tab with a general web search for the typed words (one search engine, no
+    "video site" list, no site filters). On return, a "Paste the link" hint focuses the box; a pasted link plays as it
+    does today. No in-app browser and no page scraping.
+  - No piracy site is named, suggested or special-cased anywhere. We stay a neutral sync tool.
+  - Texts in `i18n.ts` and `i18n-tr.ts`; CSP gets only the hosts actually needed (Vimeo API through the Worker, so
+    likely none in the page).
+- Done when:
+  - Each tile works on a computer and on a phone, in EN and TR.
+  - Vimeo search returns and plays.
+  - With the Vimeo secret unset, the Vimeo tile shows "not available yet" and nothing breaks.
+  - Search the web opens one tab with the words in it.
+  - Test Lab hook `sources.state` reports the chosen source and the last search.
+- Tests: Worker unit tests for the Vimeo route (validation, cap, rate limit, no token leak); e2e search → play with a
+  stubbed Vimeo answer; phone and computer harness for the grid; `check-texts`.
+- Owner's step (when lane A asks): a free Vimeo developer app and its access token, saved in KeePass and added as a
+  secret. The Planner gives the exact entry name and where to put it at that moment.
+- Owner's pick: "only Vimeo, YouTube and search the internet" (Planner chat, 14 Nov 2026).
+
 ### PH1. An app-like phone room: bottom tabs, one input row, chat sideways, join sound in step (owner, 13 Nov 2026; lane A)
 - Why: on a phone, everyday actions hide behind the ＋ and ⋯ sheets (search a video is 2 taps away, games 3), the
   sheets repeat what Settings already has, and the join sound comes out of sync. The owner asked which phone features
