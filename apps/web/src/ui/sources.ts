@@ -14,8 +14,8 @@ import { loadChunk } from './lazy.ts';
 export type Source = 'youtube' | 'vimeo' | 'web';
 const SOURCES: readonly Source[] = ['youtube', 'vimeo', 'web'];
 const KEY = 'searchSource';
-/** One general search engine (no tracking tied to the person; no site filters). */
-const WEB_SEARCH = 'https://duckduckgo.com/';
+/** One general search engine (the owner's pick: Google; no site filters). */
+const WEB_SEARCH = 'https://www.google.com/search';
 
 export function webSearchUrl(words: string): string {
   const url = new URL(WEB_SEARCH);

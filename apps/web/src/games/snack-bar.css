@@ -226,6 +226,13 @@ html.phone .sb-scene-box { flex-basis: 108px; }
 /* 0.9.97.134: a long name wraps (a -webkit-box flex item never did, it showed "Ice cream ca…"); the tag follows it. */
 .sb-name-line .sb-name { flex: 0 1 auto; min-width: 0; }
 .sb-tag { flex: none; font-size: 13px; font-weight: 800; color: var(--sb-gold); white-space: nowrap; }
+/* 0.9.97.137: on an upright tablet (`html.tablet-up`: the game's free window beside the chat is narrow and short) the
+   tag (the day's "⭐ ×2 today", the 📋 menu mark) stays on the name's line and gives way first (an ellipsis, its words
+   in its title): wrapping to a line of its own made the day's special row taller and the whole game smaller (text
+   under 11 px, depending on the day). Elsewhere it has room and shows whole (games-sweep's "no …" check). */
+html.tablet-up .sb .sb-name-line { flex-wrap: nowrap; }
+html.tablet-up .sb .sb-name-line .sb-name { flex: 0 0 auto; max-width: 100%; }
+html.tablet-up .sb .sb-tag { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .sb-tag[hidden] { display: none; }
 .sb-row.special { box-shadow: inset 0 0 0 1px rgba(255, 198, 90, 0.5); background: rgba(255, 198, 90, 0.08); }
 .sb-icon.small { width: 26px; height: 26px; }

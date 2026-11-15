@@ -264,6 +264,11 @@ jobs:
       - name: Chat kept until the room is deleted
         run: node scripts/harness/chat-history/run.cjs http://localhost:8787
 
+      # Card SH1 (1): after "↩ Room view" a playing Short offers "📱 Shorts view" (phone: the Room tab's strip; computer:
+      # beside Next), and it works again and again. Needs YouTube.
+      - name: Shorts view way back
+        run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
@@ -330,6 +335,10 @@ jobs:
         run: |
           bash scripts/ci-test-video.sh
           node scripts/harness/tablet/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+      # 0.9.97.137: the Snack Bar's daily special never makes a row taller or the game smaller (each stand forced to be
+      # the special by the page's day, upright Android tablet): CI no longer depends on the day it runs.
+      - name: Snack Bar daily special
+        run: node scripts/harness/snack-special/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       # Lane W: the game window's head and free window (W1–W5, 0.9.97.112–114): no ⛶, 🎮 opens the hall, drag / resize /
       # each game's own spot, never over a YouTube player, side games only in the free window, a table pausing the video

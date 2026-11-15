@@ -22,7 +22,32 @@ const until = async (fn, ms = 10000) => {
 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * 0.9.97.137: the page's clock on a fixed day (time still runs) whose daily special is a stand out of sight, so which
+ * rows show and which one is tagged never depend on the day the run happens (the special's tag can take a line).
+ */
+const PINNED_DAY = Date.parse('2026-12-10T12:00:00Z');
+async function pinDay(ctx) {
+  await ctx.addInitScript((at) => {
+    const Real = Date;
+    const offset = at - Real.now();
+    class Pinned extends Real {
+      constructor(...a) {
+        super(...(a.length ? a : [Real.now() + offset]));
+      }
+      static now() {
+        return Real.now() + offset;
+      }
+    }
+    globalThis.Date = Pinned;
+  }, PINNED_DAY);
+}
+
 async function person(ctx, room, extra = {}) {
+  if (!ctx.__pinned) {
+    ctx.__pinned = true;
+    await pinDay(ctx);
+  }
   const page = await ctx.newPage();
   // The Test Lab (local server) changes the open game's own copy of the save (the game writes over localStorage).
   await page.goto(`${SITE}/?debug=1`);

@@ -28,7 +28,7 @@ const VIMEO_ITEMS = [
       localStorage.setItem('opt:autoInvite', '0');
     }, lang);
     // Nothing reaches the web search engine or Vimeo's player from this machine.
-    await ctx.route(/duckduckgo\.com|player\.vimeo\.com|i\.vimeocdn\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>stub</title>' }));
+    await ctx.route(/www\.google\.com\/search|player\.vimeo\.com|i\.vimeocdn\.com/, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>stub</title>' }));
     let stubVimeo = true;
     await ctx.route('**/api/vimeo/status', (route) => (stubVimeo ? route.fulfill({ json: { on: true } }) : route.fallback()));
     let searched = null;
@@ -100,8 +100,8 @@ const VIMEO_ITEMS = [
     await page.click('.sources-tile[data-source="web"]');
     await page.fill('#media-input', 'cat video');
     const [tab] = await Promise.all([ctx.waitForEvent('page', { timeout: 5000 }).catch(() => null), page.press('#media-input', 'Enter')]);
-    const opened = tab ? new URL(tab.url() === 'about:blank' ? (await tab.waitForURL(/duckduckgo/, { timeout: 5000 }).catch(() => null), tab.url()) : tab.url()) : null;
-    check(!!opened && opened.hostname === 'duckduckgo.com' && opened.searchParams.get('q') === 'cat video' && [...opened.searchParams.keys()].join() === 'q', `${label}: "Search the web" opens one tab with just the words`, opened?.toString());
+    const opened = tab ? new URL(tab.url() === 'about:blank' ? (await tab.waitForURL(/google\.com/, { timeout: 5000 }).catch(() => null), tab.url()) : tab.url()) : null;
+    check(!!opened && opened.hostname === 'www.google.com' && opened.pathname === '/search' && opened.searchParams.get('q') === 'cat video' && [...opened.searchParams.keys()].join() === 'q', `${label}: "Search the web" opens one tab with just the words`, opened?.toString());
     if (tab) await tab.close();
     await page.bringToFront();
     await page.evaluate(() => {
