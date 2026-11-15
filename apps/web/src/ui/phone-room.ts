@@ -350,11 +350,24 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     stripTool('⏭', 'skip', '#skip'),
   );
   $('.together-strip')?.append(stripTools);
+  // Card SH1: after "↩ Room view" a playing Short can come back to the Shorts view from here. The computer's
+  // "📱 Shorts view" (#shorts-enter) sits in the toolbar a phone room hides; this one shows exactly when that one does.
+  const shortsBackLabel = el('span', {}, t('shorts.view'));
+  const shortsBack = el('button', { type: 'button', class: 'btn small-btn ph-shorts-back', hidden: '' }, '📱 ', shortsBackLabel);
+  shortsBack.addEventListener('click', () => $<HTMLButtonElement>('#shorts-enter')?.click());
+  const shortsEnter = $('#shorts-enter');
+  if (shortsEnter) {
+    const mirror = () => (shortsBack.hidden = shortsEnter.hidden);
+    new MutationObserver(mirror).observe(shortsEnter, { attributes: true, attributeFilter: ['hidden'] });
+    mirror();
+  }
+  stripTools.prepend(shortsBack);
   addEventListener('langchange', () => {
     for (const button of stripTools.querySelectorAll<HTMLElement>('.ph-strip-tool')) {
       const key = ({ '#pin-btn': 'tool.pin', '#sync-all': 'tool.sync', '#skip': 'skip' } as Record<string, I18nKey>)[button.dataset.press ?? ''];
       if (key) button.title = button.ariaLabel = t(key);
     }
+    shortsBackLabel.textContent = t('shorts.view');
     tabBar.setAttribute('aria-label', t('phone.tabs'));
   });
 

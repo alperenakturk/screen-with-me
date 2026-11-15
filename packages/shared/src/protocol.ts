@@ -19,6 +19,18 @@ export const MAX_RATE = 4;
  */
 export const COUNTDOWN_MS = 3000;
 
+/**
+ * Card SH1: a Short / TikTok (they flow one into the next, no "3-2-1") also starts this much later for everyone, even
+ * alone: each player needs about 2 s to load the next one, and without the lead the room's clock had already run on,
+ * so the engine seeked everyone 2–3 s in. Held at 0:00 meanwhile (paused, buffering), all start together at 0:00.
+ */
+export const SHORT_START_MS = 2500;
+
+/** Upright videos that flow one into the next (the Shorts view): a YouTube Short or any TikTok. */
+export function flowMedia(media: Media): boolean {
+  return (media.kind === 'youtube' && media.short === true) || media.kind === 'tiktok';
+}
+
 /** Videos that get the countdown: not Shorts / TikTok (they flow one into the next), film pages or the sync test. */
 export function countdownMedia(media: Media): boolean {
   return (media.kind === 'youtube' && media.short !== true) || media.kind === 'html5' || media.kind === 'vimeo';

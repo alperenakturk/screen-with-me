@@ -17,6 +17,8 @@ import {
   maxRateFor,
   countdownMedia,
   COUNTDOWN_MS,
+  flowMedia,
+  SHORT_START_MS,
   expectedPosition,
   parseClientMessage,
   stickerId,
@@ -2101,7 +2103,14 @@ export class Room extends DurableObject<Env> {
     if (!item || state.paused || item.id === this.counted) return;
     this.counted = item.id;
     await this.ctx.storage.put('counted', item.id);
-    if (resumed || this.settings.countdown === false || !countdownMedia(item.media) || expectedPosition(state, now) > 1) return;
+    if (resumed || expectedPosition(state, now) > 1) return;
+    // Card SH1: a Short starts SHORT_START_MS later for everyone (even alone, never shown as a countdown), so every
+    // player has loaded it and they all start at 0:00 together instead of being seeked a few seconds in.
+    if (flowMedia(item.media)) {
+      this.room = { ...this.room, state: { ...state, position: 0, updatedAt: now + SHORT_START_MS } };
+      return;
+    }
+    if (this.settings.countdown === false || !countdownMedia(item.media)) return;
     const people = new Set(this.joined().filter((a) => !a.tv).map((a) => keyOf(a)));
     if (people.size < 2) return;
     this.room = { ...this.room, state: { ...state, position: Math.max(0, expectedPosition(state, now)), updatedAt: now + COUNTDOWN_MS } };

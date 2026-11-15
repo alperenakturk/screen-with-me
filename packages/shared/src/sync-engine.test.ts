@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ServerClock } from './clock.ts';
 import type { PlayerAdapter, PlayerEvent } from './player.ts';
-import type { ClientMessage, PlaybackState } from './protocol.ts';
+import { SHORT_START_MS, type ClientMessage, type PlaybackState } from './protocol.ts';
 import { SyncEngine } from './sync-engine.ts';
 
 /** Gerçek oynatıcı gibi davranan sahte oynatıcı. Zaman sadece `run` ile ilerler. */
@@ -368,6 +368,32 @@ describe('"3-2-1, together" (a start held a few seconds ahead)', () => {
     void player.play();
     await run(300);
     expect(sent.some((m) => m.t === 'play')).toBe(true);
+  });
+});
+
+describe('Card SH1: an auto-advanced Short starts at 0:00 for everyone', () => {
+  const short = { id: 'short2', media: { kind: 'youtube' as const, id: 'aqz-KE-bpKQ', short: true }, title: null, by: 'Alex' };
+
+  it('without a start lead, a player that needs 2 s to load the next Short is seeked 2 s in (the bug)', async () => {
+    engine.receive(state({ item: short, position: 0, updatedAt: Date.now() }));
+    await run(2000); // the next Short's player is still loading
+    engine.attach(player);
+    await run(200);
+    expect(player.time).toBeGreaterThan(1.8);
+  });
+
+  it('with the server\'s start lead (SHORT_START_MS), the same slow player starts at 0:00 with the room', async () => {
+    engine.receive(state({ item: short, position: 0, updatedAt: Date.now() + SHORT_START_MS }));
+    await run(2000);
+    engine.attach(player);
+    await run(300);
+    expect(player.paused).toBe(true);
+    expect(player.time).toBe(0);
+    await run(SHORT_START_MS - 2300 + 100);
+    expect(player.paused).toBe(false);
+    expect(player.time).toBeLessThan(0.3);
+    expect(sent).toEqual([]);
+    expect(readyReports).toEqual([]);
   });
 });
 

@@ -18,6 +18,7 @@ import {
   stepRate,
   maxRateFor,
   isValidMedia,
+  flowMedia,
   isAvatar,
   randomAvatar,
   REACTION_GAPS,
@@ -349,6 +350,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
+            <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" style="margin-left:auto" hidden>📱 <span data-i18n="shorts.view"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
           <div class="player-wrap">
@@ -476,7 +478,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div class="reaction-bar tray-bar" role="group"></div>
             <div class="toolbar-right">
               <button id="add-toggle" type="button" class="tool-btn add-toggle" aria-expanded="false" data-i18n-title="addVideo"><span aria-hidden="true">＋</span></button>
-              <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" hidden>📱 <span data-i18n="shorts.view"></span></button>
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <div class="game-menu-wrap">
                 <button id="game-btn" type="button" class="tool-btn labeled game-btn" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">🎮</span><span class="tool-label" data-i18n="tool.game"></span></button>
@@ -1949,14 +1950,21 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
   })();
   const measured: number[] = [];
+  /** Card SH1: where the latest Short's player was when it first moved (s; ~0 means it started at 0:00). */
+  let shortStart: { item: string; offset: number; lag: number } | null = null;
   function measureSwitch(state: PlaybackState, player: PlayerAdapter, token: number): void {
-    if (!measureOn || !state.item || state.paused) return;
+    const item = state.item;
+    const flow = !!item && flowMedia(item.media);
+    if ((!measureOn && !flow) || !item || state.paused) return;
+    if (flow) shortStart = null;
     const from = player.getTime();
     const started = Date.now();
     const look = () => {
       if (token !== mediaToken) return;
       if (!player.isPaused() && player.getTime() > from + 0.05) {
         const lag = Math.max(0, Math.round(clock.now() - state.updatedAt));
+        if (flow) shortStart = { item: item.id, offset: Math.round(player.getTime() * 100) / 100, lag };
+        if (!measureOn) return;
         measured.push(lag);
         if (measured.length > 5) measured.shift();
         const average = Math.round(measured.reduce((a, b) => a + b, 0) / measured.length);
@@ -2709,6 +2717,28 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** Bu sekmede oynayan Shorts'lar: yeni video bunlardan biriyse (↑ ile dönüldü) yukarıdan kayarak gelir. */
   const seenShorts: string[] = [];
 
+  // Card SH1: the Shorts view in the Test Lab: which view, where the latest Short started, who is speaking now.
+  debugHooks.register('shorts', () => ({
+    commands: [
+      {
+        id: 'shorts.state',
+        tab: 'status',
+        title: { en: 'Shorts: view, start of the latest Short, who is speaking', tr: 'Shorts: görünüm, son Short\'un başlangıcı, kim konuşuyor' },
+        help: {
+          en: 'Writes the view (Shorts or room), where the latest Short was when it started (0 = from 0:00) and who is speaking now into the log.',
+          tr: 'Görünümü (Shorts ya da oda), son Short başladığında nerede olduğunu (0 = 0:00\'dan) ve şu an kimin konuştuğunu kayda yazar.',
+        },
+        run: () =>
+          JSON.stringify({
+            view: shortsOn ? 'shorts' : isShortItem(roomState?.item) ? 'room' : 'none',
+            start: shortStart,
+            debug: current ? { t: current.player.getTime(), paused: current.player.isPaused(), ready: current.player.canPlayThrough?.() ?? null, hold: engine.holdLeft() } : null,
+            speakers: [...document.querySelectorAll<HTMLElement>('.speaking[data-member]')].map((n) => n.dataset.member),
+          }),
+      },
+    ],
+  }));
+
   /** Upright videos open the Shorts view: YouTube Shorts and every TikTok (0.9.91.18). */
   function isShortItem(item: QueueItem | null | undefined): boolean {
     return (item?.media.kind === 'youtube' && item.media.short === true) || item?.media.kind === 'tiktok';
@@ -3407,7 +3437,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (countdownTimer !== null) clearInterval(countdownTimer);
       countdownTimer = null;
     };
-    const left = () => (state.paused || !state.item ? 0 : state.updatedAt - clock.now());
+    // A Short's start lead (SH1) is held silently: no "3-2-1" over the Shorts view.
+    const left = () => (state.paused || !state.item || flowMedia(state.item.media) ? 0 : state.updatedAt - clock.now());
     if (left() <= 0) {
       stop();
       countdownEl?.remove();
