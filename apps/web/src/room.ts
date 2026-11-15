@@ -349,6 +349,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
+            <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" style="margin-left:auto" hidden>📱 <span data-i18n="shorts.view"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
           <div class="player-wrap">
@@ -476,7 +477,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <div class="reaction-bar tray-bar" role="group"></div>
             <div class="toolbar-right">
               <button id="add-toggle" type="button" class="tool-btn add-toggle" aria-expanded="false" data-i18n-title="addVideo"><span aria-hidden="true">＋</span></button>
-              <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" hidden>📱 <span data-i18n="shorts.view"></span></button>
               <span id="host-lock" class="host-lock" hidden>🔒 <span data-i18n="hostLock"></span></span>
               <div class="game-menu-wrap">
                 <button id="game-btn" type="button" class="tool-btn labeled game-btn" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">🎮</span><span class="tool-label" data-i18n="tool.game"></span></button>
@@ -2708,6 +2708,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let shortsOn = false;
   /** Bu sekmede oynayan Shorts'lar: yeni video bunlardan biriyse (↑ ile dönüldü) yukarıdan kayarak gelir. */
   const seenShorts: string[] = [];
+
+  // Card SH1: the Shorts view in the Test Lab (the start of the latest Short and who is speaking come with SH1 2 / 3).
+  debugHooks.register('shorts', () => ({
+    commands: [
+      {
+        id: 'shorts.state',
+        tab: 'status',
+        title: { en: 'Shorts: which view, and the way back', tr: 'Shorts: hangi görünüm ve geri dönüş yolu' },
+        help: {
+          en: 'Writes the view (Shorts, room or none) and whether "📱 Shorts view" is offered into the log.',
+          tr: 'Görünümü (Shorts, oda ya da yok) ve "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını kayda yazar.',
+        },
+        run: () =>
+          JSON.stringify({
+            view: shortsOn ? 'shorts' : isShortItem(roomState?.item) ? 'room' : 'none',
+            wayBack: !$('#shorts-enter').hidden,
+          }),
+      },
+    ],
+  }));
 
   /** Upright videos open the Shorts view: YouTube Shorts and every TikTok (0.9.91.18). */
   function isShortItem(item: QueueItem | null | undefined): boolean {

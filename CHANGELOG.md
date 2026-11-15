@@ -24,6 +24,14 @@ games' tip jar, cuttings and badges.
   YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
   "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
 
+### 0.9.97.137 — 15 Nov
+
+- After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip
+  under the video, and on a computer it sits beside Next above the video. It works as many times as you like.
+- ⠿ → **Search the web** now opens Google Search.
+- Snack Bar on an upright tablet: the day's special no longer makes the whole game smaller (its text stayed readable
+  only on some days).
+
 ### 0.9.97.136 — 14 Nov
 
 - ⠿ **Sources** beside the search box (on a phone, in the 🔍 Search tab) picks where your words search: **YouTube**
