@@ -1,6 +1,8 @@
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
+import { isPhone } from '../device.ts';
+import './live-float.css';
 
 /** A saved place and width, as a share of the container (the video box, or the window when free). */
 interface Spot {
@@ -21,9 +23,11 @@ const KEYS: Record<Where, string> = { video: 'liveSpot:video', free: 'liveSpot:f
 const MIN_WIDTH = 200;
 /** On a phone the video is ≈ 390 px wide: 200 px would be half of it. */
 const PHONE_MIN_WIDTH = 150;
-/** It may grow to this share of its container (⤢ covers the whole video). */
+/** It may grow to this share of its container. */
 const MAX_SHARE = 0.9;
 const EDGE = 8;
+/** The gap a window keeps from the YouTube player when it settles beside it. */
+const BESIDE_GAP = 8;
 /** Below this width the window stays in the video (no room to float it on a phone). */
 const NARROW = 700;
 
@@ -40,65 +44,111 @@ function readSpot(where: Where): Spot {
 }
 
 /**
- * The stream window (0.9.91.15, owner: "free like the cameras"): it sits in the video (default) or floats freely on
- * the page (⧉; ⤓ puts it back); drag it anywhere, resize it from its corner (it keeps 16:9), double click resets the
- * place. In fullscreen it always lives inside the video, with its own place. Places are remembered as shares of the
- * container, separately for the video, the page and fullscreen. On the film page (shell) a free window is an island.
+ * The stream window. ST1 (owner, 15 Nov 2026: "one button: fullscreen or a window I can put anywhere; simple"): a
+ * viewer has one control, "⛶ Fullscreen" ⇄ "🪟 Window". As a window on a computer it floats freely on the page: drag it
+ * anywhere, resize it from its corner (it keeps 16:9), double click resets the place; place and width are remembered as
+ * shares of the screen, so they survive a reload. Fullscreen is the browser's own, for the stream alone (a cover-the-
+ * screen fallback where the browser has none). In the room's fullscreen the window lives inside the video with its own
+ * place; on a phone (≤ 700 px) it stays inside the video as before (the phone room's own sideways behaviour). With a
+ * YouTube player on a computer the free window never covers it: it settles beside the player. On the film page
+ * (shell) a free window is an island.
  */
 export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; theater: HTMLElement; onMove: () => void }) {
   const { win, wrap, theater } = opts;
   const home = document.createComment('live-window');
   win.before(home);
-  const bar = win.querySelector<HTMLElement>('.live-bar')!;
-  const popButton = el('button', { type: 'button', class: 'icon-btn live-pop' });
-  bar.querySelector('#live-big')!.before(popButton);
+  const modeButton = win.querySelector<HTMLButtonElement>('#live-mode')!;
   const grip = el('span', { class: 'live-resize', 'aria-hidden': 'true' });
   win.append(grip);
 
-  let place: 'video' | 'free' = load('opt:livePlace') === 'free' ? 'free' : 'video';
   const spots: Record<Where, Spot> = { video: readSpot('video'), free: readSpot('free'), fs: readSpot('fs') };
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
   const narrow = () => innerWidth <= NARROW;
-  // The Shorts view's upright video is narrower than the window's smallest width, so there it always floats on the page
-  // (sweep-2 #2: inside the video it ran off the screen's right edge).
-  const shorts = () => document.documentElement.classList.contains('shorts-view');
-  const where = (): Where => (isFs() ? 'fs' : (place === 'free' || shorts()) && !narrow() && !win.classList.contains('big') ? 'free' : 'video');
+  /** The stream's own fullscreen: the browser's (the window is the fullscreen element) or the fallback class. */
+  const isFull = () => document.fullscreenElement === win || win.classList.contains('filled');
+  const where = (): Where => (isFs() ? 'fs' : narrow() ? 'video' : 'free');
   const container = (w: Where) => (w === 'free' ? { w: innerWidth, h: innerHeight } : { w: wrap.clientWidth, h: wrap.clientHeight });
+  /** A YouTube player shows beside the rail on a computer (the same test as the game window's, games/stage.ts). */
+  const overYoutube = () => theater.classList.contains('yt-rail') && !isPhone();
 
   function labels(): void {
-    const free = where() === 'free';
-    popButton.textContent = free ? '⤓' : '⧉';
-    popButton.title = t(free ? 'live.dock' : 'live.pop');
-    popButton.setAttribute('aria-label', popButton.title);
-    popButton.hidden = isFs() || narrow();
+    const full = isFull();
+    // A small window (a phone's, or one shrunk from its corner) shows the icon only; the word stays in its title.
+    const word = full || win.offsetWidth >= 280;
+    modeButton.textContent = full ? `🪟${word ? ` ${t('live.window')}` : ''}` : `⛶${word ? ` ${t('live.fullscreen')}` : ''}`;
+    modeButton.title = t(full ? 'live.windowHint' : 'live.fullscreenHint');
+    modeButton.setAttribute('aria-label', modeButton.title);
+    modeButton.setAttribute('aria-pressed', String(full));
+  }
+
+  /**
+   * A free window that would cover the YouTube player moves just beside it, to the nearest side where it fits on the
+   * screen (left, right, above, below). When it fits on no side at its size, it shrinks (16:9, not below its smallest
+   * width) to fit the side with the most room. Returns where it goes and how wide it is.
+   */
+  function clearOfPlayer(left: number, top: number, width: number): { left: number; top: number; width: number } {
+    if (where() !== 'free' || !overYoutube()) return { left, top, width };
+    const p = theater.getBoundingClientRect();
+    const covers = (l: number, t: number, w: number) => p.width >= 2 && !(l >= p.right || p.left >= l + w || t >= p.bottom || p.top >= t + (w * 9) / 16);
+    if (!covers(left, top, width)) return { left, top, width };
+    const clamp = (o: { left: number; top: number; width: number }) => ({
+      width: o.width,
+      left: Math.min(Math.max(o.left, EDGE), innerWidth - EDGE - o.width),
+      top: Math.min(Math.max(o.top, EDGE), innerHeight - EDGE - (o.width * 9) / 16),
+    });
+    // The room each side leaves: the widest 16:9 window that fits there.
+    const fullH = innerHeight - 2 * EDGE;
+    const fullW = innerWidth - 2 * EDGE;
+    const sides = [
+      { room: Math.min(p.left - BESIDE_GAP - EDGE, (fullH * 16) / 9), at: (w: number) => ({ left: p.left - w - BESIDE_GAP, top, width: w }) },
+      { room: Math.min(innerWidth - EDGE - p.right - BESIDE_GAP, (fullH * 16) / 9), at: (w: number) => ({ left: p.right + BESIDE_GAP, top, width: w }) },
+      { room: Math.min(fullW, ((p.top - BESIDE_GAP - EDGE) * 16) / 9), at: (w: number) => ({ left, top: p.top - (w * 9) / 16 - BESIDE_GAP, width: w }) },
+      { room: Math.min(fullW, ((innerHeight - EDGE - p.bottom - BESIDE_GAP) * 16) / 9), at: (w: number) => ({ left, top: p.bottom + BESIDE_GAP, width: w }) },
+    ];
+    const near = (o: { left: number; top: number }) => Math.hypot(o.left - left, o.top - top);
+    const fitting = sides
+      .filter((s) => s.room >= width)
+      .map((s) => clamp(s.at(width)))
+      .filter((o) => !covers(o.left, o.top, o.width))
+      .sort((a, b) => near(a) - near(b));
+    if (fitting[0]) return fitting[0];
+    const min = narrow() ? PHONE_MIN_WIDTH : MIN_WIDTH;
+    const roomiest = [...sides].sort((a, b) => b.room - a.room)[0]!;
+    if (roomiest.room >= min) return clamp(roomiest.at(Math.floor(roomiest.room)));
+    // No room anywhere (a player as large as the screen): the smallest window in the screen's corner.
+    return clamp({ left: innerWidth, top: innerHeight, width: min });
   }
 
   /** Puts the window where it belongs and sizes it from its saved spot. */
   function apply(): void {
     const w = where();
     const parent = w === 'free' ? document.body : wrap;
-    if (win.parentNode !== parent) {
+    if (win.parentNode !== parent && !document.fullscreenElement?.contains(win)) {
       if (w === 'free') document.body.append(win);
       else home.after(win);
       void win.querySelector('video')?.play().catch(() => {});
     }
     win.classList.toggle('free', w === 'free');
     // On the film page a window on the page must show over the hole (inside the video it is an island anyway).
-    win.toggleAttribute('data-island', w === 'free');
+    win.toggleAttribute('data-island', w === 'free' || isFull());
     labels();
-    if (win.classList.contains('big')) {
+    if (isFull()) {
       win.style.left = win.style.top = win.style.width = '';
       opts.onMove();
       return;
     }
     const c = container(w);
     const spot = spots[w];
-    const width = Math.round(Math.min(Math.max(innerWidth <= NARROW ? PHONE_MIN_WIDTH : MIN_WIDTH, spot.w * c.w), c.w * MAX_SHARE));
+    const width = Math.round(Math.min(Math.max(narrow() ? PHONE_MIN_WIDTH : MIN_WIDTH, spot.w * c.w), c.w * MAX_SHARE));
     const height = (width * 9) / 16;
-    win.style.width = `${width}px`;
-    win.style.left = `${Math.round(Math.min(Math.max(EDGE, spot.x * c.w), Math.max(EDGE, c.w - width - EDGE)))}px`;
-    win.style.top = `${Math.round(Math.min(Math.max(EDGE, spot.y * c.h), Math.max(EDGE, c.h - height - EDGE)))}px`;
+    const left = Math.min(Math.max(EDGE, spot.x * c.w), Math.max(EDGE, c.w - width - EDGE));
+    const top = Math.min(Math.max(EDGE, spot.y * c.h), Math.max(EDGE, c.h - height - EDGE));
+    const at = clearOfPlayer(left, top, width);
+    win.style.width = `${Math.round(at.width)}px`;
+    win.style.left = `${Math.round(at.left)}px`;
+    win.style.top = `${Math.round(at.top)}px`;
+    labels();
     opts.onMove();
   }
 
@@ -110,16 +160,40 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     save(KEYS[w], JSON.stringify(spots[w]));
   }
 
-  popButton.addEventListener('click', () => {
-    place = where() === 'free' ? 'video' : 'free';
-    save('opt:livePlace', place);
-    apply();
+  /** ⛶ / 🪟: the stream alone in the browser's fullscreen, or back to its window. */
+  function toggleFull(): void {
+    if (document.fullscreenElement === win) {
+      void document.exitFullscreen().catch(() => {});
+      return;
+    }
+    if (win.classList.contains('filled')) {
+      win.classList.remove('filled');
+      apply();
+      return;
+    }
+    if (win.requestFullscreen && document.fullscreenEnabled) {
+      win.requestFullscreen().catch(() => {
+        win.classList.add('filled');
+        apply();
+      });
+    } else {
+      win.classList.add('filled');
+      apply();
+    }
+  }
+  modeButton.addEventListener('click', toggleFull);
+  // Escape leaves the fallback too (the browser's own fullscreen handles its Escape itself).
+  addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && win.classList.contains('filled')) {
+      win.classList.remove('filled');
+      apply();
+    }
   });
 
   let drag: { id: number; resize: boolean; x: number; y: number; left: number; top: number; width: number } | null = null;
   let frame = 0;
   win.addEventListener('pointerdown', (event) => {
-    if (event.button !== 0 || win.classList.contains('big')) return;
+    if (event.button !== 0 || isFull()) return;
     if ((event.target as Element).closest('button')) return;
     drag = {
       id: event.pointerId,
@@ -142,10 +216,14 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     if (drag.resize) {
       // The corner grows the width; the height follows (16:9).
       const max = Math.min(c.w * MAX_SHARE, c.w - drag.left - EDGE, ((c.h - drag.top - EDGE) * 16) / 9);
-      win.style.width = `${Math.round(Math.min(Math.max(innerWidth <= NARROW ? PHONE_MIN_WIDTH : MIN_WIDTH, drag.width + Math.max(dx, (dy * 16) / 9)), max))}px`;
+      win.style.width = `${Math.round(Math.min(Math.max(narrow() ? PHONE_MIN_WIDTH : MIN_WIDTH, drag.width + Math.max(dx, (dy * 16) / 9)), max))}px`;
     } else {
-      win.style.left = `${Math.round(Math.min(Math.max(EDGE, drag.left + dx), Math.max(EDGE, c.w - win.offsetWidth - EDGE)))}px`;
-      win.style.top = `${Math.round(Math.min(Math.max(EDGE, drag.top + dy), Math.max(EDGE, c.h - win.offsetHeight - EDGE)))}px`;
+      const left = Math.min(Math.max(EDGE, drag.left + dx), Math.max(EDGE, c.w - win.offsetWidth - EDGE));
+      const top = Math.min(Math.max(EDGE, drag.top + dy), Math.max(EDGE, c.h - win.offsetHeight - EDGE));
+      const at = clearOfPlayer(left, top, win.offsetWidth);
+      win.style.width = `${Math.round(at.width)}px`;
+      win.style.left = `${Math.round(at.left)}px`;
+      win.style.top = `${Math.round(at.top)}px`;
     }
     // In the shell the hole and islands are reported once per frame.
     if (!frame) {
@@ -158,16 +236,27 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
   const stop = (event: PointerEvent) => {
     if (!drag || event.pointerId !== drag.id) return;
     const still = Math.abs(event.clientX - drag.x) + Math.abs(event.clientY - drag.y) < 4;
+    const resized = drag.resize;
     drag = null;
     win.classList.remove('dragging');
-    if (!still) remember();
+    if (!still) {
+      // A window grown from its corner over the YouTube player moves beside it.
+      if (resized) {
+        const at = clearOfPlayer(win.offsetLeft, win.offsetTop, win.offsetWidth);
+        win.style.width = `${Math.round(at.width)}px`;
+        win.style.left = `${Math.round(at.left)}px`;
+        win.style.top = `${Math.round(at.top)}px`;
+      }
+      remember();
+      labels();
+    }
     opts.onMove();
   };
   win.addEventListener('pointerup', stop);
   win.addEventListener('pointercancel', stop);
   // Double click: back to the default place and size (this view only).
   win.addEventListener('dblclick', (event) => {
-    if ((event.target as Element).closest('button') || win.classList.contains('big')) return;
+    if ((event.target as Element).closest('button') || isFull()) return;
     const w = where();
     spots[w] = DEFAULTS[w];
     save(KEYS[w], '');
@@ -179,29 +268,38 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
   });
   document.addEventListener('fullscreenchange', () => {
     wasFs = isFs();
-    apply();
-  });
-  // The phones' own fullscreen and the film page's are a class on the theater, not real fullscreen.
-  let wasFs = isFs();
-  new MutationObserver(() => {
-    if (isFs() === wasFs) return;
-    wasFs = isFs();
-    apply();
-  }).observe(theater, { attributes: true, attributeFilter: ['class'] });
-  // Entering or leaving the Shorts view moves it between the video and the page.
-  let wasShorts = shorts();
-  new MutationObserver(() => {
-    if (shorts() === wasShorts) return;
-    wasShorts = shorts();
     if (!win.hidden) apply();
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  });
+  // The phones' own fullscreen and the film page's are a class on the theater, not real fullscreen; the YouTube rail
+  // coming or going changes where the free window may sit. Both are classes on the theater.
+  let wasFs = isFs();
+  let wasYoutube = overYoutube();
+  new MutationObserver(() => {
+    if (isFs() === wasFs && overYoutube() === wasYoutube) return;
+    wasFs = isFs();
+    wasYoutube = overYoutube();
+    if (!win.hidden) apply();
+  }).observe(theater, { attributes: true, attributeFilter: ['class'] });
 
   return {
     apply,
-    /** ⤢: cover the whole video (a free window comes back into the video for it). */
-    toggleBig(): void {
-      win.classList.toggle('big');
-      apply();
+    /** Leaves the stream's own fullscreen (the stream ended or the window closed). */
+    leaveFull(): void {
+      if (document.fullscreenElement === win) void document.exitFullscreen().catch(() => {});
+      win.classList.remove('filled');
+    },
+    /** Test Lab `stream.view`: the window's mode and box. */
+    view(): { mode: 'window' | 'fullscreen' | 'hidden'; where: Where; box: number[]; overPlayer: boolean; onScreen: boolean } {
+      const r = win.getBoundingClientRect();
+      const p = theater.getBoundingClientRect();
+      const overPlayer = overYoutube() && !isFs() && !isFull() && !(r.left >= p.right || p.left >= r.right || r.top >= p.bottom || p.top >= r.bottom);
+      return {
+        mode: win.hidden ? 'hidden' : isFull() ? 'fullscreen' : 'window',
+        where: where(),
+        box: [r.left, r.top, r.width, r.height].map(Math.round),
+        overPlayer,
+        onScreen: r.left >= 0 && r.top >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
+      };
     },
   };
 }

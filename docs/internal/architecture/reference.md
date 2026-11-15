@@ -1671,13 +1671,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the screen's frames drive it and a background tab doesn't freeze it; hidden where unsupported); quality changes go
   to the real screen track; the browser's "Stop sharing" ends the composed track too. `LiveKind` 'camera' stays in the
   protocol for old clients. Test: `voice/live.mjs` (19 checks).
-  **0.9.91.15 free stream window (owner: "free like the cameras", `ui/live-float.ts`):** (LAYOUT1: the in-video default is the top right, `y: 0.04`, clear of the player's own bar; at least 150 px wide on a phone, `PHONE_MIN_WIDTH`, 200 elsewhere) `#live-window` sits in the
-  video (default) or floats on the page (⧉ / ⤓, `opt:livePlace`; not under 700 px); drag anywhere, corner grip resizes
-  (16:9 kept), double click resets; places as shares of the container in `liveSpot:video` / `liveSpot:free` /
-  `liveSpot:fs`; in fullscreen (real or `.fake-fs`) it always lives inside the video; ⤢ covers the video (a free window
-  comes back into it). A free window is `data-island` (shown over the hole on the film page). 🙈 hides my own preview
-  (`opt:liveSelfHidden`; viewers still get it), "👁 Yayınımı göster" in the stream card brings it back. Test:
-  `voice/live.mjs` (30 checks: drag, pop out, resize, remembered after a reload, inside fullscreen, hide my own).
+  **ST1 stream viewer (0.9.97.139, owner: "one button: fullscreen or a window I can put anywhere; simple"; `ui/live-float.ts`):**
+  a viewer has **one** control in the window's bar, `#live-mode`: "⛶ Fullscreen" ⇄ "🪟 Window" (`live.fullscreen` /
+  `live.window`, titles `live.fullscreenHint` / `live.windowHint`; under 280 px wide it shows the icon only). The old ⧉ / ⤓
+  (in the video ⇄ on the page, `opt:livePlace`) and ⤢ ("bigger / smaller") are gone. On a computer the window always
+  floats on the page (`.free`, `data-island`): drag anywhere, the corner grip resizes (16:9 kept), double click resets;
+  place and width are shares of the screen in `liveSpot:free`, so they survive a reload. "⛶ Fullscreen" is the browser's
+  fullscreen for `#live-window` alone (a `.filled` cover-the-screen fallback where the Fullscreen API is missing; Escape
+  leaves it); "🪟 Window" goes back to the same place and size. In the room's fullscreen (real or `.fake-fs`) the window
+  lives inside the video (`liveSpot:fs`); under 700 px (a phone) it stays inside the video (`liveSpot:video`, at least
+  150 px, `PHONE_MIN_WIDTH`), the phone room's own sideways behaviour unchanged. With a YouTube player (`.yt-rail` on the
+  theater, not a phone) the free window never covers it: `clearOfPlayer` moves it beside the player on the nearest side
+  where it fits, else shrinks it (16:9, ≥ 200 px) to the roomiest side, on drag, resize and every placement. The grip and
+  fullscreen rules live in `ui/live-float.css` (loaded with the lazy `live-engine` chunk; room.css stays in its budget).
+  🙈 hides my own preview (`opt:liveSelfHidden`; viewers still get it), "👁 Yayınımı göster" in the stream card brings it
+  back. Test Lab `stream.view` (🎬 tab): the viewer's mode, box, on screen, over a YouTube player (never). Test:
+  `voice/live.mjs` (`SWM_W` / `SWM_H`; run at 1366, 1920 and 1180 × 820): one toggle, a free window, drag, corner resize,
+  ⛶ → fullscreen → 🪟 back to the same place, remembered after a reload, inside the room's fullscreen, beside a YouTube
+  player, hide my own.
   **Card R1 (0.9.97.8, owner's test round 1: "a game throws people out of the room / the stream, opens only on the
   second press"; root cause: every deploy restarts the room's object and closes every room connection, the owner tested
   while ~10 versions went live):** like voice since 0.9.91.16, a welcome with my old member id keeps the stream

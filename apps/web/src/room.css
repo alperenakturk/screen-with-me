@@ -4306,18 +4306,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   border-color: var(--border);
 }
 
-/* Büyüt: videonun tamamını kaplar */
-.live-window.big {
-  inset: 0;
-  width: auto;
-  aspect-ratio: auto;
-  border-radius: 0;
-}
-
-.live-window.big {
-  cursor: default;
-}
-
 .live-window.dragging {
   cursor: grabbing;
 }
@@ -4326,28 +4314,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
 .live-window.free {
   position: fixed;
   z-index: 820;
-}
-
-.live-resize {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  opacity: 0;
-  transition: opacity 0.15s;
-  background:
-    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.8) 55% 62%, transparent 62% 72%,
-      rgb(255 255 255 / 0.8) 72% 79%, transparent 79%);
-}
-
-.live-window:hover .live-resize {
-  opacity: 1;
-}
-
-.live-window.big .live-resize {
-  display: none;
 }
 
 .live-window video {

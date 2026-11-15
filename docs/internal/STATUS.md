@@ -118,6 +118,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
   back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in
   the private feedback repository. On the phone the same two buttons are on their row in the People list.
+- [ ] 27h. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
+  it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
+  watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

@@ -49,7 +49,6 @@ export function createLive(
   const win = root.querySelector<HTMLElement>('#live-window')!;
   const video = root.querySelector<HTMLVideoElement>('#live-video')!;
   const title = root.querySelector<HTMLElement>('#live-title')!;
-  const bigButton = root.querySelector<HTMLButtonElement>('#live-big')!;
   const closeButton = root.querySelector<HTMLButtonElement>('#live-close')!;
   const killButton = root.querySelector<HTMLButtonElement>('#live-kill')!;
   const hideSelfButton = root.querySelector<HTMLButtonElement>('#live-hide-self')!;
@@ -152,8 +151,20 @@ export function createLive(
       flashHint(card, t('voice.blocked'), 15000);
     },
   });
-  // 🐞 Test Lab: each stream connection's state (ids shortened; read only).
+  // 🐞 Test Lab: each stream connection's state (ids shortened; read only), and ST1's `stream.view`.
   debugHooks.register('live', () => ({
+    commands: [
+      {
+        id: 'stream.view',
+        title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },
+        help: {
+          en: 'Writes the stream viewer\'s mode (window or fullscreen), its box, whether it is on the screen and whether it covers a YouTube player (it never should) into the log.',
+          tr: 'İzlediğim yayının hâlini (pencere ya da tam ekran), kutusunu, ekranda olup olmadığını ve bir YouTube oynatıcısını örtüp örtmediğini (hiç örtmemeli) kayda yazar.',
+        },
+        tab: 'video',
+        run: () => JSON.stringify(float?.view() ?? { mode: 'hidden' }),
+      },
+    ],
     status: () => {
       const peers = live?.peerStates() ?? [];
       return [
@@ -233,7 +244,7 @@ export function createLive(
     }
     if (!stream) {
       video.srcObject = null;
-      win.classList.remove('big');
+      float?.leaveFull();
     }
     title.textContent = host ? `🔴 ${host.name}` : '';
     win.classList.toggle('mine', mine);
@@ -307,7 +318,6 @@ export function createLive(
     if (engine) void composed?.screen.applyConstraints({ frameRate: { ideal: engine.FPS[quality()], max: engine.FPS[quality()] } }).catch(() => {});
     void live?.setQuality(quality());
   });
-  bigButton.addEventListener('click', () => float?.toggleBig());
   const setSelfHidden = (hidden: boolean) => {
     selfHidden = hidden;
     save('opt:liveSelfHidden', hidden ? '1' : '0');

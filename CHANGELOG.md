@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.139 — 15 Nov
+
+- Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
+  it floats on the page: drag it anywhere and make it bigger or smaller from its corner; it keeps its shape, and its
+  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it. The old
+  "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
+
 ### 0.9.97.136 — 14 Nov
 
 - ⠿ **Sources** beside the search box (on a phone, in the 🔍 Search tab) picks where your words search: **YouTube**
