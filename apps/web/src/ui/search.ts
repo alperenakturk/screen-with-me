@@ -69,10 +69,14 @@ export function createSearch(
     head.append(x);
     return head;
   }
-  /** Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. */
+  /**
+   * Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. YTQ1
+   * (owner, 15 Nov 2026; YouTube Branding Guidelines): the YouTube logo beside them, linking to YouTube.
+   */
   function attribution(): HTMLElement {
     const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
-    return el('p', { class: 'yt-attrib small' }, `${t('yt.from')} · `, terms);
+    const logo = el('a', { class: 'yt-logo', href: 'https://www.youtube.com', target: '_blank', rel: 'noopener', 'aria-label': 'YouTube' }, el('img', { src: '/brand/youtube-icon.svg', alt: '', width: '24', height: '17', style: 'vertical-align: middle' }));
+    return el('p', { class: 'yt-attrib small' }, logo, ` ${t('yt.from')} · `, terms);
   }
   let lastQuery = '';
 

@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.140 — 15 Nov
+
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show the YouTube logo beside "Results
+  from YouTube"; it links to YouTube.
+
 ### 0.9.97.136 — 14 Nov
 
 - ⠿ **Sources** beside the search box (on a phone, in the 🔍 Search tab) picks where your words search: **YouTube**

@@ -278,8 +278,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   opened in the Shorts view; the cache key is `yt-search2`) (each has a friendly note; links
   always still work). The thumbnail is built from the id (`i.ytimg.com`, already in the CSP); the page also caches
   full answers in memory. A row adds to the queue (plays at once in an empty room), "▶ Şimdi aç" loads it. Privacy
-  policy has a "YouTube search" section (YouTube API Services, YouTube Terms, Google privacy policy). A quota increase
-  needs Google's API compliance audit (owner, before 1.0). Test: `scripts/e2e/search.mjs` (live: real results or
+  policy has a "YouTube search" section (YouTube API Services, YouTube Terms, Google privacy policy). Every YouTube result
+  list (search, the Shorts view's ＋ Add search, the ♾ Discover window) ends with `.yt-attrib`: **the YouTube icon**
+  (YTQ1, 0.9.97.140; YouTube Branding Guidelines: the logo beside the API results, linking to YouTube;
+  `public/brand/youtube-icon.svg`, 24 × 17, `a.yt-logo` → youtube.com, never over the player) + "Results from YouTube ·
+  YouTube Terms of Service" (Y1). A quota increase needs Google's API compliance audit (card YTQ1; the pack is
+  `docs/internal/youtube-audit/`). Test: `scripts/e2e/search.mjs` (live: real results or
   `quota`).
 - **TikTok (0.9.91.19, PDF item 2, `players/tiktok.ts`):** `{kind:'tiktok', id, user?}` (optional new kind, no version
   bump: `cleanMedia` validates `TIKTOK_ID` / `TIKTOK_USER`). Links: `tiktok.com/@user/video/<id>`, `/v/<id>`,
