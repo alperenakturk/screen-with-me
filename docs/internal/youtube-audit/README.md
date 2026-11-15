@@ -28,5 +28,5 @@ address. Google gives no review time; plan for 4–12 weeks.
 ## Status
 - Self-check: every item passes (see `self-check.md`). Two items wait for the day: the official logo file (Design is
   replacing the traced icon with YouTube's own) and the screenshots on the final domain.
-- Still open before submitting: the own domain (owner), the official YouTube logo file (Design), the screenshots and the
+- Still open before submitting: the own domain (owner), the official YouTube logo files (owner's download, then B2), the screenshots and the
   screencast (B2, on the live domain).
