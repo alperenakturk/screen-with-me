@@ -194,3 +194,14 @@
 .quiz-option .quiz-pickers { position: absolute; top: -10px; right: 10px; }
 /* QZ2: once an answer is locked in, the other options look out of reach. */
 .quiz-option:disabled:not(.picked, .correct, .wrong) { opacity: 0.6; }
+/* QZ2: a typed-answer question: the field and Send on one row, the reveal's answer and everyone's answers under it. */
+.quiz-type { display: flex; gap: 10px; width: min(100%, 520px); margin: 4px auto 0; }
+.quiz-type-input { flex: 1; min-width: 0; min-height: 52px; padding: 0 14px; border-radius: 14px; border: 2px solid var(--border); background: var(--surface-2); color: var(--text); font: inherit; font-size: 18px; font-weight: 600; }
+.quiz-type-input:focus-visible { border-color: var(--accent); outline: 2px solid var(--accent); outline-offset: 2px; }
+.quiz-type-input:disabled { opacity: 0.8; }
+.quiz-type-go { min-height: 52px; padding: 0 20px; }
+.quiz-type-answer { margin: 8px 0 0; text-align: center; font-size: 18px; font-weight: 700; color: var(--ok); min-height: 1.4em; }
+.quiz-said { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 6px 0 0; padding: 0; }
+.quiz-said-one { display: flex; align-items: center; gap: 6px; max-width: 240px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); font-size: 14px; }
+.quiz-said-one.right { border-color: var(--ok); }
+.quiz-said-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

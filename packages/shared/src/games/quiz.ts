@@ -1,14 +1,15 @@
 // Quiz: 2–8 players, 5 / 10 / 15 questions (the host also picks the language and a topic), four options or true /
-// false, 15 s each. Points come from `scoring.ts` (speed, being among the first, streaks); everyone has one 50:50
+// false, 15 s each, or a typed answer (QZ2: 20 s, forgiving match: `matchTyped`). Harder questions and typed ones are
+// worth more (`quizLevelBonus`). Points come from `scoring.ts` (speed, being among the first, streaks); everyone has one 50:50
 // joker per game. When everyone answered or the time is up the right option and who picked what are shown, then the
 // next question; a podium at the end. The server (Durable Object `Quiz`) picks the questions, shuffles the options
 // and only tells the right one at the reveal. This file: messages, validation, question picking.
 
-import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
-import { QUIZ_BANK, QUIZ_CATEGORIES, type QuizCategory } from './quiz-questions.ts';
+import { CLIENT_ID, cleanName, cleanText, isAvatar, type Avatar } from '../protocol.ts';
+import { QUIZ_BANK, QUIZ_CATEGORIES, type QuizCategory, type QuizEntry } from './quiz-questions.ts';
 
-/** 2: host settings (language, category, length), the 50:50 joker, rank / streak points. */
-export const QUIZ_PROTOCOL_VERSION = 2;
+/** 2: host settings (language, category, length), the 50:50 joker, rank / streak points. 3 (QZ2): typed answers. */
+export const QUIZ_PROTOCOL_VERSION = 3;
 export const QUIZ_MAX_PLAYERS = 8;
 export const QUIZ_QUESTIONS = 10;
 /** Game lengths the host can pick. */
@@ -16,6 +17,61 @@ export const QUIZ_COUNTS = [5, 10, 15] as const;
 export type QuizCount = (typeof QUIZ_COUNTS)[number];
 export const QUIZ_ANSWER_MS = 15_000;
 export const QUIZ_REVEAL_MS = 4_000;
+/** A typed-answer question gets more time (QZ2). */
+export const QUIZ_TYPED_MS = 20_000;
+/** The longest typed answer the table keeps (after `cleanText`). */
+export const QUIZ_TYPED_MAX = 40;
+/** The answer time of a question. */
+export const quizAnswerMs = (typed: boolean | undefined): number => (typed ? QUIZ_TYPED_MS : QUIZ_ANSWER_MS);
+/**
+ * QZ2: harder questions are worth more: easy ×1, medium ×1.2, hard ×1.5; a typed answer ×1.3 on top. The bank's
+ * older entries have no difficulty: medium.
+ */
+export function quizLevelBonus(level: 1 | 2 | 3 | undefined, typed: boolean | undefined): number {
+  return ({ 1: 1, 2: 1.2, 3: 1.5 } as const)[level ?? 2] * (typed ? 1.3 : 1);
+}
+
+/** Folds a typed answer for comparing: case, accents, Turkish ı / İ, punctuation, spaces and a leading "the". */
+export function foldAnswer(text: string): string {
+  return text
+    .replace(/[İIı]/g, 'i')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/^the /, '')
+    .replace(/ /g, '');
+}
+
+/** Damerau–Levenshtein distance capped at 2 (one swap of neighbours counts as one typo). */
+function typos(a: string, b: string): number {
+  if (Math.abs(a.length - b.length) > 1) return 2;
+  const d: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array<number>(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0]![j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      let v = Math.min(d[i - 1]![j]! + 1, d[i]![j - 1]! + 1, d[i - 1]![j - 1]! + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, d[i - 2]![j - 2]! + 1);
+      d[i]![j] = v;
+    }
+  return d[a.length]![b.length]!;
+}
+
+/**
+ * Is a typed answer right? Folded (`foldAnswer`) it equals an accepted answer, or is one typo away when that answer has
+ * 5+ letters and is not a number (numbers must be exact).
+ */
+export function matchTyped(input: string, accepted: readonly string[]): boolean {
+  const said = foldAnswer(input);
+  if (!said) return false;
+  return accepted.some((answer) => {
+    const want = foldAnswer(answer);
+    if (said === want) return true;
+    return want.length >= 5 && !/\d/.test(want) && typos(said, want) <= 1;
+  });
+}
 /** Questions the same game object does not ask again (rematches get new questions). */
 export const QUIZ_RECENT = 150;
 /** A browser remembers this many questions it has seen and sends them as a bitmap (base64) in its hello. */
@@ -64,6 +120,8 @@ export interface QuizPlayer {
   gained?: number;
   /** In the reveal: the order of this right answer (1 = first). */
   rank?: number;
+  /** In the reveal of a typed question: what this player typed (cleaned; never sent before the reveal). */
+  said?: string;
   /** Right answers in a row (shown from 2 on). */
   streak: number;
   /** The 50:50 joker is used up (once per game). */
@@ -76,12 +134,14 @@ export type QuizClientMessage =
   /** Host only, in the lobby or on the podium. */
   | { t: 'settings'; lang?: QuizLang; topic?: QuizTopic; count?: QuizCount }
   | { t: 'start' }
-  /** `n`: hangi soruya (geç kalan cevap bir sonrakine sayılmasın). */
+  /** `n`: which question (a late answer must not count for the next). `pick` an option, or `text` a typed answer. */
   | { t: 'answer'; n: number; pick: number }
+  | { t: 'answer'; n: number; text: string }
   /** 50:50 on question `n` (before answering, once per game). */
   | { t: 'joker'; n: number }
-  /** Test Lab (DL3b): end the current phase now; only a local lab server acts on it. */
-  | { t: 'lab'; op: 'skip' }
+  /** Test Lab (DL3b): end the current phase now; `typed` (QZ2): the next game asks only typed questions. Only a local
+   * lab server acts on it. */
+  | { t: 'lab'; op: 'skip' | 'typed' }
   | { t: 'ping' };
 
 export type QuizServerMessage =
@@ -99,8 +159,12 @@ export type QuizServerMessage =
       cat?: QuizCategory;
       /** The question's bank id (the browser remembers what it has seen, `encodeSeen`). */
       qid?: number;
-      /** Sadece açıklamada. */
+      /** Only in the reveal. On a typed question 0, and a player's `pick` is 0 (right) or 1 (wrong). */
       correct?: number;
+      /** A typed-answer question (no options; QZ2). */
+      typed?: boolean;
+      /** The reveal of a typed question: the right answer as shown. */
+      answer?: string;
       endsAt: number | null;
       lang: QuizLang;
       topic: QuizTopic;
@@ -145,12 +209,17 @@ export function parseQuizMessage(raw: string): QuizClientMessage | null {
       if ((QUIZ_COUNTS as readonly unknown[]).includes(m.count)) out.count = m.count as QuizCount;
       return Object.keys(out).length > 1 ? out : null;
     }
-    case 'answer':
-      return isInt(m.n, 1, maxQuestions) && isInt(m.pick, 0, 3) ? { t: 'answer', n: m.n, pick: m.pick } : null;
+    case 'answer': {
+      if (!isInt(m.n, 1, maxQuestions)) return null;
+      if (isInt(m.pick, 0, 3)) return { t: 'answer', n: m.n, pick: m.pick };
+      if (typeof m.text !== 'string') return null;
+      const text = cleanText(m.text, QUIZ_TYPED_MAX).trim();
+      return text ? { t: 'answer', n: m.n, text } : null;
+    }
     case 'joker':
       return isInt(m.n, 1, maxQuestions) ? { t: 'joker', n: m.n } : null;
     case 'lab':
-      return m.op === 'skip' ? { t: 'lab', op: 'skip' } : null;
+      return m.op === 'skip' || m.op === 'typed' ? { t: 'lab', op: m.op } : null;
     case 'start':
     case 'ping':
       return { t: m.t };
@@ -166,13 +235,16 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correct: number;
+  /** A typed question (QZ2): `options` is empty, `accept` holds the accepted answers (server only, never sent). */
+  typed?: true;
+  accept?: string[];
 }
 
 /** Questions of a language (and topic), as bank ids. */
-export function quizPool(lang: QuizLang, topic: QuizTopic = 'mix'): number[] {
+export function quizPool(lang: QuizLang, topic: QuizTopic = 'mix', only?: (entry: QuizEntry) => boolean): number[] {
   const ids: number[] = [];
   QUIZ_BANK.forEach((entry, id) => {
-    if (entry[lang] && (topic === 'mix' || entry.c === topic)) ids.push(id);
+    if (entry[lang] && (topic === 'mix' || entry.c === topic) && (!only || only(entry))) ids.push(id);
   });
   return ids;
 }
@@ -187,8 +259,9 @@ export function pickQuestions(
   random: () => number = Math.random,
   topic: QuizTopic = 'mix',
   avoid: readonly number[] = [],
+  only?: (entry: QuizEntry) => boolean,
 ): QuizQuestion[] {
-  const all = quizPool(lang, topic);
+  const all = quizPool(lang, topic, only);
   const fresh = all.filter((id) => !avoid.includes(id));
   const pool = fresh.length >= count ? fresh : all;
   const out: QuizQuestion[] = [];
@@ -196,12 +269,17 @@ export function pickQuestions(
     const id = pool.splice(Math.floor(random() * pool.length), 1)[0]!;
     const entry = QUIZ_BANK[id]!;
     const text = entry[lang]!;
-    if (entry.tf !== undefined) {
-      out.push({ id, cat: entry.c, question: text.q, options: [...text.o], correct: entry.tf ? 0 : 1 });
+    if (entry.typed) {
+      out.push({ id, cat: entry.c, question: text.q, options: [], correct: 0, typed: true, accept: [...(text.a ?? [])] });
       continue;
     }
-    const right = text.o[0];
-    const options = [...text.o];
+    const given = text.o ?? [];
+    if (entry.tf !== undefined) {
+      out.push({ id, cat: entry.c, question: text.q, options: [...given], correct: entry.tf ? 0 : 1 });
+      continue;
+    }
+    const right = given[0]!;
+    const options = [...given];
     for (let i = options.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       [options[i], options[j]] = [options[j]!, options[i]!];

@@ -60,7 +60,7 @@ const until = async (fn, ms = 15000) => {
   for (const name of ['Sam', 'Alex']) {
     const ws = new WebSocket(quizUrl);
     others[name] = { ws, state: null };
-    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 2, name, avatar: 'fox', lang: 'en' })));
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, name, avatar: 'fox', lang: 'en' })));
     ws.addEventListener('message', (e) => {
       const m = JSON.parse(String(e.data));
       if (m.t === 'state') others[name].state = m;

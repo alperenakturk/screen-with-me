@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, parseQuizMessage, pickQuestions, quizPool } from './quiz.ts';
+import { QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, pickQuestions, quizLevelBonus, quizPool } from './quiz.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
 
 describe('Quiz', () => {
@@ -16,21 +16,30 @@ describe('Quiz', () => {
       for (const text of [entry.tr, entry.en]) {
         if (!text) continue;
         expect(text.q.trim()).toBe(text.q);
-        expect(new Set(text.o).size).toBe(text.o.length);
-        expect(text.o.length).toBe(entry.tf === undefined ? 4 : 2);
+        if (entry.typed) {
+          expect(text.a!.length).toBeGreaterThan(0);
+          expect(text.o).toBeUndefined();
+          continue;
+        }
+        expect(new Set(text.o).size).toBe(text.o!.length);
+        expect(text.o!.length).toBe(entry.tf === undefined ? 4 : 2);
       }
     }
   });
 
   it('picked questions: different, options shuffled, the right option in the right place', () => {
-    const questions = pickQuestions('tr');
-    expect(questions).toHaveLength(QUIZ_QUESTIONS);
-    expect(new Set(questions.map((q) => q.id)).size).toBe(QUIZ_QUESTIONS);
+    const questions = pickQuestions('tr', 15);
+    expect(questions).toHaveLength(15);
+    expect(new Set(questions.map((q) => q.id)).size).toBe(15);
     for (const q of questions) {
       const entry = QUIZ_BANK[q.id]!;
-      if (entry.tf === undefined) expect(q.options[q.correct]).toBe(entry.tr!.o[0]);
+      if (entry.typed) {
+        expect(q.typed && q.options.length === 0 && q.accept).toEqual([...entry.tr!.a!]);
+        continue;
+      }
+      if (entry.tf === undefined) expect(q.options[q.correct]).toBe(entry.tr!.o![0]);
       else expect(q.correct).toBe(entry.tf ? 0 : 1);
-      expect([...q.options].sort()).toEqual([...entry.tr!.o].sort());
+      expect([...q.options].sort()).toEqual([...entry.tr!.o!].sort());
     }
     // The right option is not always in the same place.
     const spots = new Set(pickQuestions('en', 15).filter((q) => q.options.length === 4).map((q) => q.correct));
@@ -67,7 +76,44 @@ describe('Quiz', () => {
     expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 2 }))).toEqual({ t: 'joker', n: 2 });
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', lang: 'en', topic: 'space', count: 5 }))).toEqual({ t: 'settings', lang: 'en', topic: 'space', count: 5 });
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', topic: 'films', count: 7 }))).toBeNull();
-    expect(parseQuizMessage(JSON.stringify({ t: 'hello', v: 1, name: 'Ali', lang: 'en' }))).toEqual({ t: 'hello', v: 1, name: 'Ali', lang: 'en' });
+    expect(parseQuizMessage(JSON.stringify({ t: 'hello', v: 1, name: 'Sam', lang: 'en' }))).toEqual({ t: 'hello', v: 1, name: 'Sam', lang: 'en' });
+  });
+
+  it('typed answers (QZ2): cleaned, capped, never empty', () => {
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: '  Mount   Everest ' }))).toEqual({ t: 'answer', n: 2, text: 'Mount Everest' });
+    const long = parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: 'x'.repeat(500) }));
+    expect(long && 'text' in long && long.text.length).toBe(QUIZ_TYPED_MAX);
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: '\u0000\u202e\n ' }))).toBeNull();
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: 42 }))).toBeNull();
+    const odd = parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: 'Pa\u202eris\u0007' }));
+    expect(odd && 'text' in odd && /[\u202e\u0007]/.test(odd.text)).toBe(false);
+  });
+
+  it('typed answers match forgivingly: case, accents, ı / İ, "the", one typo on longer words, numbers exact', () => {
+    expect(foldAnswer('  The Pacific-Ocean! ')).toBe('pacificocean');
+    expect(foldAnswer('İSTANBUL')).toBe(foldAnswer('istanbul'));
+    expect(matchTyped('istanbul', ['İstanbul'])).toBe(true);
+    expect(matchTyped('ISTANBUL', ['İstanbul'])).toBe(true);
+    expect(matchTyped('Ankara', ['İstanbul'])).toBe(false);
+    expect(matchTyped('akciger', ['Akciğer'])).toBe(true);
+    expect(matchTyped('Sao Paulo', ['São Paulo'])).toBe(true);
+    expect(matchTyped('Jupitre', ['Jupiter'])).toBe(true);
+    expect(matchTyped('Jupitr', ['Jupiter'])).toBe(true);
+    expect(matchTyped('Jptr', ['Jupiter'])).toBe(false);
+    expect(matchTyped('Mars', ['Mars'])).toBe(true);
+    expect(matchTyped('Mors', ['Mars'])).toBe(false);
+    expect(matchTyped('207', ['206'])).toBe(false);
+    expect(matchTyped('206', ['206'])).toBe(true);
+    expect(matchTyped('ten', ['10', 'ten'])).toBe(true);
+    expect(matchTyped('', ['10'])).toBe(false);
+    expect(matchTyped('!!!', ['10'])).toBe(false);
+  });
+
+  it('harder questions and typed answers are worth more (QZ2)', () => {
+    expect(quizLevelBonus(1, false)).toBe(1);
+    expect(quizLevelBonus(undefined, false)).toBe(1.2);
+    expect(quizLevelBonus(3, false)).toBe(1.5);
+    expect(quizLevelBonus(3, true)).toBeCloseTo(1.95);
   });
 });
 
@@ -78,9 +124,10 @@ describe('quiz bank 2 and rotation (P9)', () => {
       expect(entry.en || entry.tr).toBeTruthy();
       for (const text of [entry.en, entry.tr]) {
         if (!text) continue;
-        expect(text.q.length).toBeLessThanOrEqual(120);
-        expect(new Set(text.o).size).toBe(text.o.length);
-        expect(text.o.length).toBe(entry.tf === undefined ? 4 : 2);
+        expect(text.q.length).toBeLessThanOrEqual(160);
+        if (entry.typed) continue;
+        expect(new Set(text.o).size).toBe(text.o!.length);
+        expect(text.o!.length).toBe(entry.tf === undefined ? 4 : 2);
       }
     }
     expect(QUIZ_BANK.slice(-700).every((e) => e.d === 1 || e.d === 2 || e.d === 3)).toBe(true);
