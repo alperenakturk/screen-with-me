@@ -198,7 +198,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   on both sides (at most 6, the rest "+N"; on phones one row under the video), a 6 s bubble from the avatar of whoever
   writes, emojis rise from the avatar (above the video if they have no seat). At the bottom: message box + emoji bar
   + 🔁 Loop + "↩ Oda görünümü" (remembered per tab, `sessionStorage` `shortsOff:<room>`; back with "📱 Shorts
-  görünümü" in room view). View changes use View Transitions (video `view-transition-name: swm-player`; without
+  görünümü" in room view: since 0.9.97.137, card SH1, `#shorts-enter` sits in the "Now playing" row beside Next on a
+  computer (the toolbar it was in is hidden in rail mode), and a phone's Room tab has `.ph-shorts-back` at the front of
+  the strip's tools, shown exactly when `#shorts-enter` is (`phone-room.ts` mirrors its `hidden`); Test Lab
+  `shorts.state` reports the view and the way back; harness `scripts/harness/shorts-back`, CI `site`). View changes use View Transitions (video `view-transition-name: swm-player`; without
   rendering, no transition after 0.6 s). ↑/↓, PageUp/Down, ▲▼ and the mouse wheel (outside the video, once per 0.9 s):
   ↓ = `next` (not sent when the queue is empty, a note appears), ↑ = `{t:'prev', from}`: the server keeps recently
   played items in `played` (30, in storage), opens the previous one, puts the current one at the head of the queue
@@ -341,7 +344,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `privacy.embed=public`, playable videos, max 12, id / title / user / duration / an `i.vimeocdn.com` thumbnail
     (CSP `img-src`). A pick plays as `{kind:'vimeo', id}` in our Vimeo player. `GET /api/vimeo/status` → `{on}` lets the
     tile say "Not available yet" before a search; a search answering `off` says the same and points to ⠿.
-  - **Search the web:** `window.open('https://duckduckgo.com/?q=<words>', '_blank', 'noopener')` (one engine, no site
+  - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
   Test Lab `sources.state` (source, Vimeo on, last search). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
@@ -1339,7 +1342,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`@container game (max-width: 360px)`, height ≤ 420–540) slims Five Frames' rows (33 px), cells and keys, hides its
   title (the window's head shows it) and wraps its legend; Snack Bar's cinema line takes its own row, the scene is
   80 px, rows 40 px and the Upgrades rows 34 px (three stand rows, "+N more"); Window Garden's bar is tighter (a short
-  "📖 n/24" album chip). **0.9.97.134 (B2):** Snack Bar shows every text whole: its head wraps (the ? right after the
+  "📖 n/24" album chip). **0.9.97.137:** on an upright tablet (`html.tablet-up`) a stand's tag (the day's "⭐ ×2
+  today", 📋) stays on its name's line and gives way first (ellipsis, words in its title), so the day's special never
+  makes its row taller or the game smaller; elsewhere it shows whole. Harness `scripts/harness/snack-special` (each
+  stand forced to be the special by the page's day, CI games-more); `snack-bar-3` runs on a pinned day.
+  **0.9.97.134 (B2):** Snack Bar shows every text whole: its head wraps (the ? right after the
   rate, so the pills take the second line; under 360 px the paused pill is just ⏸, `.sb-state-word`), names wrap beside their tag, the counter picture is `xMaxYMin slice` (the
   sign at its top right is never cropped) and shrinks 104 → 64 px (`.sb-scene-box` flex basis) before the window
   scales; under 470 px the "closed" note is one line on the counter's edge, under 420 px the cinema line hides and

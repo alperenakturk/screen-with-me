@@ -21,6 +21,14 @@ games' tip jar, cuttings and badges.
 - YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
   from YouTube" (light or dark to match the theme); it links to YouTube.
 
+### 0.9.97.137 — 15 Nov
+
+- After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip
+  under the video, and on a computer it sits beside Next above the video. It works as many times as you like.
+- ⠿ → **Search the web** now opens Google Search.
+- Snack Bar on an upright tablet: the day's special no longer makes the whole game smaller (its text stayed readable
+  only on some days).
+
 ### 0.9.97.136 — 14 Nov
 
 - ⠿ **Sources** beside the search box (on a phone, in the 🔍 Search tab) picks where your words search: **YouTube**
