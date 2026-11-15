@@ -21,6 +21,8 @@ const check = (ok, label, extra = '') => {
     ['phone', { ...devices['Pixel 7'] }, 'tr'],
     ['phone', { ...devices['iPhone 13'] }, 'en'],
     ['computer', { viewport: { width: 1366, height: 768 } }, 'en'],
+    ['tablet', { ...devices['iPad Mini'] }, 'en'],
+    ['tablet', { ...devices['iPad Mini landscape'] }, 'tr'],
   ]) {
     const ctx = await browser.newContext(options);
     await viaYouTube(ctx);
@@ -42,7 +44,7 @@ const check = (ok, label, extra = '') => {
     const inShorts = () => page.evaluate(() => document.documentElement.classList.contains('shorts-view'));
     const opened = await page.waitForFunction(() => document.documentElement.classList.contains('shorts-view'), null, { timeout: 15000 }).then(() => true).catch(() => false);
     check(opened, `${label} ${lang}: a Short opens the Shorts view`);
-    const name = label === 'phone' ? `${label}-${lang}` : label;
+    const name = label === 'computer' ? label : `${label}-${lang}`;
     for (let round = 1; round <= 3; round++) {
       // A phone leaves through ⋯ → ↩ Room view; a computer has the button in the Shorts bar.
       if (label === 'phone') {

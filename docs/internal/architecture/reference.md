@@ -335,7 +335,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `privacy.embed=public`, playable videos, max 12, id / title / user / duration / an `i.vimeocdn.com` thumbnail
     (CSP `img-src`). A pick plays as `{kind:'vimeo', id}` in our Vimeo player. `GET /api/vimeo/status` → `{on}` lets the
     tile say "Not available yet" before a search; a search answering `off` says the same and points to ⠿.
-  - **Search the web:** `window.open('https://duckduckgo.com/?q=<words>', '_blank', 'noopener')` (one engine, no site
+  - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
   Test Lab `sources.state` (source, Vimeo on, last search). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated

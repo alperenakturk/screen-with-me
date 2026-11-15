@@ -20,6 +20,7 @@ games' tip jar, cuttings and badges.
 
 - After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip
   under the video, and on a computer it sits beside Next above the video. It works as many times as you like.
+- ⠿ → **Search the web** now opens Google Search.
 
 ### 0.9.97.136 — 14 Nov
 
