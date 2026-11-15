@@ -1,4 +1,5 @@
 import type { Member } from '@swm/shared/protocol';
+import { ringFace } from './speak-ring.ts';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { avatarNode } from './avatar.ts';
@@ -108,6 +109,14 @@ export function createSeats(left: HTMLElement, right: HTMLElement) {
       cams = next;
       myId = me;
       placeCams();
+    },
+    /** Card SH1 (3): the speaking ring on each seat's face (level-driven; "+N" never rings). */
+    speak(levels: Map<string, { on: boolean; level: number }>): void {
+      for (const [id, seat] of seats) {
+        const face = seat.querySelector<HTMLElement>('.seat-av');
+        const now = levels.get(id);
+        if (face) ringFace(face, now?.on ?? false, now?.level ?? 0);
+      }
     },
     /** Mesaj: yazanın koltuğunda baloncuk (koltuğu yoksa "+N"de, adıyla). */
     say(by: Member, text: string): void {

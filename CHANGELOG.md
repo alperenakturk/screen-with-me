@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.138 — 15 Nov
+
+- In the Shorts view, whoever is talking in voice gets a green ring that glows and grows a little with their voice, on
+  the computer's seats and in the phone's Shorts bar. Your own face shows it too, so you can see your microphone is
+  heard. With "reduce motion" on, only the ring shows.
+
 ### 0.9.97.137 — 15 Nov
 
 - After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip

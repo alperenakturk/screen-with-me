@@ -519,6 +519,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   // page out of sight: its windows (emoji tray, add, feed, games) open as sheets from the ⋯ / 😀 buttons. ----
   const shortsBar = el('div', { class: 'ph-shorts-bar' });
   const faces = el('div', { class: 'ph-faces' });
+  // Card SH1 (3): room above and below for the speaking ring (this scrolling row clips what sticks out), taken back
+  // with a negative margin so the bar keeps its height. Inline: the room's CSS budget is full.
+  faces.style.paddingBlock = '6px';
+  faces.style.marginBlock = '-6px';
   const toast = el('div', { class: 'ph-toast', role: 'status', hidden: '' });
   const barButton = (icon: string, label: string, action: () => void, id: string) => {
     const button = el('button', { type: 'button', class: 'chat-tool ph-bar-btn', id, title: label, 'aria-label': label }, icon);

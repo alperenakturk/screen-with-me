@@ -265,6 +265,8 @@ jobs:
       # beside Next), and it works again and again. Needs YouTube.
       - name: Shorts view way back
         run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
+      - name: Speaking ring in the Shorts view
+        run: node scripts/harness/speak-ring/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()

@@ -2709,21 +2709,24 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** Bu sekmede oynayan Shorts'lar: yeni video bunlardan biriyse (↑ ile dönüldü) yukarıdan kayarak gelir. */
   const seenShorts: string[] = [];
 
-  // Card SH1: the Shorts view in the Test Lab (the start of the latest Short and who is speaking come with SH1 2 / 3).
+  // Card SH1: the Shorts view in the Test Lab (the start of the latest Short comes with SH1 2).
+  voice.onSpeak((speak) => seats.speak(speak));
   debugHooks.register('shorts', () => ({
     commands: [
       {
         id: 'shorts.state',
         tab: 'status',
-        title: { en: 'Shorts: which view, and the way back', tr: 'Shorts: hangi görünüm ve geri dönüş yolu' },
+        title: { en: 'Shorts: which view, the way back and who speaks', tr: 'Shorts: hangi görünüm, geri dönüş yolu ve kim konuşuyor' },
         help: {
-          en: 'Writes the view (Shorts, room or none) and whether "📱 Shorts view" is offered into the log.',
-          tr: 'Görünümü (Shorts, oda ya da yok) ve "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını kayda yazar.',
+          en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking and how many seat faces show the green ring into the log.',
+          tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu ve kaç koltuk yüzünde yeşil halka olduğunu kayda yazar.',
         },
         run: () =>
           JSON.stringify({
             view: shortsOn ? 'shorts' : isShortItem(roomState?.item) ? 'room' : 'none',
             wayBack: !$('#shorts-enter').hidden,
+            speakers: [...voice.speakers()].map((id) => members.find((m) => m.id === id)?.name ?? id),
+            rings: document.querySelectorAll('.seat-av[data-speak]').length,
           }),
       },
     ],
