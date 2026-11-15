@@ -269,6 +269,24 @@ Two sessions never edit the same lines; the Planner splits work by files.
   other), phone long-press harness, the owner's hand test.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 
+### EC1. "Video ended" card in the middle of the screen, not in the chat (owner, 15 Nov 2026; lane A, small, after SR2)
+- Why: with YouTube the "Video ended / ▶ Start next / Close" card sits in the chat panel (5B, 0.9.92.9), where it reads
+  like a chat message and is easy to miss. The owner wants it in the middle of the screen, in a normal clean design.
+- What:
+  - `ui/end-card.ts` `showNextCard`: the card opens as a **centered dialog** over the room view (the same dialog kind as
+    Settings: `role="dialog"`, a light dim behind it, focus on "▶ Start next", Esc / Close / a click outside closes it,
+    the 60 s auto-close stays). Same place for YouTube, video files, fullscreen and the extension overlay; take
+    `.end-card` out of `NOTICES` / `placeNotices` in `room.ts`.
+  - Design: "Video ended" small and muted, the video's title in plain text (at most 2 lines, then …; the link only as
+    a small ↗ next to it, no dotted underline), the two buttons side by side and full width on a phone (≥ 44 px).
+    Fits at 1366, 1920, tablet and phone without scrolling; Design gives it one look before merge.
+  - YouTube RMF: the card only appears after the video has ended, is a page dialog (not a layer attached to the
+    player), and never covers the player while it plays. The Shorts view keeps its own place (BH12).
+- Done when: the card shows centered on computer and phone, YouTube and a video file, normal and fullscreen; Close,
+  Esc, outside click and Start next work; Test Lab hook `endcard.show`; shots reviewed (QA1).
+- Tests: the room harness that covers the end card, `scripts/shots.cjs` for the end card at the 4 sizes.
+- Owner's pick: his message with a screenshot (Planner chat, 15 Nov 2026).
+
 ## Proposed
 
 ### Security: Worker and Durable Object hygiene (R4-6, R4-7, R4-8; lane A)
