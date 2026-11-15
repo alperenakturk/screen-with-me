@@ -260,6 +260,9 @@ jobs:
       # answers are stubbed in the browser, and without the secret the real route says "not available yet".
       - name: Sources picker
         run: node scripts/harness/sources/run.cjs http://localhost:8787
+      # Card CH1: a long chat stays (500 lab messages), pages back in on scroll-up, and room activity never pushes it out.
+      - name: Chat kept until the room is deleted
+        run: node scripts/harness/chat-history/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()

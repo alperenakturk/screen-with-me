@@ -1804,6 +1804,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Chat bubbles** (`ui/chat.ts`): mine on the right in the accent color (no avatar), others on the left with avatar
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
+  - **Chat kept until the room is deleted (card CH1, 0.9.97.138):** the server keeps the chat in pages
+    (`packages/shared/src/chat-store.ts` `ChatStore`): `chatp:<n>` = 50 messages each (≤ 128 KiB a value), `chatMeta` =
+    `{first, last}`; a message rewrites only the last page (written with the room's first message too, so a short chat
+    survives a restart); past `CHAT_KEEP` (1000) the oldest page goes (1000–1050 kept); deleting the room
+    (`deleteAll`) is the only other wipe; a pre-CH1 room's single `chat` key moves into page 0 on load. `welcome.chat` =
+    the newest two pages (≤ 100) + `chatMore` (the page to ask for); `{t:'chat-older', page}` → `{t:'chat-older', page,
+    messages, more?}` (optional new types, no protocol bump; `chatOlderLimit` 4 burst, 1/s; a bad page is
+    `bad_message`, a missing one empty). Pictures go much earlier on their own (IMG2 time limit, `MAX_CHAT_IMAGES`,
+    counted from the in-memory pages), their messages stay. Client (`ui/chat.ts`): "Show earlier messages" on top and
+    scrolling to the top ask for the next page, which is prepended with the reader's place kept; up to 1200 chat lines
+    stay loaded and room-activity lines have their own cap of 150 (they used to share one 120-line cap, which pushed
+    chat out in a busy room). Test Lab `chat.history` (loaded, activity lines, older page) and lab-only `chat.fill`
+    (250 numbered messages, `{t:'lab', op:'chat-fill'}`); e2e `chat-history.mjs`; harness `scripts/harness/chat-history`
+    (CI `site`).
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count

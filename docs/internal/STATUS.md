@@ -100,6 +100,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27i. [CH1, 0.9.97.138] In a room, chat a while with a friend (or use 🐞 Test Lab → "Chat: add 250 numbered messages" on a
+  test server), leave and come back later: the earlier messages are still there; scroll up and older ones load.
 - [ ] 27f. [SRC1, 0.9.97.136] In a room (computer, then the phone's 🔍 Search tab): press ⠿ → Vimeo, type a few
   words + Enter: before the VIMEO_TOKEN secret the tile and the search say "Not available yet" (the real search is
   27g). ⠿ → Search the web: a new tab opens with your words; come back, the box asks for the link.
