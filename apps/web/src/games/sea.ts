@@ -562,7 +562,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const theirSeat = other();
     // A narrow window: placing shows my sea; in battle the sea to look at follows the turn unless chosen.
     if (s.phase === 'place' && me >= 0) view = 'mine';
-    else if (!viewChosen && s.phase === 'play') view = s.turn === me || me < 0 ? 'theirs' : 'mine';
+    // A watcher (GMP) looks at the sea being shot at: seat 1's ("theirs") on seat 0's turn, seat 0's on seat 1's.
+    else if (!viewChosen && s.phase === 'play') view = me < 0 ? (s.turn === mineSeat ? 'theirs' : 'mine') : s.turn === me ? 'theirs' : 'mine';
     root.dataset.view = view;
     const theirLabel = me >= 0 ? tx('theirSea') : tx('seaOf', { name: nameOfSeat(theirSeat) });
     const mineLabel = me >= 0 ? tx('mySea') : tx('seaOf', { name: nameOfSeat(mineSeat) });
