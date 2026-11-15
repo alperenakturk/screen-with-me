@@ -268,7 +268,8 @@ export function createGameStage(opts: StageOptions) {
     mode = narrow.matches ? (!youtube && (want === 'stage' || shortsView() || isPhoneLayout()) ? 'full' : 'below') : want;
     // YTG: no room beside the YouTube player for the free window: under it instead.
     // QA2: a tablet's side panel is a place clear of the player too (the game fitted to it), so no "under it" there.
-    if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer() && !(kind && isTablet() && homeBox(kind))) mode = 'below';
+    // GW2: a frame I placed myself stays a frame (it may sit over the player).
+    if (mode === 'float' && youtube && !inFullscreen() && !(kind && readPair(spotKey(kind))) && !besidePlayer() && !(kind && isTablet() && homeBox(kind))) mode = 'below';
     // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
     // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
     // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
@@ -339,7 +340,9 @@ export function createGameStage(opts: StageOptions) {
       return { left: r.left, top: r.top, width: r.width, height: r.height };
     }
     const room = pageRoom();
-    return overYoutube() ? besidePlayer() ?? room : room;
+    // GW2 (owner, 15 Nov 2026): once I moved or sized the frame myself it may go anywhere, over a YouTube player too;
+    // only where we place it (its home) keeps to the strip beside the player.
+    return overYoutube() && !spot ? besidePlayer() ?? room : room;
   }
   /**
    * Where the free window may be moved: the fullscreen view, or the page (on a tablet: clear of the chat). Over a YouTube
@@ -575,12 +578,10 @@ export function createGameStage(opts: StageOptions) {
     const room = posRoom();
     const x = Math.min(1, Math.max(0, where.x));
     const y = Math.min(1, Math.max(0, where.y));
-    const at = clearOfPlayer(
-      { left: room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x, top: room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y },
-      width,
-      height,
-      room,
-    );
+    const wanted = { left: room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x, top: room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y };
+    // GW2 (owner, 15 Nov 2026; CLAUDE.md §7): a frame I dragged stays where I dropped it, over a YouTube player too. We
+    // never put it there ourselves: its home (no spot yet) keeps clear of the player.
+    const at = spot ? wanted : clearOfPlayer(wanted, width, height, room);
     stage.style.left = `${Math.round(at.left)}px`;
     stage.style.top = `${Math.round(at.top)}px`;
     stage.style.width = `${width}px`;
