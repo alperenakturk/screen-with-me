@@ -73,7 +73,13 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Done when: a click plays, "＋ Queue" queues, and both are clear in EN and TR on a computer and a phone. Test Lab hook
   `search.results`.
 - Tests: the sources and search harnesses, a phone harness, `check-texts`.
-- Owner's pick: his screenshot and message (Planner chat, 15 Nov 2026).
+- **Also in SR2 (owner, 15 Nov 2026): a ♪ TikTok tile in "Where to search".** TikTok gives no search API, so the
+  tile opens TikTok: a new tab on a computer, the TikTok app on a phone. It says "Copy a video's link and come back".
+  When the person comes back, a big "📋 Paste and play" button appears; it reads the clipboard after a tap and asks
+  first if needed. A pasted TikTok plays in the Shorts view, and several links go to the queue. The tile reads
+  "TikTok" in plain text with a generic music-note icon: no TikTok logo without permission (Research
+  `tiktok-shorts.md` §3). No scraping and no extension involvement.
+- Owner's pick: his screenshot and message (Planner chat, 15 Nov 2026); the TikTok tile, option A.
 
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
