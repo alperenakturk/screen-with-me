@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.137 — 15 Nov
+
+- After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip
+  under the video, and on a computer it sits beside Next above the video. It works as many times as you like.
+- ⠿ → **Search the web** now opens Google Search.
+- Snack Bar on an upright tablet: the day's special no longer makes the whole game smaller (its text stayed readable
+  only on some days).
+
 ### 0.9.97.136 — 14 Nov
 
 - ⠿ **Sources** beside the search box (on a phone, in the 🔍 Search tab) picks where your words search: **YouTube**
