@@ -288,7 +288,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
 
   // 🔍 Search: the room's link box, its results and "Up next" (the queue).
   function fillSearch(panel: HTMLElement): void {
-    const nodes = ['#media-form', '#media-done'].map((sel) => $(sel)).filter((n): n is HTMLElement => !!n);
+    const nodes = ['#media-form', '#sources-paste', '#media-done'].map((sel) => $(sel)).filter((n): n is HTMLElement => !!n);
     const queue = $('[data-panel="queue"]');
     lent = borrow(queue ? [...nodes, queue] : nodes);
     const title = el('h4', { class: 'ph-sub' }, `${t('phone.upNext')} ${$('#queue-count')?.textContent ?? ''}`.trim());
@@ -297,6 +297,12 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   // "Play now" shows the video at once: back to the Room tab. "Add to queue" stays (Up next grows).
   $('#media-form button[value="load"]')?.addEventListener('click', () => {
     if (tab === 'search') setTimeout(() => setTab('room'), 0);
+  });
+  // Card SR2: a tapped result row plays it now, and "📋 Paste and play" plays the pasted link: the same way back. A
+  // podcast show's row (data-show) only opens its episodes, and "＋ Queue" stays.
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    if (tab === 'search' && target?.closest?.('#search-results .search-main:not([data-show]), #sources-paste')) setTimeout(() => setTab('room'), 0);
   });
 
   // 🎮 Games: the hall shows in the panel; picking a game (PH2: it plays in this panel) keeps the tab, closing the hall

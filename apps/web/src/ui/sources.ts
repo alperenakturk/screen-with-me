@@ -10,12 +10,30 @@ import { loadChunk } from './lazy.ts';
  * `VIMEO_TOKEN` secret) or the web (a new tab with one general search engine; back in the room a hint says to paste
  * the link). The pick sticks per device (`searchSource`). No in-page browser, no site list, no site filter: Sidelit
  * stays a neutral sync tool. Test Lab: `sources.state` (the source, Vimeo on or off, the last search).
+ *
+ * Card SR2: a fourth tile, ♪ TikTok. TikTok has no search API, so it is not a source: the tile opens TikTok itself (a
+ * new tab; on a phone the TikTok app takes the link when it is installed), with the typed words as a TikTok search.
+ * Back in the room a big "📋 Paste and play" button reads the clipboard after a tap (the browser may ask first) and
+ * plays the pasted link (several links: the first plays, the rest are queued). Plain text, a generic ♪, no TikTok
+ * logo, no scraping, no extension.
  */
 export type Source = 'youtube' | 'vimeo' | 'web';
 const SOURCES: readonly Source[] = ['youtube', 'vimeo', 'web'];
 const KEY = 'searchSource';
 /** One general search engine (the owner's pick: Google; no site filters). */
 const WEB_SEARCH = 'https://www.google.com/search';
+const TIKTOK = 'https://www.tiktok.com/';
+/** How long "📋 Paste and play" waits after coming back from TikTok. */
+const PASTE_MS = 120_000;
+
+/** TikTok's own page: its search for the words, or its home page with none. */
+export function tiktokUrl(words: string): string {
+  const query = words.trim();
+  if (!query) return TIKTOK;
+  const url = new URL('search', TIKTOK);
+  url.searchParams.set('q', query);
+  return url.toString();
+}
 
 export function webSearchUrl(words: string): string {
   const url = new URL(WEB_SEARCH);
@@ -42,9 +60,14 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   let source = stored();
   /** Vimeo on the server: null until asked (once per page, when the picker first opens or Vimeo is searched). */
   let vimeoOn: boolean | null = null;
-  let last: { source: Source; words: string; result: string } | null = null;
+  let last: { source: Source | 'tiktok'; words: string; result: string } | null = null;
   /** Set when "Search the web" opened a tab: the next time the room is shown again, the paste hint. */
   let awayForWeb = false;
+  /** Set when the ♪ TikTok tile opened TikTok: coming back shows "📋 Paste and play". */
+  let awayForTikTok = false;
+  let pasteTimer = 0;
+  const paste = el('button', { type: 'button', class: 'btn primary sources-paste', id: 'sources-paste', hidden: '' }, `📋 ${t('sources.paste')}`);
+  form.after(paste);
 
   const pop = el('div', { class: 'sources-pop', id: 'sources-pop', role: 'radiogroup', hidden: '' });
   form.append(pop);
@@ -89,8 +112,60 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
         tile.addEventListener('click', () => choose(value));
         return tile;
       }),
+      tiktokTile(),
     );
   }
+
+  /** ♪ TikTok: not a source (no search API), a door to TikTok itself. */
+  function tiktokTile(): HTMLButtonElement {
+    const tile = el(
+      'button',
+      { type: 'button', class: 'sources-tile sources-tiktok', 'data-source': 'tiktok', title: t('sources.tiktokHint') },
+      el('span', { class: 'sources-icon', 'aria-hidden': 'true' }, '♪'),
+      el('span', { class: 'sources-name' }, t('sources.tiktok')),
+      el('span', { class: 'sources-note muted small' }, t('sources.tiktokNote')),
+    );
+    tile.addEventListener('click', () => tiktok(input.value));
+    return tile;
+  }
+
+  function tiktok(words: string): void {
+    // A link already in the box is not a search: TikTok's home page.
+    const query = /^\s*https?:/i.test(words) ? '' : words;
+    const opened = window.open(tiktokUrl(query), '_blank', 'noopener');
+    note('tiktok', query.trim(), opened === null ? 'opened (no handle)' : 'opened');
+    close();
+    if (query.trim()) input.value = '';
+    awayForTikTok = true;
+    flashHint(button, t('sources.tiktokHint'), 4500);
+  }
+
+  function showPaste(on: boolean): void {
+    paste.hidden = !on;
+    clearTimeout(pasteTimer);
+    if (on) pasteTimer = window.setTimeout(() => showPaste(false), PASTE_MS);
+  }
+  paste.addEventListener('click', async () => {
+    let text = '';
+    try {
+      text = (await navigator.clipboard.readText()).trim();
+    } catch {
+      /* no clipboard access (refused, or an old browser): the box takes a normal paste */
+    }
+    if (!text) {
+      showPaste(false);
+      input.focus();
+      flashHint(input, t('sources.pasteManual'), 4500);
+      return;
+    }
+    showPaste(false);
+    input.value = text;
+    note('tiktok', '', 'pasted');
+    // The room's own path for links: one link plays now; several, the first plays and the rest are queued.
+    form.requestSubmit(form.querySelector<HTMLButtonElement>('button[value=load]'));
+  });
+  // Typing or submitting something else means the person moved on.
+  form.addEventListener('submit', () => showPaste(false));
 
   let styled = false;
   async function open(): Promise<void> {
@@ -147,7 +222,14 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     awayForWeb = true;
   }
   const back = () => {
-    if (!awayForWeb || document.hidden) return;
+    if (document.hidden) return;
+    if (awayForTikTok) {
+      awayForTikTok = false;
+      showPaste(true);
+      paste.focus();
+      return;
+    }
+    if (!awayForWeb) return;
     awayForWeb = false;
     input.focus();
     flashHint(input, t('sources.pasteHint'), 4500);
@@ -155,7 +237,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   document.addEventListener('visibilitychange', back);
   addEventListener('focus', back);
 
-  function note(value: Source, words: string, result: string): void {
+  function note(value: Source | 'tiktok', words: string, result: string): void {
     last = { source: value, words, result };
   }
 
@@ -163,6 +245,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   // A language change re-applies the box's default placeholder: put this source's back.
   addEventListener('langchange', () => {
     label();
+    paste.textContent = `📋 ${t('sources.paste')}`;
     if (!pop.hidden) draw();
   });
 
@@ -176,7 +259,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
           en: 'Writes the ⠿ source (YouTube, Vimeo or the web), whether Vimeo search is on at the server and the last search into the log.',
           tr: '⠿ kaynağını (YouTube, Vimeo ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.',
         },
-        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last }),
+        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last, pasteShown: !paste.hidden }),
       },
     ],
   }));

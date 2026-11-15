@@ -338,10 +338,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
-  Test Lab `sources.state` (source, Vimeo on, last search). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
+  - **♪ TikTok (card SR2, 0.9.97.142):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
+    stays): TikTok has no search API. It opens `tiktokUrl(words)` (`https://www.tiktok.com/search?q=<words>`, the home
+    page with no words or a link in the box) with `window.open(..., '_blank', 'noopener')`; on a phone the TikTok app
+    takes the link when installed. Coming back (`visibilitychange` / `focus`) shows `#sources-paste` "📋 Paste and play"
+    (a sibling after `#media-form`, borrowed into the phone's Search tab with it; it hides after 2 minutes or on any
+    submit). A tap reads `navigator.clipboard.readText()` (the browser may ask; refused or empty → the box gets focus
+    with "Paste the video's link here"), puts the text in the box and `requestSubmit`s with the box's "Play now" button:
+    one link plays, several queue after the first. No TikTok logo (a plain ♪), no scraping, no extension.
+  Test Lab `sources.state` (source, Vimeo on, last search or TikTok action, `pasteShown`). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
   Vimeo app token, scope public) goes up with the other Worker secrets. Tests: `vimeo-search.test.ts`, e2e
   `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
-  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile).
+  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile, SR2's row tap / ＋ Queue,
+  TikTok tab and Paste and play).
+- **Results rows (card SR2, 0.9.97.142):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
+  `ui/vimeo-results.ts`, podcast episodes `ui/podcasts.ts`) builds its rows with `ui/result-row.ts` `resultRow`: the
+  row's `.search-main` button plays now (`'load'`, the list closes and the box empties; on a phone the Search tab goes
+  back to the Room tab, `phone-room.ts`), and `.search-queue` "＋ Queue" / "＋ Sıraya" queues (`'enqueue'`; `room.ts`
+  `addMedia(..., fromList)` keeps the box's words and the list open; the button reads "✓ Added" for 2 s). Arrow keys
+  still move between rows' `.search-main`; Tab reaches the queue button. A podcast show's row (`data-show`) only opens
+  its episodes. The list's styles are `ui/search-list.css`, loaded with the tiny `ui/search-list.ts` chunk on the first
+  search (room CSS budget); context rules (film page, Shorts view, phone tab) stay in `room.css`. Test Lab
+  `search.results` (each row's title, play name, queue label and sizes). The Shorts bar's "＋ Add" search
+  (`shorts-search.ts`) is a queue-only list and keeps one tap = queue.
 - **Media kinds:** `youtube`, `html5`, `tiktok`, `vimeo` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is

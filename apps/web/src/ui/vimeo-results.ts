@@ -8,6 +8,7 @@ import { formatDuration, wordsRequest } from '@swm/shared/youtube-search';
 import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
+import { resultRow } from './result-row.ts';
 
 const TEXT = {
   en: {
@@ -17,8 +18,6 @@ const TEXT = {
     off: 'Vimeo search is not available yet. Paste a Vimeo link instead, or pick another source with ⠿.',
     busy: 'Too many searches right now. Try again in a minute.',
     failed: 'Vimeo can’t be reached right now. Try again later.',
-    add: 'Add to the queue',
-    now: 'Play now',
     from: 'Results from Vimeo',
   },
   tr: {
@@ -28,8 +27,6 @@ const TEXT = {
     off: 'Vimeo araması henüz kullanılamıyor. Bunun yerine bir Vimeo linki yapıştır ya da ⠿ ile başka bir kaynak seç.',
     busy: 'Şu an çok fazla arama var. Bir dakika sonra tekrar dene.',
     failed: 'Vimeo’ya şu an ulaşılamıyor. Sonra tekrar dene.',
-    add: 'Sıraya ekle',
-    now: 'Şimdi aç',
     from: 'Sonuçlar Vimeo’dan',
   },
 } as const;
@@ -64,16 +61,7 @@ function row(result: VimeoResult, pick: Pick): HTMLElement {
     : el('span', { class: 'search-thumb podcast-art', 'aria-hidden': 'true' }, '🎞️');
   if (thumb instanceof HTMLImageElement) thumb.addEventListener('error', () => (thumb.style.visibility = 'hidden'), { once: true });
   const media: Media = { kind: 'vimeo', id: result.id };
-  const main = el(
-    'button',
-    { type: 'button', class: 'search-main', title: t('add') },
-    thumb,
-    el('span', { class: 'search-text' }, el('span', { class: 'search-title' }, result.title), el('span', { class: 'muted small search-meta' }, meta)),
-  );
-  main.addEventListener('click', () => pick(media, result.title, 'enqueue'));
-  const now = el('button', { type: 'button', class: 'btn small-btn search-now', title: t('now') }, `▶ ${t('now')}`);
-  now.addEventListener('click', () => pick(media, result.title, 'load'));
-  return el('li', { class: 'search-row' }, main, now);
+  return resultRow(thumb, result.title, meta, () => pick(media, result.title, 'load'), () => pick(media, result.title, 'enqueue'));
 }
 
 /**

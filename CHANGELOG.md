@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.142 — 15 Nov
+
+- A search result now plays when you tap or click it. Each result has a **＋ Queue** button beside it that adds it to
+  the queue without playing; the list stays open, so you can queue several in a row. The same for YouTube, Vimeo and
+  podcast episodes, on a computer and on a phone's 🔍 Search tab.
+- ⠿ → **♪ TikTok** opens TikTok (a new tab, or the TikTok app on a phone) with your words. Copy a video's link there and
+  come back: a big **📋 Paste and play** button plays it in the room.
+
 ### 0.9.97.137 — 15 Nov
 
 - After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip
