@@ -327,6 +327,8 @@ async function duel(browser) {
   check(duelAlex.boardsWithLetters === 0 && duelAlex.watchers.includes('Robin'), "duel: Alex gets no one's letters and sees Robin watching", JSON.stringify(duelAlex));
   const cell = await robin.page.evaluate(() => { const c = document.querySelector('#game-stage .duel-mark.hit, #game-stage .duel-mark.near, #game-stage .duel-mark.miss'); const r = c?.getBoundingClientRect(); return r ? { h: r.height, font: parseFloat(getComputedStyle(c).fontSize), text: c.textContent } : null; });
   check(!!cell && cell.h >= 20 && cell.font >= 12 && !!cell.text, "duel: on Robin's phone the letters are readable on the boards", JSON.stringify(cell));
+  const score = await robin.page.evaluate(() => { const e = document.querySelector('#game-stage .duel-score'); return e ? { cut: e.scrollWidth > e.clientWidth + 1, text: e.textContent } : null; });
+  check(!!score && !score.cut, "duel: on Robin's phone the score is whole", JSON.stringify(score));
   const duelFit = await look(robin, 'duel-watcher-360x640');
   check(!duelFit.length, 'duel: the watcher view fits a 360×640 phone', duelFit.join('; '));
   await robin.ctx.close();

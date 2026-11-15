@@ -103,6 +103,8 @@ html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
 .duel-lobby-label { font-size: 13px; font-weight: 700; color: var(--ff-muted); }
 .duel-lobby-body { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .duel[data-phase='wait'] .duel-bar .ff-langs { display: none; }
+/* GMP: a watcher can't change the table's language; only the one in use shows, as a label. */
+.duel.watching .duel-bar .ff-lang:not(.on) { display: none; }
 html.phone .duel-lobby .game-chip { min-height: 44px; }
 
 /* Card PROP: in the video's place (a wide, short box, the game laid out at its catalog `wide` size) the race goes side
@@ -147,3 +149,7 @@ html.phone #game-stage .duel[data-phase='wait'] .duel-bar { display: none; }
 #game-stage .duel-lobby .duel-lobby-faces { flex-wrap: nowrap; }
 #game-stage .duel-lobby .duel-face { min-width: 0; }
 #game-stage .duel-lobby .duel-face > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* GMP: a watching phone has room to spare, so the score ("Alex 0 – 0 Sam") gets a line of its own and is never cut. */
+html.phone .duel.watching .duel-bar { flex-wrap: wrap; row-gap: 2px; }
+html.phone .duel.watching .duel-score { flex-basis: 100%; }
