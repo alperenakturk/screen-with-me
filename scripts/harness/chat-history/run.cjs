@@ -54,6 +54,10 @@ const history = async (page) => JSON.parse(await lab(page, 'chat.history'));
       return b ? { text: b.textContent, w: Math.round(r.width), h: Math.round(r.height) } : null;
     });
     check(!!button && (lang === 'tr' ? /Önceki mesajları göster/ : /Show earlier messages/).test(button.text), `${label}: a "Show earlier messages" button sits on top of the chat`, JSON.stringify(button));
+    // The button as a person sees it: the list scrolled to its top.
+    await page.evaluate(() => (document.getElementById('chat-list').scrollTop = 0));
+    await sleep(200);
+    await page.screenshot({ path: `${OUT}/chat-history-${label}-earlier.png` });
     // One page by the button, the rest by scrolling to the top; the reader's place stays (the line they saw is still in view).
     await page.evaluate(() => document.querySelector('#chat-list .chat-older').click());
     await page.waitForFunction((n) => JSON.parse(String(n)) < 0, -1, { timeout: 100 }).catch(() => {});
@@ -72,7 +76,16 @@ const history = async (page) => JSON.parse(await lab(page, 'chat.history'));
       [...document.querySelectorAll('#chat-list .chat-text')].map((p) => p.textContent).filter((t) => /^Lab message \d+$/.test(t)).map((t) => Number(t.slice(12))),
     );
     check(h.olderPage === null && numbers.length === 500 && numbers.every((n, i) => n === i + 1), `${label}: scrolling up brings all 500 back, in order`, JSON.stringify({ ...h, shown: numbers.length, first: numbers[0], last: numbers.at(-1) }));
-    await page.screenshot({ path: `${OUT}/chat-history-${label}.png` });
+    // All loaded: the top (message 1, no button any more) and the bottom (message 500).
+    await page.evaluate(() => (document.getElementById('chat-list').scrollTop = 0));
+    await sleep(300);
+    await page.screenshot({ path: `${OUT}/chat-history-${label}-top.png` });
+    await page.evaluate(() => {
+      const list = document.getElementById('chat-list');
+      list.scrollTop = list.scrollHeight;
+    });
+    await sleep(300);
+    await page.screenshot({ path: `${OUT}/chat-history-${label}-bottom.png` });
 
     // Room activity ("Alex added …" for each of 30 pasted links) never pushes chat out (it used to share one 120-line cap).
     const before = h.loaded;
