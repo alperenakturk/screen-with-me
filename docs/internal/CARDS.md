@@ -39,6 +39,29 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## Ready
 
+### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
+- Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
+  every room. The video and Shorts feeds (SH2), search and the Sources picker all depend on it. YouTube grants more
+  quota for free after its "YouTube API Services Audit and Quota Extension" review. The owner: "important and urgent".
+- What:
+  1. **Research** (first, short): the current audit form and its requirements, how long reviews take, what gets
+     rejected (Developer Policies, Required Minimum Functionality, branding, privacy, data storage limits), and whether
+     the workers.dev address is acceptable or the own domain should come first. Write `research/youtube-audit.md`.
+  2. **B2** (the pack):
+     - a compliance self-check against the Developer Policies, with screenshots: no overlays on the player, YouTube
+       branding, the privacy policy's YouTube section with the Google Privacy Policy link, the API data we store and
+       for how long, and deletion;
+     - fix anything that fails;
+     - a quota-need estimate from our own usage numbers (QUOTA3 counters);
+     - the form's answers drafted in English.
+  3. **Owner:** submits the form from the Google Cloud project that owns `YOUTUBE_API_KEY` (his Google account). The
+     Planner gives him the click-by-click steps with the drafted answers.
+  4. Meanwhile the code stays quota-light (SH2 rules: cheap calls first, cache searches, no search per video).
+- Done when: the audit pack is in `docs/internal/youtube-audit/`, every self-check item passes, and the owner has
+  submitted. Later: the granted quota is recorded in `costs.md`.
+- Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
+- Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
+
 ### SH1. Shorts view fixes: the way back on a phone, the first seconds, who is talking (owner, 15 Nov 2026; lane A)
 - Why: three things the owner found in the Shorts view.
 - What:
