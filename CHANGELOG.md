@@ -20,7 +20,8 @@ games' tip jar, cuttings and badges.
 
 - Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
   it floats on the page: drag it anywhere and make it bigger or smaller from its corner; it keeps its shape, and its
-  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it. The old
+  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it, and in a
+  YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
   "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
 
 ### 0.9.97.136 — 14 Nov

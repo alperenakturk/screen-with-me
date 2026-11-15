@@ -1682,7 +1682,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   lives inside the video (`liveSpot:fs`); under 700 px (a phone) it stays inside the video (`liveSpot:video`, at least
   150 px, `PHONE_MIN_WIDTH`), the phone room's own sideways behaviour unchanged. With a YouTube player (`.yt-rail` on the
   theater, not a phone) the free window never covers it: `clearOfPlayer` moves it beside the player on the nearest side
-  where it fits, else shrinks it (16:9, ≥ 200 px) to the roomiest side, on drag, resize and every placement. The grip and
+  where it fits, else shrinks it (16:9, ≥ 200 px) to the roomiest side, on drag, resize and every placement. In the
+  room's fullscreen on a YouTube player the window hides (`.yt-away`; RMF: nothing of ours over the player) and
+  `#dock-stream` "📺" (`live.backToStream`, made by `live-float.ts` in the rail's first group) leaves fullscreen and shows
+  it again; other players keep the window inside their fullscreen. The grip and
   fullscreen rules live in `ui/live-float.css`; with no saved place the window first opens over the video's top right (`firstFree`), never over the side panel (loaded with the lazy `live-engine` chunk; room.css stays in its budget).
   🙈 hides my own preview (`opt:liveSelfHidden`; viewers still get it), "👁 Yayınımı göster" in the stream card brings it
   back. Test Lab `stream.view` (🎬 tab): the viewer's mode, box, on screen, over a YouTube player (never). Test:

@@ -680,6 +680,7 @@ export const tr: Record<I18nKey, string> = {
   'live.fullscreen': 'Tam ekran',
   'live.fullscreenHint': 'Yayını tüm ekranda izle',
   'live.window': 'Pencere',
+  'live.backToStream': 'Yayını göster (tam ekrandan çıkar)',
   'live.windowHint': 'İstediğin yere sürükleyip köşesinden boyutlandırabileceğin pencereye dön',
   'live.hideSelf': 'Kendi yayınımı gizle (izleyenler görmeye devam eder)',
   'live.showSelf': '👁 Yayınımı göster',

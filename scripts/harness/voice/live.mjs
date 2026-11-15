@@ -138,6 +138,17 @@ const w0 = await rect(sam);
 await dragBy(sam, w0.x + w0.w / 2, w0.y + w0.h / 2, p.x + p.w / 2 - (w0.x + w0.w / 2), p.y + p.h / 2 - (w0.y + w0.h / 2));
 const yt = await labView(sam);
 check(yt && !yt.overPlayer && yt.onScreen, 'ST1: YouTube oynatıcısının üstüne sürüklenince yanına yerleşti, ekranda', JSON.stringify({ yt, player: p }));
+// In the room's fullscreen on a YouTube video the window hides (nothing of ours over the YouTube player) and the rail's
+// "📺 Stream" leaves fullscreen and shows it again.
+await sam.evaluate(`document.querySelector('.theater').classList.add('fake-fs'); 1`);
+await sam.sleep(400);
+const away = await sam.evaluate(`(() => { const w = document.getElementById('live-window'); const d = document.getElementById('dock-stream'); return { shown: getComputedStyle(w).display !== 'none', dock: !!d && !d.hidden }; })()`);
+const awayView = await labView(sam);
+check(!away.shown && away.dock && awayView?.mode === 'hidden', 'ST1: YouTube tam ekranında yayın penceresi gizli, rayda "📺 Yayın" var', JSON.stringify({ away, awayView }));
+await sam.evaluate(`document.getElementById('dock-stream').click(); 1`);
+await sam.sleep(500);
+const backFromFs = await sam.evaluate(`(() => { const w = document.getElementById('live-window'); return { shown: getComputedStyle(w).display !== 'none', fs: document.querySelector('.theater').classList.contains('fake-fs'), dock: !document.getElementById('dock-stream').hidden }; })()`);
+check(backFromFs.shown && !backFromFs.fs && !backFromFs.dock, 'ST1: "📺 Yayın" tam ekrandan çıkardı, pencere geri geldi', JSON.stringify(backFromFs));
 await sam.evaluate(`document.querySelector('.theater').classList.remove('yt-rail'); 1`);
 await sam.sleep(300);
 

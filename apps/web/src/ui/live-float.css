@@ -38,3 +38,8 @@
 .live-window:hover .live-resize {
   opacity: 1;
 }
+
+/* ST1: never over a YouTube player in the room's fullscreen; the rail's "📺 Stream" brings it back. */
+.live-window.yt-away {
+  display: none !important;
+}

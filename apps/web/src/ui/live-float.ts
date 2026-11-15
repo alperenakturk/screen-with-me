@@ -61,11 +61,32 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
   const modeButton = win.querySelector<HTMLButtonElement>('#live-mode')!;
   const grip = el('span', { class: 'live-resize', 'aria-hidden': 'true' });
   win.append(grip);
+  /**
+   * ST1 (Planner, 15 Nov 2026; YouTube's Required Minimum Functionality: nothing of ours over its player): in the
+   * room's fullscreen on a YouTube video the stream window hides, and "📺 Stream" in the fullscreen rail beside the
+   * video leaves fullscreen and shows it again. Other players keep the window inside their fullscreen.
+   */
+  const dockStream = el('button', { type: 'button', id: 'dock-stream', class: 'dock-btn', hidden: '' }, '📺');
+  theater.querySelector('#fs-dock .dock-group')?.append(dockStream);
+  dockStream.addEventListener('click', () => {
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    theater.classList.remove('fake-fs');
+    requestAnimationFrame(apply);
+  });
 
   const spots: Record<Where, Spot | null> = { video: savedSpot('video'), free: savedSpot('free'), fs: savedSpot('fs') };
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
   const narrow = () => innerWidth <= NARROW;
+  /** The room's fullscreen on a YouTube player (computer): the window may not show there (see `dockStream`). */
+  const awayForYoutube = () => isFs() && overYoutube() && !isFull();
+  function syncRail(): void {
+    const away = awayForYoutube();
+    win.classList.toggle('yt-away', away);
+    dockStream.hidden = !away || win.hidden;
+    dockStream.title = t('live.backToStream');
+    dockStream.setAttribute('aria-label', dockStream.title);
+  }
   /** The stream's own fullscreen: the browser's (the window is the fullscreen element) or the fallback class. */
   const isFull = () => document.fullscreenElement === win || win.classList.contains('filled');
   const where = (): Where => (isFs() ? 'fs' : narrow() ? 'video' : 'free');
@@ -134,6 +155,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
 
   /** Puts the window where it belongs and sizes it from its saved spot. */
   function apply(): void {
+    syncRail();
     const w = where();
     const parent = w === 'free' ? document.body : wrap;
     if (win.parentNode !== parent && !document.fullscreenElement?.contains(win)) {
@@ -295,6 +317,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
 
   return {
     apply,
+    syncRail,
     /** Leaves the stream's own fullscreen (the stream ended or the window closed). */
     leaveFull(): void {
       if (document.fullscreenElement === win) void document.exitFullscreen().catch(() => {});
@@ -304,9 +327,10 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     view(): { mode: 'window' | 'fullscreen' | 'hidden'; where: Where; box: number[]; overPlayer: boolean; onScreen: boolean } {
       const r = win.getBoundingClientRect();
       const p = theater.getBoundingClientRect();
-      const overPlayer = overYoutube() && !isFs() && !isFull() && !(r.left >= p.right || p.left >= r.right || r.top >= p.bottom || p.top >= r.bottom);
+      const shown = !win.hidden && !win.classList.contains('yt-away') && r.width > 0;
+      const overPlayer = shown && overYoutube() && !isFull() && !(r.left >= p.right || p.left >= r.right || r.top >= p.bottom || p.top >= r.bottom);
       return {
-        mode: win.hidden ? 'hidden' : isFull() ? 'fullscreen' : 'window',
+        mode: win.hidden || win.classList.contains('yt-away') ? 'hidden' : isFull() ? 'fullscreen' : 'window',
         where: where(),
         box: [r.left, r.top, r.width, r.height].map(Math.round),
         overPlayer,

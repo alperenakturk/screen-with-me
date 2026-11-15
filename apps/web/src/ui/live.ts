@@ -237,6 +237,8 @@ export function createLive(
     hideSelfButton.hidden = !mine;
     previewButton.hidden = !mine || !selfHidden;
     if (shown) float?.apply();
+    // ST1: the rail's "📺 Stream" (YouTube fullscreen) goes with the window.
+    else if (!stream) float?.syncRail();
     if (stream && video.srcObject !== stream) {
       video.srcObject = stream;
       video.muted = mine;

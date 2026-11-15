@@ -678,6 +678,7 @@ const en = {
   'live.fullscreen': 'Fullscreen',
   'live.fullscreenHint': 'Watch the stream on the whole screen',
   'live.window': 'Window',
+  'live.backToStream': 'Show the stream (leaves fullscreen)',
   'live.windowHint': 'Back to a window you can drag anywhere and resize from its corner',
   'live.hideSelf': 'Hide my stream (viewers still see it)',
   'live.showSelf': '👁 Show my stream',
