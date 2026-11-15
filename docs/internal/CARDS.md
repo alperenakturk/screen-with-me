@@ -102,7 +102,7 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
   studio says which and why before using them.
 
-### SH2. The ♾ feed: reachable from the room, steerable, no repeats (owner, 15 Nov 2026; B2, after SH1)
+### SH2. Feeds: ♾ Shorts and ▶ Videos, reachable from the room, steerable, no repeats (owner, 15 Nov 2026; B2, after SH1)
 - Why: the infinite Shorts feed only lives inside the Shorts view, its window is confusing, and a new feed brings back
   Shorts the room has already watched.
 - What:
@@ -115,6 +115,20 @@ Two sessions never edit the same lines; the Planner splits work by files.
      - "More like this one";
      - "Change the topic".
      One line explains each; changes apply to the next Shorts without a restart.
+  2b. **▶ Video feed (owner, 15 Nov 2026 evening):** the same idea for normal YouTube videos. The Queue gets two
+     buttons, "♾ Shorts feed" and "▶ Video feed". A video feed starts from:
+     - "like this video" (a pasted link or the playing one);
+     - "this channel" (newest / random / most viewed);
+     - "popular now" (country and category);
+     - "a topic".
+     It is steerable the same way.
+     - **Quota-aware:** `search.list` costs 100 units of the 10,000 a day, so prefer the cheap calls: `playlistItems`
+       of a channel's uploads, the `videos` `chart=mostPopular` with region and category, `videos.list` (1 unit each).
+     - Cache per room and per query in the Worker.
+     - Never call search per video.
+     - Planner's extra ideas, for the studio to pick from if cheap: length filter (short / medium / long), "two
+       channels mixed", continue a pasted playlist, "room votes between 3 next videos" (reuse voting), "each person's
+       turn".
   3. **No repeats:** the room remembers the Short ids it has played, on the room's server object, ids only. A new or
      steered feed skips them.
      - A one-time room forgets them when it is deleted.
@@ -145,6 +159,23 @@ Two sessions never edit the same lines; the Planner splits work by files.
   - Test Lab hook `stream.view`.
 - Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
 - Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
+
+### VC1. Voice: a deafen button, and the YouTube volume slider (owner, 15 Nov 2026; lane A, after SH1)
+- Why: the owner wants a Discord-like "deafen" in voice, and on YouTube he can't drag the volume, because one click
+  jumps it.
+- What:
+  1. **🎧 Deafen:** in voice, next to 🎙, a headphones button turns off what you hear from voice (everyone's voice,
+     the stream's sound if any). It also mutes your own mic, like Discord, and shows the state to others (a crossed 🎧
+     on your face). It is kept per room over a reload. The film's sound is untouched.
+  2. **Volume dragging:** find why dragging the volume on a YouTube video doesn't work and one click jumps it. Check
+     our rail's `#dock-vol`, an overlay or pointer capture over YouTube's own slider, and touch vs mouse. Make it drag
+     smoothly on a computer and a phone. Never put anything of ours over YouTube's player.
+- Done when:
+  - Deafen silences voice for you only, shows to others, and survives a reload.
+  - Volume drags smoothly.
+  - Test Lab hook `voice.deafen`.
+- Tests: voice e2e (deafen state), a harness for the volume drag, the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
 
 ## Proposed
 
