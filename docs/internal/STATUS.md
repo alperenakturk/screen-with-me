@@ -8,6 +8,11 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
+- [ ] Game Studio 2, QZ2 PR 1 (0.9.97.142): Quiz first-click fix, branch `claude/quiz-first-click`; merge after
+  #450–#452 / CH1 (Planner's order).
+- [ ] Game Studio 2, QZ2 PR 2: ~600 new questions, 3 new categories, typed answers, hard bonus (ask the Planner for a version).
+- [ ] Game Studio 2, QZ2 PR 3: Double + Second chance jokers, tournament (1 or 2 laps), protocol 3, hook `quiz.tournament`.
+- [ ] Game Studio 2, WG2: Window Garden steady buttons, backgrounds, small customisations, hook `garden.decor`.
 - [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
   phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
 
@@ -120,6 +125,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
   back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in
   the private feedback repository. On the phone the same two buttons are on their row in the People list.
+- [ ] 27d. [QZ2a, 0.9.97.142] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
+  click, also when the friend answers at the same moment.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

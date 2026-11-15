@@ -375,6 +375,8 @@ jobs:
         run: |
           ONLY=laptop-en,phone-tr node scripts/harness/lab-games-all/run.cjs http://localhost:8787
           node scripts/harness/lab-table-friend/run.cjs http://localhost:8787
+          # QZ2: a Quiz answer registers on the first press, even while other players' answers stream in.
+          node scripts/harness/quiz-click/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()
