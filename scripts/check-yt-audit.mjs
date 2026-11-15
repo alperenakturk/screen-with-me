@@ -12,7 +12,9 @@ const check = (ok, label) => {
   if (!ok) fails++;
 };
 /** A link to exactly this address in the page's HTML (an `href` attribute, optionally with a query). */
-const links = (html, url) => new RegExp(`href="${url.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}(\\?[^"]*)?"`).test(html);
+// Exact address match on href values (no regex built from the address): the link itself, or it with a query string.
+const hrefs = (html) => [...html.matchAll(/href="([^"]*)"/g)].map((m) => m[1].replaceAll('&amp;', '&'));
+const links = (html, url) => hrefs(html).some((h) => h === url || h.startsWith(`${url}?`));
 const page = async (path) => {
   const res = await fetch(`${origin}${path}`, { redirect: 'follow', signal: AbortSignal.timeout(15_000) });
   return { status: res.status, html: res.status === 200 ? await res.text() : '' };
