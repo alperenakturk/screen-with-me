@@ -61,6 +61,20 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner's pick: "don't delete chat unless the room is deleted; maybe compress past some count; you decide" (Planner
   chat, 15 Nov 2026).
 
+### SR2. A search result plays on a click; a clear "＋ Queue" button adds it (owner, 15 Nov 2026; lane A, with CH1)
+- Why: today a click on a search result's row adds it to the queue, and people expect it to open; "▶ Play now" is the
+  only way to play.
+- What:
+  - A click or tap anywhere on a result row plays it now, the same as "▶ Play now".
+  - Each row gets a small, clearly labelled **"＋ Queue"** button (icon and word, "＋ Sıraya" in Turkish, with a
+    tooltip and aria-label). It adds the video to the queue without playing, with a short "Added to queue" confirmation.
+  - The same rule for every source list (YouTube, Vimeo, Discover, feeds) and on the phone's Search tab. Targets
+    ≥ 44 px on a phone. Keyboard: Enter plays; the button is reachable with Tab.
+- Done when: a click plays, "＋ Queue" queues, and both are clear in EN and TR on a computer and a phone. Test Lab hook
+  `search.results`.
+- Tests: the sources and search harnesses, a phone harness, `check-texts`.
+- Owner's pick: his screenshot and message (Planner chat, 15 Nov 2026).
+
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
   every room. The video and Shorts feeds (SH2), search and the Sources picker all depend on it. YouTube grants more
