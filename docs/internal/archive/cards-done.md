@@ -2316,3 +2316,19 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: none needed (technical).
 - Done: QA1 shipped by B2 in Nov 2026 (CI 12:27 → 8:29, live e2e in 2 shards, canary gate, state matrix, shots.cjs); gate and retry hardened in #435 / #436.
 
+### ST1. Watching a screen share: one button, fullscreen or a free window (owner, 15 Nov 2026; B2)
+- Why: the stream viewer has too many confusing controls (fill the screen, frame, shrink, grow).
+- What:
+  - The stream viewer gets **one** control: "⛶ Fullscreen" ⇄ "🪟 Window".
+  - In window mode the stream is a free window that can be dragged anywhere and resized from its corner, keeping its
+    shape and its place after a reload, the same way the camera window does.
+  - Everything else goes from the viewer: fill, frame, ±.
+  - The phone keeps its own sideways behaviour.
+- Done when:
+  - A viewer on a computer has exactly one toggle.
+  - Fullscreen and window both work, and the window drags and resizes smoothly.
+  - Nothing goes over the YouTube player.
+  - Test Lab hook `stream.view`.
+- Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
+- Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
+- Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.
