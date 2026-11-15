@@ -25,7 +25,7 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 | What | Where |
 |---|---|
 | Where we are, owner's hand tests, owner's to-dos and decisions, "Ideas waiting for the owner's pick", task queue | `docs/internal/STATUS.md` |
-| Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` |
+| Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` (+ `cards-games.md`, `cards-proposed.md`) |
 | What to work on now / next / frozen, milestone gates, plan to 1.0 | `docs/internal/ROADMAP.md` "Focus" and "Milestone gates to 1.0" |
 | What each release changed (user-facing, one block per release) | `CHANGELOG.md` |
 | How every feature works: files, messages, constants, keys, tests | `docs/internal/architecture/reference.md` (to be split into area files) |
