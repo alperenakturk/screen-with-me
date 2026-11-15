@@ -386,8 +386,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     mini.count.textContent = p.solved ? tx('solved') : p.out ? tx('out') : tx('tries', { n: p.marks.length });
     mini.box.classList.toggle('solved', p.solved);
     mini.box.classList.toggle('winner', state?.winner === seat);
-    // Once the game is over every word shows on the marks.
-    const words = state?.phase === 'over' ? (p.words ?? []) : [];
+    // The letters show on the marks whenever the server sends them: to a watcher live (GMP), to everyone at the end.
+    const words = p.words ?? [];
     mini.cells.forEach((row, i) => {
       const marks = p.marks[i];
       const chars = words[i] ? letters(words[i]!) : [];
@@ -678,6 +678,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const offLab = debugHooks.register('table.duel', () => ({
     commands: [
       quiet.command('duel', { en: 'Five Frames Duel', tr: 'Beş Kare Düellosu' }),
+      // GMP: what this tab sees (players, watchers, and how many boards show their letters here: 1 as a player, all as a watcher).
+      { id: 'duel.state', title: { en: 'Five Frames Duel: what this tab sees', tr: 'Beş Kare Düellosu: bu sekme ne görüyor' }, help: { en: 'Players, their tries, who watches, and how many boards show their letters here (a watcher sees them all).', tr: 'Oyuncular, denemeleri, kim izliyor ve burada kaç tahtanın harfleri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Duel table first', tr: 'önce bir Düello masası aç' }, where: { en: 'at a Five Frames Duel table', tr: 'Beş Kare Düellosu masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, players: s.players.map((p) => p && { name: p.name, ready: p.ready, tries: p.marks.length, solved: p.solved }), watchers: s.watchers.map((w) => w.name), boardsWithLetters: s.players.filter((p) => (p?.words?.length ?? 0) > 0).length }); } },
       {
         id: 'duel.answer',
         title: { en: 'Five Frames Duel: show the word (this tab)', tr: 'Beş Kare Düellosu: kelimeyi göster (bu sekmede)' },
