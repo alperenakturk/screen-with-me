@@ -53,6 +53,11 @@ Two sessions never edit the same lines; the Planner splits work by files.
      level.
      - It respects reduced motion (ring only, no grow).
      - It shows for yourself too, so you know your mic is going out.
+  4. **TikTok, small (Research `research/tiktok-shorts.md` §6):**
+     - Accept short `vm.`/`vt.tiktok.com` links when pasting many links; the Worker resolves them one by one.
+     - When a TikTok plays, the ♾ window says that TikTok has no public feed and points to pasting or sharing links.
+     - A harness swipes through a queue that mixes YouTube Shorts and TikToks.
+     - No TikTok search or feed: TikTok offers none legally.
 - Done when:
   - On a phone you can leave and re-enter the Shorts view any number of times.
   - An auto-advanced Short starts at 0:00 for everyone (a harness measures `currentTime` at start).
