@@ -261,6 +261,11 @@ jobs:
       - name: Sources picker
         run: node scripts/harness/sources/run.cjs http://localhost:8787
 
+      # Card SH1 (1): after "↩ Room view" a playing Short offers "📱 Shorts view" (phone: the Room tab's strip; computer:
+      # beside Next), and it works again and again. Needs YouTube.
+      - name: Shorts view way back
+        run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true

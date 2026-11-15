@@ -103,6 +103,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27f. [SRC1, 0.9.97.136] In a room (computer, then the phone's 🔍 Search tab): press ⠿ → Vimeo, type a few
   words + Enter: before the VIMEO_TOKEN secret the tile and the search say "Not available yet" (the real search is
   27g). ⠿ → Search the web: a new tab opens with your words; come back, the box asks for the link.
+- [ ] 27h. [SH1, 0.9.97.137] On your phone, play a Short, ⋯ → ↩ Room view, then tap "📱 Shorts view" in the strip
+  under the video; repeat a few times. On a computer the same button is beside Next above the video.
 - [ ] 27g. [SRC1, 0.9.97.136] After the VIMEO_TOKEN secret is set and a deploy has run: in a live room, ⠿ → Vimeo,
   search a few words, press ▶ Play now on a result: it plays for everyone.
 - [ ] 27e. [0.9.97.133] On a laptop with a friend: play a video, open Snack Bar from 🎮; when the friend writes, the

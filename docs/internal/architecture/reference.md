@@ -198,7 +198,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   on both sides (at most 6, the rest "+N"; on phones one row under the video), a 6 s bubble from the avatar of whoever
   writes, emojis rise from the avatar (above the video if they have no seat). At the bottom: message box + emoji bar
   + 🔁 Loop + "↩ Oda görünümü" (remembered per tab, `sessionStorage` `shortsOff:<room>`; back with "📱 Shorts
-  görünümü" in room view). View changes use View Transitions (video `view-transition-name: swm-player`; without
+  görünümü" in room view: since 0.9.97.137, card SH1, `#shorts-enter` sits in the "Now playing" row beside Next on a
+  computer (the toolbar it was in is hidden in rail mode), and a phone's Room tab has `.ph-shorts-back` at the front of
+  the strip's tools, shown exactly when `#shorts-enter` is (`phone-room.ts` mirrors its `hidden`); Test Lab
+  `shorts.state` reports the view and the way back; harness `scripts/harness/shorts-back`, CI `site`). View changes use View Transitions (video `view-transition-name: swm-player`; without
   rendering, no transition after 0.6 s). ↑/↓, PageUp/Down, ▲▼ and the mouse wheel (outside the video, once per 0.9 s):
   ↓ = `next` (not sent when the queue is empty, a note appears), ↑ = `{t:'prev', from}`: the server keeps recently
   played items in `played` (30, in storage), opens the previous one, puts the current one at the head of the queue
