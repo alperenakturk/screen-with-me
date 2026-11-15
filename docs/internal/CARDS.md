@@ -39,6 +39,28 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## Ready
 
+### CH1. PRIORITY: chat history kept until the room is deleted (owner, 15 Nov 2026; lane A, right after SH1 item 0/1)
+- Why: the owner and a friend saw their chat "deleted at random". The server keeps only the last 50 messages
+  (`CHAT_HISTORY = 50` in `apps/server/src/room.ts`), so older ones vanish, after a reload or for someone who joins. A
+  one-time room is wiped 24 h after it empties, a saved one after 30 days; that part stays.
+- What:
+  - Keep the chat until the room is deleted: at least the last 1,000 messages. Older ones are dropped quietly only past
+    that cap ("compressed": their images and reactions go first, then the oldest texts).
+  - A Durable Object value is capped at 128 KiB, so store the chat in pages (e.g. 100 messages per key) or in the
+    object's SQLite storage. Never one big array.
+  - On join, send the last 100; scrolling up loads older pages on demand. Rate-limited, `readCapped` rules apply.
+  - Confirm that a deploy or a restart never clears the chat (the storage reload in the constructor). If something
+    else wiped it, say what.
+  - Images keep their current lifetime (IMG2). Message deletion (MSG1) works on the paged store.
+  - The privacy page: chat is kept until the room is deleted (both languages, dated line).
+- Done when:
+  - 1,200 messages in a room: a reload shows the last 100, and scrolling reaches the 1,000th.
+  - The chat survives a deploy (a harness restarts the object) and an empty room within its lifetime.
+  - Test Lab hook `chat.history` (count, pages).
+- Tests: room server unit tests (paging, cap, compaction, restart), e2e reload + scroll back, the owner's hand test.
+- Owner's pick: "don't delete chat unless the room is deleted; maybe compress past some count; you decide" (Planner
+  chat, 15 Nov 2026).
+
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
   every room. The video and Shorts feeds (SH2), search and the Sources picker all depend on it. YouTube grants more
@@ -56,6 +78,11 @@ Two sessions never edit the same lines; the Planner splits work by files.
      - the form's answers drafted in English.
   3. **Owner:** submits the form from the Google Cloud project that owns `YOUTUBE_API_KEY` (his Google account). The
      Planner gives him the click-by-click steps with the drafted answers.
+  3b. **Owner's picks (15 Nov 2026):**
+     - The official YouTube logo, linked to YouTube, shows next to our YouTube result lists (search, Discover, feeds),
+       never over the player. This replaces the earlier "text only" pick, for the audit. B2 builds it; Design checks
+       the size and spacing rules.
+     - The own domain comes first: `sidelit.app` (the owner buys it on Cloudflare; then `custom-domain.md`).
   4. Meanwhile the code stays quota-light (SH2 rules: cheap calls first, cache searches, no search per video).
 - Done when: the audit pack is in `docs/internal/youtube-audit/`, every self-check item passes, and the owner has
   submitted. Later: the granted quota is recorded in `costs.md`.
