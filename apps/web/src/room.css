@@ -10812,12 +10812,16 @@ html.in-room .room-title-dot {
   min-height: 28px;
 }
 
-/* Card Y1: "Results from YouTube · YouTube Terms of Service" under every list of YouTube API results. */
+/* Card Y1: "Results from YouTube · YouTube Terms of Service" under every list of YouTube API results. Card YTQ1
+   (Design): a flex row, so beside the logo the text wraps in its own column, never under it (the logo's clear space);
+   flex items keep their min-content width, so the logo is never squeezed. */
 .yt-attrib {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 6px 0 0;
   color: var(--muted);
 }
-
 .yt-attrib a {
   color: var(--accent-hover);
 }

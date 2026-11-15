@@ -76,7 +76,7 @@ export function createSearch(
    */
   function attribution(): HTMLElement {
     const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
-    return el('p', { class: 'yt-attrib small' }, ytLogo(), ` ${t('yt.from')} · `, terms);
+    return el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, `${t('yt.from')} · `, terms));
   }
   let lastQuery = '';
 
