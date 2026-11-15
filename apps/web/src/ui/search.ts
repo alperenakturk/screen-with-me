@@ -75,7 +75,7 @@ export function createSearch(
    */
   function attribution(): HTMLElement {
     const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
-    const logo = el('a', { class: 'yt-logo', href: 'https://www.youtube.com', target: '_blank', rel: 'noopener', 'aria-label': 'YouTube' }, el('img', { src: '/brand/youtube-icon.svg', alt: '', width: '24', height: '17', style: 'vertical-align: middle' }));
+    const logo = el('a', { class: 'yt-logo', href: 'https://www.youtube.com', target: '_blank', rel: 'noopener', 'aria-label': 'YouTube' }, ...(['white', 'almostblack'] as const).map((c) => el('img', { class: `yt-logo-${c[0]}`, src: `/brand/yt_logo_fullcolor_${c}_digital.png`, alt: '', width: '119', height: '40', style: 'vertical-align: middle' })));
     return el('p', { class: 'yt-attrib small' }, logo, ` ${t('yt.from')} · `, terms);
   }
   let lastQuery = '';

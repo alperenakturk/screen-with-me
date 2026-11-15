@@ -7254,12 +7254,6 @@ html:not(.phone) .live-card.active .live-quality select {
   color: var(--on-accent);
 }
 
-/* Kartta: kutuların altında "⧉ Serbest bırak" */
-.cam-pop {
-  margin-top: 6px;
-  font-size: 12px;
-}
-
 .voice-cams.floating {
   position: fixed;
   z-index: 800;
@@ -7283,11 +7277,6 @@ html:not(.phone) .live-card.active .live-quality select {
 .voice-cams.dragging {
   cursor: grabbing;
   opacity: 0.92;
-}
-
-.voice-cams.floating .cam-pop,
-.voice-cams.in-fs .cam-dock-btn {
-  display: none;
 }
 
 .voice-cams.floating .cam-bar {
@@ -7928,7 +7917,6 @@ button.together-person:focus-visible .together-name {
   padding: 0;
 }
 
-.voice-cams.free.in-fs .cam-dock-btn,
 .voice-cams:not(.free) :is(.cam-lineup, .cam-reset) {
   display: none;
 }
@@ -10832,6 +10820,13 @@ html.in-room .room-title-dot {
 
 .yt-attrib a {
   color: var(--accent-hover);
+}
+
+/* YouTube's own logo file, unchanged (its clear space is inside the PNG): white wordmark on dark themes, Almost Black
+   on Matinee (card YTQ1). */
+[data-theme=matinee] .yt-logo-w,
+:root:not([data-theme=matinee]) .yt-logo-a {
+  display: none;
 }
 
 /* The camera count in "In voice 1/6 · [camera] 1/4" uses our line icon (0.9.96.23). */
