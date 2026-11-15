@@ -39,6 +39,65 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## Ready
 
+### SH1. Shorts view fixes: the way back on a phone, the first seconds, who is talking (owner, 15 Nov 2026; lane A)
+- Why: three things the owner found in the Shorts view.
+- What:
+  1. **The way back on a phone:** after "↩ Room view" a phone has no way back into the Shorts view. `.shorts-enter` is
+     hidden in `html.ph-room`, and `shortsOff:<room>` stays in session storage. While a Short plays, give the phone a
+     clear "📱 Shorts view" entry in the Room tab (the strip under the video), and keep the computer's button.
+  2. **The first 2–3 seconds:** when the next Short starts by itself, the owner misses its first 2–3 seconds. Find out
+     why (preload, `command()` seek, the start being swallowed, the late-join offset) and fix it, so every viewer sees a
+     Short from 0:00 together. Add a `sync-engine.test.ts` scenario if the sync engine is involved.
+  3. **Who is talking:** in the Shorts bar's faces (and the phone strip's faces), a person who is speaking in voice
+     gets a visible ring around their round avatar (a green glow and a slight grow), driven by the existing voice
+     level.
+     - It respects reduced motion (ring only, no grow).
+     - It shows for yourself too, so you know your mic is going out.
+  4. **TikTok, small (Research `research/tiktok-shorts.md` §6):**
+     - Accept short `vm.`/`vt.tiktok.com` links when pasting many links; the Worker resolves them one by one.
+     - When a TikTok plays, the ♾ window says that TikTok has no public feed and points to pasting or sharing links.
+     - A harness swipes through a queue that mixes YouTube Shorts and TikToks.
+     - No TikTok search or feed: TikTok offers none legally.
+- Done when:
+  - On a phone you can leave and re-enter the Shorts view any number of times.
+  - An auto-advanced Short starts at 0:00 for everyone (a harness measures `currentTime` at start).
+  - A speaking avatar lights up in the Shorts bar on a computer and a phone.
+  - Test Lab hook `shorts.state` reports the view, the start offset and the speakers.
+- Tests: the shorts-rail / shorts-door harnesses, a phone harness for the way back, a unit scenario for the start, and
+  the owner's hand test.
+- Owner's pick: his three points (Planner chat, 15 Nov 2026).
+
+### GMP. Bigger table games: Five Frames Duel and Sea Battle for 2–6, spectators see the game, many more words (owner, 15 Nov 2026; Game Studio)
+- Why: the owner wants these two games for groups. He also wants spectators to see what happens ("it's fine if they
+  see, they are friends"), and the word game needs far more words.
+- What:
+  1. **Spectators see the game:** in Sea Battle and the Five Frames Duel a watcher sees every board live. That means
+     the Duel players' letters, and in Sea Battle all ships and shots. Players still never see each other's hidden
+     information (a player sees only their own ships, and in the Duel only the others' colour marks). The server sends
+     watcher views only to watchers.
+  2. **The Five Frames Duel for 2–6 players:** same rules, more players racing on the same word. The finish order
+     ranks them, and the result card shows 1st to 6th. Lobby, head and phone Games-tab layouts fit 6.
+  3. **Sea Battle for 2–6 players:** each player has a sea. On your turn you **choose which player to attack**, then
+     fire; turns go round. A player whose ships are all sunk is out but keeps watching. The last one with ships wins.
+     It is played for fun: no rule forces fairness.
+  4. **Many more words, English and Turkish:**
+     - The answer lists and the accepted-guess lists for both languages grow from open-licensed sources (licence
+       checked: MIT / Apache / BSD / CC0 / CC-BY with attribution in `apps/web/public/third-party-notices.txt`).
+     - Answers are common, clean words: no slurs, no adult words, no proper nouns. Guesses may be broader.
+     - Turkish handles İ/ı correctly.
+     - Size targets are the studio's to propose, e.g. 2,000+ answers and 10,000+ guesses per language.
+     - The lists ship as lazy chunks so the room bundle doesn't grow.
+- Done when:
+  - Every hidden-information rule above is enforced by the server, with unit tests.
+  - Both games run with 2, 3 and 6 players in e2e.
+  - The phone Games tab fits 6 players at 360×640.
+  - The word lists pass a licence note and a profanity filter check.
+  - Test Lab hooks: `seaBattle.state`, `duel.state` (players, turn, target, watchers).
+- Tests: server unit tests (turns, targets, elimination, watcher views), e2e with fake players, games-sweep at phone
+  and laptop, and the owner's hand test with friends.
+- Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
+  studio says which and why before using them.
+
 ### SRC1. A "⠿ Sources" picker beside 🔍 Search: YouTube, Vimeo, search the web (owner, 14 Nov 2026; lane A)
 - Why: the owner wants people to find a video without leaving Sidelit. Research (`research/competitors-how.md`) checked
   which sources are legal. The owner picked only these three: "only Vimeo, YouTube and search the internet; no archive
