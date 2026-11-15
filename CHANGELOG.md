@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.142 — 15 Nov
+### 0.9.97.144 — 15 Nov
 
 - A search result now plays when you tap or click it. Each result has a **＋ Queue** button beside it that adds it to
   the queue without playing; the list stays open, so you can queue several in a row. The same for YouTube, Vimeo and

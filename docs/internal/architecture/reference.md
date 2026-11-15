@@ -338,7 +338,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
-  - **♪ TikTok (card SR2, 0.9.97.142):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
+  - **♪ TikTok (card SR2, 0.9.97.144):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
     stays): TikTok has no search API. It opens `tiktokUrl(words)` (`https://www.tiktok.com/search?q=<words>`, the home
     page with no words or a link in the box) with `window.open(..., '_blank', 'noopener')`; on a phone the TikTok app
     takes the link when installed. Coming back (`visibilitychange` / `focus`) shows `#sources-paste` "📋 Paste and play"
@@ -351,7 +351,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
   `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile, SR2's row tap / ＋ Queue,
   TikTok tab and Paste and play).
-- **Results rows (card SR2, 0.9.97.142):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
+- **Results rows (card SR2, 0.9.97.144):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
   `ui/vimeo-results.ts`, podcast episodes `ui/podcasts.ts`) builds its rows with `ui/result-row.ts` `resultRow`: the
   row's `.search-main` button plays now (`'load'`, the list closes and the box empties; on a phone the Search tab goes
   back to the Room tab, `phone-room.ts`), and `.search-queue` "＋ Queue" / "＋ Sıraya" queues (`'enqueue'`; `room.ts`
