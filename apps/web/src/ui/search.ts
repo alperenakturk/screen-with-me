@@ -3,6 +3,7 @@ import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { loadChunk } from './lazy.ts';
+import { ytLogo } from './yt-logo.ts';
 
 export type AddMode = 'enqueue' | 'load';
 
@@ -75,8 +76,7 @@ export function createSearch(
    */
   function attribution(): HTMLElement {
     const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
-    const logo = el('a', { class: 'yt-logo', href: 'https://www.youtube.com', target: '_blank', rel: 'noopener', 'aria-label': 'YouTube' }, ...(['white', 'almostblack'] as const).map((c) => el('img', { class: `yt-logo-${c[0]}`, src: `/brand/yt_logo_fullcolor_${c}_digital.png`, alt: '', width: '119', height: '40', style: 'vertical-align: middle' })));
-    return el('p', { class: 'yt-attrib small' }, logo, ` ${t('yt.from')} · `, terms);
+    return el('p', { class: 'yt-attrib small' }, ytLogo(), ` ${t('yt.from')} · `, terms);
   }
   let lastQuery = '';
 

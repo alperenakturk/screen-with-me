@@ -18,8 +18,8 @@ games' tip jar, cuttings and badges.
 
 ### 0.9.97.140 — 15 Nov
 
-- YouTube search results, the Shorts view's search and the ♾ Discover window now show the YouTube logo beside "Results
-  from YouTube"; it links to YouTube.
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
+  from YouTube" (light or dark to match the theme); it links to YouTube.
 
 ### 0.9.97.136 — 14 Nov
 
