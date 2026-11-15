@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### @VER@ — 15 Nov
+### 0.9.97.138 — 15 Nov
 
 - 👁 **Watch a game live:** join a full Sea Battle or Five Frames Duel table from the games hall and you see both
   fleets as they are shot, or both boards with every letter, while the players still see only their own. On a phone

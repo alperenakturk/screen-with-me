@@ -44,4 +44,15 @@ describe('word lists', () => {
     const { answers } = decodeWords(TR.WORDS, TR.ANSWERS);
     expect(answers.filter((w) => blocked.has(w))).toEqual([]);
   });
+
+  // The Turkish forms are made by scripts/words/build-words.py from Zemberek's lemmas and their marks: a hand-written
+  // sample checks vowel harmony (evler, not evlar), voicing (ağacı), dropped vowels (burnu, ağzım), doubling (hakkı) and
+  // d/t after a hard consonant (kapta, dalda), and that the wrong shapes are not accepted.
+  it('Turkish: generated forms follow harmony and sound changes (hand-checked sample)', () => {
+    const { allowed } = decodeWords(TR.WORDS, TR.ANSWERS);
+    const right = 'evler ağacı burnu ağzım hakkı kolum gözün eller dalda kapta saati saate oğlum geldi okudu kızlı yazdı saçlı dağda gönlü sütlü yüzde';
+    const wrong = 'evlar ağaçı hakı kızler dağta kapda gelde okıdu saata dalde ellar gözin oğlım sütla';
+    expect(right.split(' ').filter((w) => !allowed.has(w))).toEqual([]);
+    expect(wrong.split(' ').filter((w) => allowed.has(w))).toEqual([]);
+  });
 });
