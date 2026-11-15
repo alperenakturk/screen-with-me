@@ -183,8 +183,8 @@ Each line names its section in `docs/internal/architecture/reference.md` ("ref: 
   of its own (only the overlay iframe and the "Start watching" card); never redirects anyone without asking; no own
   ad-block list, `window.open` wrapper or ad skipping; no film re-broadcasting (`tabCapture`). ref: Extension rules,
   Shell, Resilience to ads, Streaming.
-- **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality). ref: Shorts view, One
-  remote; archive 0.9.97.74 (`overYoutube`).
+- **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality), except a game frame the user
+  drags there himself (owner, 15 Nov 2026, card GW2). ref: Shorts view, One remote; archive 0.9.97.74 (`overYoutube`).
 - **DRM is never bypassed.** ref: §10 Known limits.
 - **Lazy chunks:** load with `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`; a
   chunk that gates privacy (the IP notice) fails closed. ref: Room chunk.

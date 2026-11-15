@@ -7,9 +7,8 @@ owner decide whether they become Ready. Roles, who edits what and how the owner 
 on now: `ROADMAP.md` "Focus: now / next / frozen". The owner's tick view is the Planner's board Artifact (`CLAUDE.md` §2).
 
 **A finished card leaves this file in the same PR that writes its `Done:` line**: it moves verbatim to
-`docs/internal/archive/cards-done.md` (DOCS2, 11 Nov 2026; that file also holds the old header, the owner's test rounds
-1 and 2, the run order to the test round and every card finished before then). CI (`scripts/check-docs.mjs`) proves no
-card heading or backticked identifier of the board is lost in a move.
+`docs/internal/archive/cards-done.md` (DOCS2, 11 Nov 2026). CI (`scripts/check-docs.mjs`) proves no card heading or
+backticked identifier is lost in a move.
 
 Card format:
 
@@ -28,6 +27,7 @@ Card format:
 | A | 🔨 Developer: room / site | the site, the room page and the room server, their tests and reference sections | `STATUS.md` task queue "Lane A" |
 | B (+ B2) | 🔨 Developer: players, Shorts, extension, ops | players, Shorts, the extension, CI and the shared test tooling | QA1 below |
 | W | 🔨 Developer: game windows (opened by the Planner when needed) | `apps/web/src/games/stage.ts`, game-window head / drag / fit, `catalog.ts` sizes, the game-window rules in `room.css` | idle (0.9.97.121 live) |
+| Games 2 | 🎮 Game Studio 2 (opened 15 Nov 2026) | the Quiz and Window Garden files only (QZ2, WG2) | its PRs |
 | Games | 🎮 Game Studio | the games' code, art, sounds, tutorials, server objects, `docs/internal/design/games/` | `STATUS.md` task queue "Game Studio" |
 | — | 🛡️ Security · 🔎 Research · 🎨 Design | their own docs; cards go to Proposed | — |
 
@@ -35,7 +35,7 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## In progress
 
-(none written on the board; the lanes' handoffs are in `STATUS.md` "Task queue")
+(see `STATUS.md` "Task queue")
 
 ## Ready
 
@@ -309,67 +309,90 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the CI itself (a dry run on a test branch), the measurement in the PR.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 
+### UI2. Rail ⋯ menu: one compact speed control; "Keep the controls open" starts off (owner, 15 Nov 2026; lane A, after EC1)
+- Why: 12 speed buttons tire the eye; the owner found "Keep the controls open" ticked.
+- What:
+  - **Speed:** one row "⏩ Speed · 1×" instead of the grid. Tapping it opens a small picker: 0.5 / 1 / 1.25 / 1.5 / 2
+    plus − / + (or a slider) for a custom speed from 0.25× to 3× in 0.05 steps. YouTube only plays its own rates, so
+    there the custom value snaps to the nearest one. Same control in the phone ＋ sheet; the menu gets shorter.
+  - **Keep the controls open:** `opt:railPin` must start off for everyone. Check that nothing (a migration, Test Lab,
+    a default) turns it on by itself; if nothing does, the owner's browser saved it once (tell the Planner).
+- Done when: speed row + picker work on YouTube, a file and the extension, synced; a fresh browser has the pin off;
+  Test Lab hook `rail.speed`.
+- Tests: sync-engine scenario for a custom rate, room harness for the menu height, phone ＋ sheet harness.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026).
+
+### TH3. Home: a Neon that looks neon, four neutral people, other ideas for the screens (owner, 15 Nov 2026; Design → lane A)
+- Why: the Neon home is "not neon at all"; the people under the devices are tied to one culture; he wants other
+  ideas for the device screens.
+- What:
+  - **Neon home:** glow on the wordmark, buttons and device frames on a dark base, so it reads as neon, but calm:
+    contrast ≥ 4.5:1, no flashing, soft glow. Other themes unchanged.
+  - **The people (every theme):** 4 avatars, 2 women and 2 men, neutral (nothing tied to one nation, culture or
+    religion); the line becomes "4 watching · 2 in voice" (both languages).
+  - **The screens:** Design proposes 2–3 alternatives to today's sunset (a short preview each) and sends them to the
+    Planner as text; the owner picks in the Planner chat; lane A builds the pick. Today's screens stay until then.
+- Done when: Neon home and the 4 people are live in every theme; the screen pick is built or the owner kept today's;
+  shots reviewed (QA1); contrast check green.
+- Tests: `scripts/shots.cjs` home at 4 sizes, every theme; the contrast job.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026); the screens: pending his pick.
+
+### GW2. Game windows: fullscreen or frame, any time; the frame goes anywhere (owner, 15 Nov 2026; Game Studio, first)
+- Why: the owner meant two modes for every table, ⛶ Fullscreen and a 🪟 Frame; today fullscreen only works in a room
+  with no video, and the frame is kept off the video.
+- What:
+  - **Tables:** a ⛶ / 🪟 switch in every table's head, usable any time. Fullscreen with a video: the video pauses
+    (the same rule as the table auto-pause, #46) and ▶ resumes it when the game leaves fullscreen.
+  - **Frame:** starts on the right, resizes in proportion, and can be dragged **anywhere, over the video too**,
+    YouTube included (owner's decision, 15 Nov 2026, knowing YouTube's rule; never placed over the video by us).
+  - **Solo side games** (Snack Bar, Window Garden, Five Frames): always a frame, with the same freedom.
+  - **Sweep:** look for other rules like "only without a video" in the games hall and windows; fix them, list them.
+- Done when: switch both ways with and without a video, on YouTube and a video file; the frame drags over the video;
+  the phone keeps PH2 (Games tab, upright); Test Lab hook `games.mode`.
+- Tests: game-windows harness (both modes, with a video), `npm run e2e` table pause/resume, phone harness.
+- Owner's pick: his messages (Planner chat, 15 Nov 2026).
+
+### GP1. Games open at once and answer the first tap (owner, 15 Nov 2026; Game Studio, with GW2)
+- Why: Classics stutter while opening; Snack Bar stutters and its pictures arrive late or missing.
+- What: preload a game's chunk and art when the hall opens (or on hover / touch-start), decode images before the first
+  frame, no layout jank while opening; Classics and Snack Bar ready in ≤ 300 ms after the click on the CI machine with
+  the hall open. Check every game for a click that needs two taps (Quiz has one; GS2 fixes Quiz itself).
+- Done when: open time measured in the PR for every game; no missing image on first open; Test Lab hook `games.open`.
+- Tests: a games-hall timing harness, the snack-bar harnesses.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+### GT1. Clearer tutorials and a "❓ How to play" button in every game (owner, 15 Nov 2026; Game Studio, after GMP)
+- Why: the first-run tutorials are a little thin; players can't see them again.
+- What: each tutorial a little more detailed and plain (EN + TR); "❓ How to play" in each game's menu replays it;
+  no scrolling.
+- Done when: every game has it; `check-game-text.mjs` green; Test Lab hook `games.tutorial`.
+- Tests: games harnesses open the tutorial from the menu; shots at 4 sizes.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+### QZ2. Quiz: more and harder questions, typed answers, a tournament, more jokers (owner, 15 Nov 2026; Game Studio 2)
+- Why: the owner wants more variety and more fun; an answer sometimes needs two clicks.
+- What:
+  - **Fix first:** an answer registers on the first click / tap.
+  - **Questions:** +50 % more questions, new categories, more hard ones; a hard question gives a bigger bonus. Some
+    typed-answer questions (forgiving: case, accents, one small typo). All written by us (no copied question banks).
+  - **Tournament mode:** each player picks a category in turn, everyone answers; the winner has the most round wins,
+    a tie goes to points.
+  - **More jokers** (e.g. 50:50, skip, extra time, double points), few per game. EN + TR (`check-game-text.mjs`).
+- Done when: the above live; the server validates typed answers and jokers; Test Lab hook `quiz.tournament`.
+- Tests: quiz server unit tests (scoring, tie rule, typed match), `GameSocket` e2e with 3 players, harness.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+### WG2. Window Garden: steady buttons, a few simple new things (owner, 15 Nov 2026; Game Studio 2, after QZ2)
+- Why: when texts change, buttons jump; the owner wants the garden nicer to play.
+- What: no layout shift (fixed widths, reserved lines, tabular numbers); simple additions: backgrounds to pick, small
+  customisations (pots, colours), one or two light mechanics.
+- Done when: no button moves while playing (a layout-shift check); the additions live; Test Lab hook `garden.decor`.
+- Tests: the window-garden harness with a layout-shift measure; shots.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
 ## Proposed
 
-### Security: Worker and Durable Object hygiene (R4-6, R4-7, R4-8; lane A)
-- Severity: low
-- Why: small gaps against Cloudflare's best practices: the usage book loses updates under concurrent requests, some abuse
-  buckets live only in memory, failed feedback sends burn the daily cap, `/api/youtube/usage` is unlimited, the poker
-  deck uses `Math.random`, the probe WebSocket never closes, one floating promise, a heavy room constructor, API answers
-  without `nosniff` / `no-store`, observability without traces.
-- Done when: `usage.ts` reads the body before `get`/`put`; feedback checks the token before the gate and has fetch
-  timeouts; `/api/youtube/usage` has a limit; the server shuffles with crypto randomness; the probe socket closes after
-  10 s; `fallback.ts:271` goes through `finish()`; the room loads small keys in one `get([...])` and images at join time;
-  a JSON helper sets `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`; `observability.traces.enabled`.
-- Tests: unit (usage book under two interleaved adds, shuffle source); e2e existing suites; a header check in e2e for
-  one `/api/*` answer.
-- Owner's pick: none needed.
-
-### Security: custom-domain hardening checklist (R3-3)
-- Severity: medium (do it together with the domain purchase)
-- Why: on `workers.dev` there is no WAF, rate-limiting rule, bot protection or HSTS setting; when the domain comes,
-  the old address and preview URLs must not stay open beside it.
-- Done when: `wrangler.jsonc` has the custom domain, `"workers_dev": false`, `"preview_urls": false`;
-  `allowedOrigin`, the extension's `SITE_URL` and the CSP name the new origin; production `localhost` origins are
-  gone; `_headers` sends HSTS; the owner has turned on Always Use HTTPS, minimum TLS 1.2, DNSSEC and one rate-limiting
-  rule on `/api/*` (Bot Fight Mode only after a test that WebSockets, the fallback and the extension still connect).
-- Tests: live e2e against the new domain; the old `workers.dev` address no longer answers (or redirects); embed
-  harness with the extension built for the new origin.
-- Owner's pick: needed (the domain itself, and the zone settings in the dashboard).
-
-### Security: TV link hardening before the TV leaves the lab (M8)
-- Severity: medium (only while `?tvlab=1` hides the TV)
-- Why: a TV token is the whole person including host rights, a QR shown by someone else can phish it, and pairing
-  codes can be guessed (limit keyed on a browser id the client chooses).
-- Done when: a `tv:true` connection may only send ping / tv / listen-only voice / react; the phone confirms before
-  pairing; `tv-link` is limited per IP hash and per room (plus a Worker rate limit); codes are 8 digits.
-- Tests: e2e `tv.mjs` (TV connection's `kick` / `make-host` / `settings` refused; brute-force attempts limited),
-  harness `tv/run.cjs`.
-- Owner's pick: none needed (part of the TV version after 1.0).
-
-### More players without the extension: which services and how (Research first; owner's idea, 2 Nov 2026)
-- Why: Watch2Gether's search box has a source picker (YouTube, Vimeo, Dailymotion, SoundCloud-like audio, podcasts,
-  web radio…); embeds play on our site for everyone without the extension.
-- Done when: Research lists candidate services with: official embed / player API, can we play / pause / seek / read the
-  time (sync), search API and its cost, terms (overlays, commercial use, audits), CSP hosts, and a ranked shortlist;
-  the owner picks which to build and when (not before 0.9.95).
-- Tests: none (research); each built service later gets its harness like `tiktok/run.cjs`.
-- Research (2 Nov 2026, `research/more-players.md`), ranked: 1 Vimeo (player.js, full control, rate only on PRO
-  videos → 1×), 2 podcasts (iTunes Search → RSS → audio file in today's `html5` kind), 3 SoundCloud (Widget API, links
-  only, 1×), 4 Dailymotion (needs a Player ID from the owner's free account), 5 Twitch (after the domain move:
-  `parent=`), 6 web radio (CSP `media-src https:` needs a security look). Not recommended: Spotify, Apple Music,
-  Streamable, Kick, Mixcloud, Bilibili.
-- Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
-
-### G1–G5. Growth after 1.0 (owner agreed 3 Nov 2026; ROADMAP §7 "Growth plan")
-- G1 Store listing for search words + reviews from the first 20 users (with the store submission).
-- G2 Search pages (EN first): Shorts together, W2G without ads, free Teleparty alternative, TikTok with friends.
-- G3 A weekly 15–30 s clip (TikTok / Reels / Shorts); tools: `hyperframes` / `video-use` / `earshot` on the owner's
-  computer (his catalogue).
-- G4 Communities + a Product Hunt day; copy polished with `humanizer`.
-- G5 Every room a referral: shareable recap image, one-click "Add to Chrome" on the film card (store link once listed).
-- Done when / tests: each becomes its own Ready card when 1.0 is near; the Planner details them then.
-- Owner's pick: agreed (3 Nov 2026).
+Security and Research suggestions: `docs/internal/cards-proposed.md`.
 
 ## Done
 
