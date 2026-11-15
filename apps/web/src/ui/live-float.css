@@ -7,7 +7,13 @@
   inset: 0;
   z-index: 900;
   aspect-ratio: auto;
+  border: 0;
   border-radius: 0;
+}
+
+/* First look (ST1 review): ✕ read poorly on a bright picture; it gets the same dark backing as the toggle. */
+.live-bar .icon-btn {
+  background: rgb(0 0 0 / 0.55);
 }
 
 .live-window:fullscreen .live-resize,

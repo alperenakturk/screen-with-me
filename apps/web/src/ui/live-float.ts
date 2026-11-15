@@ -33,14 +33,15 @@ const NARROW = 700;
 
 const share = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 1;
 
-function readSpot(where: Where): Spot {
+/** The saved spot, or null (a free window with none starts over the video: see `firstFree`). */
+function savedSpot(where: Where): Spot | null {
   try {
     const spot = JSON.parse(load(KEYS[where]) ?? 'null') as Spot | null;
     if (spot && share(spot.x) && share(spot.y) && share(spot.w) && spot.w > 0) return spot;
   } catch {
     // broken record: default
   }
-  return DEFAULTS[where];
+  return null;
 }
 
 /**
@@ -61,7 +62,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
   const grip = el('span', { class: 'live-resize', 'aria-hidden': 'true' });
   win.append(grip);
 
-  const spots: Record<Where, Spot> = { video: readSpot('video'), free: readSpot('free'), fs: readSpot('fs') };
+  const spots: Record<Where, Spot | null> = { video: savedSpot('video'), free: savedSpot('free'), fs: savedSpot('fs') };
 
   const isFs = () => theater.matches(':fullscreen, .fake-fs');
   const narrow = () => innerWidth <= NARROW;
@@ -120,6 +121,17 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
     return clamp({ left: innerWidth, top: innerHeight, width: min });
   }
 
+  /**
+   * First look (ST1 review): a free window with no saved place opens over the video's top right, as the stream window
+   * always did, never over the side panel (it hid "Stop watching" and the people there).
+   */
+  function firstFree(): Spot {
+    const v = wrap.getBoundingClientRect();
+    if (v.width < 2 || !innerWidth || !innerHeight) return DEFAULTS.free;
+    const width = Math.min(Math.max(MIN_WIDTH, v.width * 0.36), v.width * MAX_SHARE);
+    return { x: (v.right - width - 12) / innerWidth, y: (v.top + 12) / innerHeight, w: width / innerWidth };
+  }
+
   /** Puts the window where it belongs and sizes it from its saved spot. */
   function apply(): void {
     const w = where();
@@ -139,7 +151,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
       return;
     }
     const c = container(w);
-    const spot = spots[w];
+    const spot = spots[w] ?? (w === 'free' ? firstFree() : DEFAULTS[w]);
     const width = Math.round(Math.min(Math.max(narrow() ? PHONE_MIN_WIDTH : MIN_WIDTH, spot.w * c.w), c.w * MAX_SHARE));
     const height = (width * 9) / 16;
     const left = Math.min(Math.max(EDGE, spot.x * c.w), Math.max(EDGE, c.w - width - EDGE));
@@ -258,7 +270,7 @@ export function createLiveFloat(opts: { win: HTMLElement; wrap: HTMLElement; the
   win.addEventListener('dblclick', (event) => {
     if ((event.target as Element).closest('button') || isFull()) return;
     const w = where();
-    spots[w] = DEFAULTS[w];
+    spots[w] = null;
     save(KEYS[w], '');
     apply();
   });

@@ -1683,7 +1683,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   150 px, `PHONE_MIN_WIDTH`), the phone room's own sideways behaviour unchanged. With a YouTube player (`.yt-rail` on the
   theater, not a phone) the free window never covers it: `clearOfPlayer` moves it beside the player on the nearest side
   where it fits, else shrinks it (16:9, ≥ 200 px) to the roomiest side, on drag, resize and every placement. The grip and
-  fullscreen rules live in `ui/live-float.css` (loaded with the lazy `live-engine` chunk; room.css stays in its budget).
+  fullscreen rules live in `ui/live-float.css`; with no saved place the window first opens over the video's top right (`firstFree`), never over the side panel (loaded with the lazy `live-engine` chunk; room.css stays in its budget).
   🙈 hides my own preview (`opt:liveSelfHidden`; viewers still get it), "👁 Yayınımı göster" in the stream card brings it
   back. Test Lab `stream.view` (🎬 tab): the viewer's mode, box, on screen, over a YouTube player (never). Test:
   `voice/live.mjs` (`SWM_W` / `SWM_H`; run at 1366, 1920 and 1180 × 820): one toggle, a free window, drag, corner resize,
