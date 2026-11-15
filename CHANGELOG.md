@@ -16,7 +16,7 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.138 — 15 Nov
+### 0.9.97.141 — 15 Nov
 
 - A room's chat now keeps its last 1000 messages until the room is deleted (it was only the last 50, so older
   messages seemed to vanish). People who join get the newest messages; "Show earlier messages" or scrolling up brings

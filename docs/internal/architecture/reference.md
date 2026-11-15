@@ -1804,7 +1804,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Chat bubbles** (`ui/chat.ts`): mine on the right in the accent color (no avatar), others on the left with avatar
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
-  - **Chat kept until the room is deleted (card CH1, 0.9.97.138):** the server keeps the chat in pages
+  - **Chat kept until the room is deleted (card CH1, 0.9.97.141):** the server keeps the chat in pages
     (`packages/shared/src/chat-store.ts` `ChatStore`): `chatp:<n>` = 50 messages each (≤ 128 KiB a value), `chatMeta` =
     `{first, last}`; a message rewrites only the last page (written with the room's first message too, so a short chat
     survives a restart); past `CHAT_KEEP` (1000) the oldest page goes (1000–1050 kept); deleting the room
