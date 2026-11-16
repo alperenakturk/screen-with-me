@@ -624,7 +624,9 @@ export function createGameStage(opts: StageOptions) {
       spot = readPair(spotKey(kind));
       side = null;
     }
-    const home = !spot && zoom === undefined ? homeBox(kind) : null;
+    // GW2: a table's frame starts at the right edge at its own size (grown with the screen, never past it); the home in
+    // the column right of the video is for the small side games (a table squeezed there was unreadable).
+    const home = !spot && zoom === undefined && isSoloKind(kind) ? homeBox(kind) : null;
     if (home) {
       stage.style.left = `${home.left}px`;
       stage.style.top = `${home.top}px`;
@@ -891,7 +893,8 @@ export function createGameStage(opts: StageOptions) {
       const ih = Math.max(H, TAB_H);
       scale = H / ih;
       own = [Math.round(W / scale), ih];
-    } else if (!narrow.matches && mode === 'stage') {
+    } else if (!narrow.matches && (mode === 'stage' || mode === 'max')) {
+      // GW2: ⛶ full screen scales the game to the screen the same way.
       // PROP (owner: "the same experience in both modes"): in the video's place the game keeps its own shape too, scaled
       // to the box like the free window, from the shape that suits the box best: its own (`size`) or its wide one (`wide`).
       const info = sizeOf(kind) as { size: readonly [number, number]; wide?: readonly [number, number] };
