@@ -15,8 +15,8 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
 - [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
-- [ ] Game Studio: [ ] GW2 #470 merged + deploy check; [x] GP1 on claude/gp1-fast-open (open times, first taps, Five
-  Frames compact, phone note, readable YouTube frame start); [ ] GP1 PR, merged, deploy check; then GMP (b) (2–6 players), GT1 (tutorials).
+- [ ] Game Studio: [x] GW2 + GP1 #470 live (v0.9.97.145); GMP (b) on claude/gmp-b-players: [x] Duel 2–6; [x] Sea server
+  2–6 + e2e; [x] Sea page + sweep; [x] docs; [ ] PR, merged, deploy check; then stage.ts lazy-load step, GT1 (tutorials).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -150,6 +150,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27n. [QZ2b] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
+- [ ] 27o. [GMP-b] With two or more friends (phones and computers): open Sea Battle, the others press "Take the seat"
+  before the battle. On your turn tap a friend's chip, then fire on their sea; a sunk player is crossed out and only
+  watches; at the end the card lists 1st to last. Then the Five Frames Duel with three or more: the race goes on after
+  the first one solves, and the end card shows the places.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
