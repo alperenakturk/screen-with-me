@@ -8,7 +8,13 @@ import { linkify } from './links.ts';
 import { setIcon } from './icons.ts';
 import { isPhoneLayout } from '../device.ts';
 
-const MAX_LINES = 120;
+/**
+ * Card CH1: how much of the room's chat stays loaded here (the server keeps at least 1,000 messages; older pages load on
+ * scroll-up). The room's activity lines ("Alex paused") have their own small cap: they used to share one 120-line cap
+ * with the chat, so a busy room pushed real messages out of the list.
+ */
+const CHAT_LINES_MAX = 1200;
+const SYSTEM_LINES_MAX = 150;
 /** Aynı kişinin bu kadar süre içindeki art arda mesajları tek balon grubunda (isim/avatar bir kez). */
 const GROUP_MS = 3 * 60_000;
 
@@ -35,6 +41,11 @@ export function createChatPanel(
   const input = root.querySelector<HTMLInputElement>('#chat-input')!;
   input.maxLength = CHAT_MAX_LENGTH;
   let lines: Line[] = [];
+  /** CH1: the drawn node of each shown line (a line trimmed off the top takes its node with it). */
+  const nodes = new Map<Line, HTMLElement>();
+  /** CH1: the server keeps older chat: the page to ask for next (undefined: everything is here). */
+  let olderPage: number | undefined;
+  let asking = false;
   let visible = false;
   let unread = 0;
 
@@ -247,11 +258,59 @@ export function createChatPanel(
     list.scrollTop = list.scrollHeight;
   }
 
-  function render(): void {
+  /** CH1: "Show earlier messages" at the top while the server has older chat (scrolling to the top asks too). */
+  const olderButton = el('button', { type: 'button', class: 'btn small-btn chat-older', style: 'display:block;margin:4px auto' }, t('chatOlder'));
+  olderButton.addEventListener('click', () => askOlder());
+  const olderItem = el('li', { class: 'chat-older-row' }, olderButton);
+
+  function askOlder(): void {
+    if (olderPage === undefined || asking) return;
+    asking = true;
+    olderButton.disabled = true;
+    olderButton.textContent = t('chatOlderLoading');
+    send({ t: 'chat-older', page: olderPage });
+  }
+  list.addEventListener('scroll', () => {
+    if (list.scrollTop < 40 && list.scrollHeight > list.clientHeight) askOlder();
+  });
+
+  function render(keepPlace = false): void {
+    const fromBottom = list.scrollHeight - list.scrollTop;
     const visibleLines = lines.filter(shown);
-    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...visibleLines.map((line, i) => node(line, visibleLines[i - 1])));
+    nodes.clear();
+    const drawn = visibleLines.map((line, i) => {
+      const n = node(line, visibleLines[i - 1]);
+      nodes.set(line, n);
+      return n;
+    });
+    olderButton.disabled = false;
+    olderButton.textContent = t('chatOlder');
+    list.replaceChildren(el('li', { class: 'chat-empty' }, t('chatEmpty')), ...(olderPage === undefined ? [] : [olderItem]), ...drawn);
     drawEvents();
-    scrollToEnd();
+    if (keepPlace) list.scrollTop = list.scrollHeight - fromBottom;
+    else scrollToEnd();
+  }
+
+  /** CH1: the oldest chat lines past CHAT_LINES_MAX and activity lines past SYSTEM_LINES_MAX leave (with their nodes). */
+  function trim(): void {
+    let chats = lines.filter((line) => line.kind === 'chat').length;
+    let systems = lines.length - chats;
+    if (chats <= CHAT_LINES_MAX && systems <= SYSTEM_LINES_MAX) return;
+    lines = lines.filter((line) => {
+      if (line.kind === 'chat' ? chats > CHAT_LINES_MAX : systems > SYSTEM_LINES_MAX) {
+        if (line.kind === 'chat') chats--;
+        else systems--;
+        nodes.get(line)?.remove();
+        nodes.delete(line);
+        return false;
+      }
+      return true;
+    });
+    // Older pages would come back above the gap: stop offering them once the list is full.
+    if (chats >= CHAT_LINES_MAX) {
+      olderPage = undefined;
+      olderItem.remove();
+    }
   }
 
   const shown = (line: Line) => line.kind !== 'chat' || line.message.by.id === myId() || !isBlocked(line.message.by);
@@ -259,15 +318,16 @@ export function createChatPanel(
   function push(line: Line, countsAsUnread: boolean): void {
     if (!shown(line)) {
       lines.push(line);
-      if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
+      trim();
       return;
     }
     const atBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 60;
     const prev = [...lines].reverse().find(shown);
     lines.push(line);
-    if (lines.length > MAX_LINES) lines = lines.slice(-MAX_LINES);
-    list.append(node(line, prev));
-    while (list.children.length > MAX_LINES + 1) list.children[1]?.remove();
+    const drawn = node(line, prev);
+    nodes.set(line, drawn);
+    list.append(drawn);
+    trim();
     if (line.kind === 'system') drawEvents();
     if (atBottom || (line.kind === 'chat' && line.message.by.id === myId())) scrollToEnd();
     if (countsAsUnread && !visible) {
@@ -277,9 +337,27 @@ export function createChatPanel(
   }
 
   return {
-    set(messages: ChatMessage[]): void {
+    /** The room's chat on (re)joining; `more`: the server keeps older pages (CH1). */
+    set(messages: ChatMessage[], more?: number): void {
       lines = messages.map((message) => ({ kind: 'chat', message }));
+      olderPage = more;
+      asking = false;
       render();
+    },
+    /** CH1: an older page arrived (oldest first): it goes on top, the reader's place stays. */
+    older(messages: ChatMessage[], more?: number): void {
+      asking = false;
+      const have = new Set(lines.flatMap((line) => (line.kind === 'chat' ? [line.message.id] : [])));
+      const fresh = messages.filter((message) => !have.has(message.id));
+      lines = [...fresh.map((message): Line => ({ kind: 'chat', message })), ...lines];
+      olderPage = more;
+      trim();
+      render(true);
+    },
+    /** CH1 Test Lab: how much chat is loaded here and whether older pages are offered. */
+    history(): { loaded: number; system: number; olderPage: number | null } {
+      const loaded = lines.filter((line) => line.kind === 'chat').length;
+      return { loaded, system: lines.length - loaded, olderPage: olderPage ?? null };
     },
     add(message: ChatMessage): void {
       push({ kind: 'chat', message }, message.by.id !== myId());

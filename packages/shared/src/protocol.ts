@@ -468,13 +468,15 @@ export type ClientMessage =
   | { t: 'recap-save' }
   /** Bu odanın önceki özetleri. */
   | { t: 'recaps' }
+  /** Card CH1: one older page of the room's chat (the number from `welcome.chatMore` or the last `chat-older`). */
+  | { t: 'chat-older'; page: number }
   /** Film sayfasından odaya dönüyorum: filmdeki diğerlerine "sen de dön" diye sorulur. */
   | { t: 'home' }
   /** Snack Bar served a customer while the film plays: a coin for the room's shared tip jar (side games 2, pick 5). */
   | { t: 'tip' }
   /** Test Lab (DL3b): only a local lab server (`SWM_LAB_SERVER`) acts on it; elsewhere `bad_message`. */
   /** `age-images` (QUOTA1a / IMG2): the room's chat images run out now, as if their time had passed. */
-  | { t: 'lab'; op: 'tipjar' | 'age-images' }
+  | { t: 'lab'; op: 'tipjar' | 'age-images' | 'chat-fill' }
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
@@ -590,6 +592,8 @@ export type ServerMessage =
       /** Oda yöneticisinin üye ID'si. */
       hostId: string | null;
       chat: ChatMessage[];
+      /** Card CH1: older chat is kept; ask for this page with `chat-older` (absent: `chat` is everything). */
+      chatMore?: number;
       /** Eski sunucular yollamaz. */
       settings?: RoomSettings;
       /** Şu an beklenenler (üye ID'leri). */
@@ -654,7 +658,9 @@ export type ServerMessage =
   /** Relayed from my paired TV / my phone (`TvOp`); `present` comes from the server: my TV joined (true) or left. */
   | { t: 'tv'; op: TvOp | 'present' | 'linked'; value?: number | boolean }
   | { t: 'recap'; recap: Recap; by: Member }
-  | { t: 'recaps'; recaps: Recap[] };
+  | { t: 'recaps'; recaps: Recap[] }
+  /** Card CH1: an older page of the chat (oldest first); `more`: the page before it, if any. */
+  | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number };
 
 /** Verilen sunucu saatinde videonun kaçıncı saniyede olması gerektiği. */
 export function expectedPosition(state: PlaybackState, serverNow: number): number {
@@ -1007,6 +1013,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     }
     case 'vote':
       return isItemId(m.id) && typeof m.up === 'boolean' ? { t: 'vote', id: m.id, up: m.up } : null;
+    case 'chat-older':
+      return Number.isInteger(m.page) && (m.page as number) >= 0 && (m.page as number) < 1e9 ? { t: 'chat-older', page: m.page as number } : null;
     case 'recap':
     case 'recap-save':
     case 'recaps':
@@ -1048,7 +1056,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (m.table === null) return { t: 'at', table: null };
       return typeof m.table === 'string' && TABLE_ID.test(m.table) ? { t: 'at', table: m.table } : null;
     case 'lab':
-      return m.op === 'tipjar' || m.op === 'age-images' ? { t: 'lab', op: m.op } : null;
+      return m.op === 'tipjar' || m.op === 'age-images' || m.op === 'chat-fill' ? { t: 'lab', op: m.op } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':
