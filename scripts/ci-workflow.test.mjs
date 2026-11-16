@@ -31,12 +31,12 @@ const all = jobs(readFileSync(FILE, 'utf8'));
 const cond = (job) => (all[job]?.if ?? '').replace(/^\$\{\{\s*|\s*\}\}$/g, '');
 
 test('the jobs are found', () => {
-  for (const name of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep', 'test', 'deploy', 'live-e2e', 'tag']) assert.ok(all[name], name);
+  for (const name of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'test', 'deploy', 'live-e2e', 'tag']) assert.ok(all[name], name);
 });
 
 test('the summary job `test` always reports and waits for every test job', () => {
   assert.match(cond('test'), /\balways\(\)/);
-  for (const job of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep']) assert.match(all.test.needs, new RegExp(`\\b${job}\\b`));
+  for (const job of ['changes', 'checks', 'e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows']) assert.match(all.test.needs, new RegExp(`\\b${job}\\b`));
 });
 
 test('deploy runs despite skipped test jobs, but only after the tests passed, never in a cancelled run', () => {
@@ -80,7 +80,7 @@ test('tag: only contents: write + actions: read, never workflows; the catch-up s
 });
 
 test('CI3: on main the PR test jobs are skipped only for code a green PR run tested, and a green PR marks its code', () => {
-  for (const job of ['e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep']) {
+  for (const job of ['e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows']) {
     const c = cond(job);
     assert.match(c, /\(github\.event_name != 'push' \|\| needs\.changes\.outputs\.proven != 'true'\)/, `${job}: runs on main unless proven`);
     assert.doesNotMatch(c, /github\.event_name != 'push' &&/, `${job}: no plain "PR only" left`);
@@ -142,4 +142,11 @@ test('GR1: the deploy keeps the earlier builds\' files, after the build and befo
   const d = all.deploy.block;
   const keep = d.indexOf('node scripts/keep-assets.mjs');
   assert.ok(keep > d.indexOf('npm run build') && keep < d.indexOf('npm run deploy -w @swm/server'));
+});
+
+test('CI3: fewer runners per PR: the state matrix runs in game-windows, the Test Lab sweep in contrast', () => {
+  assert.ok(!all['state-matrix'] && !all['lab-sweep'], 'no jobs of their own any more');
+  assert.match(all['game-windows'].block, /scripts\/harness\/state-matrix\/run\.cjs/);
+  assert.match(all.contrast.block, /scripts\/harness\/lab-sweep\/run\.cjs/);
+  assert.doesNotMatch(all.test.block, /state-matrix\.result|lab-sweep\.result/);
 });

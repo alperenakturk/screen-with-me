@@ -20,6 +20,10 @@ export const MAX_RATE = 4;
 export const COUNTDOWN_MS = 3000;
 
 /** Videos that get the countdown: not Shorts / TikTok (they flow one into the next), film pages or the sync test. */
+/** An upright video for the Shorts view: a YouTube Short or any TikTok. */
+export function isShortMedia(media: Media): boolean {
+  return (media.kind === 'youtube' && media.short === true) || media.kind === 'tiktok';
+}
 export function countdownMedia(media: Media): boolean {
   return (media.kind === 'youtube' && media.short !== true) || media.kind === 'html5' || media.kind === 'vimeo';
 }
@@ -455,7 +459,11 @@ export type ClientMessage =
    * Sunucu takılan biri olduğunda odayı kısa süre bekletir. `ad`: film sayfasında reklam oynuyor; oda bu kişiyi
    * beklemez (reklamı herkes farklı anda görür), kişiler listesinde "reklamda" yazar, reklam bitince kişi yetişir.
    */
-  | { t: 'ready'; ready: boolean; ad?: boolean }
+  /**
+   * `primed` (card SH1 (2)): my player has loaded this item and holds at its start, so a Short's lead-in can end as
+   * soon as everyone is primed (an optional field: no protocol bump).
+   */
+  | { t: 'ready'; ready: boolean; ad?: boolean; primed?: string }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
   | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; countdown?: boolean; knock?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
@@ -663,6 +671,22 @@ export type ServerMessage =
   | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number };
 
 /** Verilen sunucu saatinde videonun kaçıncı saniyede olması gerektiği. */
+/**
+ * Card SH1 (2): a Short starts this long after it is chosen (the room holds it at 0:00, silently), so every viewer has
+ * loaded it and they all start from 0:00 together, instead of joining a second or two in.
+ */
+export const SHORT_LEAD_MS = 1500;
+/** Card SH1 (2): once every viewer is primed, a Short starts this long later (time for the "start" to reach them all). */
+export const SHORT_START_MARGIN_MS = 250;
+/** Card SH1 (2): a room that waits for someone this early in a video waits at 0:00, so nobody loses the start. */
+export const WAIT_REWIND_S = 3;
+
+/** Where the "everyone ready" wait pauses the room: at 0:00 in a video's first seconds, else where it is. */
+export function waitPausePosition(state: PlaybackState, serverNow: number): number {
+  const at = expectedPosition(state, serverNow);
+  return at < WAIT_REWIND_S ? 0 : at;
+}
+
 export function expectedPosition(state: PlaybackState, serverNow: number): number {
   if (state.paused) return state.position;
   const elapsed = Math.max(0, serverNow - state.updatedAt) / 1000;
@@ -998,7 +1022,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
       if (typeof m.ready !== 'boolean') return null;
-      return typeof m.ad === 'boolean' ? { t: 'ready', ready: m.ready, ad: m.ad } : { t: 'ready', ready: m.ready };
+      return { t: 'ready', ready: m.ready, ...(typeof m.ad === 'boolean' ? { ad: m.ad } : {}), ...(isItemId(m.primed) ? { primed: m.primed } : {}) };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
       for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'countdown', 'knock'] as const) {
@@ -1114,4 +1138,34 @@ export function parseClientMessage(raw: string): ClientMessage | null {
 /** İnce hız ayarı: ±0.05 adım, MIN_RATE–MAX_RATE arası, iki basamağa yuvarlı. */
 export function stepRate(rate: number, direction: 1 | -1): number {
   return Math.min(MAX_RATE, Math.max(MIN_RATE, Math.round((rate + direction * 0.05) * 100) / 100));
+}
+
+/** Card UI2: the speed picker's ready speeds, and the top of its custom range (0.25×–3× in 0.05 steps). */
+export const PRESET_RATES: readonly number[] = [0.5, 1, 1.25, 1.5, 2];
+export const CUSTOM_MAX_RATE = 3;
+/** The only speeds YouTube's player plays (it rounds anything else itself, so we pick for it). */
+export const YOUTUBE_RATES: readonly number[] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+/** The fastest the picker offers for this media: 3× at most, less where the player can't (YouTube 2×, TikTok 1×). */
+function pickerMax(media: Media | null | undefined): number {
+  return Math.min(CUSTOM_MAX_RATE, maxRateFor(media));
+}
+
+/** A wanted speed made playable here: in range, on 0.05 steps; on YouTube the nearest of its own speeds. */
+export function fitRate(media: Media | null | undefined, wanted: number): number {
+  const top = pickerMax(media);
+  const clamped = Math.min(top, Math.max(MIN_RATE, Number.isFinite(wanted) ? wanted : 1));
+  if (media?.kind === 'youtube') {
+    return YOUTUBE_RATES.reduce((best, r) => (Math.abs(r - clamped) < Math.abs(best - clamped) ? r : best), 1);
+  }
+  return Math.round(clamped * 20) / 20;
+}
+
+/** One − / + press from `current`: 0.05 on a file, YouTube's next own speed on YouTube; it stops at the ends. */
+export function stepRateFor(media: Media | null | undefined, current: number, direction: 1 | -1): number {
+  if (media?.kind === 'youtube') {
+    const next = direction > 0 ? YOUTUBE_RATES.find((r) => r > current + 1e-6) : [...YOUTUBE_RATES].reverse().find((r) => r < current - 1e-6);
+    return fitRate(media, next ?? current);
+  }
+  return fitRate(media, Math.round((current + direction * 0.05) * 100) / 100);
 }

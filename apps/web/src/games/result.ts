@@ -137,7 +137,7 @@ export interface PointsLines {
 export function showPointsResult(
   card: ResultCard,
   game: string,
-  players: readonly { id: string; name: string; avatar?: Avatar; score: number; online?: boolean }[],
+  players: readonly { id: string; name: string; avatar?: Avatar; score: number; online?: boolean; label?: string }[],
   host: string | null | undefined,
   me: string | null,
   lines: PointsLines,

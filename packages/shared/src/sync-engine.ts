@@ -124,6 +124,10 @@ export class SyncEngine {
     player.onEvent((event) => this.handlePlayerEvent(player, event));
     this.tickTimer = setInterval(() => this.tick(), TICK_MS);
     this.enforce(ACTION_SEEK_SECONDS);
+    // Card SH1 (2): a player that is in place during a Short's lead-in (it has loaded and holds at the start) tells the
+    // room, so the lead-in ends as soon as everyone is primed instead of waiting out its cap.
+    const item = this.state?.item;
+    if (item && this.holdLeft() > 0) this.options.send({ t: 'ready', ready: this.readyReported, primed: item.id });
   }
 
   detach(): void {

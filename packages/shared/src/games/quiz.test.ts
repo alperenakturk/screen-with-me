@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, pickQuestions, quizLevelBonus, quizPool } from './quiz.ts';
+import { QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, pickQuestions, quizLevelBonus, quizOffer, quizPool, roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
 
 describe('Quiz', () => {
@@ -155,5 +155,53 @@ describe('quiz bank 2 and rotation (P9)', () => {
     expect(picked.every((q) => !avoid.includes(q.id))).toBe(true);
     const levels = picked.map((q) => QUIZ_BANK[q.id]!.d ?? 2);
     expect(levels).toEqual([...levels].sort((a, b) => a - b));
+  });
+});
+
+describe('Quiz tournament and jokers (QZ2)', () => {
+  it('messages: joker kinds, a pick, tournament settings; anything else refused', () => {
+    expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 4, kind: 'double' }))).toEqual({ t: 'joker', n: 4, kind: 'double' });
+    expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 4 }))).toEqual({ t: 'joker', n: 4 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 4, kind: 'triple' }))).toBeNull();
+    // A tournament of 8 players × 2 laps × 3 questions numbers up to 48.
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 48, pick: 1 }))).toEqual({ t: 'answer', n: 48, pick: 1 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 49, pick: 1 }))).toBeNull();
+    expect(parseQuizMessage(JSON.stringify({ t: 'pick', cat: 'body' }))).toEqual({ t: 'pick', cat: 'body' });
+    expect(parseQuizMessage(JSON.stringify({ t: 'pick', cat: 'mix' }))).toBeNull();
+    expect(parseQuizMessage(JSON.stringify({ t: 'settings', mode: 'tournament', laps: 2 }))).toEqual({ t: 'settings', mode: 'tournament', laps: 2 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'settings', mode: 'league', laps: 3 }))).toBeNull();
+  });
+
+  it('a typed 50:50 shows the first letter and the length', () => {
+    expect(typedHint('Berlin')).toBe('B·····');
+    expect(typedHint('mount everest')).toBe('M···· ·······');
+    expect(typedHint('206')).toBe('2··');
+    expect(typedHint('istanbul')).toBe('I·······');
+  });
+
+  it('an offer is three different categories with enough questions', () => {
+    for (const lang of ['en', 'tr'] as const) {
+      const offer = quizOffer(lang);
+      expect(offer).toHaveLength(QUIZ_OFFER);
+      expect(new Set(offer).size).toBe(QUIZ_OFFER);
+      for (const cat of offer) expect(quizPool(lang, cat).length).toBeGreaterThanOrEqual(QUIZ_ROUND_QUESTIONS * 4);
+    }
+  });
+
+  it('a round goes to its best scorer, a tie to all of them, nobody when nobody scored', () => {
+    expect(roundWinners({ a: 300, b: 120, c: 0 })).toEqual(['a']);
+    expect(roundWinners({ a: 200, b: 200, c: 50 })).toEqual(['a', 'b']);
+    expect(roundWinners({ a: 0, b: 0 })).toEqual([]);
+    expect(roundWinners({})).toEqual([]);
+  });
+
+  it('the tournament ranks by round wins, then points', () => {
+    const order = tournamentOrder([
+      { id: 'a', wins: 1, score: 900 },
+      { id: 'b', wins: 2, score: 300 },
+      { id: 'c', wins: 1, score: 950 },
+      { id: 'd', score: 2000 },
+    ]);
+    expect(order.map((p) => p.id)).toEqual(['b', 'c', 'a', 'd']);
   });
 });

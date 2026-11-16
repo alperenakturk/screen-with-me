@@ -8,10 +8,27 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] B2, card CI3 (claude/ci3-release-train): [x] tested-code mark + main tests untested combinations; [x] settle
-  (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
-  merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
-  merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
+- [ ] Lane A (handoff 16 Nov, 15:10; a fresh lane A session continues from here):
+  - [x] Merged today: SR2 #460, BUD2 #481 (phone room lazy chunk), GR1 #476 (refresh note + phone-ready fix for BUD2's
+    race), UI2 #469. Cards archived to `archive/cards-done.md`.
+  - [ ] EC1 #465 (`claude/ec1-end-card`): green except the state-matrix games-window drag / hover flake (Game Studio's
+    fix, top priority). When state-matrix is green on main: merge main into it, re-run, merge.
+  - [ ] SH1 item 3, #471 (`claude/sh1-ring`): same blocker as EC1; then merge.
+  - [ ] SH1 item 2, #486 (`claude/sh1-start`): ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on
+    `ready`, `waitPausePosition`), e2e `shorts-start.mjs`. Get CI green, merge. After #471: add the start offset to
+    Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
+  - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
+  - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
+- [ ] B2 (session 16 Nov, 15:40):
+  - [x] CI3 closed (measured batch after #482 in its Done line; card in `archive/cards-done.md`).
+  - [ ] SH2 feeds: PR #488 (`claude/sh2-feeds`): shared feed on the room object, ▶ video feed, Queue row, steer window,
+    played-id memory, Test Lab `feed.state`, harness `feed`. Merge-tree clean against lane A's `claude/sh1-ring` and
+    `claude/sh1-start`. Then: merge when green, deploy + live e2e check, Done line, card to archive.
+  - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
+    owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
+  - Game Studio owns the state-matrix hover flake ("1366 garden: a head button lights up under the mouse", main run
+    43886203220).
+  - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
 - [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
@@ -145,12 +162,16 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
   YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
   YouTube"; clicking the logo opens youtube.com in a new tab.
+- [ ] 27p. [WG2] Window Garden while a film plays: tap each pot, water, pick a bloom: no button or the
+  window moves. 🎨: try the four window views and pot colours; compost 5 petals into a seed.
 - [ ] 27m. [QZ2a] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
   click, also when the friend answers at the same moment.
 - [ ] 27n. [QZ2b] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
-- [ ] 27o. [GMP-b] With two or more friends (phones and computers): open Sea Battle, the others press "Take the seat"
+- [ ] 27o. [QZ2c] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
+  turn. Try ×2 (Double) and ↺ (Second chance: answer wrong first, then try again). The winner has the most round wins.
+- [ ] 27p. [GMP-b] With two or more friends (phones and computers): open Sea Battle, the others press "Take the seat"
   before the battle. On your turn tap a friend's chip, then fire on their sea; a sunk player is crossed out and only
   watches; at the end the card lists 1st to last. Then the Five Frames Duel with three or more: the race goes on after
   the first one solves, and the end card shows the places.
