@@ -266,7 +266,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   playlist or album link (`/playlist?list=`, `parsePlaylist` + `isPlaylistId` in `media.ts`; mixes `RD…` and `LL` /
   `WL` / `LM` are not lists; `watch?v=…&list=` stays one video) pasted in the link box (or anywhere, `takeLink`) →
   `/api/youtube/playlist?list&hl&page` (`youtubePlaylist`: playlistItems 50 + videos.list = 2 units, usage kind
-  `playlist`, `yt-list1` per list + day; a YouTube 404 = no items) → `addPlaylist` / `queuePlaylistItems` in `room.ts`
+  `playlist`, `yt-list1` per list + day; a YouTube 4xx other than quota = no items) → `addPlaylist` / `queuePlaylistItems` in `room.ts`
   queue the first page in the playlist's order with titles, 300 ms apart, only as many as `QUEUE_MAX_LENGTH` leaves
   room for ("Play now": the first one loads); `playlist.*` texts for empty / quota / failed. Test Lab `queue.playlist`
   (three fixture tracks); harness `scripts/harness/playlist` (endpoint faked, CI `site`); e2e `search.mjs` (input
