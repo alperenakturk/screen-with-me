@@ -87,6 +87,19 @@ const playing = (page) =>
       } catch {}
     }, lang);
     const page = await ctx.newPage();
+    // What went over the room connection (message types, errors in full): printed when a swipe doesn't arrive.
+    const frames = [];
+    const note = (dir, data) => {
+      try {
+        const m = JSON.parse(String(data));
+        frames.push(`${dir}${m.t}${m.t === 'error' ? `:${m.code}` : m.t === 'next' ? `:${m.from}` : m.t === 'state' ? `:${m.state?.item?.media?.id ?? '-'}` : ''}`);
+        if (frames.length > 40) frames.shift();
+      } catch {}
+    };
+    page.on('websocket', (ws) => {
+      ws.on('framesent', (f) => note('→', f.payload));
+      ws.on('framereceived', (f) => note('←', f.payload));
+    });
     await page.goto(`${SITE}/r/sm${Math.random().toString(36).slice(2, 8)}?debug=1`);
     await page.fill('#name', 'Alex');
     await page.click('#name-form button.primary');
@@ -108,7 +121,7 @@ const playing = (page) =>
         }, want, { timeout: 15000 })
         .then(() => true)
         .catch(() => false);
-      check(got, `${label} ${i + 1}/${EXPECT.length}: ${want.kind} ${want.id} plays, in paste order`, JSON.stringify(await playing(page)));
+      check(got, `${label} ${i + 1}/${EXPECT.length}: ${want.kind} ${want.id} plays, in paste order`, got ? JSON.stringify(await playing(page)) : `${JSON.stringify(await playing(page))} · connection: ${frames.join(' ')}`);
       // The ♾ window: its TikTok note only while a TikTok plays.
       if (label === 'computer' && (i === 0 || i === 1)) {
         await page.click('#shorts-feed');
