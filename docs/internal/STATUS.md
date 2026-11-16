@@ -20,6 +20,10 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness): built on
     `claude/sh1-tiktok-small` (harness `shorts-mixed` green locally); PR, CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
+  - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
+    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). Showing the rate and setting `roomState` happen in
+    the same call, so the room's rate itself seems to go back to 1.5 after a quick 1.5 → 1.55. Suspect: a late
+    `ratechange` or a `rate` sent from stale state in `sync-engine.ts`. Find it and add a `sync-engine.test.ts` scenario.
 - [ ] B2 (handoff 16 Nov, 14:50; everything below is on main, no unmerged B2 branch):
   - [x] CI3 built and live (#464, #472, #473, #480, #482): tested-code mark, settle, CI numbering
     (`release-series.txt`, `changelog/next/`, `check-version-edits.mjs`), nightly date sweep, 3 live shards, PR
