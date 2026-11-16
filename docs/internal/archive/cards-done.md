@@ -2345,4 +2345,4 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: quiz server unit tests (scoring, tie rule, typed match), `GameSocket` e2e with 3 players, harness.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 - Done: #458 (0.9.97.142, first-press answers), #463 (0.9.97.145, 587 checked questions, 3 new topics, typed answers,
-  hard bonus), #PR3 (0.9.97.146, Double + Second chance jokers, tournament); Game Studio 2.
+  hard bonus), #466 (0.9.97.146, Double + Second chance jokers, tournament); Game Studio 2.
