@@ -1,0 +1,1 @@
+- Rooms open a little faster: the games window now downloads in the background after the room has loaded (or at your first press of 🎮), not with the room itself.

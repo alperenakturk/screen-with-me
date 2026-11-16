@@ -18,6 +18,8 @@ const assets = join(dist, 'assets');
 // and blocks its first paint on: ≈ 9 kB, so a room rule that drifts back into styles.css shows here.
 // The room page's CSS budget went 37 → 38 with it: two gzipped files instead of one, and phone.css's few home rules are
 // in both files so phone rules still come last on the room page (36.9 → 37.3 kB); the home page gains 31.5 kB.
+// The games window (games/stage.ts) became a lazy chunk (16 Nov 2026): JS 139.1 → 124.8 kB; the budget stays 145, the
+// room has room again for the next features.
 const BUDGET = { js: 145, css: 38, entryCss: 12 };
 
 const gz = (file) => gzipSync(readFileSync(join(assets, file))).length / 1024;

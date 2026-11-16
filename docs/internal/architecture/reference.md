@@ -859,7 +859,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   live-compose; `live.ts` makes it on `ensure()`: someone streams, a hover / focus / touch on Share or Watch, a press,
   a signal; until then "not streaming, not watching"), the TikTok / Vimeo / sync-test players, the sound recipes
   (`@swm/shared/sounds`, loaded on the first press; a sound whose recipes come > 300 ms late is dropped, as before),
-  the shortcuts card and the Shorts search list. First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
+  the shortcuts card and the Shorts search list. **The games window (`games/stage.ts`, budget step after BUD2: room JS
+  139.1 → 124.8 kB):** room.ts makes `games/stage-lazy.ts` `createLazyGameStage`, which loads the real stage on a
+  press of any games button (held, then pressed again once it is there), when the room lists a table, at once when the
+  Test Lab is on or this tab was at a game before a reload (`swm:table:<path>`), else on `whenIdle`; calls before that
+  are replayed in order (`membersChanged` only matters once the hall is drawn, so it is dropped). First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
   windows and the stream engine 4 s after the room starts, when the browser is idle. **Load a lazy chunk with
   `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`:** main.ts handles a failed chunk
   (`vite:preloadError`, one reload "for the new version") and Vite then resolves the import to nothing, and a `.then`
@@ -1047,7 +1051,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `{t:'game', kind}`. A room holds one game at a time (`RoomGame {kind, id, by, at}`, storage `game` + opener's
   persistent key; `welcome.game`, on change `{t:'game', game, by?}`); only the opener or the host changes/ends it
   (`{t:'game', end:true}`), others get `game_busy`. The game id is a fresh `newId()` from the room; the game itself
-  runs in the objects below. Site `games/stage.ts`: the game opens in the video's place as a "game stage"
+  runs in the objects below. Site `games/stage.ts` (a lazy chunk behind `games/stage-lazy.ts`, see Room chunk): the game opens in the video's place as a "game stage"
   (`#game-stage`, child of `.player-wrap`: an island in the shell automatically; at ≤860 px moved to body and
   fullscreen `.full`); opens immediately for the opener, others get an "Ali opened XOX · Join / Later" card
   (`#game-invite`), "▶ Videoya dön" minimizes it (connection stays open, a blinking dot on 🎮), a grey chat line.
