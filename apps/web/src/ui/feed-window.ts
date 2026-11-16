@@ -21,9 +21,9 @@ const TEXT = {
     kinds: 'Which feed',
     now: 'On now: {label}',
     paused: 'Paused: {label}',
-    pause: '⏸ Pause',
+    pause: 'Pause',
     resume: '▶ Resume',
-    stop: 'Stop',
+    stop: '✕ Stop',
     steer: 'Steer it',
     steerNote: 'The queue’s next videos follow your choice; nothing restarts.',
     channel: '📺 Continue from this channel',
@@ -48,8 +48,8 @@ const TEXT = {
     regionWorld: 'World',
     input: 'Words, a video link or a channel’s link / @handle',
     inputHint: 'Words follow a topic; a video link brings videos like it; a channel brings that channel.',
-    placeholderShorts: 'e.g. cats, or @channel',
-    placeholderVideos: 'e.g. cooking, a video link, or @channel',
+    placeholderShorts: 'e.g. cats or @channel',
+    placeholderVideos: 'e.g. cooking or @channel',
     order: 'From a channel',
     newest: 'Newest',
     random: 'Random',
@@ -64,9 +64,9 @@ const TEXT = {
     kinds: 'Hangi akış',
     now: 'Şu an açık: {label}',
     paused: 'Duraklatıldı: {label}',
-    pause: '⏸ Duraklat',
+    pause: 'Duraklat',
     resume: '▶ Sürdür',
-    stop: 'Durdur',
+    stop: '✕ Durdur',
     steer: 'Yönlendir',
     steerNote: 'Sıradaki videolar seçtiğine göre gelir; hiçbir şey baştan başlamaz.',
     channel: '📺 Bu kanaldan devam',
@@ -89,10 +89,10 @@ const TEXT = {
     country2: 'Ülke',
     regionAuto: 'Benim ülkem',
     regionWorld: 'Dünya',
-    input: 'Kelimeler, bir video linki ya da kanal linki / @adı',
+    input: 'Kelimeler, bir video linki ya da kanal linki / @kullanıcı adı',
     inputHint: 'Kelimeler bir konuyu izler; video linki ona benzerleri getirir; kanal o kanalı getirir.',
     placeholderShorts: 'ör. kediler ya da @kanal',
-    placeholderVideos: 'ör. yemek, bir video linki ya da @kanal',
+    placeholderVideos: 'ör. yemek ya da @kanal',
     order: 'Kanaldan',
     newest: 'En yeni',
     random: 'Karışık',
@@ -197,7 +197,8 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
         if (event.key === 'Enter') steerTopic();
       });
       parts.push(
-        el('h4', { class: 'feed-sub' }, tx.steer, el('span', { class: 'muted small' }, ` · ${tx.steerNote}`)),
+        el('h4', { class: 'feed-sub' }, tx.steer),
+        el('p', { class: 'muted small feed-note' }, tx.steerNote),
         row('feed-steer-channel', tx.channel, id ? tx.channelText : tx.noVideo, () => id && opts.feed.start(kind, tx.channelLabel, { kind: 'chanOf', id, ...(running.source.kind === 'channel' || running.source.kind === 'chanOf' ? orderOf(running.source) : {}) }), undefined, !id),
         row('feed-steer-country', tx.country, regional ? tx.countryText : tx.countryNone, () => {
           const region = country.value;
@@ -245,14 +246,16 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
       opts.feed.start(kind, picked.label, picked.source);
       close();
     });
-    parts.push(
-      el('h4', { class: 'feed-sub' }, running ? tx.startOther : tx.start),
+    const starters = [
       info && info.kind !== kind ? el('p', { class: 'muted small' }, tx.switchNote.replace('{other}', tx[other])) : '',
       el('p', { class: 'small feed-discover-title' }, el('b', {}, kind === 'shorts' ? tx.discoverShorts : tx.discoverVideos), ' ', region),
       chips,
       form,
-      el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, el('span', {}, t('yt.from')), ' · ', el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms')))),
-    );
+    ];
+    // While a feed runs, starting another is folded away, so the window fits a phone without scrolling.
+    if (running) parts.push(el('details', { class: 'feed-more', id: 'feed-more' }, el('summary', { class: 'feed-sub' }, tx.startOther), ...starters));
+    else parts.push(el('h4', { class: 'feed-sub' }, tx.start), ...starters);
+    parts.push(el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, el('span', {}, t('yt.from')), ' · ', el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms')))));
     const focused = document.activeElement?.id;
     body.replaceChildren(...parts);
     if (focused) document.getElementById(focused)?.focus();

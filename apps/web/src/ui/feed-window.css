@@ -67,13 +67,25 @@
 
 .feed-sub {
   font-size: 14px;
-  margin-top: 4px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.feed-more > summary {
+  cursor: pointer;
+}
+
+.feed-more[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .feed-row-line {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  margin-bottom: 4px;
 }
 
 .feed-row-main {
@@ -100,8 +112,8 @@
 }
 
 .feed-pools {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -168,7 +180,5 @@ html.phone .feed-window :is(.btn, .feed-pool, .feed-tab, select, input) {
 }
 
 html.phone .feed-pools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }

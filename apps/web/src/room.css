@@ -2382,8 +2382,9 @@ html:not(.shell) .shell-only {
   font-size: 13px;
 }
 
-html.phone .feed-qrow .btn {
+html.phone .feed-qrow :is(.btn, .icon-btn) {
   min-height: 44px;
+  min-width: 44px;
 }
 
 .end-name a {
