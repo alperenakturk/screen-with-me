@@ -1932,8 +1932,21 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   pill, the owner's slogan with its second line in gold, one line, "Create room" (`#start-form`, gold) + "Join with a
   code" (`#join-toggle` → `#join`), the save box (`#start-save` → `#create-name`, `create:<room>`), the continue line
   `#continue` (`lastRoom`, "↺ Continue: name · N inside · Open")) and the art (`.hm-art`, inline SVG: the mascot
-  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and three random themed avatar faces (a phone hides the art's words); `aria-hidden`; the bar
-  runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
+  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and four faces (card TH3: `artFaces()` picks woman / man / woman / man from the
+  neutral pools `ART_WOMEN` = detective, rocker, astronaut and `ART_MEN` = driver, chef, explorer, spy on every load,
+  the first two with the green voice ring; never the culture-tied or costume avatars; text "4 watching · 2 in voice"
+  at x 148) (a phone hides the art's words); `aria-hidden`; the bar runs 6 s, the beam breathes, and the screens'
+  picture `#hm-pic` (the sunset) carries a hot-air balloon (`.hm-move`, `hm-drift`: 6 s, ease-in-out, alternate,
+  ±16 units so the phone's narrow crop shows it; the same spot on all three screens since all three are `<use>` copies
+  on one clock); nothing moves with reduced motion. **Freezing the art (TH3):** `html.hm-frozen` stops the bars at
+  half and the beam; the balloon is inside the `<use>` copies, where a selector on `<html>` doesn't reach, so it stops
+  through the inherited custom property `--hm-drift: none`. Test Lab `home.art` (`registerArtLab` in `home.ts`): the
+  next theme on this page only + the frozen art, Undo puts both back; `scripts/shots.cjs`'s `home` screen sets
+  `hm-frozen`. **Neon home (TH3, Design's `docs/internal/design/home-neon-people.md`):** the last block of `home.css`,
+  every rule under `html.in-home[data-theme='neon']`: tube letters (core `--neon-core` `#ffd3dc` + a coral
+  `text-shadow` halo) on the wordmark and the slogan's second line, an outlined pill, glowing buttons (focus ring 2 px
+  core colour, offset 3 px), coral / amber (tablet) `drop-shadow` frames on the devices (each device group's first
+  `<rect>` is its frame), a coral light cone, faint feature-card edges; static), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
   scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
@@ -2247,17 +2260,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
   - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
   - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
-    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
+    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
+    `snack-special` (waits up to 20 s for `.room.has-item` instead of 8) and the games sweep's Duel race (waits for the
+    table's `data-table` id before Sam's socket joins, and up to 20 s for the race; read too early, the id was
+    undefined and Sam joined no table).
   - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
     extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
     `scripts/release-version.mjs --apply`, numbers the batch: the series in `release-series.txt` (three parts, e.g.
     `0.9.97`; it changes only when the owner moves the third part, and the next release is then `<series>.1`) + the
-    highest tag's fourth part + 1, written into the footer (`apps/web/index.html`) and the extension
+    highest fourth part already used + 1 (CI3c: used = tagged, or recorded as released, or committed on main; the
+    tag job saves a cache `released-<version>` after every green live e2e even when GitHub refuses the tag, as it did
+    for 0.9.97.141, whose commit's workflow files differed from main's; the deploy job lists those records with
+    `actions: read`; the committed footer / extension number is the last per-PR one), written into the footer (`apps/web/index.html`) and the extension
     (`apps/extension/package.json`) of the checkout before the build, never committed, so both always show the same
     number. The `tag` job tags it (`RELEASE_VERSION` → `tag-live.mjs`) only after every live e2e shard passed; a
     failed run makes no tag, and the next run gives the same number again (none burnt). The tag job then publishes a
-    GitHub release `v<version>` whose notes are the `changelog/next/` files added since the previous tag
+    GitHub release `v<version>` (on the tag, or on the run's commit when the tag was refused; if that is refused too,
+    the notes stay in the run's summary) whose notes are the `changelog/next/` files added since the previous tag
     (`scripts/changelog.mjs notes`). Now and then a docs PR runs `node scripts/changelog.mjs fold`: one block per tag
     not yet in `CHANGELOG.md` (newest first, the same text) and the folded files deleted. The PR check
     `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
