@@ -1,0 +1,45 @@
+/* ST1: the stream window's own rules, loaded with its lazy chunk (ui/live-float.ts) to keep room.css in its budget. */
+
+/* ST1: "⛶ Fullscreen": the stream alone in the browser's fullscreen, or (no Fullscreen API) covering the screen. */
+.live-window:fullscreen,
+.live-window.filled {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+/* First look (ST1 review): ✕ read poorly on a bright picture; it gets the same dark backing as the toggle. */
+.live-bar .icon-btn {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.live-window:fullscreen .live-resize,
+.live-window.filled .live-resize {
+  display: none;
+}
+
+.live-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background:
+    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.8) 55% 62%, transparent 62% 72%,
+      rgb(255 255 255 / 0.8) 72% 79%, transparent 79%);
+}
+
+.live-window:hover .live-resize {
+  opacity: 1;
+}
+
+/* ST1: never over a YouTube player in the room's fullscreen; the rail's "📺 Stream" brings it back. */
+.live-window.yt-away {
+  display: none !important;
+}
