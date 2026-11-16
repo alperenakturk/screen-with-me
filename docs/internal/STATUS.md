@@ -24,6 +24,9 @@ One handoff per lane or role; each session updates only its own lines and delete
     Lab hook `feed.state`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
+  - [ ] state-matrix hover check still flaky after its 2 s poll: "1366 garden: a head button lights up under the
+    mouse" failed on main run 43886203220 (#466, quiz-only; GS2's report). Find why the hover style doesn't change
+    (pointer not over the button? a toast over it?) rather than waiting longer; `scripts/harness/state-matrix/run.cjs`.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
