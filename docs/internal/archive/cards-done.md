@@ -2348,6 +2348,20 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
 - Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
 - Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.
+### QZ2. Quiz: more and harder questions, typed answers, a tournament, more jokers (owner, 15 Nov 2026; Game Studio 2)
+- Why: the owner wants more variety and more fun; an answer sometimes needs two clicks.
+- What:
+  - **Fix first:** an answer registers on the first click / tap.
+  - **Questions:** +50 % more questions, new categories, more hard ones; a hard question gives a bigger bonus. Some
+    typed-answer questions (forgiving: case, accents, one small typo). All written by us (no copied question banks).
+  - **Tournament mode:** each player picks a category in turn, everyone answers; the winner has the most round wins,
+    a tie goes to points.
+  - **More jokers** (e.g. 50:50, skip, extra time, double points), few per game. EN + TR (`check-game-text.mjs`).
+- Done when: the above live; the server validates typed answers and jokers; Test Lab hook `quiz.tournament`.
+- Tests: quiz server unit tests (scoring, tie rule, typed match), `GameSocket` e2e with 3 players, harness.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: #458 (first-press answers), #463 (587 checked questions, 3 new topics, typed answers,
+  hard bonus), #466 (Double + Second chance jokers, tournament); Game Studio 2.
 
 ### GW2. Game windows: fullscreen or frame, any time; the frame goes anywhere (owner, 15 Nov 2026; Game Studio, first)
 - Why: the owner meant two modes for every table, ⛶ Fullscreen and a 🪟 Frame; today fullscreen only works in a room

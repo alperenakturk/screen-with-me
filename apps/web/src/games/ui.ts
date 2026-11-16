@@ -78,7 +78,8 @@ export function lobbySplit(intro: readonly (HTMLElement | null | false)[], setup
 }
 
 /** Podium for the top three (1st in the middle and highest). */
-export function podium(players: readonly { name: string; avatar?: Avatar; score: number }[]): HTMLElement {
+/** `label` (QZ2): shown instead of the score (the Quiz tournament: round wins and points; `score` only orders). */
+export function podium(players: readonly { name: string; avatar?: Avatar; score: number; label?: string }[]): HTMLElement {
   const top = [...players].sort((a, b) => b.score - a.score).slice(0, 3);
   // Visual order 2 · 1 · 3.
   const order = [top[1], top[0], top[2]];
@@ -93,7 +94,7 @@ export function podium(players: readonly { name: string; avatar?: Avatar; score:
         { class: `place-${place}` },
         avatarNode(p.avatar, 'game-podium-avatar'),
         el('b', {}, p.name),
-        el('span', { class: 'game-podium-score' }, String(p.score)),
+        el('span', { class: 'game-podium-score' }, p.label ?? String(p.score)),
         el('span', { class: 'game-podium-step', 'aria-label': `${place}.` }, ['🥇', '🥈', '🥉'][place - 1]!),
       );
     }),

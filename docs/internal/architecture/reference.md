@@ -1294,7 +1294,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   ı / İ, punctuation, a leading "the" ignored, a number's minus kept; one typo (Damerau) on non-numeric answers of 5+ letters)
   and keeps it as `said`, sent only in the reveal with the right `answer` (a player's `pick` there is 0 right / 1 wrong).
   Points × `quizLevelBonus` (easy 1, medium 1.2, hard 1.5; typed × 1.3). `QUIZ_PROTOCOL_VERSION` 3. Test Lab
-  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part. Test:
+  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part.
+  **QZ2 jokers and tournament (16 Nov 2026):** jokers `QUIZ_JOKERS` (`{t:'joker', n, kind}`, no kind = 50:50), each kind
+  once a game and one per question (`used`, `jokerAt`); the texts are the chunk's own (`tq`): 50:50 (typed: `typedHint`, first letter + a dot per letter),
+  Double (×2 if right) and Second chance (`armed[key].tried`: a first wrong answer is kept aside, only that player gets
+  `{t:'again', n, wrong?}`, the second try scores half; time up = the first answer stands). Tournament (`mode`, `laps`
+  1 / 2): `pickers` = the players at the start, `rounds` = players × laps; phase `pick` (`quizOffer`: 3 categories,
+  `QUIZ_PICK_MS` 10 s, time up or the picker away = a random one), then `QUIZ_ROUND_QUESTIONS` (3) questions; question
+  numbers run on across rounds (`base()` / `qn()`, so a joker or a 50:50 on one round's question 1 never matches
+  another's); `roundWinners` (best round score, all tied, nobody at 0) add a win; the state's `round`, `rounds`,
+  `picker`, `offer`, `roundWin`, a player's `wins` / `round`; standings `tournamentOrder` (wins, then points; the podium
+  shows `label` "🏆 wins · points", `ui.ts` `podium`). Client: the three jokers are icon buttons in the top bar (full
+  name as aria-label), the pick view is built once per round. Test Lab `quiz.tournament` (the host starts a one-lap
+  tournament; the 🤖 friend picks on its turn). e2e `quiz-tournament.mjs` (3 players, no lab powers). Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their
