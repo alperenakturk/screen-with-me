@@ -6,7 +6,7 @@
 import './garden.css';
 import { gameHint } from './hint.ts';
 import {
-  ALBUM_IDS, GARDEN_DECOR, GARDEN_KEY, VISITORS, buyGardenDecor, seeVisitor, visitorFor, type GardenDecorId, type VisitorId, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
+  ALBUM_IDS, GARDEN_DECOR, GARDEN_VIEWS, POT_COLORS, COMPOST_PETALS, compost, waterAll, type GardenView, type PotColor, GARDEN_KEY, VISITORS, buyGardenDecor, seeVisitor, visitorFor, type GardenDecorId, type VisitorId, HYBRID_COLORS, LAMP_BONUS, PLANT_IDS, POTS, RARITIES, albumId, plantColor, type HybridColor, filmEnded, found, freshGarden, lampFree, lampOn, placeLamp, inBloom, loadGarden, minutesLeft, pick, plant, rarityOf,
   saveGarden, stageOf, tickGarden, water, type GardenSave, type Rarity, canGift, giveCutting, plantGift, receiveCutting, type PlantId,
 } from '@swm/shared/games/garden';
 import type { SoloRoom } from '@swm/shared/games/catalog';
@@ -49,6 +49,32 @@ const GARDEN_DECOR_ART: Record<GardenDecorId, string> = {
   cat: '<g transform="translate(300 146)"><ellipse cx="16" cy="18" rx="17" ry="9" fill="#2b2240"/><circle cx="4" cy="12" r="7" fill="#2b2240"/><path d="M0 7 L1 1 L5 6 M6 6 L9 1 L10 7" fill="#2b2240"/><path d="M1 12 q2 1.5 4 0 M6 12 q2 1.5 4 0" stroke="#ffc65a" stroke-width="1" fill="none"/><path d="M32 20 q8 -2 6 -10" stroke="#2b2240" stroke-width="4" fill="none" stroke-linecap="round"/></g>',
   lantern: '<g transform="translate(20 20)"><line x1="10" y1="0" x2="10" y2="18" stroke="#3a2e57" stroke-width="1.5"/><rect x="2" y="18" width="16" height="22" rx="4" fill="#3a2e57"/><rect x="5" y="22" width="10" height="14" rx="3" fill="#ffc65a" class="wg-lantern-glow"/><circle cx="10" cy="29" r="14" fill="#ffc65a" opacity=".12"/></g>',
 };
+/** WG2 window views: silhouettes on the window's lower part (the sky above keeps its time of day), clipped to the glass;
+ * the window's centre bar is drawn again over them. `lights` = the first scene's own scattered lights. */
+const VIEW_ART: Record<Exclude<GardenView, 'lights'>, string> = {
+  sea:
+    '<path d="M43 98 Q80 94 120 98 T200 97 T297 98 V167 H43 Z" fill="var(--wgv-far)"/>' +
+    '<path d="M43 110 Q70 107 98 111 T154 110 T210 111 T266 109 T297 111" stroke="var(--wgv-line)" stroke-width="1.2" fill="none" opacity=".45"/>' +
+    '<path d="M43 122 Q76 119 110 123 T178 122 T246 123 T297 121" stroke="var(--wgv-line)" stroke-width="1.2" fill="none" opacity=".3"/>' +
+    '<g transform="translate(222 82)"><rect x="0" y="0" width="6" height="15" fill="var(--wgv-near)"/><path d="M-1 0 L3 -5 L7 0 Z" fill="var(--wgv-near)"/><circle cx="3" cy="-1.5" r="1.8" fill="#ffd76a" class="wg-view-blink"/></g>' +
+    '<g transform="translate(118 92)"><path d="M0 0 H14 L12 4 H2 Z" fill="var(--wgv-near)"/><path d="M6 0 V-9 L12 -1 Z" fill="var(--wgv-line)" opacity=".6"/></g>',
+  hills:
+    '<path d="M43 104 Q90 74 140 96 Q190 70 240 92 Q270 82 297 88 V167 H43 Z" fill="var(--wgv-far)"/>' +
+    '<path d="M43 120 Q100 98 160 116 Q220 100 297 112 V167 H43 Z" fill="var(--wgv-near)"/>' +
+    '<g fill="var(--wgv-near)"><path d="M84 102 l4 -10 l4 10 Z"/><path d="M196 98 l4 -9 l4 9 Z"/><path d="M262 94 l3 -8 l3 8 Z"/></g>',
+  city:
+    '<g fill="var(--wgv-far)"><rect x="46" y="92" width="22" height="75"/><rect x="72" y="78" width="16" height="89"/><rect x="92" y="98" width="26" height="69"/><rect x="122" y="70" width="14" height="97"/><rect x="140" y="90" width="24" height="77"/>' +
+    '<rect x="176" y="84" width="18" height="83"/><rect x="198" y="100" width="28" height="67"/><rect x="230" y="74" width="16" height="93"/><rect x="250" y="94" width="22" height="73"/><rect x="276" y="86" width="20" height="81"/></g>' +
+    '<g fill="#ffc65a" opacity=".55">' +
+    [[52, 98], [60, 108], [76, 86], [82, 100], [98, 104], [108, 112], [126, 78], [130, 94], [146, 96], [156, 106], [180, 92], [186, 104], [204, 106], [216, 112], [234, 82], [238, 98], [256, 100], [264, 110], [282, 92], [288, 104]]
+      .map(([x, y]) => `<rect x="${x}" y="${y}" width="3" height="3"/>`)
+      .join('') +
+    '</g>',
+};
+const viewSvg = (): string =>
+  `<svg viewBox="0 0 340 226" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="wg-view-glass"><rect x="43" y="17" width="254" height="150" rx="8"/></clipPath></defs>` +
+  `<g clip-path="url(#wg-view-glass)">${Object.entries(VIEW_ART).map(([id, art]) => `<g data-view="${id}" style="display:none">${art}</g>`).join('')}</g>` +
+  `<line data-view-bar x1="170" y1="14" x2="170" y2="170" stroke="#3a2e57" stroke-width="5" style="stroke:var(--al-3a2e57,#3a2e57);display:none"/></svg>`;
 const VISITOR_ART: Record<VisitorId, string> = {
   moth: '<g class="wg-moth"><path d="M0 0 q-10 -8 -12 2 q4 6 12 0 q10 -8 12 2 q-4 6 -12 0" fill="#e9dcc0"/><ellipse cx="0" cy="1" rx="1.4" ry="4" fill="#8a7a5a"/></g>',
   firefly: '<g class="wg-firefly"><circle r="6" fill="#d8ff7a" opacity=".25"/><circle r="2.2" fill="#e8ff9a"/></g>',
@@ -153,6 +179,20 @@ const TEXT = {
     restart: 'Start over',
     restartAsk: 'Start Window Garden over?',
     restartText: 'Your pots, seeds and album all go back to the start. This cannot be undone.',
+    view: 'Window view',
+    'view.lights': 'Night lights',
+    'view.sea': 'Sea',
+    'view.hills': 'Hills',
+    'view.city': 'City',
+    potColor: 'Pot colour',
+    'pot.clay': 'Clay',
+    'pot.sky': 'Sky',
+    'pot.cream': 'Cream',
+    'pot.sage': 'Sage',
+    compost: 'Compost',
+    compostLine: '{n} petals become a common seed',
+    compostDone: 'The compost gave a seed 🌰',
+    waterAll: '💧 Water all',
   },
   tr: {
     how1Title: 'Tohum ek',
@@ -247,6 +287,20 @@ const TEXT = {
     restart: 'Baştan başla',
     restartAsk: 'Pencere Bahçesi baştan başlasın mı?',
     restartText: 'Saksıların, tohumların ve albümün baştaki haline döner. Bu geri alınamaz.',
+    view: 'Pencere manzarası',
+    'view.lights': 'Gece ışıkları',
+    'view.sea': 'Deniz',
+    'view.hills': 'Tepeler',
+    'view.city': 'Şehir',
+    potColor: 'Saksı rengi',
+    'pot.clay': 'Toprak',
+    'pot.sky': 'Gök',
+    'pot.cream': 'Krem',
+    'pot.sage': 'Adaçayı',
+    compost: 'Kompost',
+    compostLine: '{n} yaprak bir sıradan tohum olur',
+    compostDone: 'Kompost bir tohum verdi 🌰',
+    waterAll: '💧 Hepsini sula',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -318,7 +372,10 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
   // Decorations and visitors live in their own layer, drawn in the scene's own frame (pick 6).
   const decorLayer = el('span', { class: 'wg-decor-layer', 'aria-hidden': 'true' });
   decorLayer.innerHTML = `<svg viewBox="0 0 340 226" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">${GARDEN_DECOR.map((d) => `<g data-decor="${d.id}" style="display:none">${GARDEN_DECOR_ART[d.id]}</g>`).join('')}<g data-visitor style="display:none"></g></svg>`;
-  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, decorLayer, ...pots, rest);
+  // WG2: the window's view, between the scene and the decorations.
+  const viewLayer = el('span', { class: 'wg-view', 'aria-hidden': 'true' });
+  viewLayer.innerHTML = viewSvg();
+  const sceneBox = el('div', { class: 'wg-scene' }, sceneArt, viewLayer, decorLayer, ...pots, rest);
 
   // ---- What the selected pot can do ----
   const actionTitle = el('b', { class: 'wg-action-title' });
@@ -478,8 +535,11 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     const full = p.water >= 0.98;
     // THEMEG: always "💧 Water" (present tense); a full pot shows it as the quiet outlined button, full contrast, with
     // "Full of water" on hover, instead of a faded "Watered" that read as a broken button.
-    const waterButton = actionButton(t('water'), full ? 'full' : 'main', () => {
-      if (!water(garden, selected)) return;
+    // WG2: with more than one pot thirsty the same button waters them all (same place, so nothing moves).
+    const thirsty = garden.pots.filter((x) => x && x.growth < 1 && x.water < THIRSTY).length;
+    const all = !full && thirsty >= 2 && p.water < THIRSTY;
+    const waterButton = actionButton(all ? t('waterAll') : t('water'), full ? 'full' : 'main', () => {
+      if (all ? !waterAll(garden, THIRSTY) : !water(garden, selected)) return;
       playSound('gardenWater');
       persist();
       draw();
@@ -526,6 +586,8 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     box.classList.toggle('wg-idle', !ctx.playing);
     decorButton.title = t('decor');
     decorButton.setAttribute('aria-label', t('decor'));
+    applyView();
+    box.dataset.pots = garden.potColor;
     for (const d of GARDEN_DECOR) {
       const node = decorLayer.querySelector<SVGGElement>(`[data-decor="${d.id}"]`);
       if (node) node.style.display = garden.decor.includes(d.id) ? '' : 'none';
@@ -608,6 +670,40 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       });
       return el('li', { class: 'wg-page-entry found wg-decor-item' }, el('span', { class: 'wg-page-words' }, el('b', {}, t(`decor.${d.id}` as TextKey)), hint ? el('small', {}, hint) : ''), buyButton);
     });
+    // WG2: a view and a pot colour (free), and the compost.
+    const chips = <T extends string>(ids: readonly T[], current: T, label: (id: T) => string, cls: (id: T) => string, setTo: (id: T) => void) =>
+      el(
+        'span',
+        { class: 'wg-chips', role: 'radiogroup' },
+        ...ids.map((id) => {
+          const b = el('button', { type: 'button', class: `wg-chip ${cls(id)}${id === current ? ' on' : ''}`, role: 'radio', 'aria-checked': String(id === current) }, label(id));
+          b.disabled = blocked;
+          b.addEventListener('click', () => {
+            if (id === current) return;
+            setTo(id);
+            playSound('gardenPlant');
+            persist();
+            draw();
+            openDecor();
+          });
+          return b;
+        }),
+      );
+    const viewRow = el('li', { class: 'wg-page-entry found wg-decor-item wg-decor-row' }, el('span', { class: 'wg-page-words' }, el('b', {}, t('view'))), chips(GARDEN_VIEWS, garden.view, (id) => t(`view.${id}` as TextKey), (id) => `wg-chip-view-${id}`, (id) => (garden.view = id)));
+    const potRow = el('li', { class: 'wg-page-entry found wg-decor-item wg-decor-row' }, el('span', { class: 'wg-page-words' }, el('b', {}, t('potColor'))), chips(POT_COLORS, garden.potColor, (id) => t(`pot.${id}` as TextKey), (id) => `wg-swatch wg-swatch-${id}`, (id) => (garden.potColor = id as PotColor)));
+    const compostButton = el('button', { type: 'button', class: 'wg-btn main' }, `🌸 ${COMPOST_PETALS} → 🌰`);
+    compostButton.disabled = blocked || garden.petals < COMPOST_PETALS;
+    compostButton.addEventListener('click', () => {
+      if (!compost(garden)) return;
+      playSound('gardenPlant');
+      flash(t('compostDone'));
+      persist();
+      draw();
+      openDecor();
+    });
+    const compostRow = el('li', { class: 'wg-page-entry found wg-decor-item' }, el('span', { class: 'wg-page-words' }, el('b', {}, t('compost')), el('small', {}, t('compostLine', { n: COMPOST_PETALS }))), compostButton);
+    items.unshift(viewRow, potRow);
+    items.push(compostRow);
     const seen = VISITORS.filter((v) => garden.visitors.includes(v.id)).map((v) => t(`visitor.${v.id}` as TextKey));
     const close = el('button', { type: 'button', class: 'wg-page-close', 'aria-label': t('close'), title: t('close') }, '✕');
     close.addEventListener('click', () => (page.hidden = true));
@@ -665,7 +761,17 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     const moon = sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}moon`);
     if (moon) moon.style.display = sky === 'night' || sky === 'dusk' ? '' : 'none';
     const lights = sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}city-lights`);
-    if (lights) lights.style.display = sky === 'day' ? 'none' : '';
+    if (lights) lights.style.display = sky === 'day' || garden.view !== 'lights' ? 'none' : '';
+  }
+  /** WG2: shows the chosen view (and hides the first scene's scattered lights under another view). */
+  function applyView(): void {
+    if (viewLayer.dataset.view === garden.view) return;
+    viewLayer.dataset.view = garden.view;
+    for (const node of viewLayer.querySelectorAll<SVGGElement>('[data-view]')) node.style.display = node.dataset.view === garden.view ? '' : 'none';
+    const bar = viewLayer.querySelector<SVGLineElement>('[data-view-bar]');
+    if (bar) bar.style.display = garden.view === 'lights' ? 'none' : '';
+    delete sceneBox.dataset.sky;
+    weather();
   }
 
   // ---- One tab at a time (as in Snack Bar) ----
@@ -793,6 +899,20 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
     'windowGarden',
     'windowGarden',
     () => [
+      // WG2 (card hook): petals to try the 🎨 page (views, pot colours, decorations, compost), and the page opens.
+      {
+        id: 'garden.decor',
+        title: { en: 'Window Garden: 20 petals and the 🎨 page', tr: 'Pencere Bahçesi: 20 yaprak ve 🎨 sayfası' },
+        help: { en: 'Adds 20 petals and opens the decorations page: window views, pot colours, decorations and the compost.', tr: '20 yaprak ekler ve süsler sayfasını açar: pencere manzaraları, saksı renkleri, süsler ve kompost.' },
+        tab: 'games',
+        where,
+        run: () => {
+          garden.petals += 20;
+          const out = changed('petals');
+          openDecor();
+          return out;
+        },
+      },
       {
         id: 'garden.grow',
         title: { en: 'Window Garden: grow every pot by half', tr: 'Pencere Bahçesi: her saksı yarı yarıya büyüsün' },

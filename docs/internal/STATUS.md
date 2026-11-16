@@ -130,6 +130,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
   YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
   YouTube"; clicking the logo opens youtube.com in a new tab.
+- [ ] 27l. [WG2, 0.9.97.14x] Window Garden while a film plays: tap each pot, water, pick a bloom: no button or the
+  window moves. 🎨: try the four window views and pot colours; compost 5 petals into a seed.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

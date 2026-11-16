@@ -253,3 +253,46 @@ html.phone #game-stage .wg-seeds { flex: none; overflow: visible; }
    (the garden was 5 px too tall and shrank to 99 %). */
 #game-stage.in-tab .wg { gap: 6px; padding-block: 8px 10px; }
 #game-stage.in-tab .wg-scene { min-height: 0; flex-shrink: 1; }
+
+/* WG2: nothing moves while playing. The pot's card always has the same height: the name on one line, two lines kept
+   for the text (one line or two), and the buttons beside it (a narrow window: always under it). The window sill above
+   takes the space that is left, so the pots stayed put only while the card's text kept its number of lines. */
+.wg-action { flex-wrap: nowrap; }
+.wg-action-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wg-action-text { min-height: calc(2 * 1.3em); }
+.wg-action-buttons { min-height: 40px; }
+.wg-bar, .wg-pill, .wg-seeds { font-variant-numeric: tabular-nums; }
+@container game (max-width: 380px) {
+  #game-stage .wg-action { flex-wrap: wrap; }
+  #game-stage .wg-action-words { flex-basis: 100%; }
+  #game-stage .wg-action-buttons { width: 100%; justify-content: flex-end; }
+}
+
+/* WG2 window views: silhouettes over the sky, tinted by the time of day (the sky itself stays the scene's). */
+.wg-view, .wg-view svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.wg-view { --wgv-far: #1f1942; --wgv-near: #15102d; --wgv-line: #6f86c8; }
+.wg-scene[data-time='dusk'] .wg-view { --wgv-far: #3b2a5e; --wgv-near: #241a40; --wgv-line: #ffb38a; }
+.wg-scene[data-time='dawn'] .wg-view { --wgv-far: #5a4c86; --wgv-near: #3a3164; --wgv-line: #ffd0b0; }
+.wg-scene[data-time='day'] .wg-view { --wgv-far: #5a86bb; --wgv-near: #4a7a62; --wgv-line: #e6f2ff; }
+.wg-idle .wg-view { filter: saturate(0.6) brightness(0.8); }
+.wg-view-blink { animation: wg-glow 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .wg-view-blink { animation: none; } }
+/* WG2 pot colours: the same pots, their clay body and rim recoloured. */
+.wg[data-pots='sky'] .wg-plant [fill='#c46a3a'] { fill: #4f86c6; }
+.wg[data-pots='sky'] .wg-plant [fill='#d98250'] { fill: #74a6dd; }
+.wg[data-pots='cream'] .wg-plant [fill='#c46a3a'] { fill: #d9c7a3; }
+.wg[data-pots='cream'] .wg-plant [fill='#d98250'] { fill: #eee0c2; }
+.wg[data-pots='sage'] .wg-plant [fill='#c46a3a'] { fill: #6f9a7c; }
+.wg[data-pots='sage'] .wg-plant [fill='#d98250'] { fill: #8fb89a; }
+/* The 🎨 page's choices: chips for the view, colour swatches for the pots. */
+.wg-decor-row { flex-wrap: wrap; row-gap: 6px; }
+.wg-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
+.wg-chip { min-height: 32px; padding: 3px 10px; border-radius: 999px; border: 1.5px solid rgba(255, 198, 90, 0.4); background: transparent; color: var(--wg-cream); font-size: 13px; font-weight: 700; }
+.wg-chip.on { border-color: var(--wg-gold); background: rgba(255, 198, 90, 0.18); color: var(--wg-gold); }
+.wg-swatch::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; background: #c46a3a; }
+.wg-swatch-sky::before { background: #4f86c6; }
+.wg-swatch-cream::before { background: #d9c7a3; }
+.wg-swatch-sage::before { background: #6f9a7c; }
+html.phone .wg-chip { min-height: 44px; }
+:root[data-theme='matinee'] .wg-chip { border-color: var(--accent); color: var(--text); }
+:root[data-theme='matinee'] .wg-chip.on { background: rgb(154 53 23 / 0.12); color: var(--accent); }
