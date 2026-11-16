@@ -92,6 +92,42 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
 
+### FD1. Feed start window and Shorts view: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
+- Why: SH2's "♾ Shorts feed / ▶ Video feed" window and the Shorts view are cramped and unclear; things overlap; a
+  Discover chip (Popular, Music …) starts the feed at once, before he has chosen.
+- What (owner's asks):
+  - Choose first, then a clear "Start feed" button; options more detailed and meaningful but simple-looking, not cramped;
+    each control says what it does.
+  - The window opens on the RIGHT side of the screen so the playing Short / video stays visible while he sets it up.
+  - A started feed is seen by everyone; anyone may cancel it and start their own.
+  - Host setting in Room rules: "Only the host can start a feed" (default: everyone can).
+  - Tidy the Shorts view: nothing overlapping, clear labels.
+- Design step: `docs/internal/design/feed-start.md` with 2–3 options (recommended first, a short preview each, computer
+  + phone sketches), sent to the Planner as text. Build only after the owner's pick.
+- Done when: the picked design is live; Test Lab hook `feed.start`; the host rule enforced on the server (protocol
+  optional field) with an e2e; shots at 4 sizes; owner's hand test.
+
+### RC1. The session recap, redesigned: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
+- Why: today's recap (Profile menu, `ui/recap.ts`) is hard to find, looks out of place, and its phone-like story screen
+  with side swipes is not what he wants. He wants something people love and use at the end of a session.
+- What (owner's asks; he is undecided on the flow, so give options):
+  - Findable but not screen-filling. Beautiful backgrounds with our logo, several cute designs; facts get their own
+    background (e.g. "most emojis").
+  - Ideas for getting people to see it at the end of a session although we can't know when they close the tab,
+    without nagging people who already know it.
+  - Flow he leans to: only the host can start it; others send "ask the host to show the recap"; on the host's yes it
+    plays for everyone in the video's place like a newly opened video (Shorts view switches to the normal view), the
+    queue unchanged: a horizontal, windowed, scrolling show (not a phone story), maybe with its own music. Content:
+    when you started, how long you watched, the most-used emoji and who sent it, who talked most, etc.
+  - Session rule: a "day" is a session, not a date. Proposal to check: a session starts after a gap of ≥ 4 h without
+    activity (today's `SESSION_GAP_MS`); the recap can be shown once per session after ≥ 30 min of watching; after it
+    is shown it cannot be shown again in that session; the next session resets it. The design note confirms or
+    improves this rule.
+- Design step: `docs/internal/design/session-recap.md` with 2–3 options for look, entry point and flow (recommended
+  first, short previews), sent to the Planner as text. Build only after the owner's pick.
+- Done when: the picked design is live; Test Lab hook `recap.show`; server rule (once per session) with an e2e;
+  privacy page checked (no new data unless stated); shots at 4 sizes; owner's hand test.
+
 Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 
 ## Proposed
