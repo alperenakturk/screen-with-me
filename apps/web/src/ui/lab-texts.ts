@@ -37,6 +37,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
     help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
   },
+  'shorts.chat': {
+    title: { en: 'Shorts: the chat panel on a computer', tr: 'Shorts: bilgisayardaki sohbet paneli' },
+    help: { en: 'Writes whether 💬 left the chat panel open, whether it shows now, how many messages came in while it was closed, its box and whether it covers the video (it never should) into the log.', tr: '💬 ile sohbet panelinin açık bırakılıp bırakılmadığını, şu an görünüp görünmediğini, kapalıyken kaç mesaj geldiğini, kutusunu ve videoyu örtüp örtmediğini (hiç örtmemeli) kayda yazar.' },
+  },
   'shorts.state': {
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },

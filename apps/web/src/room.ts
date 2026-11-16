@@ -519,9 +519,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <span id="shorts-measure" class="shorts-measure" data-i18n-title="shorts.measureHint" hidden></span>
         </div>
         <div id="seats-r" class="seats seats-r shorts-only"></div>
+        <aside id="shorts-chat-panel" class="shorts-chat-panel card" aria-labelledby="shorts-chat-title" hidden>
+          <div class="shorts-chat-head"><b id="shorts-chat-title" data-i18n="tab.chat"></b><button id="shorts-chat-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
+        </aside>
         <div id="shorts-bar" class="shorts-bar shorts-only">
           <div class="shorts-chat-wrap">
-            <button id="shorts-chat-btn" type="button" class="btn small-btn rail-only" aria-expanded="false" data-i18n-title="shorts.chatHint">💬</button>
+            <button id="shorts-chat-btn" type="button" class="btn small-btn rail-only" aria-expanded="false" aria-controls="shorts-chat-panel" data-i18n-title="shorts.chatHint">💬<span id="shorts-chat-badge" class="badge" hidden></span></button>
             <form id="shorts-chat" class="shorts-chat">
               <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button class="btn primary" data-i18n="send"></button>
@@ -1036,10 +1039,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   }
   /** İlk girişte açılacak sekme seçildi mi (önce sekmeler varsayılan sohbetle kurulur; o hatırlanmaz). */
   let tabChosen = false;
+  /** Card SH3: the chat tab's panel is lent to the Shorts view's chat panel (it stays shown there whatever the tab). */
+  let chatLent = false;
   const tabs = createTabs(
     app,
     (tab, chatShown) => {
-      chat.setVisible(chatShown);
+      if (chatLent) app.querySelector<HTMLElement>('[data-panel="chat"]')!.hidden = false;
+      chat.setVisible(chatShown || chatLent);
     // Aynı sekmede yenileyince kalınan sekme korunur.
       if (tabChosen) sessionSave(`tab:${roomId}`, tab);
     },
@@ -2795,6 +2801,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       roomEl.classList.toggle('shorts', shortsOn);
       document.documentElement.classList.toggle('shorts-view', shortsOn);
       if (!shortsOn) document.documentElement.classList.remove('topbar-peek');
+      drawShortsPanel();
     };
     // Görünümler arasında yumuşak geçiş (tarayıcı destekliyorsa): video yerinden süzülerek büyür/küçülür.
     // Sayfa çizilmiyorsa (arka plandaki sekme) geçiş hiç başlamayabilir: en geç 0,6 sn'de yine değişir.
@@ -2928,19 +2935,93 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   };
   $('#shorts-exit').addEventListener('click', () => setShortsOff(true));
   $('#shorts-enter').addEventListener('click', () => setShortsOff(false));
-  // ---- Shorts rail (0.9.92.2, owner chose C): on wide screens the bar is a column right of the video, so the message
-  // box is a small window opened by 💬 (or Enter), and on short screens the top bar folds away (⋯ brings it back). ----
-  const shortsChatWrap = $('.shorts-chat-wrap');
-  function setShortsChat(open: boolean): void {
-    shortsChatWrap.classList.toggle('open', open);
-    $('#shorts-chat-btn').setAttribute('aria-expanded', String(open));
-    if (open) $('#shorts-input').focus();
+  // ---- Shorts rail (0.9.92.2, owner chose C): on wide screens the bar is a column right of the video, and on short
+  // screens the top bar folds away (⋯ brings it back). ----
+  // Card SH3: there 💬 (or Enter) opens the room's chat as a panel right of the Shorts view, in the free space beside
+  // the right seats: the side panel's own chat (list, box, 😀 and pictures), lent and put back, never over the video.
+  // Open / closed is kept per room; while closed 💬 counts the messages that came in. Narrow windows keep the message
+  // box in the bottom bar, phones their 💬 sheet (PH1).
+  const chatTabPanel = $('[data-panel="chat"]');
+  const shortsPanel = $('#shorts-chat-panel');
+  const shortsChatBtn = $('#shorts-chat-btn');
+  const shortsBadge = $('#shorts-chat-badge');
+  const wideShorts = matchMedia('(min-width: 861px)');
+  let shortsPanelOpen = load(`shortsChat:${roomId}`) === '1';
+  let chatHome: { parent: Node; next: Node | null } | null = null;
+  let shortsUnread = 0;
+  const panelFits = () => shortsOn && wideShorts.matches && !document.documentElement.classList.contains('ph-room');
+  const panelShown = () => shortsPanelOpen && panelFits();
+  function drawShortsPanel(): void {
+    const show = panelShown();
+    roomEl.classList.toggle('shorts-chat-open', show);
+    shortsPanel.hidden = !show;
+    shortsChatBtn.setAttribute('aria-expanded', String(show));
+    if (show && !chatHome) {
+      chatHome = { parent: chatTabPanel.parentNode!, next: chatTabPanel.nextSibling };
+      chatLent = true;
+      shortsPanel.append(chatTabPanel);
+      chatTabPanel.hidden = false;
+      chat.setVisible(true);
+    } else if (!show && chatHome) {
+      chatHome.parent.insertBefore(chatTabPanel, chatHome.next);
+      chatHome = null;
+      chatLent = false;
+      tabs.refresh();
+    }
+    if (show) shortsUnread = 0;
+    shortsBadge.hidden = shortsUnread === 0;
+    shortsBadge.textContent = shortsUnread > 9 ? '9+' : String(shortsUnread);
   }
-  $('#shorts-chat-btn').addEventListener('click', () => setShortsChat(!shortsChatWrap.classList.contains('open')));
-  $('#shorts-input').addEventListener('keydown', (event) => {
-    if (event.key !== 'Escape') return;
+  function setShortsChat(open: boolean): void {
+    if (!panelFits()) {
+      if (open) $('#shorts-input').focus();
+      return;
+    }
+    shortsPanelOpen = open;
+    save(`shortsChat:${roomId}`, open ? '1' : '0');
+    drawShortsPanel();
+    if (open) $('#chat-input').focus();
+  }
+  shortsChatBtn.addEventListener('click', () => setShortsChat(!panelShown()));
+  $('#shorts-chat-close').addEventListener('click', () => {
     setShortsChat(false);
-    $('#shorts-input').blur();
+    shortsChatBtn.focus();
+  });
+  wideShorts.addEventListener('change', drawShortsPanel);
+  // A message from someone else while the panel is closed: 💬 shows the count (a full redraw adds many lines at once
+  // and is not counted, as on the phone).
+  new MutationObserver((records) => {
+    if (!shortsOn || panelShown() || records.length !== 1 || records[0]!.addedNodes.length !== 1) return;
+    const line = records[0]!.addedNodes[0];
+    if (!(line instanceof HTMLElement) || !line.classList.contains('chat-line') || line.classList.contains('me')) return;
+    shortsUnread++;
+    drawShortsPanel();
+  }).observe($('#chat-list'), { childList: true });
+  debugHooks.register('shorts-chat', () => ({
+    commands: [
+      {
+        id: 'shorts.chat',
+        tab: 'status',
+        run: () => {
+          const box = (node: Element | null) => {
+            const r = node?.getBoundingClientRect();
+            return r && r.width ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) } : null;
+          };
+          const panel = box(shortsPanel);
+          const player = box($('.player-wrap'));
+          return JSON.stringify({
+            open: shortsPanelOpen,
+            shown: panelShown(),
+            unread: shortsUnread,
+            panel,
+            overPlayer: !!panel && !!player && panel.x < player.x + player.w && panel.x + panel.w > player.x && panel.y < player.y + player.h && panel.y + panel.h > player.y,
+          });
+        },
+      },
+    ],
+  }));
+  $('#shorts-input').addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') $('#shorts-input').blur();
   });
   const rootEl = document.documentElement;
   const foldedTop = matchMedia('(min-width: 861px) and (max-height: 899px)');
@@ -2952,7 +3033,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   document.addEventListener('pointerdown', (event) => {
     const target = event.target as Element | null;
     if (!target) return;
-    if (shortsChatWrap.classList.contains('open') && !shortsChatWrap.contains(target)) setShortsChat(false);
     if (rootEl.classList.contains('topbar-peek') && !target.closest('.topbar, #shorts-more, .profile-pop, .dialog-backdrop, .recap-backdrop, dialog')) {
       peekTop(false);
     }
@@ -2967,7 +3047,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // A window opened from the rail (emojis, add, feed, games, the message box) stays on screen: it opens right of the
   // rail and slides back in when the window is too small for it.
   const shortsBar = $('#shorts-bar');
-  const RAIL_POPS = '.react-tray, .shorts-feed-pop, .game-menu, #shorts-chat';
+  const RAIL_POPS = '.react-tray, .shorts-feed-pop, .game-menu';
   let fitting = 0;
   const fitRailPops = () => {
     cancelAnimationFrame(fitting);

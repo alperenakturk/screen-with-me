@@ -1,7 +1,7 @@
 // The Shorts rail (0.9.92.2, owner chose C): on wide screens the Shorts bar is a column right of the video and the
 // top bar folds on screens under 900 px tall; phones have their own slim bar (phone harness). Checks at laptop, monitor, big and short
 // screens: the page never scrolls, the rail sits right of the video and fits beside it, ⋯ shows only when the top bar
-// is folded and brings it back, Enter / 💬 open the message box; on a phone the phone bar stays under the video.
+// is folded and brings it back, Enter / 💬 open the chat panel (SH3); on a phone the phone bar stays under the video.
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-rail/run.cjs [site]
 const { viaYouTube } = require('../via-youtube.cjs');
@@ -84,9 +84,10 @@ const box = (page, sel) =>
     await page.keyboard.press('Enter');
     await page.waitForTimeout(200);
     const typing = await page.evaluate(() => document.activeElement?.id);
-    const chat = await box(page, '#shorts-chat');
-    check(typing === 'shorts-input' && chat.x >= video.r && chat.r <= width, `${name}: Enter opens the message box beside the rail`, { typing, chat });
-    await page.keyboard.press('Escape');
+    // Card SH3: Enter (or 💬) opens the room's chat as a panel right of the rail; ✕ closes it.
+    const chat = await box(page, '#shorts-chat-panel');
+    check(typing === 'chat-input' && chat.x >= bar.r && chat.r <= width, `${name}: Enter opens the chat panel beside the rail`, { typing, chat });
+    await page.click('#shorts-chat-close');
     await page.click('#shorts-feed');
     await page.waitForSelector('#feed-window');
     await page.waitForTimeout(300);
