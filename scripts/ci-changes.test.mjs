@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { decide, lastGoodSha } from './ci-changes.mjs';
+import { codeTreeKey, decide, hasTested, lastGoodSha, testedKey } from './ci-changes.mjs';
 
 const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), 'ci-changes.mjs');
 
@@ -32,6 +32,12 @@ test('lastGoodSha skips this run, cancelled / failed runs and PR runs', () => {
   assert.equal(lastGoodSha(runs.slice(0, 4), 9), null);
 });
 
+/** The old two outputs, as the tests before CI3 read them. */
+const run = async (dir, env, runs) => {
+  const o = await outputs(dir, env, runs);
+  return `code=${o.code}\nweb=${o.web}\n`;
+};
+
 /** A repo with A (deployed), B (code, its run cancelled), C (docs only, this run). */
 function repo() {
   const dir = mkdtempSync(join(tmpdir(), 'ci-changes-'));
@@ -52,11 +58,15 @@ function repo() {
   return { dir, a, b, c };
 }
 
-function run(dir, env, runs) {
+/** Runs ci-changes.mjs against a fake API; answers its outputs as an object (`code`, `web`, `tree`, `proven`). */
+function outputs(dir, env, runs, caches = []) {
   return new Promise((resolve, reject) => {
     const server = createServer((req, res) => {
       res.setHeader('content-type', 'application/json');
-      res.end(JSON.stringify({ workflow_runs: runs }));
+      if (req.url.includes('/actions/caches')) {
+        const key = new URL(req.url, 'http://x').searchParams.get('key');
+        res.end(JSON.stringify({ actions_caches: caches.filter((c) => c.key.startsWith(key)) }));
+      } else res.end(JSON.stringify({ workflow_runs: runs }));
     }).listen(0, () => {
       const out = join(dir, 'out.txt');
       writeFileSync(out, '');
@@ -67,7 +77,7 @@ function run(dir, env, runs) {
       }, (error) => {
         server.close();
         if (error) reject(error);
-        else resolve(readFileSync(out, 'utf8'));
+        else resolve(Object.fromEntries(readFileSync(out, 'utf8').trim().split('\n').map((l) => l.split('='))));
       });
     });
   });
@@ -99,4 +109,40 @@ test('main: no successful run yet, or a manual run: everything', async () => {
 test('pull request: only its own change (first parent .. HEAD)', async () => {
   const { dir } = repo();
   assert.equal(await run(dir, { EVENT: 'pull_request' }, []), 'code=false\nweb=false\n');
+});
+
+test('codeTreeKey: the code files only; a docs change keeps the key, a code change moves it', () => {
+  const ls = (doc, code) => [
+    `100644 blob ${doc}\tdocs/internal/STATUS.md`,
+    `100644 blob ${doc}\tREADME.md`,
+    `100644 blob ${code}\tapps/web/src/room.ts`,
+  ].join('\n');
+  assert.equal(codeTreeKey(ls('a1', 'c1')), codeTreeKey(ls('a2', 'c1')));
+  assert.notEqual(codeTreeKey(ls('a1', 'c1')), codeTreeKey(ls('a1', 'c2')));
+  assert.match(codeTreeKey(ls('a1', 'c1')), /^[0-9a-f]{40}$/);
+});
+
+test('hasTested: the exact key only (the API matches by prefix)', () => {
+  assert.equal(hasTested([{ key: testedKey('ab') }], 'ab'), true);
+  assert.equal(hasTested([{ key: testedKey('abc') }], 'ab'), false);
+  assert.equal(hasTested([], 'ab'), false);
+});
+
+test('main: the code a green PR run tested (its cache exists) is proven; any other code is not', async () => {
+  const { dir, a, b } = repo();
+  const runs = [{ id: 1, head_branch: 'main', event: 'push', status: 'completed', conclusion: 'success', head_sha: a }];
+  const tree = (await outputs(dir, { EVENT: 'push' }, runs)).tree;
+  const hit = await outputs(dir, { EVENT: 'push' }, runs, [{ key: testedKey(tree), ref: 'refs/pull/7/merge' }]);
+  assert.deepEqual(hit, { code: 'true', web: 'false', tree, proven: 'true' });
+  const miss = await outputs(dir, { EVENT: 'push' }, runs, [{ key: testedKey('0'.repeat(40)), ref: 'refs/pull/8/merge' }]);
+  assert.equal(miss.proven, 'false', 'a combination no PR tested: main runs the PR test jobs');
+  void b;
+});
+
+test('pull request and manual runs never count as proven', async () => {
+  const { dir } = repo();
+  const tree = (await outputs(dir, { EVENT: 'pull_request' }, [])).tree;
+  const caches = [{ key: testedKey(tree) }];
+  assert.equal((await outputs(dir, { EVENT: 'pull_request' }, [], caches)).proven, 'false');
+  assert.equal((await outputs(dir, { EVENT: 'workflow_dispatch' }, [], caches)).proven, 'false');
 });

@@ -37,6 +37,8 @@ jobs:
     outputs:
       code: ${{ steps.diff.outputs.code }}
       web: ${{ steps.diff.outputs.web }}
+      tree: ${{ steps.diff.outputs.tree }}
+      proven: ${{ steps.diff.outputs.proven }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -117,10 +119,12 @@ jobs:
         run: node scripts/size-budget.mjs
 
   # CI diet (a), owner's pick: on main the PR already ran the local suite on the same code, so a push to main runs only
-  # `checks` before the deploy; the full e2e still runs against live after it.
+  # `checks` before the deploy; the full e2e still runs against live after it. Card CI3: only when main's code is exactly
+  # what a green PR run tested (`proven`); a combination no PR tested (two PRs merged without updating) runs every PR
+  # test job here before the deploy.
   e2e:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -168,7 +172,7 @@ jobs:
   # The site's browser harnesses, only when the site, the shared code, the harnesses or the workflows changed.
   site:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -276,7 +280,7 @@ jobs:
   # tablet layouts with a game window beside the chat.
   games:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -312,7 +316,7 @@ jobs:
   # video, the tablets, Snack Bar and motion. Same gate as `games`; the two stay about equal.
   games-more:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -383,7 +387,7 @@ jobs:
   # Card QA1: the game windows' own job (game-proportions alone took 6.5 of games-more's 12.5 min).
   game-windows:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -407,7 +411,7 @@ jobs:
   # every head button does something; a real mouse (hover, drag, resize) in a real window under xvfb.
   state-matrix:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -430,7 +434,7 @@ jobs:
   # Card QA1: the theme contrast check is its own job (5.5 of the site job's 12 min; the site job was the longest).
   contrast:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -454,7 +458,7 @@ jobs:
   # it, the server's limits apply), a computer in English and a phone in Turkish. The 🎮 tab is Game Studio's.
   lab-sweep:
     needs: changes
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push' && needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -493,6 +497,21 @@ jobs:
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
           done
+
+      # Card CI3 (release train): every test job passed on this PR, so this exact code is tested. A tiny cache named
+      # after the code's fingerprint (ci-changes.mjs `tree`: every code file, docs left out) tells main's run so; main
+      # skips the PR test jobs only when it finds its own fingerprint here (`proven`).
+      - name: Remember the tested code
+        if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
+        env:
+          TREE: ${{ needs.changes.outputs.tree }}
+        run: mkdir -p .tested && echo "$TREE" > .tested/tree
+      - name: Save the tested code's mark
+        if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .tested
+          key: tested-code-${{ needs.changes.outputs.tree }}
 
   # Deploy to live: only on main and only if the tests passed. Cloudflare keys are in the repo's
   # Secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID); without them the job warns and skips.

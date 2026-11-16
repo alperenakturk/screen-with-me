@@ -78,3 +78,18 @@ test('tag: only contents: write + actions: read, never workflows; the catch-up s
     assert.doesNotMatch(job.block, /workflows: write/, `${name} must not get workflow rights`);
   }
 });
+
+test('CI3: on main the PR test jobs are skipped only for code a green PR run tested, and a green PR marks its code', () => {
+  for (const job of ['e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep']) {
+    const c = cond(job);
+    assert.match(c, /\(github\.event_name != 'push' \|\| needs\.changes\.outputs\.proven != 'true'\)/, `${job}: runs on main unless proven`);
+    assert.doesNotMatch(c, /github\.event_name != 'push' &&/, `${job}: no plain "PR only" left`);
+  }
+  assert.match(all.changes.block, /proven: \$\{\{ steps\.diff\.outputs\.proven \}\}/);
+  assert.match(all.changes.block, /tree: \$\{\{ steps\.diff\.outputs\.tree \}\}/);
+  assert.match(all.changes.block, /actions: read/, 'listing the caches');
+  const save = all.test.block;
+  assert.match(save, /actions\/cache\/save@[0-9a-f]{40}/, 'a pinned save');
+  assert.match(save, /key: tested-code-\$\{\{ needs\.changes\.outputs\.tree \}\}/);
+  assert.match(save, /if: github\.event_name == 'pull_request' && needs\.changes\.outputs\.code == 'true'/, 'only a PR marks its code');
+});
