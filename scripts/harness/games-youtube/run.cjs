@@ -61,13 +61,22 @@ const where = (page) =>
     const full = await where(page);
     check(full.shown && full.mode === 'max' && full.game[0] <= 0 && full.game[1] <= 0 && full.game[2] >= viewport.width - 1 && full.game[3] >= viewport.height - 1, `${label} classics: a table opens in ⛶, filling the screen`, full);
     // GP1 (Planner, 16 Nov 2026: never open a frame whose text is below 11 px): the strip beside the player is too narrow
-    // for a readable table on a computer (≈ 350 px at 1366, ≈ 430 px at 1920), so asking for 🪟 keeps the table in ⛶,
-    // without 🪟 in its head, unless the screen has room for it under the player.
+    // for a readable table on a computer (≈ 350 px at 1366, ≈ 430 px at 1920), so with no spot of mine the frame mode
+    // keeps the table in ⛶ (or under the player when the screen has room there). 🪟 stays in the head (owner: both modes
+    // always): pressing it opens the frame at the right edge at a readable size, over part of the player (my choice).
     const asked = JSON.parse(await page.evaluate(() => window.__swmLab.run('games.mode', 'frame').then((l) => l.text.slice(l.text.indexOf('{')))));
     await wait(700);
     const kept = await where(page);
-    const noSwitch = await page.evaluate(() => !!document.querySelector('#game-stage .game-mode')?.hidden);
-    check(asked.forced ? kept.mode === 'max' && noSwitch : kept.mode === 'below' && !kept.overlap, `${label} classics: no readable 🪟 frame beside the player: ⛶ stays (no 🪟) or the table goes under the player`, { asked, kept, noSwitch });
+    const switchShown = await page.evaluate(() => !document.querySelector('#game-stage .game-mode')?.hidden);
+    check((asked.forced ? kept.mode === 'max' : kept.mode === 'below' && !kept.overlap) && switchShown, `${label} classics: no readable frame beside the player: ⛶ (or under it), 🪟 still in the head`, { asked, kept, switchShown });
+    if (kept.mode === 'max') {
+      await page.evaluate(() => document.querySelector('#game-stage .game-mode').click());
+      await until(async () => (await where(page)).mode === 'float');
+      await wait(700);
+      const chosen = await where(page);
+      check(chosen.mode === 'float' && chosen.onScreen && chosen.game[2] >= 0.85 * 540, `${label} classics: 🪟 opens the frame at a readable size (over the player is fine: I chose it)`, chosen);
+      await page.evaluate(() => localStorage.removeItem('gameFloat:at:classics'));
+    }
     for (const kind of ['classics', 'sea']) {
       if (kind === 'sea') {
         await page.evaluate(() => window.__swmLab.run('games.open.sea'));

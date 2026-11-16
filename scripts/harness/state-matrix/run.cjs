@@ -220,6 +220,9 @@ async function runState(browser, kinds, size, video, side) {
         // GW2 (Planner's pick A): in ⛶ the table fills the whole screen with the video paused, so the YouTube player is
         // not on the screen at all (nothing of ours sits over a player you can see).
         if (m.mode === 'max') check(m.box[0] <= 0 && m.box[1] <= 0 && m.box[2] >= m.vw - 1 && m.box[3] >= m.vh - 1, `${label}: ⛶ fills the screen`, { game: m.box, screen: [m.vw, m.vh] });
+        // GP1 (owner via the Planner, 16 Nov 2026; CLAUDE.md §7): a table's 🪟 pressed over YouTube where no readable frame
+        // fits beside the player opens at the right edge at a readable size, over part of the player: the user chose it.
+        else if (m.youtube && place === 'mode-float' && !SOLO.includes(kind) && m.overPlayer) check(m.box[2] >= 380 && m.box[3] >= 380, `${label}: 🪟 over YouTube (my choice) opens at a readable size`, { game: m.box });
         else if (m.youtube) check(!m.overPlayer, `${label}: nothing over the YouTube player`, { game: m.box, player: m.player });
         // GW2: a table's frame starts at the right edge at a readable size and may cover part of a video file there (never
         // a YouTube player); the rule below is the side games'.

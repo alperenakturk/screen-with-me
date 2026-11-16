@@ -189,7 +189,15 @@ export function createGameStage(opts: StageOptions) {
   const moreButton = headButton('⋯', 'game-more');
   // GW2: ⛶ full screen / 🪟 frame (tables on a computer or tablet).
   const modeButton = headButton('⛶', 'game-mode');
-  modeButton.node.addEventListener('click', () => setTableMode(tableMode() === 'full' ? 'frame' : 'full'));
+  modeButton.node.addEventListener('click', () => {
+    // GP1 (owner via the Planner, 16 Nov 2026: both modes always there): 🪟 pressed where no readable frame fits beside a
+    // YouTube player opens the frame at the right edge at its readable size, over part of the player: I chose it
+    // (CLAUDE.md §7), so `place` saves it as a spot of mine (a double click on the head forgets it: ⛶ again).
+    const toFrame = mode === 'max';
+    frameAsked = toFrame;
+    setTableMode(toFrame ? 'frame' : 'full');
+    frameAsked = false;
+  });
   const morePop = el('div', { class: 'live-menu game-more-pop', role: 'menu' });
   morePop.hidden = true;
   // Placement switch: free window / in the video's place (narrow screens: below / large).
@@ -253,8 +261,10 @@ export function createGameStage(opts: StageOptions) {
   const cinemaOn = () => document.documentElement.classList.contains('cinema-on');
   /** The placement in use now. */
   let mode: Place | 'below' | 'full' | 'max' = 'stage';
-  /** GP1: no readable frame fits beside the YouTube player (nor under it): the table plays in ⛶ and has no 🪟. */
+  /** GP1: no readable frame fits beside the YouTube player (nor under it): the table opens in ⛶ (🪟 then puts it over the player). */
   let frameForced = false;
+  /** GP1: 🪟 was just pressed (a forced ⛶ becomes a frame of mine at the right edge). */
+  let frameAsked = false;
   /**
    * Card YTG (the YouTube audit): YouTube's rules allow nothing of ours in front of its player. On a computer, while the
    * room's item is YouTube, a game never sits on the player: "in the video's place" acts as the free window, and the free
@@ -294,7 +304,8 @@ export function createGameStage(opts: StageOptions) {
     const tableHere = !!current && !narrow.matches && !shortsView();
     // GP1 (Planner, 16 Nov 2026: "never open a frame whose text is below 11 px"): a table's frame starting beside a
     // YouTube player gets only the strip beside it (≈ 350 px on a laptop, its text ≈ 7 px). Where no readable frame fits
-    // there it opens under the player when the screen has room for it there, else in ⛶ (`frameForced`: no 🪟 then).
+    // there it opens under the player when the screen has room for it there, else in ⛶ (`frameForced`; 🪟 in its head
+    // then opens the frame at a readable size over part of the player, as my own choice).
     frameForced = false;
     let tableBelow = false;
     if (tableHere && tableMode() === 'frame' && youtube && !inFullscreen() && kind && !readPair(spotKey(kind))) {
@@ -305,6 +316,13 @@ export function createGameStage(opts: StageOptions) {
         const under = theater.getBoundingClientRect().bottom;
         tableBelow = innerHeight - under - 2 * EDGE >= h * READ_ZOOM && innerWidth - 2 * EDGE >= w * READ_ZOOM;
         frameForced = !tableBelow;
+        if (frameForced && frameAsked) {
+          frameForced = false;
+          spotFor = kind;
+          spot = { ...SPOT_HOME };
+          side = null;
+          saveSpot();
+        }
       }
     }
     if (tableHere) mode = tableMode() === 'full' || frameForced ? 'max' : tableBelow ? 'below' : 'float';
@@ -334,7 +352,7 @@ export function createGameStage(opts: StageOptions) {
       tableChangedAt = Date.now();
     }
     syncFullscreen();
-    modeButton.node.hidden = !tableHere || frameForced;
+    modeButton.node.hidden = !tableHere;
     const toFrame = mode === 'max';
     (modeButton.node.firstElementChild as HTMLElement).textContent = toFrame ? '🪟' : '⛶';
     modeButton.label(t(toFrame ? 'game.toFrame' : 'game.toFull'));
@@ -1484,7 +1502,7 @@ export function createGameStage(opts: StageOptions) {
     table: () => !!current,
     reset: resetFloat,
     autoPause,
-    modeShown: () => !modeButton.node.hidden || frameForced,
+    modeShown: () => !modeButton.node.hidden,
     setMode: (arg) => {
       if (arg === 'full' || arg === 'frame') setTableMode(arg);
       else if (!arg) setTableMode(tableMode() === 'full' ? 'frame' : 'full');
