@@ -2330,7 +2330,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   shots reviewed (QA1); contrast check green.
 - Tests: `scripts/shots.cjs` home at 4 sizes, every theme; the contrast job.
 - Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026); the screens: pending his pick.
-- Done: 0.9.97.143, PR on branch claude/home-neon-people (Developer A2, 16 Nov 2026).
+- Done: #462 (Developer A2, 16 Nov 2026).
 
 ### ST1. Watching a screen share: one button, fullscreen or a free window (owner, 15 Nov 2026; B2)
 - Why: the stream viewer has too many confusing controls (fill the screen, frame, shrink, grow).

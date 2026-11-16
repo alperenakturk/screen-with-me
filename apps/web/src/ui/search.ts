@@ -3,6 +3,7 @@ import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { loadChunk } from './lazy.ts';
+import { ytLogo } from './yt-logo.ts';
 
 export type AddMode = 'enqueue' | 'load';
 
@@ -69,10 +70,13 @@ export function createSearch(
     head.append(x);
     return head;
   }
-  /** Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. */
+  /**
+   * Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. YTQ1
+   * (owner, 15 Nov 2026; YouTube Branding Guidelines): the YouTube logo beside them, linking to YouTube.
+   */
   function attribution(): HTMLElement {
     const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
-    return el('p', { class: 'yt-attrib small' }, `${t('yt.from')} · `, terms);
+    return el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, `${t('yt.from')} · `, terms));
   }
   let lastQuery = '';
 

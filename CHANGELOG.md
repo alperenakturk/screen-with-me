@@ -16,13 +16,16 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.143 — 16 Nov
+### 0.9.97.141 — 15 Nov
 
-- 🏠 **The home page:** the Neon theme now really glows: the name, the slogan, the buttons and the three devices
-  are lit like neon tubes on a dark wall, calm and still. In every theme four people watch under the devices, two
-  women and two men, and the line says "4 watching · 2 in voice". A small red-and-gold hot-air balloon drifts across
-  the sunset, at the same spot on the laptop, the tablet and the phone at every moment (it stays still if your device
-  asks for less motion).
+- A room's chat now keeps its last 1000 messages until the room is deleted (it was only the last 50, so older
+  messages seemed to vanish). People who join get the newest messages; "Show earlier messages" or scrolling up brings
+  older ones back. A busy room's activity lines no longer push messages out of the chat.
+
+### 0.9.97.140 — 15 Nov
+
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
+  from YouTube" (light or dark to match the theme); it links to YouTube.
 
 ### 0.9.97.139 — 15 Nov
 
