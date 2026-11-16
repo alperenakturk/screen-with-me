@@ -105,6 +105,8 @@ const playing = (page) =>
     await page.click('#name-form button.primary');
     await page.waitForSelector('.room');
     await phoneReady(page);
+    // The room's live connection must be open first: a link sent before it opens is dropped (CI run 43917530748).
+    await page.waitForSelector('.room-title-dot[data-status="open"]', { state: 'attached', timeout: 20000 });
     if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
     await page.fill('#media-input', PASTE);
     await page.click('#media-form button[value=load]');
