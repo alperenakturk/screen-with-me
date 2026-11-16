@@ -12810,3 +12810,7 @@ html.upright-turned body {
   transform: scale(var(--up-s));
   transform-origin: top center;
 }
+
+/* MSG1: a deleted message's line; the ⋯ stays out of sight until ui/chat-menu.css (lazy) styles it. */
+.chat-deleted{margin:2px 0;font-size:12.5px;font-style:italic;color:var(--muted);text-align:center}
+.chat-more{opacity:0}

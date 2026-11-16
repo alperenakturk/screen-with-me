@@ -1,0 +1,11 @@
+/* Card MSG1: the chat message menu (⋯ / long press), a lazy stylesheet (the room page's CSS budget), loaded
+   when the chat starts. room.css keeps only `.chat-more{opacity:0}` so the ⋯ never shows unstyled. */
+.chat-more{flex:none;align-self:center;width:28px;height:28px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);font:inherit;font-size:18px;line-height:1;cursor:pointer}
+.chat-line:hover .chat-more,.menu-open .chat-more,.chat-more:focus-visible{opacity:1}
+.chat-more:hover,.menu-open .chat-more{background:var(--surface-2)}
+.chat-more:focus-visible{outline:2px solid var(--accent)}
+.chat-menu{position:fixed;z-index:1000;min-width:190px;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:0 8px 24px #0004}
+.chat-menu[hidden]{display:none}
+.chat-menu-item{display:block;width:100%;min-height:36px;padding:6px 12px;border:0;border-radius:7px;background:none;color:var(--chrome-text);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.chat-menu-item:hover,.chat-menu-item:focus-visible{background:var(--surface-2)}
+.chat-menu-item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}

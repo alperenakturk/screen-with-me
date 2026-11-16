@@ -17,6 +17,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Chat: how much is loaded and whether older pages are offered', tr: 'Sohbet: ne kadarı yüklü ve eski sayfalar sunuluyor mu' },
     help: { en: 'Writes how many chat messages and room-activity lines this tab holds and the older page the room offers (null: everything is here) into the log.', tr: 'Bu sekmede kaç sohbet mesajı ve oda hareketi satırı olduğunu ve odanın sunduğu eski sayfayı (null: hepsi burada) kayda yazar.', },
   },
+  'chat.delete': {
+    title: { en: 'Chat: delete my newest message for everyone', tr: 'Sohbet: en yeni mesajımı herkesten sil' },
+    help: { en: 'Deletes your newest message without asking (as "🗑 Delete for everyone" does) and writes which one and how many lines read "deleted" here into the log.', tr: 'En yeni mesajını sormadan siler ("🗑 Herkesten sil" gibi) ve hangisini sildiğini ve burada kaç satırın "sildi" dediğini kayda yazar.' },
+  },
   'endcard.show': {
     title: { en: 'Show the "Video ended" card', tr: '"Video bitti" kartını göster' },
     help: { en: 'Opens the card people see when a video ends and the next one does not start by itself (a sample title; "Start next" only closes it). Run it again to read what is showing.', tr: 'Bir video bitince ve sıradaki kendiliğinden başlamayınca görünen kartı açar (örnek başlık; "Sıradakini başlat" yalnızca kapatır). Yeniden çalıştırınca açık olanı yazar.', },

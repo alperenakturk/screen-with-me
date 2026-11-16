@@ -13,6 +13,7 @@
     "./media": "./src/media.ts",
     "./vimeo-search": "./src/vimeo-search.ts",
     "./chat-store": "./src/chat-store.ts",
+    "./chat-delete": "./src/chat-delete.ts",
     "./embed": "./src/embed.ts",
     "./shell": "./src/shell.ts",
     "./level-meter": "./src/level-meter.ts",
