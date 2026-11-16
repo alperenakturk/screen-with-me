@@ -101,6 +101,8 @@ const en = {
   'game.menuTitle': 'Start a game in the room',
   'game.change': 'Other game',
   'game.minimize': 'Back to video',
+  'game.toFull': 'Full screen',
+  'game.toFrame': 'Frame',
   'game.pausedForGame': 'Video paused for the game',
   'game.besideYoutube': 'YouTube doesn’t allow anything over its video, so the game keeps beside it. Drag it by this bar; double-click to put it back.',
   'game.back': 'Back to the game',

@@ -1037,11 +1037,42 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   **Game window head and free window (lane W, bugs W1–W5 + 0.9.97.112, owner 10 Nov 2026):** the head is (placement
   switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
-  slot (`.game-head-slot`: "?" How to play, Classics' shelf). No game has its own full screen (card GW's ⛶ and `.game-max`
-  were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
-  (`placeOf`, owner 10 Nov 2026):** the tables always play in the video's place, without a switch (`STAGE_READY`, on
-  since card .113; over YouTube, `overYoutube` / YTG, the free window beside the player); the side games always play in
-  the free window, without a switch on a computer (narrow screens keep their below / large pick, `gamePlace:<kind>`).
+  slot (`.game-head-slot`: "?" How to play, Classics' shelf), and for tables ⛶ / 🪟 (GW2, below). A side game's free
+  window lives inside the video's fullscreen while there is one. **Where a game plays
+  (`placeOf`, owner 10 Nov 2026):** the side games always play in the free window, without a switch on a computer
+  (narrow screens keep their below / large pick, `gamePlace:<kind>`). **GW2 (owner, 15 Nov 2026; Planner's pick A):** a
+  table on a computer or tablet plays in **⛶ full screen** (mode `max`: `#game-stage` asks for the browser's own full
+  screen, `requestFullscreen`; refused (an iframe, iOS Safari) `.game-stage.max` is fixed and `100dvh`, filling the
+  browser window) or in its **🪟 frame** (the free window), switched any time with the head's `.game-mode` button
+  (`setTableMode`); the mode used last is remembered for every table (`gameMode`: `full` | `frame`, `full` the first
+  time). ⛶ pauses the room's video (`autoPause`, with or without YouTube: the player is off the screen, so nothing of ours
+  sits over it) and leaving it (🪟, Esc, the browser's own exit, ✕, Leave) plays it again if it paused it (`pausedForFull`,
+  `room.ts` `playVideo`). In ⛶ the game keeps its shape and scales to the screen like it did in the video's place
+  (`refit`). A table's frame starts at the right edge at its own size grown with the screen (`SPOT_HOME`; `homeBox` is
+  the side games'), may cover part of a video file there, keeps beside a YouTube player (under it, `below`, when nothing
+  fits), and a frame smaller than the table's own size scales the table's own layout down. **A frame I moved or sized
+  myself goes anywhere, over a YouTube player too** (CLAUDE.md §7's one exception: `clearOfPlayer` and the strip-beside
+  size limit only apply to its home). Narrow screens and PH2's Games tab keep their placements (⛶ there is the tab).
+  Lab: `games.mode` (`full` / `frame` / flip; writes the mode, `realFullscreen`, `pausedForFull`, the box). Harnesses:
+  `state-matrix` (both modes in every state), `games-youtube`, `game-proportions` (⛶ rows = the old video's place).
+  **GP1 (owner, 15 Nov 2026: "Classics stutters while opening"):** opening the hall (`setHub(true)` → `warmSolo`) loads
+  the side games' chunks and then the tables' chunks one after another (match, sea, duel, quiz, draw, poker), so a card
+  picked from the hall draws at once; Snack Bar's art is inline SVG in its chunk (no late images). `markOpened` records
+  the time from the click (`openTable` / `openSolo`) to the first frame with the game (Lab `games.openTime`). Measured on
+  a laptop: every game 40–110 ms; at CPU 4× with 150 ms latency, Classics and Snack Bar 230–320 ms. The game window's
+  Lab commands (`gameWindow.*`, `games.mode`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
+  (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
+  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
+  **A table's frame never starts unreadable beside YouTube** (Planner, 16 Nov 2026: no frame with text under 11 px):
+  without a spot of mine, a frame that would get less than `READ_ZOOM` (0.85) of the table's size in the strip beside
+  the player opens under the player when the screen has room for it there (`below`), else in ⛶ with no 🪟 in its head
+  (`frameForced`; on a computer's usual screens the strip is ≈ 350–430 px, so ⛶). A frame I placed before (its spot
+  saved) still opens there and may sit over the player; a double click forgets the spot (⛶ again). Side games keep their
+  own homes and, once dragged, may go over the video too. Lab `games.mode` also writes `forced`.
+  Connect Four's column highlight follows a mouse only. Five Frames has a compact tier for windows under 430 px tall (a
+  sideways tablet's side-game window, catalog `fit` 388 px), so it keeps 13 px text instead of being scaled down.
+  Harness `game-open` (CI games-more): every game opens with one click, Classics and Snack Bar in ≤ 300 ms, and on a touch
+  tablet real taps open the hall, the Classics table, Connect Four, seat Stub and drop a disc, each on the first tap.
   The free window's **home** (`homeBox`): with the side panel showing, the window lines up with it (its top and right
   edge, down to just above `#chat-form`, at least the game's `minSize` wide, never over the video box itself), so no
   sliver of chat shows and the message box stays free (0.9.97.117, Game Studio's review); otherwise the column right of the theater, under the top bar, over the side panel,
