@@ -34,7 +34,7 @@ const TEXT = {
   en: {
     daily: 'Word of the day #{n}',
     lobbyTitle: 'Five Frames Duel',
-    lobbyRules: 'The same word for everyone at the table (2 to 6), seven tries each. You see the others’ marks, never their letters; the first to find the word wins.',
+    lobbyRules: 'One word for 2 to 6 players, seven tries each. You see their marks, never their letters; first to find it wins.',
     lobbyLang: 'Word language',
     lobbyGames: 'Games',
     oneGame: 'One game',
@@ -113,7 +113,7 @@ const TEXT = {
   tr: {
     daily: 'Günün kelimesi #{n}',
     lobbyTitle: 'Beş Kare Düellosu',
-    lobbyRules: 'Masadaki herkese (2–6 kişi) aynı kelime, herkese yedi hak. Diğerlerinin işaretlerini görürsün, harflerini asla; kelimeyi önce bulan kazanır.',
+    lobbyRules: '2–6 kişiye aynı kelime, herkese yedi hak. İşaretleri görürsün, harfleri asla; önce bulan kazanır.',
     lobbyLang: 'Kelime dili',
     lobbyGames: 'Oyun',
     oneGame: 'Tek oyun',
