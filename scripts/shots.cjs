@@ -93,6 +93,8 @@ const SCREENS = {
   // Cinema mode (card 14) is the room's only way to hide the side panel. Computers only: a phone's room is one column
   // and a touch-only tablet doesn't offer it (it needs a mouse for its edges).
   'room-cinema': { what: 'Room playing a video in cinema mode (#side-toggle: the side panel hides, the video fills the page)', room: true, video: true, sizes: ['laptop', 'desktop'], after: (p) => p.evaluate(() => document.querySelector('#side-toggle')?.click()) },
+  // Card EC1: the "Video ended" dialog (autoNext off, a video just ended), opened through the Test Lab over a video file.
+  'end-card': { what: 'The "Video ended / ▶ Play next / Close" dialog after a video ended (the next one does not start by itself)', room: true, video: true, lab: 'endcard.show', after: () => wait(600), keepLab: false },
   // Card UI2: the rail's ⋯ with its one "⏩ Speed" row opened into the speed picker (computers: the rail opens at the
   // video's right edge).
   'rail-speed': {
@@ -168,6 +170,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/public\/terms/, ['terms']],
   [/^apps\/web\/public\/extension|^apps\/extension\//, ['extension']],
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
+  [/^apps\/web\/src\/ui\/end-card/, ['end-card']],
   [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],

@@ -76,7 +76,7 @@ import { createSeats } from './ui/seats.ts';
 import { createShortsFeed } from './ui/shorts-feed.ts';
 import { createFeedRow } from './ui/feed-row.ts';
 import { createPins } from './ui/pins.ts';
-import { showNextCard } from './ui/end-card.ts';
+import { closeNextCard, showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
@@ -1893,6 +1893,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
     // Video değişti: eskisini kapat, yenisini aç.
     currentItemId = itemId;
+    // Card EC1: a "Video ended" dialog left open closes once the room moves on (someone else started the next one).
+    closeNextCard();
     renderShorts();
     if (state.item && isShortItem(state.item)) {
       // Shorts'tan Shorts'a: yeni video aşağıdan (daha önce oynayansa yukarıdan) kayarak gelir.
