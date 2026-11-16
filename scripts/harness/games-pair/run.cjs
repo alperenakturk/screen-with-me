@@ -3,7 +3,8 @@
 // the two; then Sam reloads mid-game (he is back in his seat with the same board / fleet / cards), and Sam's network
 // drops for 8 s (the browser goes offline and back): the table carries on and both still see each other's moves. Quiz
 // and Draw & Guess get the same drop. No page reloads while offline, and a lazy chunk asked for while offline works once
-// the browser is back online (BH13-G). No page errors anywhere.
+// the browser is back online (BH13-G). No page errors anywhere. GMP: Robin (a 360×640 phone) joins Sea Battle and the
+// Duel as a watcher and sees both fleets and both boards' letters live; the players never do.
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-pair/run.cjs [site]
 //   BOARDS=dama,chess limits the Classics boards; TABLES=sea,poker,quiz,draw the other tables; OFFLINE_CHUNK=1 adds
@@ -36,8 +37,8 @@ async function until(fn, ms = 8000) {
   return null;
 }
 
-async function person(browser, room, name, avatar) {
-  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+async function person(browser, room, name, avatar, viewport = { width: 1366, height: 768 }) {
+  const ctx = await browser.newContext({ viewport });
   await ctx.addInitScript(([name, avatar]) => {
     for (const [k, v] of Object.entries({ lang: 'en', name, avatar, 'opt:autoInvite': '0', tipsSeen: '1', 'opt:leaveWarn': '1' })) localStorage.setItem(k, v);
     for (const k of ['sea:howSeen', 'duel:howSeen', 'quiz:howSeen', 'draw:howSeen', 'poker:howSeen', 'classics:xox:howSeen', 'classics:four:howSeen', 'classics:dama:howSeen', 'classics:chess:howSeen', 'classics:backgammon:howSeen', 'classics:reversi:howSeen']) localStorage.setItem(k, '1');
@@ -51,6 +52,33 @@ async function person(browser, room, name, avatar) {
   await wait(1500);
   return { ctx, page, errors, name };
 }
+const PHONE = { width: 360, height: 640 };
+const SHOTS = path.join(__dirname, '.shots');
+/** Robin comes in later on a small phone and joins the full table from the games hall (🎮 · Join): a watcher. */
+async function watcher(browser, room, sel) {
+  const robin = await person(browser, room, 'Robin', 'robot', PHONE);
+  await robin.page.evaluate(() => document.getElementById('game-btn')?.click());
+  await until(() => robin.page.evaluate(() => !!document.querySelector('.hub-table .btn.primary')));
+  await robin.page.evaluate(() => document.querySelector('.hub-table .btn.primary')?.click());
+  await until(() => robin.page.evaluate((sel) => !!document.querySelector(`#game-stage ${sel}`), sel));
+  return robin;
+}
+/** Screenshot for the eye (GMP watcher look), and no scrollbars or overflow in the game stage. */
+async function look(p, label) {
+  require('fs').mkdirSync(SHOTS, { recursive: true });
+  await p.page.screenshot({ path: path.join(SHOTS, `${label}.png`) }).catch(() => {});
+  return p.page.evaluate(() => {
+    const st = document.getElementById('game-stage');
+    const out = [];
+    for (const e of st?.querySelectorAll('*') ?? []) {
+      const cs = getComputedStyle(e);
+      if (/(auto|scroll)/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 2 && !e.closest('.chat, .duel-mini-list')) out.push(`${e.className} scrolls`);
+    }
+    return out;
+  });
+}
+/** A lab command's JSON answer (its log line starts with ▶). */
+const labJson = async (page, id) => { const t = await run(page, id); return JSON.parse(t.slice(t.indexOf('{'))); };
 const run = (page, id) => page.evaluate((id) => window.__swmLab.run(id).then((l) => l.text), id);
 
 /** Sam presses Join on Alex's invite card. */
@@ -227,6 +255,21 @@ async function sea(browser) {
   let shots = 0;
   for (let i = 0; i < 3; i++) if (await shoot()) (shots++, await wait(500));
   check(shots >= 2, `sea: the two take shots (${shots} of 3)`);
+  // GMP: a watcher sees both fleets live; Alex still sees only his own.
+  const robin = await watcher(browser, room, '.sea');
+  const seen = (p) => p.page.evaluate(() => [...document.querySelectorAll('#game-stage .sea-grid')].map((g) => g.querySelectorAll('.sea-cell.ship').length));
+  const robinSeas = await until(async () => { const n = await seen(robin); return n.length === 2 && n.every((x) => x >= 15) ? n : null; });
+  check(!!robinSeas, 'sea: Robin (watching) sees both fleets live', JSON.stringify(await seen(robin)));
+  const robinState = await labJson(robin.page, 'seaBattle.state');
+  check(robinState.seat === -1 && robinState.seasWithShips === 2, "sea: the lab hook says Robin watches and both seas show ships", JSON.stringify(robinState));
+  const alexState = await labJson(alex.page, 'seaBattle.state');
+  check(alexState.seasWithShips === 1 && alexState.watchers.includes('Robin'), "sea: Alex gets only his own fleet and sees Robin watching", JSON.stringify(alexState));
+  const robinView = await robin.page.evaluate(() => document.querySelector('#game-stage .sea')?.dataset.view);
+  check(robinView === (robinState.turn === 0 ? 'theirs' : 'mine'), "sea: Robin's phone shows the sea being shot at", `turn ${robinState.turn}, view ${robinView}`);
+  const seaFit = await look(robin, 'sea-watcher-360x640');
+  check(!seaFit.length, 'sea: the watcher view fits a 360×640 phone', seaFit.join('; '));
+  await look(alex, 'sea-player-laptop');
+  await robin.ctx.close();
   const fleetBefore = await fleet(sam);
   const marksBefore = await marks(sam);
   await sam.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
@@ -274,6 +317,21 @@ async function duel(browser) {
   }
   check(!!(await until(async () => (await theirRows(alex)) === 2)), "duel: Alex sees two rows of Sam's marks");
   check(!(await alex.page.evaluate(() => /SLATE|PIOUS/i.test(document.querySelector('#game-stage .duel-mini')?.parentElement?.textContent ?? ''))), "duel: … without Sam's letters");
+  // GMP: a watcher sees both boards with their letters live; the players still see only marks.
+  const robin = await watcher(browser, room, '.duel');
+  const letters = (p) => p.page.evaluate(() => document.querySelector('#game-stage .duel')?.textContent ?? '');
+  check(!!(await until(async () => /slate/i.test(await letters(robin)) && /pious/i.test(await letters(robin)))), "duel: Robin (watching) sees Sam's words live");
+  const duelState = await labJson(robin.page, 'duel.state');
+  check(duelState.seat === -1 && duelState.boardsWithLetters >= 1, 'duel: the lab hook says Robin watches and sees letters', JSON.stringify(duelState));
+  const duelAlex = await labJson(alex.page, 'duel.state');
+  check(duelAlex.boardsWithLetters === 0 && duelAlex.watchers.includes('Robin'), "duel: Alex gets no one's letters and sees Robin watching", JSON.stringify(duelAlex));
+  const cell = await robin.page.evaluate(() => { const c = document.querySelector('#game-stage .duel-mark.hit, #game-stage .duel-mark.near, #game-stage .duel-mark.miss'); const r = c?.getBoundingClientRect(); return r ? { h: r.height, font: parseFloat(getComputedStyle(c).fontSize), text: c.textContent } : null; });
+  check(!!cell && cell.h >= 20 && cell.font >= 12 && !!cell.text, "duel: on Robin's phone the letters are readable on the boards", JSON.stringify(cell));
+  const score = await robin.page.evaluate(() => { const e = document.querySelector('#game-stage .duel-score'); return e ? { cut: e.scrollWidth > e.clientWidth + 1, text: e.textContent } : null; });
+  check(!!score && !score.cut, "duel: on Robin's phone the score is whole", JSON.stringify(score));
+  const duelFit = await look(robin, 'duel-watcher-360x640');
+  check(!duelFit.length, 'duel: the watcher view fits a 360×640 phone', duelFit.join('; '));
+  await robin.ctx.close();
   const before = await myRows(sam);
   await sam.page.reload({ waitUntil: 'domcontentloaded' }).catch(() => {});
   check(await backAtTable(sam, '.duel'), 'duel: after a reload Sam is back at the table');

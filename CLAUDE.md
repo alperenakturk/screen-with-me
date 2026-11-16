@@ -25,7 +25,7 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 | What | Where |
 |---|---|
 | Where we are, owner's hand tests, owner's to-dos and decisions, "Ideas waiting for the owner's pick", task queue | `docs/internal/STATUS.md` |
-| Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` |
+| Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` (+ `cards-games.md`, `cards-proposed.md`) |
 | What to work on now / next / frozen, milestone gates, plan to 1.0 | `docs/internal/ROADMAP.md` "Focus" and "Milestone gates to 1.0" |
 | What each release changed (user-facing, one block per release) | `CHANGELOG.md` |
 | How every feature works: files, messages, constants, keys, tests | `docs/internal/architecture/reference.md` (to be split into area files) |
@@ -183,8 +183,8 @@ Each line names its section in `docs/internal/architecture/reference.md` ("ref: 
   of its own (only the overlay iframe and the "Start watching" card); never redirects anyone without asking; no own
   ad-block list, `window.open` wrapper or ad skipping; no film re-broadcasting (`tabCapture`). ref: Extension rules,
   Shell, Resilience to ads, Streaming.
-- **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality). ref: Shorts view, One
-  remote; archive 0.9.97.74 (`overYoutube`).
+- **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality), except a game frame the user
+  drags there himself (owner, 15 Nov 2026, card GW2). ref: Shorts view, One remote; archive 0.9.97.74 (`overYoutube`).
 - **DRM is never bypassed.** ref: §10 Known limits.
 - **Lazy chunks:** load with `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`; a
   chunk that gates privacy (the IP notice) fails closed. ref: Room chunk.

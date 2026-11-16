@@ -63,9 +63,9 @@ Texts (`TEXT.en` / `TEXT.tr` in `home.ts`):
 
 The phone layout hides the texts already, and the faces row stays.
 
-## 3. The device screens: ideas (owner's pick)
+## 3. The device screens: the owner picked A, sunset + hot-air balloon (15 Nov 2026)
 All screens are the same `#hm-pic` symbol in all three devices.
-- **Today's sunset stays until the owner picks.**
+- **The owner picked A** (the balloon), so lane A builds it.
 - **Each idea has one small moving part on the progress bars' 6 s clock.** All three screens show it at the same spot
   at the same time: the art's "same moment" made visible.
 - With `prefers-reduced-motion`, the moving part stays still in the middle.
@@ -74,7 +74,7 @@ All screens are the same `#hm-pic` symbol in all three devices.
 See `screens-options.jpg`. Text for the Planner's question:
 
 **Q. What should the three screens on the home page show?**
-- **A (recommended): today's sunset + a hot-air balloon.**
+- **A (recommended, picked by the owner 15 Nov 2026): today's sunset + a hot-air balloon.** Lane A builds `SCREENS.balloon`.
   - Preview: the same orange sky, sun and purple hills; a small red-and-gold balloon drifts slowly across.
   - It is at the same point on the laptop, the tablet and the phone at every moment.
   - It keeps what the owner likes and shows the product's point.

@@ -284,3 +284,12 @@ export function parseSeaMessage(raw: string): SeaClientMessage | null {
       return null;
   }
 }
+
+/**
+ * GMP (owner, 15 Nov 2026): who sees the ships of seat `side`. A player sees only their own; a watcher (said hello, no
+ * seat) sees every ship live; everyone sees all once the game is over. `viewer` is the viewer's seat (-1 = none).
+ */
+export function seaShipsVisible(viewer: number, side: number, watcher: boolean, over: boolean): boolean {
+  if (over || viewer === side) return true;
+  return viewer < 0 && watcher;
+}
