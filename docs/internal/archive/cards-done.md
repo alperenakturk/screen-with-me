@@ -2339,5 +2339,5 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Done when: no button moves while playing (a layout-shift check); the additions live; Test Lab hook `garden.decor`.
 - Tests: the window-garden harness with a layout-shift measure; shots.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
-- Done: #PRWG (Game Studio 2): the pot's card keeps one height (nothing moves; harness `garden-steady`), window views,
+- Done: #467 (Game Studio 2): the pot's card keeps one height (nothing moves; harness `garden-steady`), window views,
   pot colours, compost, Water all; Test Lab `garden.decor`.
