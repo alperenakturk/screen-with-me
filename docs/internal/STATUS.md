@@ -227,6 +227,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - **Film page intro** (play the room intro on the film page or not; Planner recommends not): decided right before the store
   submission, not now (owner, 17 Nov 2026).
 - **After 1.0:** a Firefox extension (L), a TURN relay (Phase 2). Not planned: a Safari extension, Opera's own store.
+- **TV (owner, 17 Nov 2026):** all three, in this order: short term a TV-browser mode joined with a short code
+  (after 1.0 for now, maybe earlier), medium term Google Cast / Google TV (one-time developer fee), long term an Android
+  TV app. Cards are written when the first one is due.
 
 ## Ideas waiting for the owner's pick
 Claude's and the sessions' ideas that came up mid-task (`CLAUDE.md` §4: never built without a card). The full list
@@ -234,7 +237,7 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
 - **Invite with the film time:** the invite window also offers "invite with the film time" when one is set (agreed for
   0.9.95, not built yet).
 - **More players without the extension:** Vimeo + podcasts first (Planner's proposal; card under Proposed in `CARDS.md`).
-- **A TV can keep the host role:** fix with the Google Cast TV version after 1.0 (ROADMAP Phase 2).
+- **A TV can keep the host role:** fix with the TV work above (Google Cast step).
 - **A link pasted while the room is still connecting:** it is dropped without a note (`connection.send` drops while
   the socket is not open); queue it until open or show "still connecting" (lane A, 16 Nov).
 - **Screenshot on failure for the feed harness:** `scripts/harness/feed/run.cjs` failed once on main (the friend's
