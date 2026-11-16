@@ -118,7 +118,7 @@ html.phone .wg-scene { min-height: 260px; }
 /* The album page (picks 7 + 10). */
 .wg-page {
   position: absolute; inset: 8px; z-index: 4; display: flex; flex-direction: column; gap: 8px; padding: 14px; box-sizing: border-box;
-  border-radius: 12px; background: rgba(20, 16, 43, 0.97); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 10px 30px #000a;
+  border-radius: 12px; background: #14102b; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 10px 30px #000a;
 }
 .wg-page[hidden] { display: none; }
 .wg-page h3 { margin: 0; font-size: 18px; padding-right: 36px; }
@@ -278,21 +278,24 @@ html.phone #game-stage .wg-seeds { flex: none; overflow: visible; }
 .wg-view-blink { animation: wg-glow 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .wg-view-blink { animation: none; } }
 /* WG2 pot colours: the same pots, their clay body and rim recoloured. */
-.wg[data-pots='sky'] .wg-plant [fill='#c46a3a'] { fill: #4f86c6; }
-.wg[data-pots='sky'] .wg-plant [fill='#d98250'] { fill: #74a6dd; }
+.wg[data-pots='sky'] .wg-plant [fill='#c46a3a'] { fill: #8cc0f0; }
+.wg[data-pots='sky'] .wg-plant [fill='#d98250'] { fill: #b9dbfa; }
 .wg[data-pots='cream'] .wg-plant [fill='#c46a3a'] { fill: #d9c7a3; }
 .wg[data-pots='cream'] .wg-plant [fill='#d98250'] { fill: #eee0c2; }
-.wg[data-pots='sage'] .wg-plant [fill='#c46a3a'] { fill: #6f9a7c; }
-.wg[data-pots='sage'] .wg-plant [fill='#d98250'] { fill: #8fb89a; }
+.wg[data-pots='sage'] .wg-plant [fill='#c46a3a'] { fill: #9ccaa8; }
+.wg[data-pots='sage'] .wg-plant [fill='#d98250'] { fill: #c2e3c9; }
+/* A recoloured pot keeps a thin dark edge, so it stands out against any view. */
+.wg:not([data-pots='clay']) .wg-plant :is([fill='#c46a3a'], [fill='#d98250']) { stroke: rgb(10 8 24 / 0.55); stroke-width: 1; }
 /* The 🎨 page's choices: chips for the view, colour swatches for the pots. */
 .wg-decor-row { flex-wrap: wrap; row-gap: 6px; }
+.wg-decor-item small { white-space: normal; }
 .wg-chips { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }
 .wg-chip { min-height: 32px; padding: 3px 10px; border-radius: 999px; border: 1.5px solid rgba(255, 198, 90, 0.4); background: transparent; color: var(--wg-cream); font-size: 13px; font-weight: 700; }
 .wg-chip.on { border-color: var(--wg-gold); background: rgba(255, 198, 90, 0.18); color: var(--wg-gold); }
 .wg-swatch::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 3px; vertical-align: -1px; background: #c46a3a; }
-.wg-swatch-sky::before { background: #4f86c6; }
+.wg-swatch-sky::before { background: #8cc0f0; }
 .wg-swatch-cream::before { background: #d9c7a3; }
-.wg-swatch-sage::before { background: #6f9a7c; }
+.wg-swatch-sage::before { background: #9ccaa8; }
 html.phone .wg-chip { min-height: 44px; }
 :root[data-theme='matinee'] .wg-chip { border-color: var(--accent); color: var(--text); }
 :root[data-theme='matinee'] .wg-chip.on { background: rgb(154 53 23 / 0.12); color: var(--accent); }
