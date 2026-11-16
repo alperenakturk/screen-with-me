@@ -2285,7 +2285,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
     `snack-special` (waits up to 20 s for `.room.has-item` instead of 8) and the games sweep's Duel race (waits for the
     table's `data-table` id before Sam's socket joins, and up to 20 s for the race; read too early, the id was
-    undefined and Sam joined no table).
+    undefined and Sam joined no table). The state matrix's first page waits for the room's live connection and for the games' Test Lab commands
+    (registered by the lazily loaded `lab-tools.ts`), and a game that does not open is tried for 8 s and reported with
+    the lab's answer: on a slow runner the first cell's six tables all "did not open" (16 Nov 2026, run 43855473075).
   - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
     extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,

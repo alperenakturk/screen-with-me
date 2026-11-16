@@ -124,15 +124,28 @@ async function newPage(browser, size) {
   page.on('pageerror', (e) => check(false, `${size}: no page error`, e.message.slice(0, 160)));
   await page.goto(`${SITE}/r/sm${Math.random().toString(36).slice(2, 8)}?debug=1#back`);
   await page.waitForFunction(() => !!window.__swmLab && !!document.querySelector('#media-input'), null, { timeout: 25000 });
+  // CI3: the room's live connection open before any table (a table needs it, a side game doesn't).
+  await page.waitForSelector('.room-title-dot[data-status="open"]', { state: 'attached', timeout: 25000 }).catch(() => {});
+  // CI3: the games' lab commands come with a lazy chunk (stage.ts loads lab-tools.ts); on a slow runner's first page
+  // they were not registered yet ("no command games.open.xox"), and every table "did not open".
+  await page.waitForFunction(() => window.__swmLab.list().some((c) => c.id === 'games.open.xox'), null, { timeout: 25000 }).catch(() => {});
   // The lab's own drawer and 🐞 stay out of the way (they are not what a person sees).
   await page.addStyleTag({ content: '#debug-panel-root { display: none !important; }' });
   await wait(1200);
   return { ctx, page };
 }
-const lab = (page, id) => page.evaluate((id) => window.__swmLab.run(id).then((l) => l.dir, (e) => String(e)), id);
+const lab = (page, id) => page.evaluate((id) => window.__swmLab.run(id).then((l) => ({ dir: l.dir, text: l.text }), (e) => ({ dir: 'error', text: String(e) })), id);
+/** The lab's last answer when a game would not open (shown with the failed check). */
+let notOpened = '';
 async function openGame(page, kind) {
-  const dir = await lab(page, `games.open.${kind}`);
-  if (dir !== 'lab') return false;
+  // CI3: retry for a few seconds before calling it broken (the room may still be connecting), and keep the answer.
+  let answer = await lab(page, `games.open.${kind}`);
+  for (let i = 0; answer.dir !== 'lab' && i < 16; i++) {
+    await wait(500);
+    answer = await lab(page, `games.open.${kind}`);
+  }
+  notOpened = answer.dir === 'lab' ? '' : `${answer.dir}: ${answer.text}`;
+  if (answer.dir !== 'lab') return false;
   await page.waitForFunction(() => {
     const b = document.querySelector('#game-stage .game-stage-body');
     return b && !b.querySelector('.game-stage-loading, .mt-loading') && b.childElementCount > 0;
@@ -196,7 +209,7 @@ async function runState(browser, kinds, size, video, side) {
     }
     for (const kind of kinds) {
       if (!(await openGame(page, kind))) {
-        check(false, `${where} ${kind}: opens`);
+        check(false, `${where} ${kind}: opens`, notOpened);
         continue;
       }
       const places = await placesOf(page);
