@@ -185,3 +185,13 @@ export function parseDuelMessage(raw: string): DuelClientMessage | null {
       return null;
   }
 }
+
+/**
+ * GMP (owner, 15 Nov 2026): who sees the letters of seat `side` while a game goes on. A player sees their own (the others
+ * only as colour marks); a watcher (said hello, no seat) sees every board's letters live; everyone sees all at the end.
+ * The answer itself stays hidden from everyone until the game is over.
+ */
+export function duelWordsVisible(viewer: number, side: number, watcher: boolean, over: boolean): boolean {
+  if (over || viewer === side) return true;
+  return viewer < 0 && watcher;
+}
