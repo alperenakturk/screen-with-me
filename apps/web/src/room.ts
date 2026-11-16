@@ -10,6 +10,7 @@ import { isTikTokShortLink, parseMediaInput, parseMediaList, samePage } from '@s
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
+  countdownMedia,
   avatarText,
   SYSTEM_MEMBER_ID,
   cleanName,
@@ -3541,7 +3542,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (countdownTimer !== null) clearInterval(countdownTimer);
       countdownTimer = null;
     };
-    const left = () => (state.paused || !state.item ? 0 : state.updatedAt - clock.now());
+    // Card SH1 (2): a Short's short lead-in is silent (nothing of ours over the YouTube player); only a countdown
+    // video shows the numbers.
+    const left = () => (state.paused || !state.item || !countdownMedia(state.item.media) ? 0 : state.updatedAt - clock.now());
     if (left() <= 0) {
       stop();
       countdownEl?.remove();

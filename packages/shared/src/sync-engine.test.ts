@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ServerClock } from './clock.ts';
 import type { PlayerAdapter, PlayerEvent } from './player.ts';
 import type { ClientMessage, PlaybackState } from './protocol.ts';
+import { SHORT_LEAD_MS } from './protocol.ts';
 import { SyncEngine } from './sync-engine.ts';
 
 /** Gerçek oynatıcı gibi davranan sahte oynatıcı. Zaman sadece `run` ile ilerler. */
@@ -103,7 +104,7 @@ beforeEach(() => {
   clock.addSample(Date.now(), Date.now());
   engine = new SyncEngine({
     clock,
-    send: (message) => (message.t === 'ready' ? readyReports.push(message.ready) : sent.push(message)),
+    send: (message) => (message.t === 'ready' && !message.primed ? readyReports.push(message.ready) : sent.push(message)),
     onAutoplayBlocked: () => autoplayBlocked++,
     onEnded: (itemId) => ended.push(itemId),
     wallNow: () => Date.now(),
@@ -359,6 +360,36 @@ describe('"3-2-1, together" (a start held a few seconds ahead)', () => {
     expect(player.paused).toBe(true);
     expect(player.time).toBeLessThan(0.1);
     expect(sent).toEqual([]);
+  });
+
+  // Card SH1 (2): a Short's short silent lead-in (SHORT_LEAD_MS): every viewer holds at 0:00 while it loads, reports
+  // no stall, and starts from 0:00 when the lead-in ends, instead of joining a second or two in.
+  it("a Short's lead-in holds at 0:00 and starts there, with no stall", async () => {
+    engine.attach(player);
+    const short = { id: 'short1', media: { kind: 'youtube' as const, id: 'aqz-KE-bpKQ', short: true as const }, title: null, by: 'Alex' };
+    engine.receive(state({ item: short, position: 0, updatedAt: Date.now() + SHORT_LEAD_MS }));
+    await run(SHORT_LEAD_MS - 100);
+    expect(player.paused).toBe(true);
+    expect(player.time).toBe(0);
+    expect(readyReports).toEqual([]);
+    await run(400);
+    expect(player.paused).toBe(false);
+    expect(player.time).toBeLessThan(0.5);
+    expect(readyReports).toEqual([]);
+    expect(sent).toEqual([]);
+  });
+
+  // Card SH1 (2): a player put in place during the lead-in tells the room it is primed for that item (once), so the
+  // server can end the lead-in as soon as everyone is; outside a lead-in it says nothing.
+  it('a player attached during the lead-in reports itself primed', async () => {
+    const short = { id: 'short2', media: { kind: 'youtube' as const, id: 'aqz-KE-bpKQ', short: true as const }, title: null, by: 'Alex' };
+    engine.receive(state({ item: short, position: 0, updatedAt: Date.now() + SHORT_LEAD_MS }));
+    engine.attach(player);
+    expect(sent).toEqual([{ t: 'ready', ready: true, primed: 'short2' }]);
+    engine.attach(player);
+    await run(SHORT_LEAD_MS + 100);
+    engine.attach(player);
+    expect(sent.filter((m) => m.t === 'ready' && m.primed)).toHaveLength(2);
   });
 
   it('the user pressing play during the countdown starts the room now', async () => {
