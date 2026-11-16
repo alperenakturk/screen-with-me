@@ -1063,6 +1063,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Lab commands (`gameWindow.*`, `games.mode`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
   (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
   "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
+  **A table's frame never starts unreadable beside YouTube** (Planner, 16 Nov 2026: no frame with text under 11 px):
+  without a spot of mine, a frame that would get less than `READ_ZOOM` (0.85) of the table's size in the strip beside
+  the player opens under the player when the screen has room for it there (`below`), else in ⛶ with no 🪟 in its head
+  (`frameForced`; on a computer's usual screens the strip is ≈ 350–430 px, so ⛶). A frame I placed before (its spot
+  saved) still opens there and may sit over the player; a double click forgets the spot (⛶ again). Side games keep their
+  own homes and, once dragged, may go over the video too. Lab `games.mode` also writes `forced`.
   Connect Four's column highlight follows a mouse only. Five Frames has a compact tier for windows under 430 px tall (a
   sideways tablet's side-game window, catalog `fit` 388 px), so it keeps 13 px text instead of being scaled down.
   Harness `game-open` (CI games-more): every game opens with one click, Classics and Snack Bar in ≤ 300 ms, and on a touch
