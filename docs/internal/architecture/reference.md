@@ -2227,7 +2227,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
   - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
   - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
-    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
+    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
+    `snack-special` (waits up to 20 s for `.room.has-item` instead of 8) and the games sweep's Duel race (waits for the
+    table's `data-table` id before Sam's socket joins, and up to 20 s for the race; read too early, the id was
+    undefined and Sam joined no table).
   - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
     extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
