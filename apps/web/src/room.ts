@@ -64,6 +64,7 @@ import {
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
 import { autoInviteOn } from './ui/invite-option.ts';
 import { createChatPanel } from './ui/chat.ts';
+import { ytLogoHtml } from './ui/yt-logo.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
@@ -361,7 +362,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="live-bar">
                 <span id="live-title" class="live-title"></span>
                 <button id="live-hide-self" type="button" class="icon-btn" data-i18n-title="live.hideSelf" hidden>🙈</button>
-                <button id="live-big" type="button" class="icon-btn" data-i18n-title="live.bigger">⤢</button>
+                <button id="live-mode" type="button" class="btn small-btn live-mode"></button>
                 <button id="live-close" type="button" class="icon-btn" data-i18n-title="close">✕</button>
               </div>
             </div>
@@ -532,7 +533,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
-              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
+              <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
             </form>
           </div>
           <div class="game-menu-wrap shorts-game-wrap">
@@ -552,7 +553,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button class="btn primary small-btn" data-i18n="feed.start"></button>
               </div>
               <p class="muted small" data-i18n="feed.hint"></p>
-              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
+              <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
             </form>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>

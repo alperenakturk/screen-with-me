@@ -11,7 +11,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Game Studio 2, QZ2 PR 1 (0.9.97.142): Quiz first-click fix, PR #458; merges after CH1 #455
   (0.9.97.141, Planner's order).
 - [ ] Game Studio 2, QZ2 PR 2: ~600 new questions, 3 new categories, typed answers, hard bonus, protocol 3, Lab
-  `quiz.typed`; branch `claude/quiz-questions` (ask the Planner for a version).
+  `quiz.typed`; 0.9.97.145, branch `claude/quiz-questions`, merges after #458 (and .143 / .144).
 - [ ] Game Studio 2, QZ2 PR 3: Double + Second chance jokers, tournament (1 or 2 laps), hook `quiz.tournament`.
 - [ ] Game Studio 2, WG2: Window Garden steady buttons, backgrounds, small customisations, hook `garden.decor`.
 - [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
@@ -130,9 +130,15 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Join the table: you watch, and you see both fleets as they are shot; the friend never sees yours. Same in the Five
   Frames Duel: the phone shows both boards with their letters. Five Frames in English and Turkish: new everyday words
   are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
-- [ ] 27i. [QZ2a, 0.9.97.142] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
+- [ ] 27j. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
+  it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
+  watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.
+- [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
+  YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
+  YouTube"; clicking the logo opens youtube.com in a new tab.
+- [ ] 27m. [QZ2a, 0.9.97.142] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
   click, also when the friend answers at the same moment.
-- [ ] 27j. [QZ2b, 0.9.97.14x] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
+- [ ] 27n. [QZ2b, 0.9.97.145] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 - [ ] 27k. [QZ2c, 0.9.97.14x] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in

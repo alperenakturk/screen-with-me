@@ -16,10 +16,31 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.145 — 16 Nov
+
+- Quiz: **587 new questions** (about half again as many), all written for Sidelit in English and Turkish and checked
+  one by one, with three new topics: **Languages and words**, **The human body** and **World and cultures**.
+- Some questions are now **typed**: write the answer yourself (20 seconds). Capitals, accents and one small typo don't
+  matter; what others typed shows only when the answer is revealed.
+- Hard questions are worth more (×1.5, medium ×1.2), and a typed answer adds ×1.3.
+
 ### 0.9.97.142 — 15 Nov
 
 - Quiz: your answer counts on the first click or tap. Before, an answer pressed just as another player answered
   sometimes needed a second press.
+
+### 0.9.97.140 — 15 Nov
+
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
+  from YouTube" (light or dark to match the theme); it links to YouTube.
+
+### 0.9.97.139 — 15 Nov
+
+- Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
+  it floats on the page: drag it anywhere and make it bigger or smaller from its corner; it keeps its shape, and its
+  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it, and in a
+  YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
+  "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
 
 ### 0.9.97.138 — 15 Nov
 
