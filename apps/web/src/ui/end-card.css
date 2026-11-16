@@ -1,0 +1,62 @@
+/* Card EC1: the "Video ended" dialog, centered over the room view like Settings (the backdrop is the shared
+   `.dialog-backdrop`). Loaded with ui/end-card-css.ts before the dialog first opens. */
+.end-dialog {
+  width: min(420px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.end-dialog p {
+  margin: 0;
+}
+
+.end-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.end-title {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+/* The link is only this small ↗: no underline under the title. */
+.end-link {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.end-link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.end-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* On a phone the two buttons share the width, thumb-sized. */
+html.phone .end-buttons > .btn {
+  flex: 1 1 0;
+  min-height: 44px;
+}
