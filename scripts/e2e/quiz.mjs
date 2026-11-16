@@ -65,7 +65,7 @@ ok((await sam.wait((m) => m.t === 'error', 'second hello')).code === 'bad', 'A s
 alex.inbox.length = 0;
 alex.send({ t: 'start' });
 const q1 = await alex.wait((m) => m.t === 'state' && m.phase === 'question', 'q1');
-ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && q1.options.length >= 2 && !('correct' in q1), 'First question: general knowledge, right option hidden');
+ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && (q1.options.length >= 2 || q1.typed) && !('correct' in q1), 'First question: general knowledge, right option hidden');
 ok(/^[\x00-\x7F’…“”°×−]+$/.test(q1.question), 'The question is in English');
 
 // 50:50 (on a four-option question): only Alex gets the hidden options; a second use does nothing.
@@ -85,12 +85,14 @@ if (q1.options.length === 4) {
   ok([...fiftyY.hide].sort().join() === [...fiftyHide].sort().join(), '50:50 hides one pair per question for everyone');
 }
 // Alex picks an option the joker left (or 0), Sam the next one; the reveal shows the right option and the points.
-const alexPick = [0, 1, 2, 3].find((i) => i < q1.options.length && !(fiftyHide ?? []).includes(i));
-const samPick = [0, 1, 2, 3].find((i) => i < q1.options.length && i !== alexPick && !(fiftyHide ?? []).includes(i));
-alex.send({ t: 'answer', n: 1, pick: alexPick });
+// QZ2: the first question can be a typed one (every category has some): then both type a wrong answer.
+const alexPick = q1.typed ? 1 : [0, 1, 2, 3].find((i) => i < q1.options.length && !(fiftyHide ?? []).includes(i));
+const samPick = q1.typed ? 1 : [0, 1, 2, 3].find((i) => i < q1.options.length && i !== alexPick && !(fiftyHide ?? []).includes(i));
+const answerOf = (s, pick) => (s.typed ? { t: 'answer', n: s.n, text: 'zzzz' } : { t: 'answer', n: s.n, pick });
+alex.send(answerOf(q1, alexPick));
 const mid = await sam.wait((m) => m.t === 'state' && m.phase === 'question' && m.players.some((p) => p.answered), 'answered');
 ok(mid.players.every((p) => !('pick' in p)), 'Kimin neyi seçtiği açıklamaya kadar gizli');
-sam.send({ t: 'answer', n: 1, pick: samPick });
+sam.send(answerOf(q1, samPick));
 const rev = await alex.wait((m) => m.t === 'state' && m.phase === 'reveal', 'reveal');
 const a = rev.players.find((p) => p.id === wa.you);
 const y = rev.players.find((p) => p.id === wy.you);
@@ -108,8 +110,8 @@ ok(q2.players.every((p) => !p.answered), '4 sn sonra ikinci soruya geçildi');
 // The rest quickly: both always pick 0.
 for (let n = 2; n <= 5; n++) {
   if (n > 2) await alex.wait((m) => m.t === 'state' && m.phase === 'question' && m.n === n, `q${n}`, 9000);
-  alex.send({ t: 'answer', n, pick: 0 });
-  sam.send({ t: 'answer', n, pick: 0 });
+  alex.send(answerOf(alex.state, 0));
+  sam.send(answerOf(alex.state, 0));
 }
 const over = await alex.wait((m) => m.t === 'state' && m.phase === 'over', 'over', 9000);
 ok(over.players.every((p) => p.score >= 0) && !('question' in over), 'Five questions done: podium');
