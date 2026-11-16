@@ -14,11 +14,11 @@ const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const OUT = process.argv[3] || require('os').tmpdir();
-// The Themed avatar page (AVATAR_PAGES[0]) as the code has it: the art's faces must come from there (card 15c).
-const THEMED = (() => {
-  const src = require('fs').readFileSync(require('path').join(__dirname, '../../../packages/shared/src/protocol.ts'), 'utf8');
-  const first = src.slice(src.indexOf('export const AVATAR_PAGES')).match(/\[\s*\[([^\]]*)\]/)[1];
-  return [...first.matchAll(/'([a-z]+)'/g)].map((m) => m[1]);
+// Card TH3: the art's four faces come from home.ts's neutral pools, woman / man / woman / man (as the code has them).
+const [WOMEN, MEN] = (() => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '../../../apps/web/src/home.ts'), 'utf8');
+  const pool = (name) => [...src.match(new RegExp(`const ${name} = \\[([^\\]]*)\\]`))[1].matchAll(/'([a-z]+)'/g)].map((m) => m[1]);
+  return [pool('ART_WOMEN'), pool('ART_MEN')];
 })();
 let failed = 0;
 const check = (ok, label, detail) => {
@@ -124,7 +124,7 @@ const ours = () => location.hostname === 'localhost' || location.hostname === '1
         };
       });
       check(art.devices === 'laptop,tablet,phone' && art.screens === 3 && art.bars === 3, `${where}: three devices, three screens, three progress bars`, art);
-      check(new Set(art.ids).size === 3 && art.ids.every((id) => THEMED.includes(id)) && art.hrefs.every((h, i) => h === `/avatars/${art.ids[i]}.svg`) && art.rings === 2, `${where}: three different themed avatars, two in voice rings`, art.ids);
+      check(new Set(art.ids).size === 4 && art.ids.every((id, i) => (i % 2 ? MEN : WOMEN).includes(id)) && art.hrefs.every((h, i) => h === `/avatars/${art.ids[i]}.svg`) && art.rings === 2, `${where}: four different neutral faces (woman, man, woman, man), two in voice rings`, art.ids);
       // Card 15e: one tidy device row under one cone of light; text and art on one centre line with even margins.
       const lay = await page.evaluate(() => {
         const box = (e) => e.getBoundingClientRect();

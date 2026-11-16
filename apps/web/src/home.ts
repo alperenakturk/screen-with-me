@@ -2,7 +2,7 @@ import { extractRoomId, friendlyRoomName, newRoomId } from '@swm/shared/room-id'
 import { createMascot } from '@swm/shared/logo';
 import { sharedLink } from '@swm/shared/media';
 import { el } from './dom.ts';
-import { AVATAR_PAGES, cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
+import { cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
 import { forgetLastRoom, lastRoom, load, save, sessionSave } from './storage.ts';
 import { isIOSSafari, isStandalone } from './device.ts';
