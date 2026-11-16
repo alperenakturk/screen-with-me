@@ -1229,7 +1229,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`: a question's nodes are built once (`buildQuestion`) and later states only
   patch them; an option answers on `pointerdown` (keys and screen readers come as a click; `answer` counts once), so a
-  state arriving mid-press no longer swallows the answer (QZ2, 0.9.97.142; harness `quiz-click`). Test:
+  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`). Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their
