@@ -12,8 +12,11 @@ One handoff per lane or role; each session updates only its own lines and delete
   (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
   merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
   merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
+- [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
+  order; no version bumps (CI3), notes in changelog/next/.
+- [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
 - [ ] Game Studio: [ ] GW2 #470 merged + deploy check; [x] GP1 on claude/gp1-fast-open (open times, first taps, Five
-  Frames compact, phone note); [ ] GP1 PR, merged, deploy check; then GMP (b) (2–6 players), GT1 (tutorials).
+  Frames compact, phone note, readable YouTube frame start); [ ] GP1 PR, merged, deploy check; then GMP (b) (2–6 players), GT1 (tutorials).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -142,6 +145,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
   YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
   YouTube"; clicking the logo opens youtube.com in a new tab.
+- [ ] 27m. [QZ2a] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
+  click, also when the friend answers at the same moment.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

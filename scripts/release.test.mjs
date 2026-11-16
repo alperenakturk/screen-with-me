@@ -1,7 +1,7 @@
 // node --test scripts/release.test.mjs — card CI3b: CI numbers every release; notes from changelog/next/; the PR check.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyVersion, nextVersion, parseSeries, shownVersions } from './release-version.mjs';
+import { applyVersion, nextVersion, parseSeries, releasedFromKeys, releasedKey, shownVersions } from './release-version.mjs';
 import { block, compareVersions, foldedVersions, insertBlocks, isFragment, shortDate } from './changelog.mjs';
 import { violations } from './check-version-edits.mjs';
 
@@ -63,4 +63,14 @@ test('fold: blocks go above the newest one, newest first; the versions already t
   assert.ok(out.indexOf('0.9.97.142') < out.indexOf('0.9.97.141') && out.indexOf('0.9.97.141') < out.indexOf('0.9.97.140'));
   assert.equal(insertBlocks(log, []), log);
   assert.ok(compareVersions('0.9.97.100', '0.9.97.99') > 0);
+});
+
+test('CI3c: a number live but untagged never comes back: main\'s files and the released records count as used', () => {
+  // 0.9.97.141 went live (per-PR, the last before CI numbering), its tag was refused: main's files say .141.
+  assert.equal(nextVersion(['v0.9.97.140'], '0.9.97', ['0.9.97.141', '0.9.97.141']), '0.9.97.142');
+  // A CI-numbered .143 went live, its tag refused: the tag job's record keeps it used.
+  assert.equal(nextVersion(['v0.9.97.142'], '0.9.97', ['0.9.97.141', ...releasedFromKeys([releasedKey('0.9.97.143'), 'tested-code-ab', 'released-x'])]), '0.9.97.144');
+  // A failed live e2e records nothing: its number comes again.
+  assert.equal(nextVersion(['v0.9.97.142'], '0.9.97', ['0.9.97.141']), '0.9.97.143');
+  assert.equal(nextVersion(['v0.9.97.142'], '0.9.98', ['0.9.97.141']), '0.9.98.1', 'another series ignores the old numbers');
 });
