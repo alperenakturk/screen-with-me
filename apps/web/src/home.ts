@@ -2,10 +2,13 @@ import { extractRoomId, friendlyRoomName, newRoomId } from '@swm/shared/room-id'
 import { createMascot } from '@swm/shared/logo';
 import { sharedLink } from '@swm/shared/media';
 import { el } from './dom.ts';
-import { AVATAR_PAGES, cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
+import { cleanRoomName, ROOM_NAME_MAX } from '@swm/shared/protocol';
 import { forgetSaved, isFull, MAX_SAVED, savedRooms, type SavedRoom } from './saved-rooms.ts';
 import { forgetLastRoom, lastRoom, load, save, sessionSave } from './storage.ts';
 import { isIOSSafari, isStandalone } from './device.ts';
+import { debugHooks } from './debug-lab.ts';
+import { applyTheme, currentTheme } from './themes.ts';
+import { THEME_IDS, resolveTheme } from '@swm/shared/themes';
 import { helpHref, lang, t, translate } from './i18n.ts';
 import './home.css';
 
@@ -57,7 +60,7 @@ const TEXT = {
     helpGo: 'Help and FAQ',
     artSync: 'In sync · 30 ms',
     artChat: 'this part! 😄',
-    artPeople: '3 watching · 2 in voice',
+    artPeople: '4 watching · 2 in voice',
   },
   tr: {
     pill: 'Ücretsiz · hesap yok · reklam yok',
@@ -98,7 +101,7 @@ const TEXT = {
     helpGo: 'Yardım ve SSS',
     artSync: 'Senkron · 30 ms',
     artChat: 'işte bu kısım! 😄',
-    artPeople: "3 kişi izliyor · 2'si seste",
+    artPeople: "4 kişi izliyor · 2'si seste",
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -108,18 +111,28 @@ function h(key: TextKey, values: Record<string, string | number> = {}): string {
   return (table[key] ?? TEXT.en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? ''));
 }
 
-/** Three different themed avatars for the art's faces, picked again on every load (card 15c). */
+/**
+ * Card TH3 (Design's `home-neon-people.md`): four neutral faces, woman / man / woman / man, from fixed pools of existing
+ * avatars that aren't tied to one nation, culture, faith or history (no janissary, veiled, samurai, horseman, ninja,
+ * cowboy, nor the fantasy ones), picked again on every load. The avatars stay in the picker; this only limits the art.
+ */
+const ART_WOMEN = ['detective', 'rocker', 'astronaut'];
+const ART_MEN = ['driver', 'chef', 'explorer', 'spy'];
 function artFaces(): string[] {
-  const pool = [...AVATAR_PAGES[0]];
-  const picked: string[] = [];
-  while (picked.length < 3 && pool.length) picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!);
-  return picked;
+  const take = (pool: string[]) => pool.splice(Math.floor(Math.random() * pool.length), 1)[0]!;
+  const women = [...ART_WOMEN];
+  const men = [...ART_MEN];
+  return [take(women), take(men), take(women), take(men)];
 }
 
 /**
  * Stub's light falls on a laptop, a tablet and a phone showing the same moment (card 15c, Design's
  * `home-15c/preview.html`): one picture (`#hm-pic`) clipped into each screen, a progress bar per device (`.hm-prog`, the
- * same 6 s animation), the sync pill on the laptop, the chat bubble and three themed faces (the first two in voice).
+ * same 6 s animation), the sync pill on the laptop, the chat bubble and four faces (the first two in voice).
+ *
+ * Card TH3 (the owner's pick A): a red-and-gold hot-air balloon (`.hm-move`) drifts across the sunset on the progress
+ * bars' 6 s clock, so it is at the same spot on all three screens at every moment; it holds still under
+ * `prefers-reduced-motion` and while the Test Lab's `home.art` freezes the art (`html.hm-frozen`).
  *
  * Card 15e (the owner's screenshot of 0.9.97.28): one cone of light from Stub's lamp (`LAMP`) whose glow falls on
  * all three screens, each with a soft lit sheen, the nearest (the laptop) brightest; no slab and no hard edge: the cone
@@ -154,7 +167,7 @@ function beamPath(): string {
   return `M${at(0, -1.3)} L${at(1000, -1.3)} L${at(1000, 1.4)} L${at(0, 1.4)} Z`;
 }
 function scene(): string {
-  const [a, b, c] = artFaces();
+  const [a, b, c, d] = artFaces();
   const face = (x: number, id: string | undefined, voice: boolean) =>
     `<g transform="translate(${x} 18)"><image class="hm-face" href="/avatars/${id}.svg" data-avatar="${id}" x="-15" y="-15" width="30" height="30" clip-path="url(#hm-face)"/><circle class="hm-ring${voice ? ' voice' : ''}" r="16" fill="none" stroke="${voice ? '#3ee08f' : '#ffffff26'}" stroke-width="${voice ? 3 : 2}"/></g>`;
   // The devices in their own units: the laptop's base -18 … 308 (the body 0 … 290), all standing on y = 192.
@@ -177,6 +190,12 @@ function scene(): string {
         <circle cx="86" cy="38" r="15" fill="#fff3d6" opacity=".88"/>
         <path d="M0 74 Q40 54 82 70 T160 64 V100 H0Z" fill="#4b2f8f"/>
         <path d="M0 84 Q56 70 106 86 T160 80 V100 H0Z" fill="#2c1c63"/>
+        <g transform="translate(80 36)"><g class="hm-move"><g transform="scale(.9)">
+          <path d="M0 -14 C9 -14 13 -7 13 0 C13 7 5 11 3 15 H-3 C-5 11 -13 7 -13 0 C-13 -7 -9 -14 0 -14Z" fill="#ff6b5a"/>
+          <path d="M0 -14 C4 -14 5 -7 5 0 C5 7 2 11 1.5 15 H-1.5 C-2 11 -5 7 -5 0 C-5 -7 -4 -14 0 -14Z" fill="#ffd27a"/>
+          <path d="M-3 15 L-2.5 19 M3 15 L2.5 19" stroke="#3b2050" stroke-width=".8"/>
+          <rect x="-3" y="19" width="6" height="4" rx="1" fill="#6b3f2a"/>
+        </g></g></g>
       </symbol>
       <!-- Card 15f: a <use> clip is in the picture's own space (after its x / y), so the clips start at 0; at the screen's
            x / y they cut the picture 12 units in and left a dark band along the top and left of every screen. -->
@@ -216,8 +235,8 @@ function scene(): string {
     </g>
     </g>
     <g class="hm-faces" transform="translate(${DEV_X} ${ROW_Y})">
-      ${face(16, a, true)}${face(52, b, true)}${face(88, c, false)}
-      <text x="112" y="23" font-size="14" fill="#c9c0ea" data-art="artPeople"></text>
+      ${face(16, a, true)}${face(52, b, true)}${face(88, c, false)}${face(124, d, false)}
+      <text x="148" y="23" font-size="14" fill="#c9c0ea" data-art="artPeople"></text>
     </g>
     <g class="hm-bubble" transform="translate(${ART_W - 140} ${ROW_Y})">
       <rect width="140" height="40" rx="20" fill="#6a4cf2"/>
@@ -306,6 +325,38 @@ function launched(): boolean {
   return true;
 }
 
+/**
+ * 🐞 Test Lab (card TH3): "home.art" shows the next theme on this page only and freezes the art's clock at its middle
+ * (`html.hm-frozen`: the progress bars at half, the balloon in the middle), so `scripts/shots.cjs` takes the same frame
+ * every time; run again for the next theme. Undo puts back the saved theme and lets the art run.
+ */
+let artLab: (() => void) | null = null;
+function registerArtLab(): void {
+  artLab?.();
+  const root = document.documentElement;
+  const shown = () => resolveTheme(root.dataset.theme);
+  artLab = debugHooks.register('home', () => ({
+    commands: [
+      {
+        id: 'home.art',
+        title: { en: 'Home: next theme, art frozen', tr: 'Ana sayfa: sıradaki tema, çizim durdurulmuş' },
+        help: { en: 'This page only; the art stops at its middle so every shot is the same frame', tr: 'Yalnızca bu sayfada; çizim ortasında durur, her ekran görüntüsü aynı kare olur' },
+        tab: 'screen',
+        available: () => (root.classList.contains('in-home') ? true : { en: 'not on the home page', tr: 'ana sayfada değil' }),
+        run: () => {
+          root.classList.add('hm-frozen');
+          applyTheme(THEME_IDS[(THEME_IDS.indexOf(shown()) + 1) % THEME_IDS.length]!, { wait: false, remember: false });
+        },
+        undo: () => {
+          root.classList.remove('hm-frozen');
+          applyTheme(currentTheme(), { wait: false, remember: false });
+        },
+      },
+    ],
+    status: () => [[{ en: 'Home art', tr: 'Ana sayfa çizimi' }, root.classList.contains('hm-frozen') ? { en: 'frozen', tr: 'durduruldu' } : { en: 'running', tr: 'çalışıyor' }]],
+  }));
+}
+
 export function renderHome(app: HTMLElement): void {
   if (launched()) return;
   app.innerHTML = `
@@ -364,6 +415,7 @@ export function renderHome(app: HTMLElement): void {
   // Stub at the source of the light, in the art's own coordinates (card 15d: in the shown theme's costume).
   placeMascot(app);
   window.addEventListener('themechange', () => placeMascot(app));
+  registerArtLab();
   const draw = () => {
     for (const node of app.querySelectorAll<HTMLElement>('[data-h]')) node.textContent = h(node.dataset.h as TextKey);
     for (const node of app.querySelectorAll<SVGTextElement>('[data-art]')) node.textContent = h(node.dataset.art as TextKey);
