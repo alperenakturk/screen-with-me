@@ -171,11 +171,6 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
       {
         id: 'sources.state',
         tab: 'status',
-        title: { en: 'Search sources: the chosen one and the last search', tr: 'Arama kaynakları: seçili olan ve son arama' },
-        help: {
-          en: 'Writes the ⠿ source (YouTube, Vimeo or the web), whether Vimeo search is on at the server and the last search into the log.',
-          tr: '⠿ kaynağını (YouTube, Vimeo ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.',
-        },
         run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last }),
       },
     ],

@@ -287,6 +287,36 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: Shorts view harness (panel open, no overlap with the player), shots (QA1).
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 
+### GR1. PRIORITY: opening a game must never throw you out of the room and reload the page (owner, 16 Nov 2026; B2 + lane A)
+- Why: the owner sees some games kick him out and reload when he opens them or presses Play. The likely cause is the
+  stale-chunk path: after a deploy, a tab still running the old build asks for a lazy chunk (a game, a panel) whose
+  hashed file is gone, and `main.ts` reloads the page (OFFLINE2). With CI3 batches, deploys are more frequent, so this
+  will happen more.
+- What:
+  - **Confirm the cause first** (B2): reproduce with a tab open across a deploy and open each game; also rule out a game
+    socket error. Report what it was.
+  - **Keep old chunks for a while** (B2, deploy): each deploy also serves the previous builds' hashed assets for at
+    least 24 h (e.g. carry the last builds' `assets/` forward), so an open tab never misses a chunk.
+  - **Never a silent reload mid-room** (lane A, `main.ts` / `loadChunk`): if a chunk is still missing, show a calm
+    "Sidelit was updated · ↻ Refresh" note and reload only on the tap; the room, name and seat come back after it.
+- Done when: a tab open across two deploys opens every game without a reload (harness); a missing chunk shows the note,
+  never reloads by itself; Test Lab hook `app.staleChunk`.
+- Tests: a deploy-across harness (old build → new build, open all games), unit test of the note path.
+- Owner's pick: his message (Planner chat, 16 Nov 2026).
+
+### VC3. Voice that can't connect says so (VPN, strict networks) (owner, 16 Nov 2026; lane A, with VC1)
+- Why: with a VPN (or a strict school / work network) voice "connects" but nobody hears anybody: voice goes directly
+  between people, and these networks block the direct path. The owner chose a clear warning for now, no relay server
+  (TURN) yet.
+- What: watch each voice link; when one can't connect within ~10 s (ICE failed / never connected), show the person a
+  plain note: "Your voice isn't reaching the others. A VPN or this network may be blocking it — turn the VPN off and try
+  again." (TR too), with a small ⓘ in the people list on the link that failed. No technical words. Clears itself when the
+  link works. The help page gets a short "Voice and VPNs" entry.
+- Done when: a forced ICE failure shows the note and the ⓘ; a good link shows nothing; Test Lab hook `voice.blocked`.
+- Tests: voice harness with a forced failed link; texts check.
+- Owner's pick: "warning only for now" (Planner chat, 16 Nov 2026). A relay (Cloudflare TURN, 1,000 GB/month free) can
+  come later as its own card if VPN users ask for it.
+
 Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 
 ## Proposed

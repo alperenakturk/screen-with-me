@@ -1484,7 +1484,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   line: what you will see), tab: 'status' | 'friends' | 'video' | 'games' | 'scenarios' | 'screen' | 'log', where?,
   available?: () => true | reason, run(arg?), undo? }`. **Texts (card LABTR):** title / help / where / reasons / status
   rows / results are `LabText` = a string or `{ en, tr }` written inline (`title: { en: 'Drop my connection for 6 s',
-  tr: 'Bağlantımı 6 sn kopar' }`); a thrown `labFail({ en, tr })` shows in the page's language; the lab chunk picks the
+  tr: 'Bağlantımı 6 sn kopar' }`). **A command registered by a module in the room's own chunk leaves `title` / `help` /
+  `where` out and puts them in `ui/lab-texts.ts` under its id (card BUD1, the room's JS budget):** that file is part
+  of the lab's lazy chunk and `test-lab.ts` `allCommands` fills them in, so nobody without the lab downloads them,
+  while `run` / `available` / `undo` stay with the feature and every hook is registered before the lab opens; a thrown `labFail({ en, tr })` shows in the page's language; the lab chunk picks the
   side (`ui/lab-text.ts` `say`, `both` for the search). Plain words that say what happens, no jargon in Turkish
   (WebSocket, HTTP, peer, ICE… are said in words); `check-texts.mjs` fails a lab command without a pair. Every lab
   harness takes `LAB_LANG=tr`; every run goes through `runCommand` (a throw / rejection = a red log line, never a broken
@@ -2283,6 +2286,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
     version, leaves them on different numbers, or adds a block for an untagged version. The repository's footer and
     extension files keep the last per-PR number (the one local builds show).
+  - *Open tabs survive a deploy (card GR1, 16 Nov 2026).* Every file in `assets/` is named by its content's hash,
+    and a deploy used to replace the whole set. A tab opened before it that then lazily loaded a chunk (opening a
+    game, pressing Play) asked for a file that was gone, got `index.html` back (the assets' single-page fallback, `200
+    text/html`), the module import failed ("Expected a JavaScript module … MIME type text/html") and `main.ts`
+    (`vite:preloadError` → `reloadForNewVersion`) reloaded the page, out of the room. More deploys (CI3) made it more
+    frequent. Reproduced locally: a room open, the game hall's chunk removed as a deploy does, 🎮 → one reload. Fix,
+    server side: the deploy job runs `scripts/keep-assets.mjs <live origin>` after the build. It reads the live site's
+    `assets-kept.json` (`build`: that build's files; `kept`: older files still served → when they were replaced), or
+    on the first deploy follows the links from the live pages and chunks; copies every live file the new build lacks
+    and every kept file younger than 7 days (`KEEP_DAYS`) from the live site into `dist/assets` (a 200 that is not the
+    HTML fallback), and writes the new `assets-kept.json`. Never fails the deploy (a file it can't fetch is a warning
+    and that tab reloads as before). The client part (no silent reload; a "Sidelit was updated · ↻ Refresh" note) is
+    lane A's.
   - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
     PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
     from the first merge.
