@@ -86,6 +86,8 @@ const EDGE = 8;
 type Box = { left: number; top: number; width: number; height: number };
 /** The least zoom at which a strip of the screen still counts as room for the free window (tablets, YouTube). */
 const MIN_ZOOM = 0.45;
+/** GP1: the least zoom a table's frame starts at (its usual 13 px text stays ≥ 11 px). */
+const READ_ZOOM = 0.85;
 /** PROP: the most the video's place scales a game up, and the free window's head + border its `size` includes. */
 const MAX_STAGE = 2.2;
 const CHROME_W = 2;
@@ -251,6 +253,8 @@ export function createGameStage(opts: StageOptions) {
   const cinemaOn = () => document.documentElement.classList.contains('cinema-on');
   /** The placement in use now. */
   let mode: Place | 'below' | 'full' | 'max' = 'stage';
+  /** GP1: no readable frame fits beside the YouTube player (nor under it): the table plays in ⛶ and has no 🪟. */
+  let frameForced = false;
   /**
    * Card YTG (the YouTube audit): YouTube's rules allow nothing of ours in front of its player. On a computer, while the
    * room's item is YouTube, a game never sits on the player: "in the video's place" acts as the free window, and the free
@@ -288,7 +292,22 @@ export function createGameStage(opts: StageOptions) {
     // GW2: a table on a computer or tablet is ⛶ full screen or the 🪟 frame, with or without a video (YouTube too: in
     // full screen the player isn't on the screen at all, so nothing of ours sits over it).
     const tableHere = !!current && !narrow.matches && !shortsView();
-    if (tableHere) mode = tableMode() === 'full' ? 'max' : 'float';
+    // GP1 (Planner, 16 Nov 2026: "never open a frame whose text is below 11 px"): a table's frame starting beside a
+    // YouTube player gets only the strip beside it (≈ 350 px on a laptop, its text ≈ 7 px). Where no readable frame fits
+    // there it opens under the player when the screen has room for it there, else in ⛶ (`frameForced`: no 🪟 then).
+    frameForced = false;
+    let tableBelow = false;
+    if (tableHere && tableMode() === 'frame' && youtube && !inFullscreen() && kind && !readPair(spotKey(kind))) {
+      const beside = besidePlayer();
+      const [w, h] = sizeOf(kind).size;
+      const fits = (b: Box | null) => !!b && Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h) >= READ_ZOOM;
+      if (!fits(beside)) {
+        const under = theater.getBoundingClientRect().bottom;
+        tableBelow = innerHeight - under - 2 * EDGE >= h * READ_ZOOM && innerWidth - 2 * EDGE >= w * READ_ZOOM;
+        frameForced = !tableBelow;
+      }
+    }
+    if (tableHere) mode = tableMode() === 'full' || frameForced ? 'max' : tableBelow ? 'below' : 'float';
     // GW2: a frame I placed myself stays a frame (it may sit over the player).
     if (mode === 'float' && youtube && !inFullscreen() && !(kind && readPair(spotKey(kind))) && !besidePlayer() && !(kind && isSoloKind(kind) && isTablet() && homeBox(kind))) mode = 'below';
     // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
@@ -315,7 +334,7 @@ export function createGameStage(opts: StageOptions) {
       tableChangedAt = Date.now();
     }
     syncFullscreen();
-    modeButton.node.hidden = !tableHere;
+    modeButton.node.hidden = !tableHere || frameForced;
     const toFrame = mode === 'max';
     (modeButton.node.firstElementChild as HTMLElement).textContent = toFrame ? '🪟' : '⛶';
     modeButton.label(t(toFrame ? 'game.toFrame' : 'game.toFull'));
@@ -766,7 +785,9 @@ export function createGameStage(opts: StageOptions) {
     spot = null;
     side = null;
     saveSpot();
-    if (mode === 'float') placeFloat();
+    // GP1: a table's frame over YouTube without a spot of mine may have no readable place left beside the player (⛶).
+    if (mode === 'float') current ? place() : placeFloat();
+    if (mode === 'max') autoPause();
     dispatchEvent(new Event('swm-layout'));
   }
   head.addEventListener('dblclick', (event) => {
@@ -1463,12 +1484,12 @@ export function createGameStage(opts: StageOptions) {
     table: () => !!current,
     reset: resetFloat,
     autoPause,
-    modeShown: () => !modeButton.node.hidden,
+    modeShown: () => !modeButton.node.hidden || frameForced,
     setMode: (arg) => {
       if (arg === 'full' || arg === 'frame') setTableMode(arg);
       else if (!arg) setTableMode(tableMode() === 'full' ? 'frame' : 'full');
       const box = stage.getBoundingClientRect();
-      return { mode: tableMode(), place: mode, realFullscreen: realFull(), pausedForFull, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
+      return { mode: tableMode(), place: mode, forced: frameForced, realFullscreen: realFull(), pausedForFull, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
     },
     lastOpen: () => lastOpen,
     shown: () => !stage.hidden,

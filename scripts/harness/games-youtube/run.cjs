@@ -60,18 +60,27 @@ const where = (page) =>
     await wait(700);
     const full = await where(page);
     check(full.shown && full.mode === 'max' && full.game[0] <= 0 && full.game[1] <= 0 && full.game[2] >= viewport.width - 1 && full.game[3] >= viewport.height - 1, `${label} classics: a table opens in ⛶, filling the screen`, full);
-    await page.evaluate(() => document.querySelector('#game-stage .game-mode')?.click());
-    await until(async () => (await where(page)).mode === 'float');
+    // GP1 (Planner, 16 Nov 2026: never open a frame whose text is below 11 px): the strip beside the player is too narrow
+    // for a readable table on a computer (≈ 350 px at 1366, ≈ 430 px at 1920), so asking for 🪟 keeps the table in ⛶,
+    // without 🪟 in its head, unless the screen has room for it under the player.
+    const asked = JSON.parse(await page.evaluate(() => window.__swmLab.run('games.mode', 'frame').then((l) => l.text.slice(l.text.indexOf('{')))));
     await wait(700);
+    const kept = await where(page);
+    const noSwitch = await page.evaluate(() => !!document.querySelector('#game-stage .game-mode')?.hidden);
+    check(asked.forced ? kept.mode === 'max' && noSwitch : kept.mode === 'below' && !kept.overlap, `${label} classics: no readable 🪟 frame beside the player: ⛶ stays (no 🪟) or the table goes under the player`, { asked, kept, noSwitch });
     for (const kind of ['classics', 'sea']) {
       if (kind === 'sea') {
         await page.evaluate(() => window.__swmLab.run('games.open.sea'));
         await until(async () => (await where(page)).shown);
         await wait(700);
       }
+      // A frame I placed myself before (its spot saved) stays a frame, at a readable size, and may go over the player.
+      await page.evaluate((k) => localStorage.setItem(`gameFloat:at:${k}`, JSON.stringify({ x: 1, y: 0.5 })), kind);
+      await page.evaluate(() => window.__swmLab.run('games.mode', 'frame'));
+      await until(async () => (await where(page)).mode === 'float');
+      await wait(700);
       const now = await where(page);
-      // No room beside the player for the frame (a small screen): it sits under the player instead (YTG), never over it.
-      check(now.shown && (now.mode === 'float' || now.mode === 'below') && !now.overlap && now.onScreen, `${label} ${kind}: the 🪟 frame (the mode used last) opens clear of the YouTube player, whole on screen`, now);
+      check(now.shown && now.mode === 'float' && now.onScreen && now.game[2] >= 0.85 * (kind === 'sea' ? 780 : 540), `${label} ${kind}: a frame I placed before opens as a frame at a readable size, whole on screen`, now);
       if (now.mode !== 'float') continue;
       const head = await page.evaluate(() => {
         // Grabbed by the game's name (a narrow head wraps its buttons under it).
@@ -86,11 +95,13 @@ const where = (page) =>
       await wait(400);
       const dragged = await where(page);
       check(dragged.shown && dragged.overlap && dragged.onScreen, `${label} ${kind}: a frame I drag onto the player stays there`, dragged);
-      // A double click on the head: back to its home, clear of the player again.
+      // A double click on the head forgets the spot: no readable frame fits beside the player, so ⛶ again (never over it
+      // by our choice).
       await page.mouse.dblclick(head.x - (head.x - dragged.game[0]) + Math.min(40, dragged.game[2] / 4), dragged.game[1] + (head.y - now.game[1]));
       await wait(400);
       const home = await where(page);
-      check(home.shown && !home.overlap, `${label} ${kind}: a double click brings it home, clear of the player`, home);
+      check(home.shown && (home.mode === 'max' || !home.overlap), `${label} ${kind}: a double click forgets the spot: ⛶, or a frame clear of the player`, home);
+      await page.evaluate((k) => localStorage.removeItem(`gameFloat:at:${k}`), kind);
     }
     if (label === '1366×768') {
       // Going fullscreen with the game open tucks it away (a dot on 🎮); bringing it up in fullscreen leaves fullscreen.
@@ -98,16 +109,23 @@ const where = (page) =>
       const tucked = await until(() => page.evaluate(() => document.fullscreenElement && document.getElementById('game-stage').hidden));
       check(!!tucked, `${label}: going fullscreen tucks the game away`);
       await page.evaluate(() => window.__swmLab.run('games.open.sea'));
-      const left = await until(() => page.evaluate(() => !document.fullscreenElement && !document.getElementById('game-stage').hidden));
+      // (GP1: the table may take the browser's full screen itself, ⛶ over YouTube: only the video's fullscreen is left.)
+      const left = await until(() => page.evaluate(() => document.fullscreenElement !== document.getElementById('theater') && !document.getElementById('game-stage').hidden));
       check(!!left, `${label}: bringing the game up in fullscreen leaves fullscreen`);
       const back = await where(page);
-      check(back.shown && !back.overlap, `${label}: … and the window is clear of the player again`, back);
-      // GW2: the table's head has the ⛶ / 🪟 switch; with a video that isn't YouTube ⛶ works the same.
-      check(await page.evaluate(() => !document.querySelector('#game-stage .game-mode')?.hidden), `${label}: the table's head has ⛶ / 🪟`);
+      check(back.shown && (back.mode === 'max' || !back.overlap), `${label}: … and the table is in ⛶ or clear of the player again`, back);
+      // GW2: with a video that isn't YouTube the table's head has the ⛶ / 🪟 switch, and ⛶ works the same.
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
-      await page.fill('#media-input', `${SITE}/sample.mp4`);
+      // The table may be in the browser's real full screen (⛶ over YouTube) with the address box outside it: typed in
+      // from the page's side.
+      await page.evaluate((url) => {
+        const input = document.getElementById('media-input');
+        input.value = url;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }, `${SITE}/sample.mp4`);
       await page.evaluate(() => document.querySelector('#media-form button[value="load"]')?.click());
       await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail')));
+      check(!!(await until(() => page.evaluate(() => !document.querySelector('#game-stage .game-mode')?.hidden))), `${label}: the table's head has ⛶ / 🪟`);
       await page.evaluate(() => window.__swmLab.run('games.mode', 'full'));
       const fileFull = await until(async () => {
         const x = await where(page);
