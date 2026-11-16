@@ -1088,6 +1088,8 @@ export function createGameStage(opts: StageOptions) {
 
   // Card R8: the side games' chunks (their pictures and "How to play" cards are inlined in them) start loading as soon
   // as the hall opens, so a game picked from it shows its cards at once instead of after a network round trip.
+  // GP1 (owner, 15 Nov 2026: "Classics stutters while opening"): the tables' chunks too, the most played first, each
+  // after the previous one so the hall itself keeps drawing smoothly.
   let soloWarm = false;
   function warmSolo(): void {
     if (soloWarm) return;
@@ -1095,6 +1097,8 @@ export function createGameStage(opts: StageOptions) {
     void import('./snack-bar.ts').catch(() => (soloWarm = false));
     void import('./garden.ts').catch(() => (soloWarm = false));
     void import('./five-frames.ts').catch(() => (soloWarm = false));
+    const tables: (() => Promise<unknown>)[] = [() => import('./match.ts'), () => import('./sea.ts'), () => import('./duel.ts'), () => import('./quiz.ts'), () => import('./draw.ts'), () => import('./poker.ts')];
+    void tables.reduce((chain, load) => chain.then(load).catch(() => undefined), Promise.resolve<unknown>(undefined));
   }
 
   function openTable(kind: RoomGameKind): void {
