@@ -2687,3 +2687,29 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   come later as its own card if VPN users ask for it.
 - Done: #502 (`claude/vc3-voice-blocked`, note + ⓘ after 10 s, help "Voice and VPNs"; Test Lab `voice.blocked`),
   live in v0.9.97.156 (live e2e green).
+
+### MSG1. Delete a chat message for everyone; the host can delete others' (owner, 15 Nov 2026; lane A, after VC1)
+- Why: there is no way to take back a message.
+- What:
+  - **Delete your own message:** in the message's menu (hover ⋯ on a computer, long-press on a phone), "🗑 Delete for
+    everyone". It asks once. The server removes the text, any image and its reactions from the room's history and tells
+    every client. In its place everyone sees a muted line: "Alex deleted a message".
+  - **The host deletes anyone's message:** the same menu item on others' messages, only for the (acting) host. The line
+    reads "The host deleted Sam's message" (or "Alex (host) deleted Sam's message").
+  - Private messages: the sender can delete; the line shows only to the two people.
+  - **Server rules:** validate the message id, check it is the sender's or the caller is host, and rate-limit. The
+    deleted content is gone from the stored history (not just hidden), and replies or pins that quote it show "deleted
+    message". Old clients ignore the new message type (optional field, no protocol bump unless needed).
+  - Texts in `i18n.ts` / `i18n-tr.ts`.
+  - The privacy page notes that deleted messages are removed from the room's history (both languages).
+- Done when:
+  - Your own and the host's deletes work for everyone, live and after a reload, with the right line.
+  - A non-host can't delete others' messages (server-enforced, unit test).
+  - Test Lab hook `chat.delete`.
+- Tests: room server unit tests (permissions, history removal, rate limit), e2e with three clients (sender, host,
+  other), phone long-press harness, the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
+- Done: #509 (`claude/msg1-delete-message`, `{t:'chat-delete'}` / `chat-deleted`, `ChatOwners`; Test Lab
+  `chat.delete`; e2e `chat-delete.mjs`, harness `chat-delete`), live in v0.9.97.157 (live e2e green).

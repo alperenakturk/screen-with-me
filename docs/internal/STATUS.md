@@ -11,8 +11,8 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (fresh session 16 Nov, evening):
   - [x] SH3 #499, VC1 #501 live in v0.9.97.155, VC3 #502 live in v0.9.97.156 (live e2e green): Done lines, cards in
     `archive/cards-done.md`, hand tests 27u–27x; GMP-b's duplicate 27p renumbered 27p2.
-  - [ ] MSG1 #509 (`claude/msg1-delete-message`) merged (e8335623): check deploy + live e2e, then the Done line and
-    hand test; the same run's tag job should back-fill `v0.9.97.141` and `v0.9.97.113` (TAG_TOKEN added 17 Nov).
+  - [x] MSG1 #509 live in v0.9.97.157 (live e2e green): Done line, card in `archive/cards-done.md`, hand test 27y. The
+    tag job back-filled `v0.9.97.141` (TAG_TOKEN); `v0.9.97.113` was not (outside its 80-commit lookback, it seems).
   - [ ] CR2 (YouTube Music playlists / albums → queue) on `claude/cr2-yt-playlists`: PR → merge, deploy, live e2e.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
@@ -193,6 +193,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27w. [VC1] On a YouTube video drag YouTube's own volume slider: it follows the mouse (the cloud can't test real
   YouTube).
 - [ ] 27x. [VC3, 0.9.97.156] With a VPN on, join voice: after ~10 s "Your voice isn't reaching the others" and an ⓘ.
+- [ ] 27y. [MSG1, 0.9.97.157] With a friend: open ⋯ on your message (on a phone, press and hold it), "🗑 Delete for
+  everyone": you both see "… deleted a message"; as the host delete your friend's message; reload: the lines stay.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
