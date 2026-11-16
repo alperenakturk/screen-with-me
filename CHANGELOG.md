@@ -16,6 +16,13 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.147 — 16 Nov
+
+- When a video ends and the next one doesn't start by itself, "Video ended" now opens in the middle of the screen
+  instead of in the chat: the video's name, a small ↗ to its page, and **▶ Play next** or **Close**. Esc or a click
+  outside closes it too, and it goes away by itself when someone starts the next video. Shorts keep their small card
+  beside the video.
+
 ### 0.9.97.138 — 15 Nov
 
 - 👁 **Watch a game live:** join a full Sea Battle or Five Frames Duel table from the games hall and you see both

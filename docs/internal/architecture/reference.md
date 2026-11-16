@@ -2225,7 +2225,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`freezeIfLongEmpty`). Listed under "Kaydedilen odaların" on the home page.
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
-- **"Video ended" card (card EC1):** `ui/end-card.ts` `showNextCard` (from the engine's `onEnded` and the film page's
+- **"Video ended" card (card EC1, 0.9.97.147):** `ui/end-card.ts` `showNextCard` (from the engine's `onEnded` and the film page's
   `next`, only when autoNext is off and the queue has more). Outside the Shorts view it is a centered page dialog: a
   shared `.dialog-backdrop.end-backdrop` on `body` (`fs-layer.ts` lifts it into fullscreen; on the film page it closes
   the hole like every dialog) with `.end-dialog` ("Video ended" small, the title as plain text clamped to 2 lines, the
