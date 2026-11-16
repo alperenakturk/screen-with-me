@@ -12,8 +12,8 @@ One handoff per lane or role; each session updates only its own lines and delete
   (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
   merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
   merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
-- [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
-  (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
+- [ ] Game Studio: GW2 (⛶ / 🪟 for tables) on claude/gw2-game-modes (PR, merge, deploy check); then GP1 (games open at
+  once; Five Frames' compact layout for a sideways tablet's short window), GMP (b) (2–6 players), GT1 (tutorials).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -130,6 +130,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Join the table: you watch, and you see both fleets as they are shot; the friend never sees yours. Same in the Five
   Frames Duel: the phone shows both boards with their letters. Five Frames in English and Turkish: new everyday words
   are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
+- [ ] 27k. [GW2] On a computer with a friend and a YouTube video playing: open Classics from 🎮: it fills the whole
+  screen and the video pauses for both of you. Press 🪟 (or Esc): a frame at the right edge, the video plays again.
+  Drag the frame over the video: it stays there. Open Sea Battle: it opens as a frame (the mode you used last); ⛶ in
+  its head gives it the whole screen again. Snack Bar: a frame you can drag over the video too.
 - [ ] 27j. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
   it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
   watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.

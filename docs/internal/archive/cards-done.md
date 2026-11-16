@@ -2332,3 +2332,20 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
 - Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
 - Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.
+
+### GW2. Game windows: fullscreen or frame, any time; the frame goes anywhere (owner, 15 Nov 2026; Game Studio, first)
+- Why: the owner meant two modes for every table, ⛶ Fullscreen and a 🪟 Frame; today fullscreen only works in a room
+  with no video, and the frame is kept off the video.
+- What:
+  - **Tables:** a ⛶ / 🪟 switch in every table's head, usable any time. Fullscreen with a video: the video pauses
+    (the same rule as the table auto-pause, #46) and ▶ resumes it when the game leaves fullscreen.
+  - **Frame:** starts on the right, resizes in proportion, and can be dragged **anywhere, over the video too**,
+    YouTube included (owner's decision, 15 Nov 2026, knowing YouTube's rule; never placed over the video by us).
+  - **Solo side games** (Snack Bar, Window Garden, Five Frames): always a frame, with the same freedom.
+  - **Sweep:** look for other rules like "only without a video" in the games hall and windows; fix them, list them.
+- Done when: switch both ways with and without a video, on YouTube and a video file; the frame drags over the video;
+  the phone keeps PH2 (Games tab, upright); Test Lab hook `games.mode`.
+- Tests: game-windows harness (both modes, with a video), `npm run e2e` table pause/resume, phone harness.
+- Owner's pick: his messages (Planner chat, 15 Nov 2026).
+- Done: branch `claude/gw2-game-modes` (Game Studio, 16 Nov 2026; option A, real full screen, Planner 15 Nov).
+

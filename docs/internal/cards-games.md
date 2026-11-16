@@ -37,21 +37,6 @@ Game Studio 2 QZ2 → WG2.
 - Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
   studio says which and why before using them.
 
-### GW2. Game windows: fullscreen or frame, any time; the frame goes anywhere (owner, 15 Nov 2026; Game Studio, first)
-- Why: the owner meant two modes for every table, ⛶ Fullscreen and a 🪟 Frame; today fullscreen only works in a room
-  with no video, and the frame is kept off the video.
-- What:
-  - **Tables:** a ⛶ / 🪟 switch in every table's head, usable any time. Fullscreen with a video: the video pauses
-    (the same rule as the table auto-pause, #46) and ▶ resumes it when the game leaves fullscreen.
-  - **Frame:** starts on the right, resizes in proportion, and can be dragged **anywhere, over the video too**,
-    YouTube included (owner's decision, 15 Nov 2026, knowing YouTube's rule; never placed over the video by us).
-  - **Solo side games** (Snack Bar, Window Garden, Five Frames): always a frame, with the same freedom.
-  - **Sweep:** look for other rules like "only without a video" in the games hall and windows; fix them, list them.
-- Done when: switch both ways with and without a video, on YouTube and a video file; the frame drags over the video;
-  the phone keeps PH2 (Games tab, upright); Test Lab hook `games.mode`.
-- Tests: game-windows harness (both modes, with a video), `npm run e2e` table pause/resume, phone harness.
-- Owner's pick: his messages (Planner chat, 15 Nov 2026).
-
 ### GP1. Games open at once and answer the first tap (owner, 15 Nov 2026; Game Studio, with GW2)
 - Why: Classics stutter while opening; Snack Bar stutters and its pictures arrive late or missing.
 - What: preload a game's chunk and art when the hall opens (or on hover / touch-start), decode images before the first
