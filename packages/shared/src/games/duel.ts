@@ -34,14 +34,37 @@ export function duelGuess(board: DuelBoard, raw: string, answer: string, lang: L
   return guess({ day: 0, guesses: board.guesses }, raw, answer, lang, { allowed });
 }
 
+/** GMP (b): the most seats at a duel table (the first two people sit by themselves, the others press "Sit"). */
+export const DUEL_MAX_SEATS = 6;
+
 /**
- * The result after a guess by seat `by`: that seat when it solved (the first to solve wins), 'draw' when both boards
- * are used up without the word, null while the game goes on.
+ * The result after a guess by seat `by` (`boards` per seat, null = an empty seat; `solved` = the seats in the order
+ * they found the word). Two players: the first to solve wins at once, 'draw' when both boards are used up. Three or more
+ * (GMP b, owner: "more players racing on the same word"): the race goes on until every board is done; the first to
+ * solve wins, 'draw' when nobody did. Null while the game goes on.
  */
-export function duelOutcome(boards: readonly DuelBoard[], answer: string, by: number): number | 'draw' | null {
-  if (boardSolved(boards[by]!, answer)) return by;
-  if (boards.every((b) => boardDone(b, answer))) return 'draw';
-  return null;
+export function duelOutcome(boards: readonly (DuelBoard | null)[], answer: string, by: number, solved: readonly number[] = []): number | 'draw' | null {
+  const seated = boards.filter((b): b is DuelBoard => !!b);
+  if (seated.length <= 2) {
+    if (boards[by] && boardSolved(boards[by]!, answer)) return by;
+    if (seated.every((b) => boardDone(b, answer))) return 'draw';
+    return null;
+  }
+  if (!seated.every((b) => boardDone(b, answer))) return null;
+  return solved.length ? solved[0]! : 'draw';
+}
+
+/**
+ * The places at the end (GMP b): per seat, 1 for the first to solve, 2 for the next…, then every seat that didn't
+ * solve shares the place after the last solver; 0 for an empty seat.
+ */
+export function duelRanks(boards: readonly (DuelBoard | null)[], answer: string, solved: readonly number[]): number[] {
+  const order = solved.filter((i, k) => boards[i] && boardSolved(boards[i]!, answer) && solved.indexOf(i) === k);
+  return boards.map((b, i) => {
+    if (!b) return 0;
+    const at = order.indexOf(i);
+    return at >= 0 ? at + 1 : order.length + 1;
+  });
 }
 
 /**
@@ -72,10 +95,11 @@ export function matchOver(bestOf: 1 | 3, wins: readonly number[], games: number)
   if (bestOf === 1) return games >= 1;
   return Math.max(...wins) >= 2 || games >= MATCH_GAMES;
 }
-/** The match's winner (seat), or null for a tie. */
+/** The match's winner (seat), or null for a tie (GMP b: the one seat with the most wins, any number of seats). */
 export function matchWinner(wins: readonly number[]): number | null {
-  if (wins[0] === wins[1]) return null;
-  return wins[0]! > wins[1]! ? 0 : 1;
+  const best = Math.max(0, ...wins.map((w) => w ?? 0));
+  const top = wins.flatMap((w, i) => ((w ?? 0) === best ? [i] : []));
+  return best > 0 && top.length === 1 ? top[0]! : null;
 }
 
 /** A practice word: any answer except `avoid` (the day's word), picked with `random` (the server's secure one). */
@@ -121,12 +145,14 @@ export type DuelServerMessage =
       lang: Lang;
       /** The day number of the day's word, or null for a practice word. */
       daily: number | null;
-      /** Two seats (null = free). */
+      /** Two to six seats (null = free; GMP b). */
       players: (DuelPlayer | null)[];
       /** My seat (-1 = watching). */
       seat: number;
       winner: number | null;
       draw: boolean;
+      /** GMP b: each seat's place once the game is over (1 = first to solve; 0 = an empty seat). */
+      ranks?: number[];
       /** The word, only once the game is over. */
       answer?: string;
       /** Games played at this table (a new one = new boards). */

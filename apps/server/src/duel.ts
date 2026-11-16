@@ -6,11 +6,13 @@ import { labOnRequest, labRemembered } from './lab.ts';
 import { RateLimiter } from './rate-limit.ts';
 import type { Avatar } from '@swm/shared/protocol';
 import {
+  DUEL_MAX_SEATS,
   DUEL_PROTOCOL_VERSION,
   boardDone,
   boardSolved,
   duelGuess,
   duelOutcome,
+  duelRanks,
   duelWordsVisible,
   hardModeMiss,
   matchOver,
@@ -80,6 +82,9 @@ interface Saved {
   dailyDone: boolean;
   winner: number | null;
   draw: boolean;
+  /** GMP b: the seats in the order they found the word this game, and each seat's place once it is over. */
+  solved: number[];
+  ranks: number[];
   round: number;
   /** NG1: one game or best of three; hard mode. */
   bestOf: 1 | 3;
@@ -92,7 +97,7 @@ interface Saved {
 }
 
 const fresh = (): Saved => ({
-  seats: [null, null], phase: 'wait', lang: 'en', answer: '', daily: null, dailyDone: false, winner: null, draw: false, round: 0,
+  seats: [null, null], phase: 'wait', lang: 'en', answer: '', daily: null, dailyDone: false, winner: null, draw: false, solved: [], ranks: [], round: 0,
   bestOf: 1, hard: false, matchWins: [0, 0], matchGames: 0, people: {}, emptySince: null,
 });
 
@@ -270,17 +275,26 @@ export class Duel extends DurableObject<Env> {
     d.phase = 'play';
     d.winner = null;
     d.draw = false;
+    d.solved = [];
+    d.ranks = [];
     d.round++;
     // A new match after the last one ended (or the first); else the next game of this match.
     if (this.matchDone()) {
-      d.matchWins = [0, 0];
+      d.matchWins = d.seats.map(() => 0);
       d.matchGames = 0;
     }
+    while (d.matchWins.length < d.seats.length) d.matchWins.push(0);
     for (const s of d.seats) {
       if (!s) continue;
       s.guesses = [];
       s.ready = false;
     }
+  }
+
+  /** GMP b: two or more seated and every seated player ready. */
+  private allReady(): boolean {
+    const seated = this.data.seats.filter((s): s is Seat => !!s);
+    return seated.length >= 2 && seated.every((s) => s.ready);
   }
 
   /** The current match is over (or none has started): the next game starts a new one. */
@@ -315,7 +329,7 @@ export class Duel extends DurableObject<Env> {
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (d.phase === 'play') return;
         d.seats[seat]!.ready = message.on;
-        if (d.seats.every((s) => s?.ready)) this.start();
+        if (this.allReady()) this.start();
         break;
       }
       case 'rematch': {
@@ -323,7 +337,7 @@ export class Duel extends DurableObject<Env> {
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (d.phase !== 'over') return;
         d.seats[seat]!.ready = true;
-        if (d.seats.every((s) => s?.ready)) this.start();
+        if (this.allReady()) this.start();
         break;
       }
       case 'guess': {
@@ -339,9 +353,12 @@ export class Duel extends DurableObject<Env> {
         }
         const error = duelGuess(board, message.word, d.answer, d.lang, (w) => wordList(d.lang).allowed.has(w));
         if (error) return this.sendTo(ws, { t: 'error', code: error });
-        const outcome = duelOutcome(d.seats.map((s) => ({ guesses: s?.guesses ?? [] })), d.answer, seat);
+        const boards = d.seats.map((s) => (s ? { guesses: s.guesses } : null));
+        if (boardSolved(boards[seat]!, d.answer) && !d.solved.includes(seat)) d.solved.push(seat);
+        const outcome = duelOutcome(boards, d.answer, seat, d.solved);
         if (outcome !== null) {
           d.phase = 'over';
+          d.ranks = duelRanks(boards, d.answer, d.solved);
           d.matchGames++;
           if (outcome === 'draw') d.draw = true;
           else {
@@ -364,7 +381,9 @@ export class Duel extends DurableObject<Env> {
         if (seat >= 0) return;
         // Only between games: a free seat, or the seat of someone who left (a new board, no wins).
         if (d.phase === 'play') return this.sendTo(ws, { t: 'error', code: 'in_progress' });
-        const free = d.seats.findIndex((s) => s === null || !this.online(s.key));
+        // GMP b: up to six seats; a new one is added while there is room.
+        let free = d.seats.findIndex((s) => s === null || !this.online(s.key));
+        if (free < 0 && d.seats.length < DUEL_MAX_SEATS) free = d.seats.push(null) - 1;
         if (free < 0) return this.sendTo(ws, { t: 'error', code: 'full' });
         d.seats[free] = this.newSeat(key);
         for (const s of d.seats) if (s) s.ready = false;
@@ -447,7 +466,7 @@ export class Duel extends DurableObject<Env> {
       seat: mine,
       winner: d.winner,
       draw: d.draw,
-      ...(over ? { answer: d.answer } : {}),
+      ...(over ? { answer: d.answer, ranks: d.seats.map((s, i) => (s ? (d.ranks[i] ?? 0) : 0)) } : {}),
       round: d.round,
       bestOf: d.bestOf,
       hard: d.hard,
