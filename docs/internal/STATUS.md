@@ -190,8 +190,6 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   and count on 💬 while it is closed.
 - [ ] 27v. [VC1, 0.9.97.155] In voice press 🎧: you hear nobody, your mic goes off, your friend sees a crossed 🎧 on your
   face; 🎙 brings everything back.
-- [ ] 27w. [VC1] On a YouTube video drag YouTube's own volume slider: it follows the mouse (the cloud can't test real
-  YouTube).
 - [ ] 27x. [VC3, 0.9.97.156] With a VPN on, join voice: after ~10 s "Your voice isn't reaching the others" and an ⓘ.
 - [ ] 27y. [MSG1, 0.9.97.157] With a friend: open ⋯ on your message (on a phone, press and hold it), "🗑 Delete for
   everyone": you both see "… deleted a message"; as the host delete your friend's message; reload: the lines stay.
