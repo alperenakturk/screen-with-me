@@ -184,10 +184,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `COUNTDOWN_MS` (3 s) ahead; not for Shorts / TikTok / film pages / the sync test (`countdownMedia`), a resumed saved
     video, or with `settings.countdown === false` (Room rules, host); once per item (`counted`, storage). The page shows
     the seconds over the video (`showCountdown`, `.countdown`). A user's play during the hold starts the room at once.
+    A Short (`isShortMedia`: YouTube Short or TikTok) gets no countdown but a silent lead-in instead (card SH1 (2)):
+    the server holds it at 0:00 for at most `SHORT_LEAD_MS` (1.5 s, alone too). Each viewer's engine, when it
+    attaches a player during the lead-in (loaded, holding at 0:00), sends `{t:'ready', primed: itemId}`; once every
+    joined non-TV viewer is primed the server moves the start to `SHORT_START_MARGIN_MS` (250 ms) from now (`primed`,
+    memory-only `lead`) and broadcasts it as a SYSTEM `play`. `showCountdown` draws nothing for a Short (nothing of
+    ours over the YouTube player). e2e `shorts-start.mjs` measures swipe → start: both primed at once ≈ 0.3 s, one
+    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap.
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait
   again within 30 s; a manual play/pause/seek cancels the wait; the host can turn it off (`settings.waitForAll`).
+  Card SH1 (2): a wait that starts in a video's first `WAIT_REWIND_S` (3 s) pauses at 0:00 (`waitPausePosition`), so
+  a slow viewer never makes everyone lose the start.
   System actions arrive with `by.id === SYSTEM_MEMBER_ID`.
 - **Protocol (`protocol.ts`):** the server validates everything from clients and copies it into a new object. On a
   backward-incompatible change bump `PROTOCOL_VERSION` (old clients get a "refresh the page" error; extension users
@@ -275,6 +284,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`sessionStorage` `feed:<room>`); stops on quota / off, when the topic runs dry or after 3 empty pages, and when only
   the host may change the queue. Each page ≈ 1 % of the day's quota. Since 0.9.92.6 ♾ always opens its window; a running
   feed shows on top (`#shorts-feed-now`, "On now: …" + Stop) and stops only from there (it used to stop on the press).
+- **Room feeds: ♾ Shorts and ▶ videos, steerable from the Queue (card SH2, 16 Nov 2026):** the feed lives on the room
+  object (`packages/shared/src/feed.ts`: `FeedIn` / `FeedInfo {kind: shorts|videos, label, source, paused, by,
+  steers}`; storage key `feed`), so everyone sees it. Client `{t:'feed', feed}` starts / steers / pauses (`null` stops;
+  a locked queue locks it, `not_host`); the server broadcasts `{t:'feed'}` and sends it in `welcome.feed`. Same source +
+  label = pause / resume (the runner stays, unless they left); same kind, other source = a steer (`steers + 1`, the one
+  who steered runs it); another kind = a new feed. Sources (`FeedSource`): `topic {q, region?}` (search.list, 100
+  units, cached per words + region; ▶ uses `long=1`: no Shorts), `pool {pool, region}` (♾ Discover pool; ▶
+  `/api/youtube/chart`: videos.list `chart=mostPopular` by country and category, 1 unit, cached per hour), `like {id}`
+  (`/like`, ▶ adds `videos=1`), `channel {c, order?}` and `chanOf {id, order?}` (`/channel?c=` or `?of=<video>`, the
+  channel looked up with 1 more unit; ▶ `videos=1`; `order=popular` sorts a page by views with `statistics`, `random`
+  is shuffled in the tab). **The runner** (`ui/shorts-feed.ts`, the tab whose member id is `by`) asks `{t:'feed-played'}`
+  once (the room's played ids, oldest first), then fills the queue below 3 Shorts / 2 videos with up to 8 / 3 new ids,
+  `enqueue` with `feed: true` (`QueueItem.feed`); a start or steer first dequeues the queued `feed` items, so the next
+  videos follow it at once. A runner who left: the first remaining person (by member id) who may add takes it over.
+  **Memory:** every YouTube item that starts playing is remembered (`feedMemory`, `[id, at][]`, `rememberPlayed`):
+  ids only, at most `FEED_MEMORY_MAX` 2000 for `FEED_MEMORY_DAYS` 30, wiped with the room (`deleteAll` + reset in the
+  alarm). **UI:** the Queue's `#feed-row` (`ui/feed-row.ts`): no feed → "♾ Shorts feed" / "▶ Video feed"; running →
+  label, ⏸ / ▶, 🧭 Steer, ✕. The window (`ui/feed-window.ts` + `.css`, a lazy chunk with its own `TEXT`; also from the
+  Shorts bar's ♾): tabs ♾ / ▶, the running feed with Pause / Stop, four steers with a line each (📺 continue from this
+  channel = `chanOf`, 🌍 same topic other country, ✨ more like this one = `like`, 🔤 change the topic), then the
+  starters (Discover / Popular-now chips + country, one box for words / a video link / a channel with ▶'s order).
+  Test Lab `feed.state` (active feed, mine, steers, remembered). Tests: `feed.test.ts`, `e2e/shorts.mjs` (feed part),
+  `e2e/search.mjs` (chart / `of=` inputs), harness `feed` (CI `site`, computer + phone, a friend pauses and stops).
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `POST /api/youtube/search?hl` with the words as a form body `q` (since 0.9.96.20, security M6: never in the logged address; `wordsRequest`, `readWords`; podcasts search the same) (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with
@@ -1404,6 +1436,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Saves every 5 s, on a seed / bloom, on close and `pagehide`; one tab at a time (`windowGarden:tab`). Sounds
   `gardenPlant` / `gardenWater` / `gardenSeed` / `gardenBloom` / `gardenPick` / `gardenNew`. Gallery progress
   "🌱 2 growing · 📖 3/8". Harness `scripts/harness/garden/run.cjs` (17 checks).
+  **WG2 (16 Nov 2026):** nothing moves while playing: the pot's card keeps one height (the name on one line, two lines
+  kept for the text, the buttons beside it, or always under it in a game box ≤ 380 px), so the sill above (`flex: 1`)
+  no longer jumps when the text changes; numbers are tabular. The 🎨 page adds a window view (`GARDEN_VIEWS`: `lights`
+  = the scene's own lights, `sea` / `hills` / `city` = silhouettes in `.wg-view` clipped to the glass, tinted by
+  `data-time`) and a pot colour (`POT_COLORS`: CSS recolours the clay `#c46a3a` / `#d98250` of every pot art,
+  `.wg[data-pots]`), both free and saved (`view`, `potColor`, defaults for older saves), and the compost
+  (`COMPOST_PETALS` 5 → a common seed). With two or more thirsty pots the Water button waters them all (`waterAll`).
+  Test Lab `garden.decor` (+20 petals, the page opens). Harness `garden-steady` (every button's box after each step; CI
+  games job).
   **🎟️ Five Frames (0.9.95.5, card "Daily word game", board A "ticket row", name owner's pick):** `games/five-frames.ts`
   + `five-frames.css` (lazy chunk, own `TEXT`), rules `@swm/shared/games/five-frames`, word lists as their own chunks
   per language, generated by `scripts/words/build-words.py` (GMP: `en.ts` 11,509 guesses from ENABLE + SCOWL, 2,052
@@ -1966,7 +2007,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Under the video** (`ui/reactions.ts` `.tray-bar`): "😀 Tepki ▴" tray (Ready-made / Mine, 8 slots, ‹ 1/3 ›,
     🖼️ Add; pressing inside doesn't close it, outside/Esc closes) + the three most recent emojis next to it
     (`localStorage` `recentReactions`); on the right labelled buttons 🎮 Game · 📌 Pin · 🔄 Sync · ⏩ 1× (opens
-    `#speed-pop`: −, rate list, +) · ⇥ · ⛶; icons only at ≤1180 px. Fullscreen and Shorts bars stay flat (8 slots +
+    `#speed-pop`: the speed picker, below) · ⇥ · ⛶; icons only at ≤1180 px. Fullscreen and Shorts bars stay flat (8 slots +
     ▲▼). In the shell, popups opening over the hole (`[data-island]`: tray, speed, game menu) are islands; they have no
     opening animation (measurements shifted).
   - **Top bar** (`html.in-room`): "Bağlı" text, ⟳, 🎨 and TR/EN hidden in the room; the connection is the dot of the
@@ -2078,8 +2119,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   on a computer (not the film page, phones or the Shorts view) the toolbar under the video is hidden whenever the
   dock is shown in the window (`.dock-window`); the dock is the only remote: 💬 (only in fullscreen or with the side
   panel hidden), 😀, 📌, 🎮 `#dock-game` (an `extraButtons` of the games stage, its hall opens left of the rail), 🎙 / 📷,
-  🖥️ only while someone streams, ⋯ `#dock-more` (`#dock-more-pop`: speed chips, sync, next, side panel, "keep the
-  controls open"), ⛶. `#dock-speed` / `#dock-skip` are hidden there. YouTube (`.theater.yt-rail`, set when the player is
+  🖥️ only while someone streams, ⋯ `#dock-more` (`#dock-more-pop`: one "⏩ Speed · 1×" row `#dock-speed-row` that
+  opens the speed picker in place, sync, next, side panel, "keep the controls open"), ⛶. `#dock-speed` / `#dock-skip` are hidden there. YouTube (`.theater.yt-rail`, set when the player is
   YouTube): the rail is a 58 px column beside the video, never on it: `.player` / `.fs-catcher` end at its edge while
   it shows (a mouse move, hovering it, an open window of it, a paused video, always on touch screens) and fill the
   width when it rests (`.dock-idle`), in the window and in fullscreen. **0.9.93 (owner: "not on every move; open when
@@ -2325,6 +2366,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     the issue labelled `date-sweep` with the date; the next green night closes it. Locally:
     `SWM_TEST_DATE=2027-02-28 NODE_OPTIONS="--require $PWD/scripts/harness/forced-date.cjs" node scripts/harness/<x>/run.cjs …`.
   - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
+  - *Fewer runners per PR (Planner's pick, 16 Nov 2026).* The first real 3-PR batch took 38 min (first merge 13:39 →
+    live e2e end 14:18): ≈ 9 min waiting for the previous main run to finish deploying and 4–9 min waiting for free
+    runners, because five sessions' PR runs (≈ 11 jobs each) share the account's 20 concurrent jobs; the tests
+    themselves took ≈ 10. So the state matrix now runs inside `game-windows` and the Test Lab sweep inside `contrast`
+    (≈ 11 min each, timeout 25): 7 test jobs per PR instead of 9, none longer than `games-more`.
   - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
   - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
     style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
@@ -2409,6 +2455,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Its findings so far: YouTube + cinema
   put the head below the screen (W, .114) and the room's intro took the first click on a game (W, .116). In CI as the
   `state-matrix` job (its own: `game-windows` + it would pass 10 min).
+  Shared pointer (16 Nov 2026, the "lights up" / "dragging moves" failures now and then): the three headful windows
+  share one X pointer, so a window opening, closing or going ⛶ elsewhere sends a page a buttonless pointer move at the
+  real cursor and can take its pointer capture. The harness opens and closes windows and drives the real mouse in turn
+  (`withMouse`, the front window), and tries a hover a window-system event took away up to three times. The drag
+  (`stage.ts`) no longer ends on `lostpointercapture`: it takes the capture back on the next move with the button held,
+  ignores buttonless moves and ends on `pointerup` / `pointercancel` or the next press; the matrix drops the head's
+  capture after the drag's first step to prove it.
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
@@ -2434,5 +2487,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   message carries `resumed`. A video skipped with "Next" counts from the start. Turning saving off deletes `history`.
   Every room: a room that stayed empty for more than 1 min while playing opens paused where the last person left
   (`freezeIfLongEmpty`). Listed under "Kaydedilen odaların" on the home page.
+- **Speed picker (card UI2):** one picker everywhere (`room.ts` `speedPicker`): in the rail's ⋯ (behind the
+  "⏩ Speed · 1×" row; open, `#dock-more-pop.picking` hides the menu's other rows so it fits a short video, and it
+  closes again with the menu), the rail's own ⏩ pop `#dock-speed-pop` and the toolbar's
+  `#speed-pop`. It holds the ready speeds `PRESET_RATES` (0.5 / 1 / 1.25 / 1.5 / 2, `[data-rate]`, `.on` +
+  `aria-pressed` for the room's speed) and − value + (`[data-step]`). `fitRate` / `stepRateFor`
+  (`packages/shared/src/protocol.ts`) keep a custom speed between 0.25× and `CUSTOM_MAX_RATE` 3× in 0.05 steps; on
+  YouTube they snap to / step through `YOUTUBE_RATES` (its player plays nothing else), TikTok and Vimeo stay 1×. `room.ts`
+  `requestRate` fits every request; `showRates` paints all pickers and the ⋯ row; one delegated click handles − / +
+  and the ready speeds outside the rail (the rail's own handler closes its pop). The engine plays and shares a custom
+  rate once (scenario in `sync-engine.test.ts`). Phones: targets ≥ 44 px; the speed is in the sideways / fullscreen
+  rail only (the toolbar is hidden in the phone room). "Keep the controls open" (`opt:railPin`) is off unless someone
+  turns it on: nothing sets it by itself. Test Lab `rail.speed` (speed, ready / ± values for this media, picker open,
+  ⋯ height, `opt:railPin`). Harness `scripts/harness/rail-speed` (CI games-more).
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.

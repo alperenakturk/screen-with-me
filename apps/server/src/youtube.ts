@@ -19,6 +19,8 @@ import {
   parseSearchItems,
   SEARCH_RESULTS,
   shortsOnly,
+  videosOnly,
+  POOL_REGIONS,
   type SearchAnswer,
   type SearchResult,
   WORDS_BODY_MAX,
@@ -113,10 +115,14 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   const rawPage = url.searchParams.get('page');
   const page = rawPage === null ? null : cleanPageToken(rawPage);
   if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
+  // Card SH2: "same topic, other country" (a Discover region), and the ▶ video feed (`long=1`: no Shorts).
+  const rawRegion = url.searchParams.get('region');
+  const region = rawRegion !== null && (POOL_REGIONS as readonly string[]).includes(rawRegion) ? rawRegion : null;
+  const long = !short && url.searchParams.get('long') === '1';
   if (!env.YOUTUBE_API_KEY) return json({ error: 'off' });
 
   const cache = caches.default;
-  const resultKey = cacheKey(url.origin, `yt-search2?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${page ? `&page=${page}` : ''}`);
+  const resultKey = cacheKey(url.origin, `yt-search2?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${long ? '&long=1' : ''}${region ? `&region=${region}` : ''}${page ? `&page=${page}` : ''}`);
   const quotaKey = cacheKey(url.origin, 'yt-quota');
   const cached = await cache.match(resultKey);
   if (cached) return markHit(cached);
@@ -129,13 +135,13 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
 
   const api: ApiKey = { key: env.YOUTUBE_API_KEY, calls: {} };
   try {
-    return await searchWith(api, query, lang, short, page, cache, resultKey, quotaKey);
+    return await searchWith(api, query, lang, short, page, cache, resultKey, quotaKey, region, long);
   } finally {
     await recordUsage(env, 'search', api.calls);
   }
 }
 
-async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: boolean, page: string | null, cache: Cache, resultKey: Request, quotaKey: Request): Promise<Response> {
+async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: boolean, page: string | null, cache: Cache, resultKey: Request, quotaKey: Request, region: string | null = null, long = false): Promise<Response> {
   const search = await callYouTube(
     'search',
     {
@@ -144,10 +150,11 @@ async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: 
       // Only videos that may be played inside another site: everything else would fail in our player.
       videoEmbeddable: 'true',
       safeSearch: 'moderate',
-      maxResults: String(short ? FEED_RESULTS : SEARCH_RESULTS),
+      maxResults: String(short || long ? FEED_RESULTS : SEARCH_RESULTS),
       relevanceLanguage: lang,
       q: short ? `${query} #shorts` : query,
       ...(short ? { videoDuration: 'short' } : {}),
+      ...(region ? { regionCode: region } : {}),
       ...(page ? { pageToken: page } : {}),
       fields: 'nextPageToken,items(id/videoId,snippet(title,channelTitle,liveBroadcastContent))',
     },
@@ -161,7 +168,7 @@ async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: 
     return json({ error: 'failed' });
   }
 
-  const limit = short ? FEED_RESULTS : SEARCH_RESULTS;
+  const limit = short || long ? FEED_RESULTS : SEARCH_RESULTS;
   let items = parseSearchItems(search.body, new Map(), limit);
   if (items.length > 0) {
     // Durations are a nicety: if this call fails, the results still go out without them.
@@ -179,6 +186,7 @@ async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: 
     items = shortsOnly(items);
     if (items.some((item) => item.short)) items = items.filter((item) => item.short);
   }
+  if (long) items = videosOnly(items);
   const next = cleanPageToken((search.body as { nextPageToken?: unknown } | null)?.nextPageToken);
   const response = json(next ? { items, next } : { items }, RESULT_TTL_S);
   await cache.put(resultKey, response.clone());
@@ -234,7 +242,7 @@ function keepShorts(items: SearchResult[]): SearchResult[] {
 }
 
 /** search.list for Shorts + videos.list for their length and shape (101 units). */
-async function searchShorts(params: Record<string, string>, key: ApiKey, limit: number): Promise<SearchAnswer | Call> {
+async function searchShorts(params: Record<string, string>, key: ApiKey, limit: number, keep: (items: SearchResult[]) => SearchResult[] = keepShorts): Promise<SearchAnswer | Call> {
   const search = await callYouTube(
     'search',
     {
@@ -258,7 +266,7 @@ async function searchShorts(params: Record<string, string>, key: ApiKey, limit: 
     );
     if (videos.ok) items = parseSearchItems(search.body, parseDurations(videos.body), limit, parseUpright(videos.body));
   }
-  items = keepShorts(items);
+  items = keep(items);
   const next = cleanPageToken((search.body as { nextPageToken?: unknown } | null)?.nextPageToken);
   return next ? { items, next } : { items };
 }
@@ -316,14 +324,22 @@ export async function youtubeLike(request: Request, url: URL, env: Env, ipKey: (
   const rawPage = url.searchParams.get('page');
   const page = rawPage === null ? null : cleanPageToken(rawPage);
   if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
-  return cached(request, url, env, ipKey, 'like', page ? EXPECTED_UNITS.likeSearch : EXPECTED_UNITS.like, `yt-like1?id=${id}&hl=${lang}${page ? `&page=${page}` : ''}`, async (key) => {
+  // Card SH2: `videos=1` is the ▶ video feed's "like this video" (no Shorts, any length).
+  const wantVideos = url.searchParams.get('videos') === '1';
+  const keep = wantVideos ? videosOnly : keepShorts;
+  return cached(request, url, env, ipKey, 'like', page ? EXPECTED_UNITS.likeSearch : EXPECTED_UNITS.like, `yt-like1?id=${id}&hl=${lang}${wantVideos ? '&videos=1' : ''}${page ? `&page=${page}` : ''}`, async (key) => {
     const source = await callYouTube('videos', { part: 'snippet', id, fields: 'items(snippet(title,channelId))' }, key);
     if (!source.ok) return source;
     const snippet = ((source.body as { items?: { snippet?: { title?: unknown; channelId?: unknown } }[] } | null)?.items ?? [])[0]?.snippet;
     const words = typeof snippet?.title === 'string' ? titleWords(snippet.title) : null;
     const bySearch = (token: string | null) =>
       words
-        ? searchShorts({ q: `${words} #shorts`, relevanceLanguage: lang, safeSearch: 'moderate', ...(token ? { pageToken: token } : {}) }, key, FEED_RESULTS)
+        ? searchShorts(
+            { q: wantVideos ? words : `${words} #shorts`, relevanceLanguage: lang, safeSearch: 'moderate', ...(wantVideos ? { videoDuration: 'any' } : {}), ...(token ? { pageToken: token } : {}) },
+            key,
+            FEED_RESULTS,
+            keep,
+          )
         : Promise.resolve<SearchAnswer>({ items: [] });
     if (page) {
       const answer = await bySearch(page === LIKE_SEARCH_PAGE ? null : page);
@@ -344,7 +360,7 @@ export async function youtubeLike(request: Request, url: URL, env: Env, ipKey: (
         if (ids.length) {
           const videos = await callYouTube('videos', { part: 'snippet,contentDetails,player', maxWidth: '100', id: ids.join(','), fields: VIDEO_FIELDS }, key);
           if (!videos.ok) return videos;
-          items = keepShorts(parseVideoItems(videos.body));
+          items = keep(parseVideoItems(videos.body));
         }
       }
     }
@@ -368,18 +384,33 @@ export async function youtubeLike(request: Request, url: URL, env: Env, ipKey: (
  * can't be told from a topic, and a channel-name search would cost 100 units.
  */
 export async function youtubeChannel(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
-  const ref = parseChannelParam(url.searchParams.get('c'));
-  if (!ref) return new Response('Bad channel', { status: 400 });
+  // Card SH2: `of=<video>` is "continue from this channel" (the playing video's channel, one more unit to find it).
+  const of = url.searchParams.get('of');
+  const ref = of === null ? parseChannelParam(url.searchParams.get('c')) : null;
+  if (of !== null ? !isVideoId(of) : !ref) return new Response('Bad channel', { status: 400 });
   const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
   const rawPage = url.searchParams.get('page');
   const page = rawPage === null ? null : cleanPageToken(rawPage);
   if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
+  // Card SH2: `videos=1` keeps the channel's normal videos (the ▶ feed), `order=popular` sorts a page by views.
+  const wantVideos = url.searchParams.get('videos') === '1';
+  const popular = url.searchParams.get('order') === 'popular';
   const { day } = poolWindow(Date.now());
-  const label = 'id' in ref ? ref.id : `@${ref.handle.toLowerCase()}`;
-  return cached(request, url, env, ipKey, 'channel', EXPECTED_UNITS.channel, `yt-chan1?c=${encodeURIComponent(label)}&hl=${lang}&day=${day}${page ? `&page=${page}` : ''}`, async (key) => {
+  const label = of !== null ? `of:${of}` : ref && 'id' in ref ? ref.id : `@${ref!.handle.toLowerCase()}`;
+  const extra = `${wantVideos ? '&videos=1' : ''}${popular ? '&order=popular' : ''}`;
+  const cost = of !== null ? EXPECTED_UNITS.chanOf : EXPECTED_UNITS.channel;
+  return cached(request, url, env, ipKey, 'channel', cost, `yt-chan1?c=${encodeURIComponent(label)}&hl=${lang}&day=${day}${extra}${page ? `&page=${page}` : ''}`, async (key) => {
+    let byId = ref && 'id' in ref ? ref.id : null;
+    if (of !== null) {
+      const source = await callYouTube('videos', { part: 'snippet', id: of, fields: 'items(snippet(channelId))' }, key);
+      if (!source.ok) return source;
+      const found = ((source.body as { items?: { snippet?: { channelId?: unknown } }[] } | null)?.items ?? [])[0]?.snippet?.channelId;
+      if (typeof found !== 'string' || !/^UC[A-Za-z0-9_-]{22}$/.test(found)) return { items: [] };
+      byId = found;
+    }
     const channel = await callYouTube(
       'channels',
-      { part: 'contentDetails', ...('id' in ref ? { id: ref.id } : { forHandle: `@${ref.handle}` }), fields: 'items/contentDetails/relatedPlaylists/uploads' },
+      { part: 'contentDetails', ...(byId ? { id: byId } : { forHandle: `@${(ref as { handle: string }).handle}` }), fields: 'items/contentDetails/relatedPlaylists/uploads' },
       key,
     );
     if (!channel.ok) return channel;
@@ -392,12 +423,72 @@ export async function youtubeChannel(request: Request, url: URL, env: Env, ipKey
     );
     if (!list.ok) return list;
     const body = list.body as { nextPageToken?: unknown; items?: { contentDetails?: { videoId?: unknown } }[] } | null;
-    const ids = (body?.items ?? []).map((item) => item.contentDetails?.videoId).filter((x): x is string => isVideoId(x));
+    const ids = (body?.items ?? []).map((item) => item.contentDetails?.videoId).filter((x): x is string => isVideoId(x) && x !== of);
     const next = cleanPageToken(body?.nextPageToken);
     if (!ids.length) return next ? { items: [], next } : { items: [] };
-    const videos = await callYouTube('videos', { part: 'snippet,contentDetails,player', maxWidth: '100', id: ids.join(','), fields: VIDEO_FIELDS }, key);
+    const videos = await callYouTube(
+      'videos',
+      { part: `snippet,contentDetails,player${popular ? ',statistics' : ''}`, maxWidth: '100', id: ids.join(','), fields: popular ? `${VIDEO_FIELDS.slice(0, -1)},statistics/viewCount)` : VIDEO_FIELDS },
+      key,
+    );
     if (!videos.ok) return videos;
-    const items = keepShorts(parseVideoItems(videos.body));
+    let items = (wantVideos ? videosOnly : keepShorts)(parseVideoItems(videos.body));
+    if (popular) {
+      const views = viewCounts(videos.body);
+      items = [...items].sort((a, b) => (views.get(b.id) ?? 0) - (views.get(a.id) ?? 0));
+    }
+    return next ? { items, next } : { items };
+  });
+}
+
+/** videos.list `statistics/viewCount` by id (card SH2's "most viewed" channel feed). */
+function viewCounts(body: unknown): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const item of ((body as { items?: { id?: unknown; statistics?: { viewCount?: unknown } }[] } | null)?.items ?? [])) {
+    const count = Number(item.statistics?.viewCount);
+    if (typeof item.id === 'string' && Number.isFinite(count)) out.set(item.id, count);
+  }
+  return out;
+}
+
+/**
+ * `GET /api/youtube/chart?kind=popular|music|…&region=auto|world|TR…&hl=…&page=…` — card SH2's ▶ "popular now" video
+ * feed: YouTube's own most-popular chart (videos.list `chart=mostPopular`, 1 unit for 50), by country and category,
+ * Shorts left out. One shared answer per kind + region + language + hour (it changes during the day).
+ */
+export async function youtubeChart(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
+  const kind = url.searchParams.get('kind');
+  if (!isPoolKind(kind)) return new Response('Bad kind', { status: 400 });
+  const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
+  const rawPage = url.searchParams.get('page');
+  const page = rawPage === null ? null : cleanPageToken(rawPage);
+  if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
+  const choice = url.searchParams.get('region') ?? 'auto';
+  if (!isPoolRegionChoice(choice)) return new Response('Bad region', { status: 400 });
+  // The chart is per country: "world" falls back to the language's country.
+  const picked = poolRegion(choice, (request as Request & { cf?: { country?: unknown } }).cf?.country, lang);
+  const region = picked === 'world' ? (lang === 'en' ? 'US' : 'TR') : picked;
+  const hour = new Date().toISOString().slice(0, 13);
+  const category = POOL_CATEGORY[kind];
+  return cached(request, url, env, ipKey, 'chart', EXPECTED_UNITS.chart, `yt-chart1?kind=${kind}&hl=${lang}&region=${region}&hour=${hour}${page ? `&page=${page}` : ''}`, async (key) => {
+    const chart = await callYouTube(
+      'videos',
+      {
+        part: 'snippet,contentDetails,player',
+        chart: 'mostPopular',
+        maxWidth: '100',
+        maxResults: '50',
+        regionCode: region,
+        hl: lang,
+        ...(category ? { videoCategoryId: category } : {}),
+        ...(page ? { pageToken: page } : {}),
+        fields: `nextPageToken,${VIDEO_FIELDS}`,
+      },
+      key,
+    );
+    if (!chart.ok) return chart;
+    const items = videosOnly(parseVideoItems(chart.body));
+    const next = cleanPageToken((chart.body as { nextPageToken?: unknown } | null)?.nextPageToken);
     return next ? { items, next } : { items };
   });
 }
