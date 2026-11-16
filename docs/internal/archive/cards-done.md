@@ -1,116 +1,37 @@
-# Finished cards (archive of `CARDS.md`, card DOCS2)
-
-Moved here verbatim on 11 Nov 2026 by card DOCS2 (`OPTIMIZATION.md` step 6): everything on the old board that was
-finished (shipped cards, the owner's test rounds 1 and 2, the run order to the test round, the old Done list, the
-night-pick cards, Proposed cards that shipped or were decided) together with the board's old header. The live board is
-`docs/internal/CARDS.md`; still-open cards stayed there. Nothing here was edited, so line wording and dates are as they
-were; release notes for each version are in `CHANGELOG.md`.
-
-## Old board header (11 Nov 2026)
-Owner's rule (2 Nov 2026): one board for every session. The **Planner** writes and orders cards; the **Developer** takes
-the top **Ready** card, moves it to **In progress**, and when it is live adds `Done: <PR link>` and moves it to
-**Done**. **Security** and **Research** add their suggestions under **Proposed**; the Planner and the owner decide
-whether they become Ready. Roles and rules: `CLAUDE.md` "Sessions as an office". The order follows `ROADMAP.md`
-"Focus: now / next / frozen". The owner's tick view is the Planner's test board Artifact https://claude.ai/artifact/NWZG7GLH4JzAnZt1rNgrJo
-(owner, 4 Nov 2026: the hidden page on our site needed a deploy for every update, so it is removed again; the
-Artifact updates at once).
-
-**How the owner is asked (owner, 4 Nov 2026):** no more option pages or other web pages for him. The only page he uses
-is the test board (the Planner keeps it current with what he tested and what is next). Every preference or design
-question is asked **in the Planner's chat** with clickable choices (the chat's question tool, the recommended choice
-first, with a side preview of each option: a short sketch or description). Design, Game Studio, Research and the
-Developers therefore send the Planner the questions as text: question, 2–4 options (one marked recommended), and a
-short preview per option. They do not publish Artifacts for the owner.
-
-**The test board stays current by itself (owner, 4 Nov 2026):** the Planner adds, updates and removes board items
-without asking: a fix that went live becomes a test, a test the owner reported passing is removed or marked, a
-question he answered disappears. Then the Planner tells him in a line what changed. **Everyone talks to the owner in
-Turkish** (all sessions; among themselves English is fine; everything written to the repo stays English).
-
-**Resources and tests (owner, 4 Nov 2026):** whenever tokens, a usage limit, Actions minutes, an API quota or anything
-else is running out, every session tells the Planner at once and the Planner tells the owner. Run as many tests as a
-change needs, none on unrelated parts, and never give up quality (the CI diet, card CI, follows this rule).
-
-**The repo is public since 4 Nov 2026** (owner: no money for Actions minutes; private-repo minutes ran out after
-≈ 3500 min in four days). The license is "All rights reserved" (card LIC, PR #287). Never commit a secret, never say
-"open source" in public texts; MIT or not is decided at 1.0.
-
-Card format:
-
-```
-### <short title>
-- Why: <one line>
-- Done when: <what can be checked>
-- Tests: <unit / e2e / harness / owner's hand test>
-- Owner's pick: <link or "none needed">
-```
-
-## In progress
-
-- **G98c** (lane A): the 0.9.98 gate re-checked against main, the owner-only list for his test round (docs PR #347).
-
-## Shipped 0.9.97.60 – 0.9.97.85 (cards routed by message, without their own block)
-Each line: card, version, PR, lane. Details are in the PR, `CHANGELOG.md` and CLAUDE.md's "Next up" line.
-- Privacy policy for KVKK + GDPR (H3 + M7): 0.9.97.60, #312, A. Feedback goes only to the owner's private repository.
-- 🚢 Sea Battle: 0.9.97.61, #313, Game Studio.
-- Home door "Scroll Shorts together" + gate check G98: 0.9.97.62, #314, A.
-- GT, game windows clear of the chat on tablets: 0.9.97.63, #315, Game Studio.
-- CAM1: 0.9.97.64, #316, B2 (block below). Reversi: 0.9.97.65, #317, Game Studio.
-- TOS, terms of use + abuse contact: 0.9.97.66, #318, A. MB: 0.9.97.67, #319, B2 (block below).
-- GP2, games polish 1 / 2 / 3: 0.9.97.68 / .71 / .73, #322 / #323 / #328, Game Studio.
-- LABLOCK, the Test Lab behind the owner's code: 0.9.97.69, #320, A. LABTR, the lab in plain EN + TR: 0.9.97.72, #324, A.
-- OPS1, changelog, release tags, uptime check, cost guard: 0.9.97.70, #321, B2.
-- STORE1, store dry run: #327, A. YTA, YouTube API audit pack: #330, A. CI2, parallel PR jobs: #326 + #329, B2.
-- YTG, no game window over a YouTube video: 0.9.97.74, #332, Game Studio.
-- R3-3, the site's address in one config value: 0.9.97.75, #331 + #334, A. TAG1, tags with catch-up: #333, B2.
-- G98b, gate re-check: #335, A. BH11, game e2e offline check: #336, Game Studio.
-- GHOST, game tables close silent connections (90 s): 0.9.97.76, #338, Game Studio.
-- PERF1 / 1c / 1e / 1a / 1b, speed and weight: 0.9.97.77 / .78 / .79 / .83, #337 / #339 / #341 / #345, A.
-- YTK, Shorts "Play now" + ← / → seek: 0.9.97.80, #340, B2.
-- FF2 + GW, Five Frames' result line, game window sizes, ⛶ in every game: 0.9.97.81, #342, Game Studio.
-- LIVE-GREEN, game e2e ride out network drops: 0.9.97.82, #343, Game Studio.
-- BH12, the room's notes off the player in the Shorts view: 0.9.97.84, #344, B2.
-- GP4, Last Heart result card + How to play, Glowbeam the referee at Quiz / Draw / Last Heart: 0.9.97.85, #346, Game
-  Studio.
-- Waiting for the owner: Sea Battle zoom on a phone (GP4 item 5, A keep / B zoom). After 1.0: bigger Five Frames keys on
-  a phone, Window Garden plant names and moods (GP4 items 6–7).
-
-## Ready
-
-### SIMP1. A calmer room screen: fewer things on it, a tidy Settings (owner, 10 Nov 2026; lane A, after LAB2)
-- Why: owner: "let's simplify the general design and take out things that aren't necessary, so they don't tire the
-  user's eyes." His examples, all moved, nothing a user needs is lost:
-  1. The room name and the people count at the top left go off the room screen (the name lives in Settings → Room, the
-     count in the people list / the faces strip that already shows who is here).
-  2. The footer line (privacy, terms, version …) leaves the room screen; it goes to Settings → About (privacy policy and
-     terms one click away in both languages, the version number there; the extension page / store copy that reads the
-     footer version is updated). The home page keeps a small privacy / terms link (KVKK / GDPR: the notice must stay easy
-     to reach before you use the site).
-  3. "Move to another device" leaves the profile popover and goes into Settings (few people use it).
-  4. Settings get categories (e.g. Me · My screen · Room · Sound & camera · About), each a short list, no scrolling where
-     it can be avoided (CLAUDE.md "No scrolling inside a view"), the same order on a computer and a phone.
-  5. (owner, same day) **The voice / stream IP notice goes**: no dialog before joining voice, starting or watching a stream,
-     and no "🔒 Those in voice can see your IP · Why?" line under the voice row ("nobody uses it; put it officially where it
-     has to be, no warnings"). The fact stays where the law needs it: `privacy.html` #voice already says it in both
-     languages (check the wording still matches: others in voice / a stream can see your public IP); Settings → Sound &
-     camera gets a quiet "Who sees what (privacy)" link to that section. `ui/ip-notice.ts` and its `opt:ipNotice:*` keys
-     go (old keys are harmless); the Planner updates CLAUDE.md's "fails closed (the IP notice)" line after it ships.
-  6. (owner, same day) The room's **join screen** (name / avatar before entering) loses its privacy / terms footer
-     line too; the links live in a small ⓘ / ⚙️ on that screen (an invited person never sees the home page, so the notice
-     must stay one tap away there) and in Settings → About.
-- Done when: the room screen shows only what you need while watching; every moved item is reachable in ≤ 2 clicks from
-  Settings; nothing is removed from the product; EN + TR texts; `store/src/room.html` copy updated; the screenshot /
-  layout harnesses at phone, tablet, laptop and desktop sizes are updated; the Test Lab steps that named the old places
-  are updated; a hand test on the board.
-- Tests: layout + settings harnesses, help / privacy harness (links still reachable in both languages), unit tests where
-  logic moves.
-- Owner's pick: done (his request). Anything else the developer wants to remove goes to the Planner as a question first.
 
 
-### LAB2. The Test Lab ready for the owner's test round (owner, 10 Nov 2026; lane A 0.9.97.107, Game Studio 0.9.97.108)
-- Why: the owner starts his 0.9.98 test round now (his pick) and will run it **through the Test Lab**: "make the debug
-  part really solid, fix what is broken there; nothing may fail in the part we test with". Afterwards the Planner gives
-  him a very basic step-by-step guide, easy to hard ("open this, unlock the lab, press this, tell me what you see").
+### SH2. Feeds: ♾ Shorts and ▶ Videos, reachable from the room, steerable, no repeats (owner, 15 Nov 2026; B2, after SH1)
+- Why: the infinite Shorts feed only lives inside the Shorts view, its window is confusing, and a new feed brings back
+  Shorts the room has already watched.
+- What:
+  1. **Reach it from the normal room:** the Queue ("Up next" / Sıra) shows the active ♾ feed as a row (its name and
+     what it follows). It can be paused, resumed and steered there without entering the Shorts view.
+  2. **A simple, clear ♾ window:** one screen with the active feed on top and plain choices. Steer the running feed
+     instead of making a new one:
+     - "Continue from this channel";
+     - "Same topic, other country";
+     - "More like this one";
+     - "Change the topic".
+     One line explains each; changes apply to the next Shorts without a restart.
+  2b. **▶ Video feed (owner, 15 Nov 2026 evening):** the same idea for normal YouTube videos. The Queue gets two
+     buttons, "♾ Shorts feed" and "▶ Video feed". A video feed starts from:
+     - "like this video" (a pasted link or the playing one);
+     - "this channel" (newest / random / most viewed);
+     - "popular now" (country and category);
+     - "a topic".
+     It is steerable the same way.
+     - **Quota-aware:** `search.list` costs 100 units of the 10,000 a day, so prefer the cheap calls: `playlistItems`
+       of a channel's uploads, the `videos` `chart=mostPopular` with region and category, `videos.list` (1 unit each).
+     - Cache per room and per query in the Worker.
+     - Never call search per video.
+     - Planner's extra ideas, for the studio to pick from if cheap: length filter (short / medium / long), "two
+       channels mixed", continue a pasted playlist, "room votes between 3 next videos" (reuse voting), "each person's
+       turn".
+  3. **No repeats:** the room remembers the Short ids it has played, on the room's server object, ids only. A new or
+     steered feed skips them.
+     - A one-time room forgets them when it is deleted.
+     - A saved room keeps the last 2,000 ids for 30 days.
+     - The privacy page notes it in both languages if needed (ids of public videos, no personal data).
 - Done when:
   - **Lane A (the lab itself, 0.9.97.107):** every lab command in every tab (📊 👥 🎬 🧪 🖥 📜, command box, 🐞 This is a
     bug) is run once on a computer and on a phone (bottom sheet), in EN and TR, on a live-like host (`lab-lock`'s
@@ -2536,3 +2457,17 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
   studio says which and why before using them.
 - Done: #483 (Game Studio, 16 Nov 2026): (a) word lists + watchers in 0.9.97.138, (b) 2–6 players for the Duel and Sea Battle.
+
+  - The feed is visible and steerable from the Queue on a computer and a phone.
+  - Each steer changes the next Shorts.
+  - A new feed doesn't replay watched ids (unit + e2e).
+  - The memory is wiped with the room.
+  - Test Lab hook `feed.state` (active feed, steer, remembered count).
+- Tests: room server unit tests for the memory and its caps, e2e feed → steer → no repeat, the shorts harnesses, and
+  the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026); the memory length is the Planner's call.
+- Done: #488 (3b7275e, v0.9.97.151, live e2e green): the feed lives on the room object and shows as a Queue row for
+  everyone (Pause / Resume, 🧭 Steer, ✕; "♾ Shorts feed" / "▶ Video feed" when none); ▶ video feed (popular now via
+  `chart=mostPopular` 1 unit, channel newest / random / most viewed, like a video, topic); one window with four steers;
+  the room remembers played YouTube ids (2000 / 30 days, wiped with the room; privacy page EN + TR); Test Lab
+  `feed.state`; e2e `shorts.mjs` + `search.mjs`, CI harness `feed`. Lane A's TikTok note lives in the new ♾ tab.
