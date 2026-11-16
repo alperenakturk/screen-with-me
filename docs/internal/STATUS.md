@@ -32,9 +32,6 @@ One handoff per lane or role; each session updates only its own lines and delete
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
-- [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
-  order; no version bumps (CI3), notes in changelog/next/.
-- [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
 - [ ] Game Studio (session 16 Nov, 16:20; handoff at the end of it):
   [x] #491 `claude/drag-capture` merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
   [x] #483 `claude/gmp-b-players` GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.
@@ -228,6 +225,12 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
   0.9.95, not built yet).
 - **More players without the extension:** Vimeo + podcasts first (Planner's proposal; card under Proposed in `CARDS.md`).
 - **A TV can keep the host role:** fix with the Google Cast TV version after 1.0 (ROADMAP Phase 2).
+- **A link pasted while the room is still connecting:** it is dropped without a note (`connection.send` drops while
+  the socket is not open); queue it until open or show "still connecting" (lane A, 16 Nov).
+- **Screenshot on failure for the feed harness:** `scripts/harness/feed/run.cjs` failed once on main (the friend's
+  `#feed-row-pause` never visible) and CI kept no picture (B2, 16 Nov).
+- **Old game layout points (Game Studio's first look, 16 Nov):** phone Sea Battle "Play against Stub" line wraps beside
+  Easy / Medium; tablet: an empty band above the game; Draw & Guess round choices "1 / 2 / 3" in EN but "1 tur" in TR.
 
 ## Testing in the cloud (verified 28 Oct 2026)
 Order matters: the server wants `apps/web/dist`, so build first.
