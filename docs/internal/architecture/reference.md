@@ -1028,11 +1028,24 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   **Game window head and free window (lane W, bugs W1–W5 + 0.9.97.112, owner 10 Nov 2026):** the head is (placement
   switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
-  slot (`.game-head-slot`: "?" How to play, Classics' shelf). No game has its own full screen (card GW's ⛶ and `.game-max`
-  were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
-  (`placeOf`, owner 10 Nov 2026):** the tables always play in the video's place, without a switch (`STAGE_READY`, on
-  since card .113; over YouTube, `overYoutube` / YTG, the free window beside the player); the side games always play in
-  the free window, without a switch on a computer (narrow screens keep their below / large pick, `gamePlace:<kind>`).
+  slot (`.game-head-slot`: "?" How to play, Classics' shelf), and for tables ⛶ / 🪟 (GW2, below). A side game's free
+  window lives inside the video's fullscreen while there is one. **Where a game plays
+  (`placeOf`, owner 10 Nov 2026):** the side games always play in the free window, without a switch on a computer
+  (narrow screens keep their below / large pick, `gamePlace:<kind>`). **GW2 (owner, 15 Nov 2026; Planner's pick A):** a
+  table on a computer or tablet plays in **⛶ full screen** (mode `max`: `#game-stage` asks for the browser's own full
+  screen, `requestFullscreen`; refused (an iframe, iOS Safari) `.game-stage.max` is fixed and `100dvh`, filling the
+  browser window) or in its **🪟 frame** (the free window), switched any time with the head's `.game-mode` button
+  (`setTableMode`); the mode used last is remembered for every table (`gameMode`: `full` | `frame`, `full` the first
+  time). ⛶ pauses the room's video (`autoPause`, with or without YouTube: the player is off the screen, so nothing of ours
+  sits over it) and leaving it (🪟, Esc, the browser's own exit, ✕, Leave) plays it again if it paused it (`pausedForFull`,
+  `room.ts` `playVideo`). In ⛶ the game keeps its shape and scales to the screen like it did in the video's place
+  (`refit`). A table's frame starts at the right edge at its own size grown with the screen (`SPOT_HOME`; `homeBox` is
+  the side games'), may cover part of a video file there, keeps beside a YouTube player (under it, `below`, when nothing
+  fits), and a frame smaller than the table's own size scales the table's own layout down. **A frame I moved or sized
+  myself goes anywhere, over a YouTube player too** (CLAUDE.md §7's one exception: `clearOfPlayer` and the strip-beside
+  size limit only apply to its home). Narrow screens and PH2's Games tab keep their placements (⛶ there is the tab).
+  Lab: `games.mode` (`full` / `frame` / flip; writes the mode, `realFullscreen`, `pausedForFull`, the box). Harnesses:
+  `state-matrix` (both modes in every state), `games-youtube`, `game-proportions` (⛶ rows = the old video's place).
   The free window's **home** (`homeBox`): with the side panel showing, the window lines up with it (its top and right
   edge, down to just above `#chat-form`, at least the game's `minSize` wide, never over the video box itself), so no
   sliver of chat shows and the message box stays free (0.9.97.117, Game Studio's review); otherwise the column right of the theater, under the top bar, over the side panel,

@@ -301,7 +301,9 @@ export function createGameStage(opts: StageOptions) {
     }
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const inTab = phoneTab() && !!gamesPanel();
-    const parent = inTab ? gamesPanel()! : narrow.matches || mode === 'max' ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
+    // GW2: ⛶ lives on the page (it asks for the browser's full screen itself), or inside the video's fullscreen while
+    // there is one (it fills that view; on the page it would be hidden behind it).
+    const parent = inTab ? gamesPanel()! : narrow.matches ? document.body : mode === 'float' || mode === 'max' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
     for (const m of ['float', 'stage', 'below', 'full', 'max'] as const) stage.classList.toggle(m, mode === m);
     syncFullscreen();
