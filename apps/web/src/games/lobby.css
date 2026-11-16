@@ -145,7 +145,7 @@
 #game-stage.in-tab .draw-page:not(.draw-lobby) .draw-top { min-height: 44px; }
 #game-stage.in-tab .draw-page:not(.draw-lobby) .draw-top .small { font-size: 13px; }
 #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-main { gap: 6px; flex: 0 0 auto; }
-#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { font-size: 13px; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { font-size: 14px; }
 #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-joker { min-height: 44px; }
 #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-body { gap: 6px; }
 #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-question { font-size: 18px; margin: 0; }
