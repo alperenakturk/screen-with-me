@@ -98,6 +98,16 @@ const until = async (fn, ms = 15000) => {
   check(sent.filter((m) => m.n === 2).length === 1 && sent.find((m) => m.n === 2).pick === 1, 'Enter answers the focused option once', JSON.stringify(sent));
   check(ring !== 'none', 'the focused option keeps a visible focus ring', ring);
 
+  // 3. A rematch: question 1 of the new game is fresh (nothing carried over from the last game's question 1).
+  await page.evaluate(() => window.__swmLab.run('quiz.toEnd'));
+  check(!!(await until(async () => last.phase === 'over', 40000)), 'the game ends');
+  await page.evaluate(() => [...document.querySelectorAll('#game-stage .gr-again, #game-stage button')].find((b) => /new game|play again|again/i.test(b.textContent) && !b.disabled)?.click());
+  check(!!(await until(async () => last.phase === 'question' && last.n === 1, 15000)), 'a rematch starts');
+  await wait(700);
+  const fresh = await page.evaluate(() => [...document.querySelectorAll('#game-stage .quiz-option')].filter((b) => !b.disabled && !b.classList.contains('picked')).length);
+  const shown = await page.evaluate(() => document.querySelector('#game-stage .quiz-question')?.textContent);
+  check(fresh >= 2 && shown === last.question, 'the rematch question is new and its options can be pressed', `${fresh} ${shown} / ${last.question}`);
+
   check(errors.length === 0, 'no page errors', errors.join(' | '));
   for (const o of Object.values(others)) o.ws.close();
   await browser.close();

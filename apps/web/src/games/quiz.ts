@@ -138,7 +138,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let lastTick = 0;
   const body = $('#quiz-body');
   /** The question on screen (QZ2: kept between states so a press always lands on the button it started on). */
-  let view: { n: number; texts: string[]; list: HTMLElement; buttons: HTMLButtonElement[]; note: HTMLElement; fresh: boolean } | null = null;
+  let view: { n: number; q: string; texts: string[]; list: HTMLElement; buttons: HTMLButtonElement[]; note: HTMLElement; fresh: boolean } | null = null;
   /** My answer to option `i` of question `n`: once, on the first press (pointer, key or screen reader). */
   function answer(n: number, i: number): void {
     if (!state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
@@ -169,7 +169,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     const note = el('p', { class: 'quiz-note' });
     body.replaceChildren(el('h3', { class: 'quiz-question' }, question), list, note);
     // The slide-in plays once, on the question's first render.
-    const built = { n, texts: [...texts], list, buttons, note, fresh: shownN !== n };
+    const built = { n, q: question, texts: [...texts], list, buttons, note, fresh: shownN !== n };
     shownN = n;
     return built;
   }
@@ -247,6 +247,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'over') showPointsResult(result, `quiz:${gameId}`, s.players, s.host, me, endLines(), () => send({ t: 'start' }));
     else result.hide();
     if (s.phase === 'lobby' || s.phase === 'over') {
+      // A new game numbers its questions from 1 again: what I picked in the last one must not carry over.
+      myPick = null;
+      fifty = null;
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
       const lead = s.players.find((p) => p.id === s.host);
@@ -284,7 +287,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       // QZ2: the question's nodes are built once and then patched. Rebuilding them on every state (another player
       // answers, a joker) swapped the button under a press, so the click never came and a second one was needed.
       const texts = s.options ?? [];
-      if (!view || view.n !== s.n || view.texts.join('\n') !== texts.join('\n') || !body.contains(view.list)) view = buildQuestion(s.n, s.question ?? '', texts);
+      if (!view || view.n !== s.n || view.q !== (s.question ?? '') || view.texts.join('\n') !== texts.join('\n') || !body.contains(view.list)) view = buildQuestion(s.n, s.question ?? '', texts);
       const v = view;
       if (!reveal) v.list.classList.toggle('fresh', v.fresh);
       else v.list.classList.remove('fresh');
