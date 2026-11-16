@@ -1017,19 +1017,44 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     return !!me && members.some((m) => m.voice && m.id !== me.id && personOf(m) === personOf(me));
   }
 
-  // Kim konuşuyor: dinlediklerimin ses seviyesi (kendi sesim için mikrofon açıksa da göstermeyiz; yankı hissi olmasın).
-  // Son sesten sonra kısa süre yanık kalır: kelime aralarında gösterge titremesin.
+  // Who is speaking: the level of everyone I hear and, since card SH1 (3), my own microphone too (the ring on my own
+  // face shows my mic is heard). It stays lit for a moment after the last sound so the ring doesn't flicker between
+  // words. The Shorts seats get the level as well (`onSpeak`): their ring and growth follow the voice.
   const SPEAK_LEVEL = 0.04;
   const SPEAK_HOLD_MS = 600;
   const spokeAt = new Map<string, number>();
+  /** Smoothed level per member: rises at once, falls slowly (like a VU meter). */
+  const smooth = new Map<string, number>();
+  let speakListener: ((speak: Map<string, { on: boolean; level: number }>) => void) | null = null;
+  let speakShown = false;
   setInterval(() => {
-    if (!client.active) return;
-    const now = Date.now();
-    for (const [memberId, level] of allLevels()) if (level > SPEAK_LEVEL) spokeAt.set(memberId, now);
-    for (const face of root.querySelectorAll<HTMLElement>('#voice-people [data-voice-id], .cam-tile[data-voice-id]')) {
-      face.classList.toggle('speaking', now - (spokeAt.get(face.dataset.voiceId!) ?? 0) < SPEAK_HOLD_MS);
+    if (!client.active) {
+      if (speakShown) {
+        speakShown = false;
+        spokeAt.clear();
+        smooth.clear();
+        speakListener?.(new Map());
+        for (const face of root.querySelectorAll<HTMLElement>('.speaking[data-voice-id]')) face.classList.remove('speaking');
+      }
+      return;
     }
-  }, 250);
+    speakShown = true;
+    const now = Date.now();
+    const levels = allLevels();
+    const me = myId();
+    if (me) levels.set(me, Math.max(levels.get(me) ?? 0, myLevel()));
+    for (const [memberId, level] of levels) {
+      if (level > SPEAK_LEVEL) spokeAt.set(memberId, now);
+      const old = smooth.get(memberId) ?? 0;
+      smooth.set(memberId, level > old ? level : old * 0.8 + level * 0.2);
+    }
+    const speak = new Map<string, { on: boolean; level: number }>();
+    for (const [memberId, level] of smooth) speak.set(memberId, { on: now - (spokeAt.get(memberId) ?? 0) < SPEAK_HOLD_MS, level });
+    for (const face of root.querySelectorAll<HTMLElement>('#voice-people [data-voice-id], .cam-tile[data-voice-id]')) {
+      face.classList.toggle('speaking', speak.get(face.dataset.voiceId!)?.on ?? false);
+    }
+    speakListener?.(speak);
+  }, 100);
 
   // Real speech (not a click or a knock) for lowering the film's volume: sampled more often than the glow above.
   const speech = new SpeechDetector();
@@ -1185,7 +1210,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       master = Math.min(1, Math.max(0, volume));
       applyVolumes();
     },
-    /** Who is speaking right now (member ids), for the TV's faces. */
+    /** Card SH1 (3): who speaks and how loud (member id → on, smoothed level), every 100 ms while in voice. */
+    onSpeak(listener: (speak: Map<string, { on: boolean; level: number }>) => void): void {
+      speakListener = listener;
+    },
+    /** Who is speaking right now (member ids), for the TV's faces and the Test Lab. */
     speakers(): Set<string> {
       const now = Date.now();
       return new Set([...spokeAt].filter(([, at]) => now - at < SPEAK_HOLD_MS).map(([id]) => id));

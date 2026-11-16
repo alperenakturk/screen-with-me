@@ -320,6 +320,9 @@ jobs:
       - name: Shorts view way back
         run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
 
+      - name: Speaking ring in the Shorts view
+        run: node scripts/harness/speak-ring/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true

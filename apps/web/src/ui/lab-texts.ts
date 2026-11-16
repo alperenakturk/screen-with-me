@@ -5,6 +5,10 @@
 import type { LabText } from '../debug-lab.ts';
 
 export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: LabText }> = {
+  'app.staleChunk': {
+    title: { en: 'A missing chunk after an update', tr: 'Güncellemeden sonra eksik parça' },
+    help: { en: 'Acts as if a chunk failed to load: the "Sidelit was updated" note shows, the room stays. Run again to read it.', tr: 'Bir parça yüklenemedi gibi davranır: "Sidelit güncellendi" notu çıkar, oda kalır. Tekrar çalıştırınca okur.' },
+  },
   'chat.fill': {
     title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
     help: { en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.', tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.', },
@@ -30,8 +34,8 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
   },
   'shorts.state': {
-    title: { en: 'Shorts: which view, and the way back', tr: 'Shorts: hangi görünüm ve geri dönüş yolu' },
-    help: { en: 'Writes the view (Shorts, room or none) and whether "📱 Shorts view" is offered into the log.', tr: 'Görünümü (Shorts, oda ya da yok) ve "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını kayda yazar.', },
+    title: { en: 'Shorts: which view, the way back and who speaks', tr: 'Shorts: hangi görünüm, geri dönüş yolu ve kim konuşuyor' },
+    help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking and how many seat faces show the green ring into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu ve kaç koltuk yüzünde yeşil halka olduğunu kayda yazar.' },
   },
   'sources.state': {
     title: { en: 'Search sources: the chosen one and the last search', tr: 'Arama kaynakları: seçili olan ve son arama' },
