@@ -1548,6 +1548,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the head's other `.btn`s; the side games' round "?" keeps its game's dark bar colours. Classics: the pink / blue turn
   ring is for the X / O boards only, the other boards ring the turn in `--accent`; backgammon's dice are `--text`. The
   hall's UPDATED badge is an accent tint and `.game-menu` sits on `--bg` (gallery.css). Checks: `table-how` (Matinee).
+  **GT1 (16 Nov 2026):** the tables' head button is "❓ How to play" (`tableHowTo`: ❓ + `.game-head-text`, words while
+  they fit, `fitHeadLabels`; it sends `swm-game-size` so the head measures again); the cards say a little more (Sea
+  Battle adds a 4th card for three or more seats, `many()`; Duel 2–6 and places; Draw & Guess 80 s and hints; Classics
+  draws / stalemate); `draw()` clamps the card index when the list shrinks. Test Lab `games.tutorial` (lab-tools.ts)
+  opens the open game's cards; `table-how` checks the words, the head fitting and the hook, `lab-games-all` runs it on
+  every table. Quiz's cards wait for Game Studio 2's QZ2.
   0.9.97.117 also: "Skip" (`.htp-skip`, words, hidden on the last card) sits in `.htp-actions` instead of a corner ✕;
   hall text ≥ 13 px and What's new unclamped (gallery.css); a NEW / UPDATED badge only while `badgeFresh(note,
   SITE_VERSION)` (the note's release or the next; `SITE_VERSION` read from `.footer-version`); Window Garden's Water

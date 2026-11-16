@@ -35,17 +35,12 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
 - [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
-- [ ] Game Studio (session 16 Nov, 16:20; continues the 16 Nov handoff):
-  [ ] #491 `claude/drag-capture`: state-matrix drag/hover (harness `withMouse`) + proportions "text 0 px" fixes (also
-  game-windows `laptop/sea/float`), plus state-based waits:
-  rail-speed's row (the same lines as B2's #488), Sea Turn (settle, each ship once) and phone zoom, Snack special
-  (menu steps, measure once steady). games-resume "never an XOX grid first" did not reproduce (3 runs side by side).
-  Merge when green, then tell lane A (EC1 #465, #471) and the Planner.
-  [ ] #483 `claude/gmp-b-players` (GMP b; e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`): merge main after #491, CI green → merge → deploy, live e2e, tag → hand test
-  27p to the Planner.
-  [ ] #493 `claude/stage-lazy`: games window as a lazy chunk (room JS 139.1 → 124.8 kB). Green → merge after #483.
-  [ ] Then card GT1 (every game already has "?": fuller cards EN + TR, "❓ How to play" in each game's menu, Test Lab
-  `games.tutorial`).
+- [ ] Game Studio (session 16 Nov, 16:20; handoff at the end of it):
+  [x] #491 `claude/drag-capture` merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
+  [x] #483 `claude/gmp-b-players` GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.
+  [x] #493 `claude/stage-lazy` games window as a lazy chunk merged (room JS 139.1 → 124.8 kB).
+  [ ] #496 `claude/gt1-tutorials` (card GT1): "❓ How to play" in the head, fuller cards, Test Lab `games.tutorial`.
+  Green → merge → deploy check → card GT1 to the archive. Quiz's cards wait for Game Studio 2's QZ2.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.

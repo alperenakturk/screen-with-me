@@ -117,6 +117,19 @@ export function registerGamesLab(
         run: () => void openSolo(kind),
       })),
       {
+        // Card GT1: the open game's "How to play" cards, the same as its ❓ (the first-time cards stay off in tests).
+        id: 'games.tutorial',
+        title: { en: 'Show "How to play" of the open game', tr: 'Açık oyunun "Nasıl oynanır" kartlarını göster' },
+        help: { en: 'Opens the picture cards of the game in the game window, as its ❓ does; ✕ / Skip closes them.', tr: 'Oyun penceresindeki oyunun resimli kartlarını açar, ❓ gibi; ✕ / Geç kapatır.' },
+        tab: 'games',
+        where: IN_ROOM,
+        available: () => !!document.querySelector('#game-stage:not([hidden]) .htp-open') || { en: 'no game open', tr: 'açık oyun yok' },
+        run: () => {
+          if (!document.querySelector('#game-stage .htp:not([hidden])')) document.querySelector<HTMLButtonElement>('#game-stage .htp-open')?.click();
+          return document.querySelector('#game-stage .htp:not([hidden]) .htp-title')?.textContent ?? '';
+        },
+      },
+      {
         id: 'games.speed',
         title: labClock.speed > 1 ? { en: 'Side games: normal time', tr: 'Yan oyunlar: zaman normal aksın' } : { en: 'Side games: time ×10', tr: 'Yan oyunlar: zaman 10 kat hızlı aksın' },
         help: { en: 'Snack Bar and Window Garden run ten times faster: coins and plants grow quickly (a number 1–30 sets the speed).', tr: 'Büfe ve Pencere Bahçesi 10 kat hızlı işler: jetonlar ve bitkiler çabuk büyür (1–30 arası bir sayı hızı belirler).' },

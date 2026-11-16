@@ -1,0 +1,2 @@
+- Every table game has a "❓ How to play" button in its window's top bar (just ❓ when space is short) to see its picture cards again.
+- Clearer How to play cards: Sea Battle explains playing with three or more, the Five Frames Duel explains places for up to six players, Draw & Guess mentions the 80 seconds and the letter hints, and the classic boards say when a game is a draw.

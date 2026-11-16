@@ -30,12 +30,12 @@ const SOLO = {
   word: { root: '.ff', ids: ['fiveFrames.answer', 'fiveFrames.day'] },
 };
 const TABLES = {
-  classics: { root: '.xox-page', ids: ['classics.picker', 'classics.pick.chess', 'classics.position.mate1', 'classics.pick.dama', 'classics.position.chain', 'classics.pick.backgammon', 'classics.position.bearoff', 'classics.silent'] },
-  sea: { root: '.sea', ids: ['sea.bot', 'sea.zoom', 'sea.oneLeft', 'sea.reveal', 'sea.silent'] },
-  duel: { root: '.duel', ids: ['duel.match', 'duel.answer', 'duel.win', 'duel.silent'] },
-  quiz: { root: '.quiz-page', ids: ['quiz.referee', 'quiz.skip', 'quiz.toEnd', 'games.friend', 'games.friendQuiet', 'games.friendLeave', 'quiz.silent'] },
-  draw: { root: '.draw-page', ids: ['draw.referee', 'draw.skip', 'draw.toEnd', 'draw.silent'] },
-  poker: { root: '.pk', ids: ['poker.referee', 'poker.end', 'poker.silent'] },
+  classics: { root: '.xox-page', ids: ['classics.picker', 'classics.pick.chess', 'classics.position.mate1', 'classics.pick.dama', 'classics.position.chain', 'classics.pick.backgammon', 'classics.position.bearoff', 'classics.silent', 'games.tutorial'] },
+  sea: { root: '.sea', ids: ['sea.bot', 'sea.zoom', 'sea.oneLeft', 'sea.reveal', 'sea.silent', 'games.tutorial'] },
+  duel: { root: '.duel', ids: ['duel.match', 'duel.answer', 'duel.win', 'duel.silent', 'games.tutorial'] },
+  quiz: { root: '.quiz-page', ids: ['quiz.referee', 'quiz.skip', 'quiz.toEnd', 'games.friend', 'games.friendQuiet', 'games.friendLeave', 'quiz.silent', 'games.tutorial'] },
+  draw: { root: '.draw-page', ids: ['draw.referee', 'draw.skip', 'draw.toEnd', 'draw.silent', 'games.tutorial'] },
+  poker: { root: '.pk', ids: ['poker.referee', 'poker.end', 'poker.silent', 'games.tutorial'] },
 };
 const GLOBAL = ['games.speed', 'games.playing', 'games.tipjar', 'games.friend', 'games.friendLeave', 'games.restore'];
 

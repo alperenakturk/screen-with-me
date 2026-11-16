@@ -95,6 +95,8 @@ const TEXT = {
     how2Line: 'Tap a cell on their sea. A hit shoots again; a miss passes the turn.',
     how3: 'Sink them all',
     how3Line: 'A sunk ship shows the water around it. Sink the whole fleet first to win.',
+    how4: 'Three or more players',
+    how4Line: 'On your turn, tap a friend’s chip to pick their sea, then fire. A player with no ships left is out and watches; the last fleet afloat wins.',
     targets: 'Seas',
     targetChip: "{name}'s sea: {left}",
     myChip: 'My sea: {left}',
@@ -166,6 +168,8 @@ const TEXT = {
     how2Line: 'Onların denizinde bir kareye dokun. İsabet edersen yine atarsın; ıska sırayı geçirir.',
     how3: 'Hepsini batır',
     how3Line: 'Batan geminin çevresindeki su görünür. Bütün filoyu ilk batıran kazanır.',
+    how4: 'Üç ve daha fazla oyuncu',
+    how4Line: 'Sıra sende olunca bir arkadaşının çipine dokunup denizini seç, sonra ateş et. Gemisi kalmayan oyundan çıkar ve izler; son kalan filo kazanır.',
     targets: 'Denizler',
     targetChip: '{name} denizi: {left}',
     myChip: 'Benim denizim: {left}',
@@ -846,6 +850,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     { art: sea1Art, title: tx('how1'), line: tx('how1Line') },
     { art: sea2Art, title: tx('how2'), line: tx('how2Line') },
     { art: sea3Art, title: tx('how3'), line: tx('how3Line') },
+    // GT1: the rules for a bigger table, only where it has three or more seats.
+    ...(many() ? [{ art: sea2Art, title: tx('how4'), line: tx('how4Line') }] : []),
   ]);
   return () => {
     offLab();
