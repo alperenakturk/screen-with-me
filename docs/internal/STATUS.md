@@ -8,6 +8,17 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
+- [ ] Lane A (handoff 16 Nov, 15:10; a fresh lane A session continues from here):
+  - [x] Merged today: SR2 #460, BUD2 #481 (phone room lazy chunk), GR1 #476 (refresh note + phone-ready fix for BUD2's
+    race), UI2 #469. Cards archived to `archive/cards-done.md`.
+  - [ ] EC1 #465 (`claude/ec1-end-card`): green except the state-matrix games-window drag / hover flake (Game Studio's
+    fix, top priority). When state-matrix is green on main: merge main into it, re-run, merge.
+  - [ ] SH1 item 3, #471 (`claude/sh1-ring`): same blocker as EC1; then merge.
+  - [ ] SH1 item 2, #486 (`claude/sh1-start`): ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on
+    `ready`, `waitPausePosition`), e2e `shorts-start.mjs`. Get CI green, merge. After #471: add the start offset to
+    Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
+  - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
+  - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
 - [ ] B2 (handoff 16 Nov, 14:50; everything below is on main, no unmerged B2 branch):
   - [x] CI3 built and live (#464, #472, #473, #480, #482): tested-code mark, settle, CI numbering
     (`release-series.txt`, `changelog/next/`, `check-version-edits.mjs`), nightly date sweep, 3 live shards, PR
