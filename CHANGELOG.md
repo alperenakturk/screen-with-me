@@ -16,6 +16,12 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.141 — 15 Nov
+
+- A room's chat now keeps its last 1000 messages until the room is deleted (it was only the last 50, so older
+  messages seemed to vanish). People who join get the newest messages; "Show earlier messages" or scrolling up brings
+  older ones back. A busy room's activity lines no longer push messages out of the chat.
+
 ### 0.9.97.140 — 15 Nov
 
 - YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
