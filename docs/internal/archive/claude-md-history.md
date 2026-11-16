@@ -39,3 +39,7 @@ site since 0.9.90.1, on the film page in fullscreen since 0.9.90.3). YouTube is 
 **After 1.0:** keep improving features; integrations with big services (Netflix, Spotify… each one researched for
 terms and DRM first, DRM is never bypassed); apps (PWA first, native only if it adds real value; Firefox/Safari/Edge
 add-on stores); growth (Instagram/TikTok content, launch posts), donations, community, making the repo public.
+
+## Old commit rule (until 16 Nov 2026, card CI3)
+
+Commits carried the version in parentheses for a release (`Fix film-page cover flash (0.9.83)`); since CI3 the CI numbers releases and commits carry no version.
