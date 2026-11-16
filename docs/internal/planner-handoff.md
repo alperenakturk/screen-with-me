@@ -4,18 +4,22 @@ The Planner's working memory, so a fresh Planner session can continue without th
 "keep contexts small, everything needed must be in the repo"). The Planner rewrites this file at every handoff;
 rules stay in `CLAUDE.md`, cards in `CARDS.md` / `cards-games.md` / `cards-proposed.md`, the owner's lists in `STATUS.md`.
 
-## State on 16 Nov 2026, 19:30 UTC (handoff 2; Planner session_015Fyri4tNaodxWjvbDYpkqT)
+## State on 16 Nov 2026, 21:40 UTC (handoff 3; Planner session_015Fyri4tNaodxWjvbDYpkqT)
 
-**Live:** v0.9.97.154. Since .147: Quiz tournament + jokers (.148), Window Garden WG2 (.149), Shorts start together
+**Live:** v0.9.97.156. Since .147: Quiz tournament + jokers (.148), Window Garden WG2 (.149), Shorts start together
 SH1-2 (.150), feeds SH2 (.151), speaking ring SH1-3, EC1 "Video ended" dialog, GMP b (Duel + Sea Battle 2–6), lazy games
-window (room JS 139 → 125 kB), GT1 "❓ How to play", TikTok share links in a pasted list SH1-4 (.153), docs (.154).
-Live e2e was red twice (runs 43917089949, 43921749258): Cloudflare-side object restarts (canary rooms dropped at the
-same minutes), not code; compare canary drop times with the deploy before blaming a PR.
+window (room JS 139 → 125 kB), GT1 "❓ How to play", TikTok share links SH1-4 (.153), docs (.154), SH3 Shorts chat
+panel + VC1 🎧 deafen / YouTube volume drag fix + #505 live e2e race fixes (.155), VC3 "voice isn't reaching" note (.156).
+Red live e2e on 16 Nov (four runs) was test races under post-deploy latency, not code or overlapping deploys
+(reference.md CI "16 Nov 2026"): live e2e files wait for state, never fixed sleeps.
 
-**Sessions:** only lane A runs ("ScreenWithMe · 🔨 Developer", session_015Fyri6k6ZeiEPuFPmbY4rc): archive SH1 / EC1
-cards → SH3 → VC1 + VC3 → MSG1. Archived today: old lane A, Game Studio (×2), GS2, B2 (×3). No Game Studio, B2 or
-Design open: open one only when its lane has work (B2: YTQ1 after `sidelit.app`; games: QZ2 Quiz cards for GT1, the
-games layout ideas if the owner picks them). Sessions now reach 300k+ in 1–3 hours: give each one card group.
+**Sessions:** only lane A runs ("ScreenWithMe · 🔨 Developer", session_015Fyri2uT2Xhd9RrdYztMEC): SH3 / VC1 / VC3
+Done lines + archive + hand tests, then MSG1. Every other Sidelit session is archived (16 Nov, owner asked: the old
+Planner, all finished lane / games / B2 sessions, and the idle Design, Research, Field Research, Security, Developer B,
+Developer W). Open a role again only when it has work (B2: YTQ1 after `sidelit.app`; games: QZ2 Quiz cards for GT1,
+the games layout ideas if the owner picks them). Sessions reach 300k+ in 1–2 hours: give each one card.
+The owner's two non-Sidelit sessions ("Bana muzu anlatan cool slayt", "Pomodoro ve Life App projesi") are his to keep
+or delete; the Planner does not touch them.
 
 **Owner, waiting on him:** TAG_TOKEN (steps on the board's Decisions tab), VIMEO_TOKEN, `sidelit.app` after the
 trademark check, the security guide (15 Nov PDF), deleting branches `tagtest-probe-do-not-use`, `claude/qa2-shots`,
@@ -27,7 +31,7 @@ no-extension sources (YT Music → SoundCloud → HLS → Twitch → Kick, after
 stopping new features for the 0.9.98 gate; Fable security + privacy audit (only on "Fable ile güvenlik denetimini
 başlat").
 
-**The owner's board** (Artifact `NWZG7GLH4JzAnZt1rNgrJo`) is current at 0.9.97.153 (version 58). Its source is not in
+**The owner's board** (Artifact `NWZG7GLH4JzAnZt1rNgrJo`) is current at 0.9.97.156 (version 60). Its source is not in
 the repo: `Artifact` read with `path: "index.html"`, strip the document skeleton (keep from `<title>` to the last
 `</script>`), add TESTS items (`d` phone | pc | ext, group "🆕 Yeni (önce bunlar)"), republish to the same URL. Two
 hand tests are both numbered 27p in STATUS (WG2, GMP-b): renumber one when STATUS C is next edited.
