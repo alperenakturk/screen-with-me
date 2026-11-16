@@ -18,6 +18,9 @@ import {
   countdownMedia,
   COUNTDOWN_MS,
   expectedPosition,
+  isShortMedia,
+  SHORT_LEAD_MS,
+  waitPausePosition,
   parseClientMessage,
   stickerId,
   type Avatar,
@@ -2007,7 +2010,8 @@ export class Room extends DurableObject<Env> {
 
     if (decision.kind === 'start') {
       this.statsTick();
-      this.room = { ...this.room, state: { ...state, paused: true, position: expectedPosition(state, now), updatedAt: now } };
+      // Card SH1 (2): a wait in a video's first seconds holds it at 0:00, so nobody loses the start.
+      this.room = { ...this.room, state: { ...state, paused: true, position: waitPausePosition(state, now), updatedAt: now } };
       await this.ctx.storage.put('room', this.room);
       this.broadcast({ t: 'state', state: this.room.state, action: 'pause', by: SYSTEM });
       this.broadcast({ t: 'waiting', ids: decision.ids });
@@ -2125,7 +2129,13 @@ export class Room extends DurableObject<Env> {
     if (!item || state.paused || item.id === this.counted) return;
     this.counted = item.id;
     await this.ctx.storage.put('counted', item.id);
-    if (resumed || this.settings.countdown === false || !countdownMedia(item.media) || expectedPosition(state, now) > 1) return;
+    if (resumed || expectedPosition(state, now) > 1) return;
+    // Card SH1 (2): a Short has no countdown, but a short silent lead-in: everyone has it loaded and starts at 0:00.
+    if (isShortMedia(item.media)) {
+      this.room = { ...this.room, state: { ...state, position: 0, updatedAt: now + SHORT_LEAD_MS } };
+      return;
+    }
+    if (this.settings.countdown === false || !countdownMedia(item.media)) return;
     const people = new Set(this.joined().filter((a) => !a.tv).map((a) => keyOf(a)));
     if (people.size < 2) return;
     this.room = { ...this.room, state: { ...state, position: Math.max(0, expectedPosition(state, now)), updatedAt: now + COUNTDOWN_MS } };

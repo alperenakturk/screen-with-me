@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, isShortMedia, waitPausePosition, WAIT_REWIND_S, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -319,5 +319,29 @@ describe('personOf (R11)', () => {
     expect(personOf({ ...a, name: 'Alex 2' })).toBe(personOf(a));
     expect(personOf({ name: 'Alex', avatar: 'wizard' })).toBe(personOf({ name: 'Alex', avatar: 'wizard' }));
     expect(personOf({ name: 'Alex' })).not.toBe(personOf(a));
+  });
+});
+
+// Card SH1 (2): the "everyone ready" wait in a video's first seconds waits at 0:00, so nobody loses the start.
+describe('waitPausePosition', () => {
+  const started = { ...playing, position: 0 };
+  it('holds a wait in the first seconds at 0:00', () => {
+    expect(waitPausePosition(started, 1_001_500)).toBe(0);
+    expect(waitPausePosition(started, 1_000_000 + (WAIT_REWIND_S * 1000 - 100))).toBe(0);
+  });
+  it('waits where the video is once it is past its start', () => {
+    expect(waitPausePosition(started, 1_000_000 + WAIT_REWIND_S * 1000 + 500)).toBeCloseTo(WAIT_REWIND_S + 0.5);
+    expect(waitPausePosition(playing, 1_002_000)).toBe(12);
+  });
+  it('a Short still held in its lead-in waits at 0:00', () => {
+    expect(waitPausePosition({ ...started, updatedAt: 1_001_500 }, 1_000_200)).toBe(0);
+  });
+});
+
+describe('isShortMedia', () => {
+  it('is true for a YouTube Short and any TikTok, false for other videos', () => {
+    expect(isShortMedia({ kind: 'youtube', id: 'dQw4w9WgXcQ', short: true })).toBe(true);
+    expect(isShortMedia({ kind: 'tiktok', id: '6718335390845095173' })).toBe(true);
+    expect(isShortMedia({ kind: 'youtube', id: 'dQw4w9WgXcQ' })).toBe(false);
   });
 });

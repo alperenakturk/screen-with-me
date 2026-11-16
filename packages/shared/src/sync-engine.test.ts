@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ServerClock } from './clock.ts';
 import type { PlayerAdapter, PlayerEvent } from './player.ts';
 import type { ClientMessage, PlaybackState } from './protocol.ts';
+import { SHORT_LEAD_MS } from './protocol.ts';
 import { SyncEngine } from './sync-engine.ts';
 
 /** Gerçek oynatıcı gibi davranan sahte oynatıcı. Zaman sadece `run` ile ilerler. */
@@ -358,6 +359,23 @@ describe('"3-2-1, together" (a start held a few seconds ahead)', () => {
     await run(1500);
     expect(player.paused).toBe(true);
     expect(player.time).toBeLessThan(0.1);
+    expect(sent).toEqual([]);
+  });
+
+  // Card SH1 (2): a Short's short silent lead-in (SHORT_LEAD_MS): every viewer holds at 0:00 while it loads, reports
+  // no stall, and starts from 0:00 when the lead-in ends, instead of joining a second or two in.
+  it("a Short's lead-in holds at 0:00 and starts there, with no stall", async () => {
+    engine.attach(player);
+    const short = { id: 'short1', media: { kind: 'youtube' as const, id: 'aqz-KE-bpKQ', short: true as const }, title: null, by: 'Alex' };
+    engine.receive(state({ item: short, position: 0, updatedAt: Date.now() + SHORT_LEAD_MS }));
+    await run(SHORT_LEAD_MS - 100);
+    expect(player.paused).toBe(true);
+    expect(player.time).toBe(0);
+    expect(readyReports).toEqual([]);
+    await run(400);
+    expect(player.paused).toBe(false);
+    expect(player.time).toBeLessThan(0.5);
+    expect(readyReports).toEqual([]);
     expect(sent).toEqual([]);
   });
 

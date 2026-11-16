@@ -184,10 +184,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `COUNTDOWN_MS` (3 s) ahead; not for Shorts / TikTok / film pages / the sync test (`countdownMedia`), a resumed saved
     video, or with `settings.countdown === false` (Room rules, host); once per item (`counted`, storage). The page shows
     the seconds over the video (`showCountdown`, `.countdown`). A user's play during the hold starts the room at once.
+    A Short (`isShortMedia`: YouTube Short or TikTok) gets no countdown but a silent lead-in instead: the server holds
+    it at 0:00 for `SHORT_LEAD_MS` (1.5 s, alone too), so every viewer has it loaded and starts from 0:00 together
+    (card SH1 (2)); `showCountdown` draws nothing for it (nothing of ours over the YouTube player).
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait
   again within 30 s; a manual play/pause/seek cancels the wait; the host can turn it off (`settings.waitForAll`).
+  Card SH1 (2): a wait that starts in a video's first `WAIT_REWIND_S` (3 s) pauses at 0:00 (`waitPausePosition`), so
+  a slow viewer never makes everyone lose the start.
   System actions arrive with `by.id === SYSTEM_MEMBER_ID`.
 - **Protocol (`protocol.ts`):** the server validates everything from clients and copies it into a new object. On a
   backward-incompatible change bump `PROTOCOL_VERSION` (old clients get a "refresh the page" error; extension users

@@ -20,6 +20,10 @@ export const MAX_RATE = 4;
 export const COUNTDOWN_MS = 3000;
 
 /** Videos that get the countdown: not Shorts / TikTok (they flow one into the next), film pages or the sync test. */
+/** An upright video for the Shorts view: a YouTube Short or any TikTok. */
+export function isShortMedia(media: Media): boolean {
+  return (media.kind === 'youtube' && media.short === true) || media.kind === 'tiktok';
+}
 export function countdownMedia(media: Media): boolean {
   return (media.kind === 'youtube' && media.short !== true) || media.kind === 'html5' || media.kind === 'vimeo';
 }
@@ -663,6 +667,20 @@ export type ServerMessage =
   | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number };
 
 /** Verilen sunucu saatinde videonun kaçıncı saniyede olması gerektiği. */
+/**
+ * Card SH1 (2): a Short starts this long after it is chosen (the room holds it at 0:00, silently), so every viewer has
+ * loaded it and they all start from 0:00 together, instead of joining a second or two in.
+ */
+export const SHORT_LEAD_MS = 1500;
+/** Card SH1 (2): a room that waits for someone this early in a video waits at 0:00, so nobody loses the start. */
+export const WAIT_REWIND_S = 3;
+
+/** Where the "everyone ready" wait pauses the room: at 0:00 in a video's first seconds, else where it is. */
+export function waitPausePosition(state: PlaybackState, serverNow: number): number {
+  const at = expectedPosition(state, serverNow);
+  return at < WAIT_REWIND_S ? 0 : at;
+}
+
 export function expectedPosition(state: PlaybackState, serverNow: number): number {
   if (state.paused) return state.position;
   const elapsed = Math.max(0, serverNow - state.updatedAt) / 1000;
