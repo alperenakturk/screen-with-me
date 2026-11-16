@@ -332,6 +332,14 @@ jobs:
       # link never shows it.
       - name: Voice that can't connect says so
         run: node scripts/harness/voice-blocked/run.cjs http://localhost:8787
+
+      # Card VC1: 🎧 deafen in voice (two Chromes with a fake microphone: voices silent, mic off, the crossed 🎧 for the
+      # other person, 🎙 undeafens, kept over a reload) and the focus after a click in the YouTube player (back to the
+      # room at once, but not while YouTube's volume is being dragged). The second needs YouTube.
+      - name: Deafen in voice
+        run: node scripts/harness/deafen/run.cjs http://localhost:8787
+      - name: Focus after a click in the YouTube player
+        run: node scripts/harness/yt-focus/run.cjs http://localhost:8787
       # Card SH3: the Shorts view's chat panel on a computer and a sideways tablet (opens beside the rail, never over the
       # video, unread count, send and read, kept over a reload, back to the side panel). Needs YouTube.
       - name: Shorts chat panel

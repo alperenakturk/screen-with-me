@@ -37,6 +37,14 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
     help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
   },
+  'voice.deafen': {
+    title: { en: 'Voice: 🎧 deafen (on / off)', tr: 'Ses: 🎧 sesleri kapat (on / off)' },
+    help: { en: 'With "on" or "off" deafens or undeafens me; then writes whether I am deafened, in voice, my mic, whether every voice is silent here and who else is deafened into the log.', tr: '"on" ya da "off" ile benim için sesleri kapatır ya da açar; sonra seslerimin kapalı olup olmadığını, seste olup olmadığımı, mikrofonumu, buradaki bütün seslerin kısık olup olmadığını ve başka kimin seslerini kapattığını kayda yazar.' },
+  },
+  'player.focus': {
+    title: { en: 'Player: is the keyboard focus in it', tr: 'Oynatıcı: klavye odağı onda mı' },
+    help: { en: 'Writes whether the keyboard focus is inside the player\'s frame now (after a click there it comes back to the room, later while YouTube\'s volume is being dragged) and the player\'s volume into the log.', tr: 'Klavye odağının şu an oynatıcının çerçevesinde olup olmadığını (oraya tıklayınca odaya geri döner, YouTube\'un sesi sürüklenirken daha geç) ve oynatıcının ses düzeyini kayda yazar.' },
+  },
   'voice.blocked': {
     title: { en: 'Voice: links that can\'t connect (VPN, strict networks)', tr: 'Ses: bağlanamayan bağlantılar (VPN, sıkı ağlar)' },
     help: { en: 'Writes whether the "your voice isn\'t reaching the others" note shows, whose link with me never connected (after 10 s) and the state of each voice link into the log.', tr: '"Sesin diğerlerine ulaşmıyor" notunun görünüp görünmediğini, kiminle bağlantımın hiç kurulamadığını (10 sn sonra) ve her ses bağlantısının durumunu kayda yazar.' },

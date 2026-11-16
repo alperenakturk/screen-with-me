@@ -8,6 +8,8 @@ export type IconName =
   | 'mic-off'
   | 'cam'
   | 'cam-off'
+  | 'headphones'
+  | 'headphones-off'
   | 'cam-flip'
   | 'screen'
   | 'screen-stop'
@@ -50,6 +52,12 @@ const CAM: Shape[] = [
   ['rect', { x: 2.5, y: 6, width: 13, height: 12, rx: 2.5 }],
   ['path', { d: 'M15.5 10.5 21.5 7v10l-6-3.5' }],
 ];
+/** Card VC1: headphones (🎧 deafen): a band and two ear cups. */
+const HEADPHONES: Shape[] = [
+  ['path', { d: 'M4 15v-3a8 8 0 0 1 16 0v3' }],
+  ['rect', { x: 3, y: 14, width: 4.5, height: 7, rx: 1.5 }],
+  ['rect', { x: 16.5, y: 14, width: 4.5, height: 7, rx: 1.5 }],
+];
 const SCREEN: Shape[] = [
   ['rect', { x: 2.5, y: 3.5, width: 19, height: 13, rx: 2 }],
   ['line', { x1: 8, y1: 21, x2: 16, y2: 21 }],
@@ -61,6 +69,8 @@ const ICONS: Record<IconName, Shape[]> = {
   'mic-off': [...MIC, SLASH],
   cam: CAM,
   'cam-off': [...CAM, SLASH],
+  headphones: HEADPHONES,
+  'headphones-off': [...HEADPHONES, SLASH],
   // CAM1: switch camera (front / rear / another lens): a camera body with two turning arrows.
   'cam-flip': [
     ['path', { d: 'M3 8.5A2 2 0 0 1 5 6.5h2.5L9 4.5h6l1.5 2H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' }],

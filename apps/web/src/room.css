@@ -8241,6 +8241,7 @@ html.shorts-view .voice-cams {
 }
 
 .voice-mic,
+.voice-deaf,
 .voice-cam {
   display: inline-grid;
   place-items: center;
@@ -8253,6 +8254,11 @@ html.shorts-view .voice-cams {
 }
 
 /* Off = red line icon, like Meet (the round pill buttons turn red already). */
+.voice-deaf[aria-pressed='true'] {
+  border-color: var(--danger);
+}
+
+.voice-deaf[aria-pressed='true'] .ico,
 .voice-mic.muted-mic .ico,
 .voice-cam:not(.on) .ico {
   color: var(--danger);

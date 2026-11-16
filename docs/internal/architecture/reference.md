@@ -1096,6 +1096,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `scripts/e2e/voice.mjs`, real audio `scripts/harness/voice/run.mjs` (two Chromes, fake mic, measures incoming audio
   energy) and `voice/shell.mjs` (on the film page). **Both need `VOICE_A`/`VOICE_B`** (two different wavs): with the
   same fake beep the echo canceller removes it and the "really hears" checks fail.
+  **🎧 Deafen (card VC1, 16 Nov 2026):** `#voice-deaf` beside 🎙 in the voice card (and "🎧 Deafen" in my own person
+  menu). On: every voice I play goes to volume 0 (`volumeOf`, also the extension's `volumes` on the film page), the
+  stream I watch is muted (`ui/deafen.ts` `setDeafNow` → `deafchange` → `live.ts`), my mic goes off and push-to-talk
+  does nothing. Every `voice` message then carries the optional `deaf: true` (no protocol bump); the server keeps
+  `voice.deaf` and forces `mic: false` while it is set, and `memberOf` sends it, so the others show a crossed 🎧
+  (`headphones-off` icon in the face's `.voice-muted` badge). Off: the mic comes back as last chosen (`voiceMic:<room>`;
+  push-to-talk keeps it off); 🎙 while deafened undeafens with the mic on (Discord-like). Kept per room
+  (`voiceDeaf:<room>`): a rejoin or reload stays deafened with the mic off. The film's own sound is untouched. Test Lab
+  `voice.deafen` (arg `on` / `off`); e2e `voice.mjs`; harness `scripts/harness/deafen/run.cjs`.
+  **Focus after a click in the YouTube player (VC1, with R26):** R26 takes the keyboard focus back from the player's
+  frame after a click there; doing it at once ended a drag on YouTube's own volume slider. `fullscreen.ts`
+  `focusBackFrom` now watches the player's volume / mute: unchanged after 400 ms → focus back (Enter etc. work again);
+  changing → it waits until they rest 1.2 s (at most 10 s). Test Lab `player.focus`; harness
+  `scripts/harness/yt-focus/run.cjs` (the drag is played by changing the volume from the page).
   **Voice that can't connect (card VC3, 16 Nov 2026):** with a VPN or a strict network the direct path is blocked and
   a link sits in "new" / "checking" without ever failing. `voice.ts` `watchLinks` (every second, peer to peer only)
   times each other person in voice whose link with me isn't `connected` (`P2pVoice.peerStates()`); after
