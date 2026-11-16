@@ -63,6 +63,10 @@ html.phone .htp .htp-btn { min-height: 44px; }
    own dark bar colours). */
 button.htp-open.htp-head { width: auto; height: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text); }
 button.htp-open.htp-head:hover { background: var(--surface-2); border-color: var(--muted); }
+/* GT1: "❓ How to play" reads like the head's other buttons (their weight and size), and keeps its words only in a wide
+   window: narrower, the ❓ alone, so the game's name keeps its row (a tablet's head wrapped onto two rows). */
+.game-head-slot button.htp-open.htp-head { font: inherit; font-size: 14px; font-weight: 600; }
+@container gstage (max-width: 1000px) { .game-head-slot .htp-head .game-head-text { display: none; } }
 /* On a phone the tables' "?" sits at the start of the game's own top bar. */
 :is(.mt-bar, .sea-bar, .draw-top) > .htp-head { flex: none; min-width: 44px; min-height: 44px; }
 

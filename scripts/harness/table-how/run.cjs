@@ -26,7 +26,7 @@ const cards = (page) =>
     const layer = [...document.querySelectorAll('#game-stage .htp')].find((l) => !l.hidden);
     const q = document.querySelector('#game-stage .htp-head');
     const r = q?.getBoundingClientRect();
-    return { open: !!layer, title: layer?.querySelector('.htp-title')?.textContent ?? '', art: !!layer?.querySelector('.htp-art svg'), next: layer?.querySelector('.htp-next')?.textContent ?? '', q: !!q, qSize: r ? Math.round(Math.min(r.width, r.height)) : 0, qName: q?.getAttribute('aria-label') ?? '' };
+    return { open: !!layer, title: layer?.querySelector('.htp-title')?.textContent ?? '', art: !!layer?.querySelector('.htp-art svg'), next: layer?.querySelector('.htp-next')?.textContent ?? '', q: !!q, qSize: r ? Math.round(Math.min(r.width, r.height)) : 0, qName: q?.getAttribute('aria-label') ?? '', qText: q?.textContent?.trim() ?? '', labels: !!document.querySelector('#game-stage.head-labels'), headFits: (() => { const h = document.querySelector('#game-stage .game-stage-head'); return !h || h.scrollWidth <= h.clientWidth + 1; })(), lineFits: !layer || [...layer.querySelectorAll('.htp-words, .htp-line')].every((e) => e.scrollHeight <= e.clientHeight + 1) };
   });
 const press = (page, sel) => page.evaluate((s) => document.querySelector(`#game-stage ${s}`)?.click(), sel);
 
@@ -71,6 +71,14 @@ async function person(browser, opts, lang = 'en', more = {}) {
     check(c.open && /forward|sideways/i.test(c.title), `${label}: the "?" opens them again from the first card`, c);
     await press(page, '.htp:not([hidden]) .htp-skip');
     check(!(await cards(page)).open, `${label}: ✕ closes them`);
+    // GT1: "❓ How to play" in words in the head when they fit (icons only on an upright phone); the head never overflows.
+    c = await cards(page);
+    check(c.qText.startsWith('❓') && (!c.labels || /How to play/.test(c.qText)) && c.headFits, `${label}: the head's ❓ says "How to play" when the words fit; the head fits`, c);
+    // GT1: the Test Lab's games.tutorial opens the same cards, every line whole.
+    await page.evaluate(() => window.__swmLab.run('games.tutorial'));
+    c = await cards(page);
+    check(c.open && /forward|sideways/i.test(c.title) && c.lineFits, `${label}: Test Lab games.tutorial opens the cards, every line whole`, c);
+    await press(page, '.htp:not([hidden]) .htp-skip');
     // Another board: its own cards; dama's never again.
     await press(page, '#cl-shelf-open');
     await wait(300);

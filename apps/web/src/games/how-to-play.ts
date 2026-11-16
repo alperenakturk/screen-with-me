@@ -65,6 +65,7 @@ export function howToPlay(host: HTMLElement, key: string, cards: () => HowCard[]
   const pictures = new Map<number, HTMLElement>();
   function draw(): void {
     const list = cards();
+    index = Math.min(index, list.length - 1);
     const card = list[index]!;
     let pic = pictures.get(index);
     if (!pic) pictures.set(index, (pic = picture(card.art)));
@@ -138,16 +139,25 @@ export function tableHowTo(app: HTMLElement, key: string, cards: () => HowCard[]
   const auto = !navigator.webdriver || load('opt:tableHow') === '1';
   const how = howToPlay(app, key, cards, auto);
   how.button.classList.add('btn', 'small-btn', 'htp-head');
+  // GT1: "❓ How to play" in words beside the head's other buttons whenever they fit (stage.ts `fitHeadLabels`), else ❓.
+  const words = el('span', { class: 'game-head-text' });
+  const label = () => (words.textContent = ` ${t('open')}`);
+  label();
+  how.button.replaceChildren(el('span', { 'aria-hidden': 'true' }, '❓'), words);
+  addEventListener('langchange', label);
   // QA2 (B2's sweep), QA2-W (0.9.97.124): the "?" is in the game window's head on every device (it sat in each game's
   // body, alone in a row on some); with no game window around it (a test page) it goes at the top of the game.
   const slot = app.closest('#game-stage')?.querySelector('.game-head-slot');
   if (slot) slot.prepend(how.button);
   else app.prepend(how.button);
+  // The head has one more button now: the window measures again whether its words fit.
+  app.dispatchEvent(new Event('swm-game-size', { bubbles: true }));
   const destroy = how.destroy;
   return {
     ...how,
     destroy: () => {
       destroy();
+      removeEventListener('langchange', label);
       how.button.remove();
     },
   };
