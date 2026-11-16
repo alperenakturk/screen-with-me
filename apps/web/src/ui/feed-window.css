@@ -65,6 +65,13 @@
   white-space: nowrap;
 }
 
+.feed-tiktok {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
 .feed-sub {
   font-size: 14px;
   font-weight: 700;

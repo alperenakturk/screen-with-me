@@ -57,6 +57,7 @@ const TEXT = {
     startBtn: 'Start',
     switchNote: 'Starting this stops the {other}.',
     close: 'Close',
+    tiktok: 'TikTok has no public feed. Add TikTok links with + beside the video (several at once is fine) or share them here from the TikTok app.',
   },
   tr: {
     shorts: '♾ Shorts akışı',
@@ -100,6 +101,7 @@ const TEXT = {
     startBtn: 'Başlat',
     switchNote: 'Bunu başlatmak {other} kapatır.',
     close: 'Kapat',
+    tiktok: "TikTok'un herkese açık bir akışı yok. TikTok linklerini videonun yanındaki + ile ekle (birkaç tane birden olur) ya da TikTok uygulamasından buraya paylaş.",
   },
 };
 
@@ -169,6 +171,8 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
     );
     const head = el('div', { class: 'feed-head-row' }, el('h3', { id: 'feed-title', class: 'sr-only' }, tx[kind]), tabs, closeX);
     const parts: (HTMLElement | string)[] = [head];
+    // Card SH1 item 4: TikTok has no public feed or search; while a TikTok plays the ♾ tab says so and points to links.
+    if (kind === 'shorts' && opts.playing()?.media.kind === 'tiktok') parts.push(el('p', { class: 'small feed-tiktok', id: 'feed-tiktok', role: 'note' }, tx.tiktok));
     const running = info && info.kind === kind ? info : null;
     if (running) {
       const pause = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-pause' }, running.paused ? tx.resume : tx.pause);
