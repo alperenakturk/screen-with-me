@@ -8,19 +8,25 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (handoff 16 Nov, 15:10; a fresh lane A session continues from here):
-  - [x] Merged today: SR2 #460, BUD2 #481 (phone room lazy chunk), GR1 #476 (refresh note + phone-ready fix for BUD2's
-    race), UI2 #469. Cards archived to `archive/cards-done.md`.
-  - [x] EC1 #465 and SH1 item 3 #471 (`claude/sh1-ring`, speaking ring) merged 16 Nov after Game Studio's #491; deploy + live e2e check
-    with the next main run, then both cards' Done lines and the archive move (DOCS2).
-  - [x] SH1 item 2, #486: ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on `ready`,
-    `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
-    the pause before a swiped Short feels.
-  - [x] Start offset in Test Lab `shorts.state` (`start`, SH1's "Done when"): #495 (`claude/sh1-start-offset`) merged;
-    `shorts-mixed` (#489) checks a swiped TikTok starts at 0:00.
-  - [ ] SH1 item 4, #489 (`claude/sh1-tiktok-small`): `vm.`/`vt.` links in a pasted list (Worker lookup, paste order),
-    mixed-queue harness `shorts-mixed`; the ♾ TikTok note came with B2's #488. CI, merge.
-  - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
+- [ ] Lane A (handoff 16 Nov, 18:30; the session hit its context limit; a fresh lane A session continues from here):
+  - [x] Merged 16 Nov: SR2 #460, BUD2 #481, GR1 #476, UI2 #469 (cards archived); SH1 item 2 #486 (live v0.9.97.150);
+    SH1 item 3 #471 (`claude/sh1-ring`, speaking ring); EC1 #465 (`claude/ec1-end-card`); SH1 Test Lab `shorts.state`
+    `start` #495 (`claude/sh1-start-offset`); SH1 item 4 #489 (`claude/sh1-tiktok-small`: `vm.`/`vt.` links in a
+    pasted list, harness `shorts-mixed`, which also checks a swiped TikTok starts at 0:00). SH1 is complete on main.
+  - [x] STOP THE LINE lifted 16 Nov 18:33: run 43923095993 green, tagged v0.9.97.153 (cause: object restarts, B2 note
+    below). Was: no merges to main until live e2e is green again. Main runs 43917089949 and
+    43921749258 deployed but failed live e2e (games: Sea seats / fleets, duel result, sea ws drops, game keepalive;
+    HTTP-fallback 429; emoji rain "40 sent, 0 reached"); a lane B session investigates. Not tagged since v0.9.97.151.
+  - [ ] When live is green: EC1 + SH1 Done lines (PRs above, the live version), both cards verbatim to
+    `archive/cards-done.md` (DOCS2), and these owner hand tests: (1) swipe Shorts with a friend, how long the pause
+    before each Short feels; (2) speak in voice in the Shorts view: your face and your friend's get a green ring;
+    (3) with auto-next off, a video that ends shows a centered "Video ended" dialog (▶ Play next / Close); (4) paste
+    several TikTok app links (vm.tiktok.com) together with YouTube Shorts: they queue in paste order.
+  - [ ] SH3 (Shorts chat panel on a computer): not started; branch it from main. Today the rail's 💬 opens only a message
+    box (`.shorts-chat-wrap`, `setShortsChat` in `room.ts`); `.room.shorts > .side` is `display: none`. Idea: reuse the
+    side panel's chat (`createChatPanel`, `#chat-list`, `#chat-badge`) as a column right of the rail when 💬 is on,
+    without covering `#seats-r` or the player; `shortsChat:<room>` memory; Test Lab `shorts.chat`; QA1 at 1366 / 1920 /
+    tablet-land. Then VC1 + VC3 → MSG1.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
