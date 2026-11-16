@@ -444,6 +444,38 @@ html.in-home:is(:not([data-theme]), [data-theme='gece']) {
   }
 }
 
+/* TH3: the balloon drifts across the screens on the progress bars' clock (the same 6 s, the same start), so it is at the
+   same spot on the laptop, the tablet and the phone at every moment. It drifts there and back (no jump) and only as
+   far as the phone's narrow crop of the picture shows, so it is in sight on all three screens. */
+.hm-move {
+  animation: var(--hm-drift, hm-drift) 6s ease-in-out infinite alternate;
+}
+
+@keyframes hm-drift {
+  from {
+    transform: translateX(-16px);
+  }
+  to {
+    transform: translateX(16px);
+  }
+}
+
+/* The Test Lab's `home.art` holds the art still at a fixed frame (the bars at half, the balloon in the middle), so
+   shots take the same frame every time. */
+html.hm-frozen :is(.hm-prog, .hm-beam) {
+  animation: none;
+}
+
+/* The balloon lives in the <use> copies of #hm-pic, where a selector on <html> doesn't reach; a custom property does
+   (it is inherited through the <use>), so the frozen art names no animation for it. */
+html.hm-frozen {
+  --hm-drift: none;
+}
+
+html.hm-frozen .hm-prog {
+  transform: scaleX(0.5);
+}
+
 @keyframes hm-breathe {
   50% {
     opacity: 0.6;
@@ -457,6 +489,10 @@ html.in-home:is(:not([data-theme]), [data-theme='gece']) {
   }
 
   .hm-beam {
+    animation: none;
+  }
+
+  .hm-move {
     animation: none;
   }
 }
@@ -577,6 +613,12 @@ html.phone .hm-main {
 
 .hm-faces text {
   fill: var(--hm-soft);
+  /* TH3: the longer "4 watching" line can reach a scene theme's picture (Night Express's tower); a halo in the page's
+     colour keeps it readable there and is invisible on the plain themes. */
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
 .hm-scene .hm-prog {
@@ -735,4 +777,69 @@ html.phone.sideways .hm-btn {
 .hm-ios-hint .icon-btn {
   min-width: 40px;
   min-height: 40px;
+}
+
+/* TH3 (Design's `home-neon-people.md`, 15 Nov 2026): the Neon home as lit tubes on a dark wall. Home only (home.css); every rule is scoped to
+   html.in-home[data-theme='neon'], so the room and the other themes don't change. Static: no animation, no flicker.
+   Tubes: --neon (the theme's coral accent) and --neon-2 (its amber second light). */
+html.in-home[data-theme='neon'] {
+  --neon: #ff5a7a;
+  --neon-2: #ffb347;
+  --neon-core: #ffd3dc; /* the tube's hot white core: text in a glow is drawn in this, 14.8:1 on the wall */
+  --tube: 0 0 2px var(--neon), 0 0 10px rgb(255 90 122 / 0.55), 0 0 28px rgb(255 90 122 / 0.3);
+  --tube-box: 0 0 0 1px var(--neon), 0 0 12px rgb(255 90 122 / 0.45), inset 0 0 10px rgb(255 90 122 / 0.18);
+}
+
+/* The wordmark in the header and the slogan's accent line: tube letters. */
+html.in-home[data-theme='neon'] :is(.brand .wordmark, .hm-slogan b) {
+  color: var(--neon-core);
+  text-shadow: var(--tube);
+}
+
+/* The "Free · no account · no ads" pill: an outlined tube, not a filled tag. */
+html.in-home[data-theme='neon'] .hm-pill {
+  background: transparent;
+  border-color: var(--neon);
+  color: var(--neon-core);
+  box-shadow: var(--tube-box);
+}
+
+/* Buttons: the main one stays a lit coral fill with dark ink (6.2:1), with a halo; the second is an outlined tube. */
+html.in-home[data-theme='neon'] .hm-btn.primary {
+  box-shadow: 0 0 0 1px #ff8aa0, 0 0 18px rgb(255 90 122 / 0.5);
+}
+html.in-home[data-theme='neon'] .hm-btn:not(.primary) {
+  border-color: var(--neon);
+  box-shadow: 0 0 10px rgb(255 90 122 / 0.25), inset 0 0 8px rgb(255 90 122 / 0.12);
+}
+html.in-home[data-theme='neon'] .hm-btn:focus-visible {
+  outline: 2px solid var(--neon-core);
+  outline-offset: 3px;
+}
+
+/* The device frames: coral tubes on the laptop and phone, the amber tube on the tablet. One drop-shadow pair each. */
+html.in-home[data-theme='neon'] .hm-device > rect:first-child {
+  stroke: var(--neon);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px rgb(255 90 122 / 0.9)) drop-shadow(0 0 10px rgb(255 90 122 / 0.45));
+}
+html.in-home[data-theme='neon'] .hm-device[data-device='tablet'] > rect:first-child {
+  stroke: var(--neon-2);
+  filter: drop-shadow(0 0 3px rgb(255 179 71 / 0.9)) drop-shadow(0 0 10px rgb(255 179 71 / 0.4));
+}
+html.in-home[data-theme='neon'] .hm-device[data-device='laptop'] > path { fill: #2a1a20; }
+
+/* Stub's light turns from a warm cone into a soft coral wash (the stops' colours only; the shape stays). */
+html.in-home[data-theme='neon'] :is(#hm-light, #hm-halo) stop { stop-color: var(--neon); }
+html.in-home[data-theme='neon'] .hm-beam { opacity: 0.7; }
+
+/* The sync pill and the progress bars glow a little; the chat bubble gets the main button's halo. */
+html.in-home[data-theme='neon'] .hm-pill-art rect { fill: #0a2a1e; stroke: #5fe0a0; stroke-width: 1.5; filter: drop-shadow(0 0 4px rgb(95 224 160 / 0.6)); }
+html.in-home[data-theme='neon'] .hm-scene .hm-prog { filter: drop-shadow(0 0 3px rgb(255 90 122 / 0.8)); }
+html.in-home[data-theme='neon'] .hm-bubble rect { filter: drop-shadow(0 0 8px rgb(255 90 122 / 0.55)); }
+
+/* The feature cards: a faint tube edge. */
+html.in-home[data-theme='neon'] .hm-feat > div {
+  border-color: color-mix(in srgb, var(--neon) 45%, var(--border));
+  box-shadow: 0 0 14px rgb(255 90 122 / 0.12);
 }

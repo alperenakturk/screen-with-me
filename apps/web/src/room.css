@@ -1004,125 +1004,6 @@ html:not(.shell) .shell-only {
   flex: 1;
 }
 
-/* YouTube search results: open over the video right under the link box, close on pick / ✕ / Esc / outside */
-.search-results {
-  position: absolute;
-  z-index: 40;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 6px;
-  max-height: min(70vh, 640px);
-  overflow-y: auto;
-  padding: 8px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
-}
-
-.search-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 4px 6px;
-}
-
-.search-head .muted {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.search-note {
-  margin: 10px 6px 12px;
-}
-
-.search-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-  gap: 4px;
-}
-
-.search-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px;
-  border-radius: 10px;
-}
-
-.search-row:hover,
-.search-row:focus-within {
-  background: var(--surface-2);
-}
-
-.search-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.search-thumb {
-  flex: none;
-  width: 112px;
-  height: 63px;
-  object-fit: cover;
-  border-radius: 8px;
-  background: var(--surface-2);
-}
-
-.search-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.search-title {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.search-meta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.search-now {
-  flex: none;
-}
-
-@media (max-width: 560px) {
-  .search-thumb {
-    width: 88px;
-    height: 50px;
-  }
-
-  .search-now {
-    padding: 6px 8px;
-  }
-}
-
 /* ---- Sahne: başlık + oynatıcı + araç çubuğu (tam ekranda birlikte büyür) ---- */
 .theater {
   display: flex;
@@ -5046,7 +4927,7 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--text);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -5582,6 +5463,11 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   white-space: nowrap;
 }
 
+/* GP1: the name and the phone's "Video paused for the game" line take turns (stage.ts `titleNote`). */
+.game-stage-title-text[hidden] {
+  display: none;
+}
+
 /* R10: a table's title is the game's name (never cut) and "· started by …" (cut first) side by side. In a window too narrow for the
    name beside the icons, the head wraps and the title takes its own row (stage.ts `head-wrap`). */
 .game-stage.head-wrap .game-stage-head {
@@ -5914,6 +5800,17 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
 .game-stage.full {
   position: fixed;
   z-index: 1100;
+}
+
+/* GW2: a table in ⛶ full screen. In the browser's full screen it fills the monitor; where the browser refuses it (an
+   iframe, iOS Safari) it fills the browser window instead, over everything of the room. */
+.game-stage.max {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 1200;
+  border-radius: 0;
 }
 
 /* ---- Game window placements (0.9.91.8): side / float / stage; narrow screens below / full ---- */

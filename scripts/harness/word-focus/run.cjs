@@ -40,9 +40,9 @@ const typedRow = (page) =>
     return row ? [...row.querySelectorAll('.ff-cell')].map((c) => c.textContent.trim()).join('') : null;
   });
 
-/** The room's state the shortcuts T (cinema), F / Space (fullscreen, play) would change. */
+/** The room's state the shortcuts T (cinema), F / Space (fullscreen, play) would change (GW2: a table's own ⛶ is not the room's). */
 const roomKeysState = (page) =>
-  page.evaluate(() => ({ cinema: document.documentElement.classList.contains('cinema-on'), full: !!document.fullscreenElement || !!document.querySelector('.fake-fs') }));
+  page.evaluate(() => ({ cinema: document.documentElement.classList.contains('cinema-on'), full: (!!document.fullscreenElement && document.fullscreenElement.id !== 'game-stage') || !!document.querySelector('.fake-fs') }));
 
 (async () => {
   const browser = await chromium.launch();

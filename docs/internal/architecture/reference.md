@@ -347,10 +347,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
-  Test Lab `sources.state` (source, Vimeo on, last search). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
+  - **♪ TikTok (card SR2):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
+    stays): TikTok has no search API. It opens `tiktokUrl(words)` (`https://www.tiktok.com/search?q=<words>`, the home
+    page with no words or a link in the box) with `window.open(..., '_blank', 'noopener')`; on a phone the TikTok app
+    takes the link when installed. Coming back (`visibilitychange` / `focus`) shows `#sources-paste` "📋 Paste and play"
+    (a sibling after `#media-form`, borrowed into the phone's Search tab with it; it hides after 2 minutes or on any
+    submit). A tap reads `navigator.clipboard.readText()` (the browser may ask; refused or empty → the box gets focus
+    with "Paste the video's link here"), puts the text in the box and `requestSubmit`s with the box's "Play now" button:
+    one link plays, several queue after the first. No TikTok logo (a plain ♪), no scraping, no extension.
+  Test Lab `sources.state` (source, Vimeo on, last search or TikTok action, `pasteShown`). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
   Vimeo app token, scope public) goes up with the other Worker secrets. Tests: `vimeo-search.test.ts`, e2e
   `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
-  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile).
+  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile, SR2's row tap / ＋ Queue,
+  TikTok tab and Paste and play).
+- **Results rows (card SR2):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
+  `ui/vimeo-results.ts`, podcast episodes `ui/podcasts.ts`) builds its rows with `ui/result-row.ts` `resultRow`: the
+  row's `.search-main` button plays now (`'load'`, the list closes and the box empties; on a phone the Search tab goes
+  back to the Room tab, `phone-room.ts`), and `.search-queue` "＋ Queue" / "＋ Sıraya" queues (`'enqueue'`; `room.ts`
+  `addMedia(..., fromList)` keeps the box's words and the list open; the button reads "✓ Added" for 2 s). Arrow keys
+  still move between rows' `.search-main`; Tab reaches the queue button. A podcast show's row (`data-show`) only opens
+  its episodes. The list's styles are `ui/search-list.css`, loaded with the tiny `ui/search-list.ts` chunk on the first
+  search (room CSS budget); context rules (film page, Shorts view, phone tab) stay in `room.css`. Test Lab
+  `search.results` (each row's title, play name, queue label and sizes). The Shorts bar's "＋ Add" search
+  (`shorts-search.ts`) is a queue-only list and keeps one tap = queue.
 - **Media kinds:** `youtube`, `html5`, `tiktok`, `vimeo` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is
@@ -694,7 +713,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Phone room as an app screen (0.9.92.3, owner's picks 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A on
   https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu; step 1 of 3, `ui/phone-room.ts` + phone.css):** `<html class=
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
-  not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). The desktop DOM stays: `.stage`, `.side`,
+  not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). **`ui/phone-room.ts` is a lazy chunk (card
+  BUD2):** room.ts loads it when the phone layout is on at start or first turns on (`onPhoneLayout`), so a computer
+  never downloads it; room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
+  (`deps.gamesButton`), since games/stage.ts takes its triggers when the room starts. The desktop DOM stays: `.stage`, `.side`,
   `.together-card`, `.tabs-card` are `display: contents`, so the column is the theater (edge to edge, `order` 1) → the
   faces strip `.together-strip` (`#voice-people` + `#strip-voice` quick 🎙 / 📷 / 🖥️ (voice.ts quick id `strip`; 🖥️ only
   while someone streams) + `#strip-more` ⋯ with the connection dot from `.room-title-dot`) → the chat panel → the chat
@@ -1041,11 +1063,42 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   **Game window head and free window (lane W, bugs W1–W5 + 0.9.97.112, owner 10 Nov 2026):** the head is (placement
   switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
-  slot (`.game-head-slot`: "?" How to play, Classics' shelf). No game has its own full screen (card GW's ⛶ and `.game-max`
-  were removed): the free window lives inside the video's fullscreen while there is one. **Where a game plays
-  (`placeOf`, owner 10 Nov 2026):** the tables always play in the video's place, without a switch (`STAGE_READY`, on
-  since card .113; over YouTube, `overYoutube` / YTG, the free window beside the player); the side games always play in
-  the free window, without a switch on a computer (narrow screens keep their below / large pick, `gamePlace:<kind>`).
+  slot (`.game-head-slot`: "?" How to play, Classics' shelf), and for tables ⛶ / 🪟 (GW2, below). A side game's free
+  window lives inside the video's fullscreen while there is one. **Where a game plays
+  (`placeOf`, owner 10 Nov 2026):** the side games always play in the free window, without a switch on a computer
+  (narrow screens keep their below / large pick, `gamePlace:<kind>`). **GW2 (owner, 15 Nov 2026; Planner's pick A):** a
+  table on a computer or tablet plays in **⛶ full screen** (mode `max`: `#game-stage` asks for the browser's own full
+  screen, `requestFullscreen`; refused (an iframe, iOS Safari) `.game-stage.max` is fixed and `100dvh`, filling the
+  browser window) or in its **🪟 frame** (the free window), switched any time with the head's `.game-mode` button
+  (`setTableMode`); the mode used last is remembered for every table (`gameMode`: `full` | `frame`, `full` the first
+  time). ⛶ pauses the room's video (`autoPause`, with or without YouTube: the player is off the screen, so nothing of ours
+  sits over it) and leaving it (🪟, Esc, the browser's own exit, ✕, Leave) plays it again if it paused it (`pausedForFull`,
+  `room.ts` `playVideo`). In ⛶ the game keeps its shape and scales to the screen like it did in the video's place
+  (`refit`). A table's frame starts at the right edge at its own size grown with the screen (`SPOT_HOME`; `homeBox` is
+  the side games'), may cover part of a video file there, keeps beside a YouTube player (under it, `below`, when nothing
+  fits), and a frame smaller than the table's own size scales the table's own layout down. **A frame I moved or sized
+  myself goes anywhere, over a YouTube player too** (CLAUDE.md §7's one exception: `clearOfPlayer` and the strip-beside
+  size limit only apply to its home). Narrow screens and PH2's Games tab keep their placements (⛶ there is the tab).
+  Lab: `games.mode` (`full` / `frame` / flip; writes the mode, `realFullscreen`, `pausedForFull`, the box). Harnesses:
+  `state-matrix` (both modes in every state), `games-youtube`, `game-proportions` (⛶ rows = the old video's place).
+  **GP1 (owner, 15 Nov 2026: "Classics stutters while opening"):** opening the hall (`setHub(true)` → `warmSolo`) loads
+  the side games' chunks and then the tables' chunks one after another (match, sea, duel, quiz, draw, poker), so a card
+  picked from the hall draws at once; Snack Bar's art is inline SVG in its chunk (no late images). `markOpened` records
+  the time from the click (`openTable` / `openSolo`) to the first frame with the game (Lab `games.openTime`). Measured on
+  a laptop: every game 40–110 ms; at CPU 4× with 150 ms latency, Classics and Snack Bar 230–320 ms. The game window's
+  Lab commands (`gameWindow.*`, `games.mode`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
+  (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
+  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
+  **A table's frame never starts unreadable beside YouTube** (Planner, 16 Nov 2026: no frame with text under 11 px):
+  without a spot of mine, a frame that would get less than `READ_ZOOM` (0.85) of the table's size in the strip beside
+  the player opens under the player when the screen has room for it there (`below`), else in ⛶ with no 🪟 in its head
+  (`frameForced`; on a computer's usual screens the strip is ≈ 350–430 px, so ⛶). A frame I placed before (its spot
+  saved) still opens there and may sit over the player; a double click forgets the spot (⛶ again). Side games keep their
+  own homes and, once dragged, may go over the video too. Lab `games.mode` also writes `forced`.
+  Connect Four's column highlight follows a mouse only. Five Frames has a compact tier for windows under 430 px tall (a
+  sideways tablet's side-game window, catalog `fit` 388 px), so it keeps 13 px text instead of being scaled down.
+  Harness `game-open` (CI games-more): every game opens with one click, Classics and Snack Bar in ≤ 300 ms, and on a touch
+  tablet real taps open the hall, the Classics table, Connect Four, seat Stub and drop a disc, each on the first tap.
   The free window's **home** (`homeBox`): with the side panel showing, the window lines up with it (its top and right
   edge, down to just above `#chat-form`, at least the game's `minSize` wide, never over the video box itself), so no
   sliver of chat shows and the message box stays free (0.9.97.117, Game Studio's review); otherwise the column right of the theater, under the top bar, over the side panel,
@@ -1233,7 +1286,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`: a question's nodes are built once (`buildQuestion`) and later states only
   patch them; an option answers on `pointerdown` (keys and screen readers come as a click; `answer` counts once), so a
-  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`). Test:
+  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`).
+  **QZ2 questions (16 Nov 2026):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
+  line by line) adds the categories `language`, `body`, `world` and typed-answer entries (`typed`, `a` = accepted answers,
+  the first shown at the reveal; no options, `QUIZ_TYPED_MS` 20 s). An answer is `{t:'answer', n, text}`: `parseQuizMessage`
+  runs `cleanText` and caps it at `QUIZ_TYPED_MAX` (40); the server checks it with `matchTyped` (`foldAnswer`: case, accents,
+  ı / İ, punctuation, a leading "the" ignored, a number's minus kept; one typo (Damerau) on non-numeric answers of 5+ letters)
+  and keeps it as `said`, sent only in the reveal with the right `answer` (a player's `pick` there is 0 right / 1 wrong).
+  Points × `quizLevelBonus` (easy 1, medium 1.2, hard 1.5; typed × 1.3). `QUIZ_PROTOCOL_VERSION` 3. Test Lab
+  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part. Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their
@@ -1468,7 +1529,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   line: what you will see), tab: 'status' | 'friends' | 'video' | 'games' | 'scenarios' | 'screen' | 'log', where?,
   available?: () => true | reason, run(arg?), undo? }`. **Texts (card LABTR):** title / help / where / reasons / status
   rows / results are `LabText` = a string or `{ en, tr }` written inline (`title: { en: 'Drop my connection for 6 s',
-  tr: 'Bağlantımı 6 sn kopar' }`); a thrown `labFail({ en, tr })` shows in the page's language; the lab chunk picks the
+  tr: 'Bağlantımı 6 sn kopar' }`). **A command registered by a module in the room's own chunk leaves `title` / `help` /
+  `where` out and puts them in `ui/lab-texts.ts` under its id (card BUD1, the room's JS budget):** that file is part
+  of the lab's lazy chunk and `test-lab.ts` `allCommands` fills them in, so nobody without the lab downloads them,
+  while `run` / `available` / `undo` stay with the feature and every hook is registered before the lab opens; a thrown `labFail({ en, tr })` shows in the page's language; the lab chunk picks the
   side (`ui/lab-text.ts` `say`, `both` for the search). Plain words that say what happens, no jargon in Turkish
   (WebSocket, HTTP, peer, ICE… are said in words); `check-texts.mjs` fails a lab command without a pair. Every lab
   harness takes `LAB_LANG=tr`; every run goes through `runCommand` (a throw / rejection = a red log line, never a broken
@@ -1916,8 +1980,21 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   pill, the owner's slogan with its second line in gold, one line, "Create room" (`#start-form`, gold) + "Join with a
   code" (`#join-toggle` → `#join`), the save box (`#start-save` → `#create-name`, `create:<room>`), the continue line
   `#continue` (`lastRoom`, "↺ Continue: name · N inside · Open")) and the art (`.hm-art`, inline SVG: the mascot
-  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and three random themed avatar faces (a phone hides the art's words); `aria-hidden`; the bar
-  runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
+  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and four faces (card TH3: `artFaces()` picks woman / man / woman / man from the
+  neutral pools `ART_WOMEN` = detective, rocker, astronaut and `ART_MEN` = driver, chef, explorer, spy on every load,
+  the first two with the green voice ring; never the culture-tied or costume avatars; text "4 watching · 2 in voice"
+  at x 148) (a phone hides the art's words); `aria-hidden`; the bar runs 6 s, the beam breathes, and the screens'
+  picture `#hm-pic` (the sunset) carries a hot-air balloon (`.hm-move`, `hm-drift`: 6 s, ease-in-out, alternate,
+  ±16 units so the phone's narrow crop shows it; the same spot on all three screens since all three are `<use>` copies
+  on one clock); nothing moves with reduced motion. **Freezing the art (TH3):** `html.hm-frozen` stops the bars at
+  half and the beam; the balloon is inside the `<use>` copies, where a selector on `<html>` doesn't reach, so it stops
+  through the inherited custom property `--hm-drift: none`. Test Lab `home.art` (`registerArtLab` in `home.ts`): the
+  next theme on this page only + the frozen art, Undo puts both back; `scripts/shots.cjs`'s `home` screen sets
+  `hm-frozen`. **Neon home (TH3, Design's `docs/internal/design/home-neon-people.md`):** the last block of `home.css`,
+  every rule under `html.in-home[data-theme='neon']`: tube letters (core `--neon-core` `#ffd3dc` + a coral
+  `text-shadow` halo) on the wordmark and the slogan's second line, an outlined pill, glowing buttons (focus ring 2 px
+  core colour, offset 3 px), coral / amber (tablet) `drop-shadow` frames on the devices (each device group's first
+  `<rect>` is its frame), a coral light cone, faint feature-card edges; static), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
   scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
@@ -2234,7 +2311,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
     `snack-special` (waits up to 20 s for `.room.has-item` instead of 8) and the games sweep's Duel race (waits for the
     table's `data-table` id before Sam's socket joins, and up to 20 s for the race; read too early, the id was
-    undefined and Sam joined no table).
+    undefined and Sam joined no table). The state matrix's first page waits for the room's live connection and for the games' Test Lab commands
+    (registered by the lazily loaded `lab-tools.ts`), and a game that does not open is tried for 8 s and reported with
+    the lab's answer: on a slow runner the first cell's six tables all "did not open" (16 Nov 2026, run 43855473075).
   - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
     extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
@@ -2254,6 +2333,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
     version, leaves them on different numbers, or adds a block for an untagged version. The repository's footer and
     extension files keep the last per-PR number (the one local builds show).
+  - *Open tabs survive a deploy (card GR1, 16 Nov 2026).* Every file in `assets/` is named by its content's hash,
+    and a deploy used to replace the whole set. A tab opened before it that then lazily loaded a chunk (opening a
+    game, pressing Play) asked for a file that was gone, got `index.html` back (the assets' single-page fallback, `200
+    text/html`), the module import failed ("Expected a JavaScript module … MIME type text/html") and `main.ts`
+    (`vite:preloadError` → `reloadForNewVersion`) reloaded the page, out of the room. More deploys (CI3) made it more
+    frequent. Reproduced locally: a room open, the game hall's chunk removed as a deploy does, 🎮 → one reload. Fix,
+    server side: the deploy job runs `scripts/keep-assets.mjs <live origin>` after the build. It reads the live site's
+    `assets-kept.json` (`build`: that build's files; `kept`: older files still served → when they were replaced), or
+    on the first deploy follows the links from the live pages and chunks; copies every live file the new build lacks
+    and every kept file younger than 7 days (`KEEP_DAYS`) from the live site into `dist/assets` (a 200 that is not the
+    HTML fallback), and writes the new `assets-kept.json`. Never fails the deploy (a file it can't fetch is a warning
+    and that tab reloads as before). The client part (no silent reload; a "Sidelit was updated · ↻ Refresh" note) is
+    lane A's.
   - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
     PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
     from the first merge.

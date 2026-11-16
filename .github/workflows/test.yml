@@ -79,7 +79,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/keep-assets.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:
@@ -385,6 +385,9 @@ jobs:
       # the special by the page's day, upright Android tablet): CI no longer depends on the day it runs.
       - name: Snack Bar daily special
         run: node scripts/harness/snack-special/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+      # Card GP1: every game opens with one click on its card, Classics and Snack Bar in ≤ 300 ms (hall open, CI machine).
+      - name: Games open at once
+        run: node scripts/harness/game-open/run.cjs http://localhost:8787
 
       # Lane W: the game window's head and free window (W1–W5, 0.9.97.112–114): no ⛶, 🎮 opens the hall, drag / resize /
       # each game's own spot, never over a YouTube player, side games only in the free window, a table pausing the video
@@ -396,9 +399,10 @@ jobs:
         # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
         run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
-      - name: Snack Bar whole on a laptop and a sideways tablet (EN + TR)
+      - name: Snack Bar and Five Frames whole on a laptop and a sideways tablet (EN + TR)
         # 0.9.97.134 (B2): no text ends in "…" and the SNACK BAR sign is whole, idle and at its busiest.
-        run: GAMES=snack,snackBusy SIZES=laptop,tabland GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+        # GP1: Five Frames keeps its 13 px text in the sideways tablet's short window (its compact tier, not a scale-down).
+        run: GAMES=snack,snackBusy,word SIZES=laptop,tabland GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       # Card PWA1: the home-screen app (share target → a new room that plays the link, "Create room" shortcut, the screen
       # kept on while playing, the one-time iOS hint). Here for the webm the Tablets step serves on :5300.
@@ -635,6 +639,13 @@ jobs:
           if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|VIMEO_TOKEN|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN|LAB_CODE)='; then
             echo "::error::A deploy secret is in the install / build environment."; exit 1
           fi
+
+      # Card GR1: a tab opened before this deploy keeps loading its lazy chunks (a game, a panel) after it: the earlier
+      # builds' hashed files are copied from the live site into dist/assets and served for 7 more days. Without this a
+      # missing chunk got the index.html fallback and the page reloaded mid-room. Never fails the deploy.
+      - name: Keep earlier builds' files for open tabs
+        if: steps.keys.outputs.ok == 'true'
+        run: node scripts/keep-assets.mjs "$(node scripts/site-config.mjs origin)"
 
       - name: Deploy to Cloudflare
         if: steps.keys.outputs.ok == 'true'

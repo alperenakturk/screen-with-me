@@ -2316,6 +2316,22 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: none needed (technical).
 - Done: QA1 shipped by B2 in Nov 2026 (CI 12:27 → 8:29, live e2e in 2 shards, canary gate, state matrix, shots.cjs); gate and retry hardened in #435 / #436.
 
+### TH3. Home: a Neon that looks neon, four neutral people, other ideas for the screens (owner, 15 Nov 2026; Design → lane A)
+- Why: the Neon home is "not neon at all"; the people under the devices are tied to one culture; he wants other
+  ideas for the device screens.
+- What:
+  - **Neon home:** glow on the wordmark, buttons and device frames on a dark base, so it reads as neon, but calm:
+    contrast ≥ 4.5:1, no flashing, soft glow. Other themes unchanged.
+  - **The people (every theme):** 4 avatars, 2 women and 2 men, neutral (nothing tied to one nation, culture or
+    religion); the line becomes "4 watching · 2 in voice" (both languages).
+  - **The screens:** Design proposes 2–3 alternatives to today's sunset (a short preview each) and sends them to the
+    Planner as text; the owner picks in the Planner chat; lane A builds the pick. Today's screens stay until then.
+- Done when: Neon home and the 4 people are live in every theme; the screen pick is built or the owner kept today's;
+  shots reviewed (QA1); contrast check green.
+- Tests: `scripts/shots.cjs` home at 4 sizes, every theme; the contrast job.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026); the screens: pending his pick.
+- Done: #462 (Developer A2, 16 Nov 2026).
+
 ### ST1. Watching a screen share: one button, fullscreen or a free window (owner, 15 Nov 2026; B2)
 - Why: the stream viewer has too many confusing controls (fill the screen, frame, shrink, grow).
 - What:
@@ -2332,3 +2348,29 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
 - Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
 - Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.
+
+### GW2. Game windows: fullscreen or frame, any time; the frame goes anywhere (owner, 15 Nov 2026; Game Studio, first)
+- Why: the owner meant two modes for every table, ⛶ Fullscreen and a 🪟 Frame; today fullscreen only works in a room
+  with no video, and the frame is kept off the video.
+- What:
+  - **Tables:** a ⛶ / 🪟 switch in every table's head, usable any time. Fullscreen with a video: the video pauses
+    (the same rule as the table auto-pause, #46) and ▶ resumes it when the game leaves fullscreen.
+  - **Frame:** starts on the right, resizes in proportion, and can be dragged **anywhere, over the video too**,
+    YouTube included (owner's decision, 15 Nov 2026, knowing YouTube's rule; never placed over the video by us).
+  - **Solo side games** (Snack Bar, Window Garden, Five Frames): always a frame, with the same freedom.
+  - **Sweep:** look for other rules like "only without a video" in the games hall and windows; fix them, list them.
+- Done when: switch both ways with and without a video, on YouTube and a video file; the frame drags over the video;
+  the phone keeps PH2 (Games tab, upright); Test Lab hook `games.mode`.
+- Tests: game-windows harness (both modes, with a video), `npm run e2e` table pause/resume, phone harness.
+- Owner's pick: his messages (Planner chat, 15 Nov 2026).
+- Done: branch `claude/gw2-game-modes` (Game Studio, 16 Nov 2026; option A, real full screen, Planner 15 Nov).
+
+### GP1. Games open at once and answer the first tap (owner, 15 Nov 2026; Game Studio, with GW2)
+- Why: Classics stutter while opening; Snack Bar stutters and its pictures arrive late or missing.
+- What: preload a game's chunk and art when the hall opens (or on hover / touch-start), decode images before the first
+  frame, no layout jank while opening; Classics and Snack Bar ready in ≤ 300 ms after the click on the CI machine with
+  the hall open. Check every game for a click that needs two taps (Quiz has one; GS2 fixes Quiz itself).
+- Done when: open time measured in the PR for every game; no missing image on first open; Test Lab hook `games.open`.
+- Tests: a games-hall timing harness, the snack-bar harnesses.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: branch `claude/gp1-fast-open` (Game Studio, 16 Nov 2026).

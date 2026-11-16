@@ -176,6 +176,19 @@ html.phone .ff-key { min-height: 44px; }
   #game-stage .ff:not(.duel) .ff-tray { gap: 3px 1px; }
   #game-stage .ff:not(.duel) { padding-inline: 8px; }
 }
+/* GP1: a short window (a sideways tablet holds the side game above the message box, about 390 px tall): slimmer tickets
+   and keys again, so the game keeps its 13 px text instead of being scaled down (catalog `fit` 388 px tall). */
+@container game (max-height: 430px) and (max-aspect-ratio: 1 / 1) {
+  #game-stage .ff:not(.duel) { gap: 3px; padding-block: 5px; }
+  #game-stage .ff:not(.duel) .ff-head { min-height: 24px; }
+  #game-stage .ff:not(.duel) .ff-lang { min-height: 24px; padding-block: 1px; }
+  #game-stage .ff:not(.duel) .ff-board { gap: 2px; padding-block: 1px; }
+  #game-stage .ff:not(.duel) .ff-row { height: 26px; }
+  #game-stage .ff:not(.duel) .ff-cells { grid-template-columns: repeat(5, 25px); gap: 5px; padding-block: 1px; }
+  #game-stage .ff:not(.duel) .ff-cell { font-size: 16px; }
+  #game-stage .ff:not(.duel) .ff-key { min-height: 28px; }
+  #game-stage .ff:not(.duel) .ff-result { min-height: 24px; }
+}
 /* QA2-A (0.9.97.122): the room now fills the window, so the narrow column beside the video can be taller than 540 px. The
    narrow width alone keeps the compact sides and key gaps, or the Turkish row of 11 keys drops under 24 px. */
 @container game (max-width: 340px) {

@@ -60,7 +60,7 @@ const until = async (fn, ms = 15000) => {
   for (const name of ['Sam', 'Alex']) {
     const ws = new WebSocket(quizUrl);
     others[name] = { ws, state: null };
-    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 2, name, avatar: 'fox', lang: 'en' })));
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, name, avatar: 'fox', lang: 'en' })));
     ws.addEventListener('message', (e) => {
       const m = JSON.parse(String(e.data));
       if (m.t === 'state') others[name].state = m;
@@ -68,7 +68,21 @@ const until = async (fn, ms = 15000) => {
   }
   check(!!(await until(async () => last.players.filter((p) => p.online).length === 3)), 'three players at the table');
   await page.evaluate(() => [...document.querySelectorAll('#game-stage button')].find((b) => /start/i.test(b.textContent) && !b.disabled)?.click());
-  check(!!(await until(async () => last.phase === 'question' && last.n === 1 && (last.options?.length ?? 0) >= 2)), 'question 1 is asked');
+  // QZ2: a typed question has no options: skip on to the next option question (lab skip: question → reveal → next).
+  const optionQuestion = async (after) => {
+    for (let i = 0; i < 12; i++) {
+      const q = await until(async () => last.phase === 'question' && last.n > after && last, 15000);
+      if (!q) return null;
+      if ((q.options?.length ?? 0) >= 2) return q.n;
+      await page.evaluate(() => window.__swmLab.run('quiz.skip'));
+      await until(async () => last.phase === 'reveal', 5000);
+      await page.evaluate(() => window.__swmLab.run('quiz.skip'));
+      after = q.n;
+    }
+    return null;
+  };
+  const n1 = await optionQuestion(0);
+  check(!!n1, 'an option question is asked');
   await wait(700);
 
   // 1. Press (mouse down) on option A; Sam answers while the button is held; then release.
@@ -76,18 +90,20 @@ const until = async (fn, ms = 15000) => {
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   const before = last;
-  others.Sam.ws.send(JSON.stringify({ t: 'answer', n: 1, pick: 1 }));
+  others.Sam.ws.send(JSON.stringify({ t: 'answer', n: n1, pick: 1 }));
   await until(async () => last !== before && last.players.some((p) => p.name === 'Sam' && p.answered), 5000);
   await wait(150);
   await page.mouse.up();
   await wait(400);
-  check(sent.filter((m) => m.n === 1).length === 1, 'one press sends exactly one answer while states stream in', JSON.stringify(sent));
+  check(sent.filter((m) => m.n === n1).length === 1, 'one press sends exactly one answer while states stream in', JSON.stringify(sent));
   check(await page.evaluate(() => document.querySelector('#game-stage .quiz-option')?.classList.contains('picked')), 'the pressed option shows as picked');
   check(!!(await until(async () => last.players.find((p) => p.name === 'Robin')?.answered, 3000)), 'the table has my answer');
 
   // 2. Next question: the keyboard answers (focus + Enter), the focus ring stays.
   await page.evaluate(() => window.__swmLab.run('quiz.skip'));
-  check(!!(await until(async () => last.phase === 'question' && last.n === 2, 15000)), 'question 2 is asked');
+  await until(async () => last.phase === 'reveal', 5000);
+  const n2 = await optionQuestion(n1);
+  check(!!n2, 'the next option question is asked');
   await wait(700);
   // Reach option B by Tab, as a keyboard user would (from option A, focused first).
   await page.locator('#game-stage .quiz-option').first().focus();
@@ -95,7 +111,7 @@ const until = async (fn, ms = 15000) => {
   const ring = await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle);
   await page.keyboard.press('Enter');
   await wait(400);
-  check(sent.filter((m) => m.n === 2).length === 1 && sent.find((m) => m.n === 2).pick === 1, 'Enter answers the focused option once', JSON.stringify(sent));
+  check(sent.filter((m) => m.n === n2).length === 1 && sent.find((m) => m.n === n2).pick === 1, 'Enter answers the focused option once', JSON.stringify(sent));
   check(ring !== 'none', 'the focused option keeps a visible focus ring', ring);
 
   // 3. A rematch: question 1 of the new game is fresh (nothing carried over from the last game's question 1).
@@ -104,7 +120,12 @@ const until = async (fn, ms = 15000) => {
   await page.evaluate(() => [...document.querySelectorAll('#game-stage .gr-again, #game-stage button')].find((b) => /new game|play again|again/i.test(b.textContent) && !b.disabled)?.click());
   check(!!(await until(async () => last.phase === 'question' && last.n === 1, 15000)), 'a rematch starts');
   await wait(700);
-  const fresh = await page.evaluate(() => [...document.querySelectorAll('#game-stage .quiz-option')].filter((b) => !b.disabled && !b.classList.contains('picked')).length);
+  // A typed question: its field is empty and open; an option question: two or more options can be pressed.
+  const fresh = await page.evaluate(() => {
+    const field = document.querySelector('#game-stage .quiz-type-input');
+    if (field) return !field.disabled && field.value === '' ? 4 : 0;
+    return [...document.querySelectorAll('#game-stage .quiz-option')].filter((b) => !b.disabled && !b.classList.contains('picked')).length;
+  });
   const shown = await page.evaluate(() => document.querySelector('#game-stage .quiz-question')?.textContent);
   check(fresh >= 2 && shown === last.question, 'the rematch question is new and its options can be pressed', `${fresh} ${shown} / ${last.question}`);
 

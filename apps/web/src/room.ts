@@ -36,7 +36,7 @@ import {
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
-import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onTabletUpright } from './device.ts';
+import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -94,7 +94,7 @@ import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
 import { debugHooks, debugTap, setDebugRoom, type RoomLab } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
-import { createPhoneRoom } from './ui/phone-room.ts';
+import type { createPhoneRoom } from './ui/phone-room.ts';
 import { loadChunk } from './ui/lazy.ts';
 import { createWakeLock } from './ui/wake-lock.ts';
 import { createBlocks } from './ui/blocks.ts';
@@ -888,8 +888,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'pwa.state',
         tab: 'status',
-        title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
-        help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
         run: async () => {
           const manifest = (await fetch('/manifest.webmanifest').then((r) => r.json()).catch(() => null)) as { share_target?: { action?: string } } | null;
           return JSON.stringify({
@@ -968,21 +966,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'chat.history',
         tab: 'status',
-        title: { en: 'Chat: how much is loaded and whether older pages are offered', tr: 'Sohbet: ne kadarı yüklü ve eski sayfalar sunuluyor mu' },
-        help: {
-          en: 'Writes how many chat messages and room-activity lines this tab holds and the older page the room offers (null: everything is here) into the log.',
-          tr: 'Bu sekmede kaç sohbet mesajı ve oda hareketi satırı olduğunu ve odanın sunduğu eski sayfayı (null: hepsi burada) kayda yazar.',
-        },
         run: () => JSON.stringify(chat.history()),
       },
       {
         id: 'chat.fill',
         tab: 'friends',
-        title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
-        help: {
-          en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.',
-          tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.',
-        },
         run: () => {
           send({ t: 'lab', op: 'chat-fill' });
           return 'sent';
@@ -1195,21 +1183,37 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (yes) send({ t: 'make-host', id: member.id });
   }
   const live = createLive(app, send, () => myId, isShell, () => amHost());
-  // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
-  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({
-    root: app,
-    openSettings: (section) => settingsDialog.open(section),
-    myId: () => myId,
-    settings: { sections: settingsDialog.sections, setInPage: settingsDialog.setInPage },
-    // PH1: the Me tab's head is my picture and name; a tap opens the profile menu (name, picture, theme).
-    meHead: () => {
-      const head = el('button', { type: 'button', class: 'ph-me-head' }, avatarNode(myAvatar, 'ph-me-avatar'), el('b', {}, myName));
-      head.addEventListener('click', () => document.querySelector<HTMLButtonElement>('.profile-btn')?.click());
-      return head;
-    },
-  });
-  if (phoneRoom) settingsDialog.setRedirect((section) => phoneRoom.openMe(section));
-  phoneRoom?.setCams(seatCams);
+  // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels. Card BUD2: its
+  // module is a lazy chunk, loaded when the phone layout first turns on (a computer never downloads it); the hidden 🎮
+  // of its Games tab is made here, since games/stage.ts takes its triggers when the room starts.
+  let phoneRoom: ReturnType<typeof createPhoneRoom> | null = null;
+  const phoneGamesButton = el('button', { type: 'button', id: 'ph-games-open', class: 'ph-games-open', tabindex: '-1', 'aria-hidden': 'true' }) as HTMLButtonElement;
+  let phoneLoading = false;
+  const startPhoneRoom = () => {
+    if (isShell || phoneLoading) return;
+    phoneLoading = true;
+    void loadChunk(() => import('./ui/phone-room.ts')).then((chunk) => {
+      if (!chunk) return void (phoneLoading = false);
+      const room = chunk.createPhoneRoom({
+        root: app,
+        openSettings: (section) => settingsDialog.open(section),
+        myId: () => myId,
+        settings: { sections: settingsDialog.sections, setInPage: settingsDialog.setInPage },
+        // PH1: the Me tab's head is my picture and name; a tap opens the profile menu (name, picture, theme).
+        meHead: () => {
+          const head = el('button', { type: 'button', class: 'ph-me-head' }, avatarNode(myAvatar, 'ph-me-avatar'), el('b', {}, myName));
+          head.addEventListener('click', () => document.querySelector<HTMLButtonElement>('.profile-btn')?.click());
+          return head;
+        },
+        gamesButton: phoneGamesButton,
+      });
+      phoneRoom = room;
+      settingsDialog.setRedirect((section) => room.openMe(section));
+      room.setCams(seatCams);
+    });
+  };
+  if (isPhoneLayout()) startPhoneRoom();
+  else onPhoneLayout((phone) => phone && startPhoneRoom());
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
   // "⋯ More → Games" on a computer (card 6): the games hall opens next to the 🎮 pressed, so an invisible one waits
   // under ⋯ More (the toolbar's 🎮 is hidden on a computer and the rail is not out in a fresh room).
@@ -1271,7 +1275,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
     // The Shorts bar's 🎮 (0.9.91.13): there a game opens as a free window.
-    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton, ...(phoneRoom ? [phoneRoom.gamesButton] : [])],
+    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton, ...(isShell ? [] : [phoneGamesButton])],
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
@@ -1284,6 +1288,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       const player = current?.player;
       if (!player || !roomState?.item || player.isPaused() || (roomSettings.hostOnly && !amHost())) return false;
       player.pause();
+      return true;
+    },
+    // GW2: a table's ⛶ full screen paused the video; leaving it plays the video again, as a press of ▶ would.
+    playVideo: () => {
+      const player = current?.player;
+      if (!player || !roomState?.item || !player.isPaused() || (roomSettings.hostOnly && !amHost())) return false;
+      player.play();
       return true;
     },
   });
@@ -2767,11 +2778,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'shorts.state',
         tab: 'status',
-        title: { en: 'Shorts: which view, and the way back', tr: 'Shorts: hangi görünüm ve geri dönüş yolu' },
-        help: {
-          en: 'Writes the view (Shorts, room or none) and whether "📱 Shorts view" is offered into the log.',
-          tr: 'Görünümü (Shorts, oda ya da yok) ve "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını kayda yazar.',
-        },
         run: () =>
           JSON.stringify({
             view: shortsOn ? 'shorts' : isShortItem(roomState?.item) ? 'room' : 'none',
@@ -3359,11 +3365,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const search = createSearch(
     mediaForm,
     mediaInput,
-    (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode),
+    (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode, undefined, mode === 'enqueue'),
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
     (query) => feed.start(query),
     // "🎧 Podcasts" on the results (card P2): an episode is an audio file with its cover art.
-    (media, title, mode) => addMedia(media, mode, title),
+    (media, title, mode) => addMedia(media, mode, title, mode === 'enqueue'),
   );
   // Card SRC1: ⠿ picks what typed words search (YouTube, Vimeo or the web).
   const sources = createSources(mediaForm, mediaInput, $<HTMLButtonElement>('#media-sources'));
@@ -3543,11 +3549,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     setTimeout(() => (done.hidden = true), 4000);
   }
 
-  function addMedia(media: Media, mode: 'load' | 'enqueue', title?: string): void {
+  /** `fromList`: "＋ Queue" on a results list (card SR2): the box keeps its words and the list stays open. */
+  function addMedia(media: Media, mode: 'load' | 'enqueue', title?: string, fromList = false): void {
     const add = () => {
       send(title ? { t: mode, media, title } : { t: mode, media });
-      mediaInput.value = '';
-      setAdding(false);
+      if (!fromList) {
+        mediaInput.value = '';
+        setAdding(false);
+      }
       // Sıraya eklendiyse (video oynarken) sessiz kalmasın: kısa bir onay.
       if (mode === 'enqueue' && roomState?.item) {
         const done = $('#media-done');
