@@ -62,8 +62,8 @@ test('the live e2e runs in shards on separate runners, only after a deploy, neve
   assert.match(c, /needs\.deploy\.outputs\.deployed == 'true'/);
   const block = all['live-e2e'].block;
   assert.match(block, /fail-fast: false/);
-  assert.match(block, /shard: \[1, 2\]/);
-  assert.match(block, /SWM_E2E_SHARD: \$\{\{ matrix\.shard \}\}\/2/);
+  assert.match(block, /shard: \[1, 2, 3\]/);
+  assert.match(block, /SWM_E2E_SHARD: \$\{\{ matrix\.shard \}\}\/3/);
   assert.match(block, /npm run e2e -- /);
 });
 
@@ -77,4 +77,54 @@ test('tag: only contents: write + actions: read, never workflows; the catch-up s
     if (name !== 'tag') assert.doesNotMatch(job.block, /contents: write/, `${name} must not write to the repository`);
     assert.doesNotMatch(job.block, /workflows: write/, `${name} must not get workflow rights`);
   }
+});
+
+test('CI3: on main the PR test jobs are skipped only for code a green PR run tested, and a green PR marks its code', () => {
+  for (const job of ['e2e', 'site', 'contrast', 'games', 'games-more', 'game-windows', 'state-matrix', 'lab-sweep']) {
+    const c = cond(job);
+    assert.match(c, /\(github\.event_name != 'push' \|\| needs\.changes\.outputs\.proven != 'true'\)/, `${job}: runs on main unless proven`);
+    assert.doesNotMatch(c, /github\.event_name != 'push' &&/, `${job}: no plain "PR only" left`);
+  }
+  assert.match(all.changes.block, /proven: \$\{\{ steps\.diff\.outputs\.proven \}\}/);
+  assert.match(all.changes.block, /tree: \$\{\{ steps\.diff\.outputs\.tree \}\}/);
+  assert.match(all.changes.block, /actions: read/, 'listing the caches');
+  const save = all.test.block;
+  assert.match(save, /actions\/cache\/save@[0-9a-f]{40}/, 'a pinned save');
+  assert.match(save, /key: tested-code-\$\{\{ needs\.changes\.outputs\.tree \}\}/);
+  assert.match(save, /if: github\.event_name == 'pull_request' && needs\.changes\.outputs\.code == 'true'/, 'only a PR marks its code');
+});
+
+test('CI3: main waits for a quiet main first; only that job may cancel a run, and PRs never wait', () => {
+  assert.equal(cond('settle'), '', 'never skipped: a skipped job would skip every job after it (#464 first run)');
+  assert.match(all.settle.block, /if: github\.event_name == 'push'\n\s+env:[\s\S]*node scripts\/ci-settle\.mjs/);
+  assert.match(all.changes.needs, /\bsettle\b/);
+  assert.equal(cond('changes'), '');
+  assert.match(all.test.block, /\[ "\$CODE" != true \] \|\| \[ "\$CHECKS" = success \]/, 'code changed: checks must have run');
+  for (const [name, job] of Object.entries(all)) {
+    if (name !== 'settle') assert.doesNotMatch(job.block, /actions: write/, `${name} must not cancel or start runs`);
+  }
+});
+
+test('CI3: the nightly date sweep tests on another day, in its own group, and never deploys', () => {
+  const text = readFileSync(FILE, 'utf8');
+  assert.match(text, /schedule:\n\s+- cron: '[^']+'/);
+  assert.match(text, /group: ci-\$\{\{ github\.workflow \}\}-\$\{\{ github\.event_name == 'schedule' && 'date-sweep' \|\|/, 'never in main\'s group');
+  assert.match(text, /SWM_TEST_DAYS: \$\{\{ github\.event_name == 'schedule' && 'sweep' \|\| '' \}\}/);
+  assert.doesNotMatch(text, /^\s+NODE_OPTIONS:/m, 'NODE_OPTIONS only through prepare (after the checkout), never for the checkout itself');
+  assert.match(cond('deploy'), /github\.event_name != 'schedule'/);
+  assert.match(cond('date-sweep'), /github\.event_name == 'schedule'/);
+  assert.match(all['date-sweep'].block, /issues: write/);
+  const prepare = readFileSync(join(dirname(FILE), '..', 'actions', 'prepare', 'action.yml'), 'utf8');
+  assert.match(prepare, /if: env\.SWM_TEST_DAYS != ''/);
+  assert.match(prepare, /NODE_OPTIONS=--require \$GITHUB_WORKSPACE\/scripts\/harness\/forced-date\.cjs/);
+});
+
+test('CI3b: CI numbers the release before the build, the tag job tags that number, a PR may not set one', () => {
+  const deploy = all.deploy.block;
+  assert.ok(deploy.indexOf('node scripts/release-version.mjs --apply') < deploy.indexOf('npm run build'), 'numbered before the build');
+  assert.match(deploy, /version: \$\{\{ steps\.number\.outputs\.version \}\}/);
+  assert.match(all.tag.block, /RELEASE_VERSION: \$\{\{ needs\.deploy\.outputs\.version \}\}/);
+  assert.match(all.tag.block, /node scripts\/changelog\.mjs notes/);
+  assert.match(all.changes.block, /node scripts\/check-version-edits\.mjs "\$BASE"/);
+  assert.match(all.changes.block, /if: github\.event_name == 'pull_request'\n\s+env:\n\s+BASE: origin\/\$\{\{ github\.base_ref \}\}/);
 });
