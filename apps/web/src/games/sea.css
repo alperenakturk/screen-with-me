@@ -224,3 +224,11 @@ html.phone .sea-bot-label { flex-basis: auto; }
 .sea-place { text-align: right; font-variant-numeric: tabular-nums; }
 .sea-place-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .sea-place-left { font-size: 13px; color: var(--muted); }
+@container game (max-width: 560px) {
+  /* A sunk fleet's round chip fades (its name can't be struck through there). */
+  .sea-target.out .sea-avatar { opacity: 0.45; filter: grayscale(1); }
+  /* Six places still fit above a phone's tab bar. */
+  .sea-places { gap: 1px; }
+  .sea-places li { grid-template-columns: 32px 20px minmax(0, 1fr) auto; font-size: 13px; }
+  .sea-places .sea-avatar.small { width: 20px; height: 20px; }
+}

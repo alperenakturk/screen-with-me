@@ -590,10 +590,17 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       : many()
         ? inMatch
           ? tx('matchLineMany', { n: gameNo })
-          : seated().map((i) => `${s.players[i]!.name} ${s.players[i]!.wins}`).join(' · ')
+          : // GMP b: six "name 0" never fit; only who has won so far, most wins first (the whole list in the tooltip).
+            seated()
+              .filter((i) => s.players[i]!.wins > 0)
+              .sort((x, y) => s.players[y]!.wins - s.players[x]!.wins)
+              .slice(0, 3)
+              .map((i) => `🏆 ${s.players[i]!.name} ${s.players[i]!.wins}`)
+              .join(' · ')
         : inMatch
         ? tx('matchLine', { n: gameNo, a: a.name, b: b.name, wa: s.match.wins[0] ?? 0, wb: s.match.wins[1] ?? 0 })
         : `${a.name} ${a.wins} – ${b.wins} ${b.name}`;
+    score0.title = many() ? seated().map((i) => `${s.players[i]!.name} ${s.players[i]!.wins}`).join(' · ') : '';
     tag.textContent = s.phase === 'wait' ? '' : `${s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice')}${s.hard ? ` · ${tx('hardLine')}` : ''}`;
     langButtons.forEach((btn) => {
       const on = btn.dataset.lang === s.lang;
