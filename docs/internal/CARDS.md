@@ -37,6 +37,19 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 (see `STATUS.md` "Task queue")
 
+### CR2. YouTube Music playlists and albums into the queue (Research, 15 Nov 2026; owner's pick 17 Nov: "add it if easy"; lane A, after MSG1)
+- Why: `music.youtube.com/watch?v=` already plays (`media.ts` accepts the host), but playlist / album links don't;
+  SyncUp lists YouTube Music as a no-extension source (`research/competitors/no-extension-sources.md`).
+- Done when: a `music.youtube.com/playlist?list=` (and `browse/` album link where it resolves to a playlist id) adds its
+  videos to the queue through the Data API calls we already make (quota counted in the usage book); an
+  embedding-disabled track shows the existing "can't play here" state and is skipped; help says YouTube Music links
+  work; a Test Lab scenario adds a fixture playlist.
+- Tests: unit (link parsing in `media.ts`), e2e with a mocked playlist answer, the owner's real check.
+- Owner's pick: "add it if easy" (Planner chat, 17 Nov 2026).
+- Test Lab hook: `queue.playlist` (three fixture tracks, no YouTube call).
+- Progress (lane A, 16 Nov 2026): built on `claude/cr2-yt-playlists` (`/api/youtube/playlist`, `parsePlaylist`, harness
+  `playlist`); album `browse/` links don't resolve to a playlist id without scraping, so help points to Share → Copy link.
+
 ## Ready
 
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
@@ -66,28 +79,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   submitted. Later: the granted quota is recorded in `costs.md`.
 - Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
 - Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
-
-### MSG1. Delete a chat message for everyone; the host can delete others' (owner, 15 Nov 2026; lane A, after VC1)
-- Why: there is no way to take back a message.
-- What:
-  - **Delete your own message:** in the message's menu (hover ⋯ on a computer, long-press on a phone), "🗑 Delete for
-    everyone". It asks once. The server removes the text, any image and its reactions from the room's history and tells
-    every client. In its place everyone sees a muted line: "Alex deleted a message".
-  - **The host deletes anyone's message:** the same menu item on others' messages, only for the (acting) host. The line
-    reads "The host deleted Sam's message" (or "Alex (host) deleted Sam's message").
-  - Private messages: the sender can delete; the line shows only to the two people.
-  - **Server rules:** validate the message id, check it is the sender's or the caller is host, and rate-limit. The
-    deleted content is gone from the stored history (not just hidden), and replies or pins that quote it show "deleted
-    message". Old clients ignore the new message type (optional field, no protocol bump unless needed).
-  - Texts in `i18n.ts` / `i18n-tr.ts`.
-  - The privacy page notes that deleted messages are removed from the room's history (both languages).
-- Done when:
-  - Your own and the host's deletes work for everyone, live and after a reload, with the right line.
-  - A non-host can't delete others' messages (server-enforced, unit test).
-  - Test Lab hook `chat.delete`.
-- Tests: room server unit tests (permissions, history removal, rate limit), e2e with three clients (sender, host,
-  other), phone long-press harness, the owner's hand test.
-- Owner's pick: his message (Planner chat, 15 Nov 2026).
 
 ### DM1. Dailymotion links play in sync without the extension (owner, 17 Nov 2026; lane A, after CR2)
 - Why: Dailymotion is the most visited entertainment site in Turkey (research `docs/internal/research/video-sources.md`).

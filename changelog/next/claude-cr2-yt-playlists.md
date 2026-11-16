@@ -1,0 +1,1 @@
+- YouTube Music: paste a playlist or album link (Share → Copy link) and its songs go into the queue, in order.

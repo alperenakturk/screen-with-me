@@ -6,8 +6,8 @@
 
 /** Which feature made the calls. */
 /** `chart`: card SH2's "popular now" video feed (videos.list `chart=mostPopular`, 1 unit). */
-export type UsageKind = 'search' | 'pool' | 'like' | 'channel' | 'chart' | 'oembed';
-export const USAGE_KINDS: readonly UsageKind[] = ['search', 'pool', 'like', 'channel', 'chart', 'oembed'];
+export type UsageKind = 'search' | 'pool' | 'like' | 'channel' | 'chart' | 'oembed' | 'playlist';
+export const USAGE_KINDS: readonly UsageKind[] = ['search', 'pool', 'like', 'channel', 'chart', 'oembed', 'playlist'];
 
 /** YouTube Data API v3 cost per call of each method (oEmbed is not the Data API: 0 units). */
 export const UNIT_COST: Readonly<Record<string, number>> = { search: 100, videos: 1, channels: 1, playlistItems: 1, oembed: 0 };
@@ -78,7 +78,7 @@ export const DAILY_UNIT_BUDGET = 9000;
 export const IP_DAILY_UNITS = 2000;
 
 /** What a request is expected to cost before it is made (the real cost is counted afterwards). */
-export const EXPECTED_UNITS = { search: 101, pool: 101, like: 4, likeSearch: 101, channel: 3, chanOf: 4, chart: 1 } as const;
+export const EXPECTED_UNITS = { search: 101, pool: 101, like: 4, likeSearch: 101, channel: 3, chanOf: 4, chart: 1, playlist: 2 } as const;
 
 /** All units counted today (UTC). */
 export function unitsToday(book: UsageBook, now: number): number {

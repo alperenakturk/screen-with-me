@@ -27,6 +27,7 @@ import {
 } from '@swm/shared/youtube-search';
 import { readCapped } from './fallback.ts';
 import type { UsageKind } from '@swm/shared/yt-usage';
+import { isPlaylistId } from '@swm/shared/media';
 import { recordUsage, spendBudget } from './usage.ts';
 import { EXPECTED_UNITS } from '@swm/shared/yt-usage';
 
@@ -62,7 +63,7 @@ interface ApiKey {
   calls: Record<string, number>;
 }
 
-async function callYouTube(path: string, params: Record<string, string>, api: ApiKey): Promise<{ ok: true; body: unknown } | { ok: false; quota: boolean }> {
+async function callYouTube(path: string, params: Record<string, string>, api: ApiKey): Promise<{ ok: true; body: unknown } | { ok: false; quota: boolean; status?: number }> {
   const url = new URL(`${API}/${path}`);
   for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
   url.searchParams.set('key', api.key);
@@ -79,7 +80,7 @@ async function callYouTube(path: string, params: Record<string, string>, api: Ap
       if (response.status < 500 || attempt > 0) {
         // Only the call's name and status reach the Worker's logs (never the key, the words or an address).
         console.warn(`youtube: ${path} answered ${status}`);
-        return { ok: false, quota: response.status === 403 && isQuotaError(body) };
+        return { ok: false, quota: response.status === 403 && isQuotaError(body), status: response.status };
       }
     } catch {
       if (attempt > 0) {
@@ -438,6 +439,41 @@ export async function youtubeChannel(request: Request, url: URL, env: Env, ipKey
       items = [...items].sort((a, b) => (views.get(b.id) ?? 0) - (views.get(a.id) ?? 0));
     }
     return next ? { items, next } : { items };
+  });
+}
+
+/**
+ * `GET /api/youtube/playlist?list=<id>&hl=tr|en&page=…` — card CR2: a YouTube / YouTube Music playlist or album link
+ * pasted into the room fills the queue. playlistItems (1 unit, 50 a page) → their titles and length (videos.list,
+ * 1 unit): 2 units a page, cached for the day per list. Shorts and normal videos both stay (an album is music, a list
+ * can mix); the playlist's order is kept. A private or unknown list gives no items.
+ */
+export async function youtubePlaylist(request: Request, url: URL, env: Env, ipKey: () => Promise<string>): Promise<Response> {
+  const list = url.searchParams.get('list');
+  if (!isPlaylistId(list)) return new Response('Bad list', { status: 400 });
+  const lang = url.searchParams.get('hl') === 'en' ? 'en' : 'tr';
+  const rawPage = url.searchParams.get('page');
+  const page = rawPage === null ? null : cleanPageToken(rawPage);
+  if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
+  const { day } = poolWindow(Date.now());
+  return cached(request, url, env, ipKey, 'playlist', EXPECTED_UNITS.playlist, `yt-list1?list=${list}&hl=${lang}&day=${day}${page ? `&page=${page}` : ''}`, async (key) => {
+    const items = await callYouTube(
+      'playlistItems',
+      { part: 'contentDetails', playlistId: list, maxResults: '50', fields: 'nextPageToken,items/contentDetails/videoId', ...(page ? { pageToken: page } : {}) },
+      key,
+    );
+    // A private, deleted or unknown list is a 404 from YouTube: no items, not an error.
+    if (!items.ok) return 'status' in items && items.status === 404 ? { items: [] } : items;
+    const body = items.body as { nextPageToken?: unknown; items?: { contentDetails?: { videoId?: unknown } }[] } | null;
+    const ids = [...new Set((body?.items ?? []).map((item) => item.contentDetails?.videoId).filter(isVideoId))];
+    const next = cleanPageToken(body?.nextPageToken);
+    if (!ids.length) return next ? { items: [], next } : { items: [] };
+    const videos = await callYouTube('videos', { part: 'snippet,contentDetails,player', maxWidth: '100', id: ids.join(','), fields: VIDEO_FIELDS }, key);
+    if (!videos.ok) return videos;
+    const found = new Map(parseVideoItems(videos.body, 50).map((item) => [item.id, item]));
+    // videos.list answers in its own order: put the playlist's order back (a removed or private track is left out).
+    const ordered = ids.flatMap((id) => (found.has(id) ? [found.get(id)!] : []));
+    return next ? { items: ordered, next } : { items: ordered };
   });
 }
 

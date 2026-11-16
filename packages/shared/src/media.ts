@@ -120,6 +120,29 @@ export function parseMediaInput(input: string): Media | null {
   return isValidMedia(media) ? media : null;
 }
 
+/**
+ * Card CR2: a YouTube or YouTube Music playlist / album link (`/playlist?list=…`; an album's share link is a playlist
+ * of its tracks, `OLAK5uy_…`) → the list id, else null. A `watch?v=…&list=…` link stays that one video, and mixes
+ * (`RD…`), "liked" and "watch later" lists (private) are not playlists the API can read.
+ */
+export function parsePlaylist(input: string): string | null {
+  const text = input.trim();
+  let url: URL;
+  try {
+    url = new URL(/^[a-z]+:\/\//i.test(text) ? text : `https://${text}`);
+  } catch {
+    return null;
+  }
+  if (!YOUTUBE_HOSTS.has(url.hostname.toLowerCase()) || url.pathname !== '/playlist') return null;
+  const list = url.searchParams.get('list');
+  return isPlaylistId(list) ? list : null;
+}
+
+/** A playlist id the Data API can read (not a mix `RD…`, not `LL` / `WL` / `LM`). */
+export function isPlaylistId(list: unknown): list is string {
+  return typeof list === 'string' && /^[A-Za-z0-9_-]{13,64}$/.test(list) && !/^(RD|LL|WL|LM)/.test(list);
+}
+
 /** At most this many links from one paste go to the queue. */
 export const MEDIA_LIST_MAX = 30;
 /** At most this many TikTok short share links from one paste (each is one server lookup). */

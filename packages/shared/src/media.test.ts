@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage, sharedLink, TIKTOK_SHORT_MAX } from './media.ts';
+import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage, sharedLink, TIKTOK_SHORT_MAX, parsePlaylist } from './media.ts';
 import { cleanMedia, countdownMedia, isValidMedia, maxRateFor } from './protocol.ts';
 
 describe('samePage', () => {
@@ -196,5 +196,22 @@ describe('sharedLink (PWA1 share target)', () => {
     expect(sharedLink(`https://example.com/x${'!'.repeat(50_000)}y`)).toBe('https://example.com/x');
     expect(sharedLink(`see https://example.com/x${'!'.repeat(3000)}`)).toBe('https://example.com/x');
     expect(Date.now() - start).toBeLessThan(200);
+  });
+});
+
+describe('YouTube Music playlists and albums (card CR2)', () => {
+  it('reads the list id of a YouTube Music or YouTube playlist link, an album share link too', () => {
+    expect(parsePlaylist('https://music.youtube.com/playlist?list=PLabcdefghijklmnop')).toBe('PLabcdefghijklmnop');
+    expect(parsePlaylist('music.youtube.com/playlist?list=OLAK5uy_kAbCdEfGhIjKlMnOpQrStUvWxYz012345&si=xyz')).toBe('OLAK5uy_kAbCdEfGhIjKlMnOpQrStUvWxYz012345');
+    expect(parsePlaylist('https://www.youtube.com/playlist?list=PLabcdefghijklmnop')).toBe('PLabcdefghijklmnop');
+  });
+  it('a video inside a list stays that video; mixes, private lists and other sites are not playlists', () => {
+    expect(parsePlaylist('https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=PLabcdefghijklmnop')).toBeNull();
+    expect(parseMediaInput('https://music.youtube.com/watch?v=dQw4w9WgXcQ&list=PLabcdefghijklmnop')).toEqual({ kind: 'youtube', id: 'dQw4w9WgXcQ' });
+    expect(parsePlaylist('https://www.youtube.com/playlist?list=RDdQw4w9WgXcQ')).toBeNull();
+    expect(parsePlaylist('https://www.youtube.com/playlist?list=WL')).toBeNull();
+    expect(parsePlaylist('https://music.youtube.com/playlist?list=LM')).toBeNull();
+    expect(parsePlaylist('https://example.com/playlist?list=PLabcdefghijklmnop')).toBeNull();
+    expect(parsePlaylist('funny cats')).toBeNull();
   });
 });

@@ -21,6 +21,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Chat: delete my newest message for everyone', tr: 'Sohbet: en yeni mesajımı herkesten sil' },
     help: { en: 'Deletes your newest message without asking (as "🗑 Delete for everyone" does) and writes which one and how many lines read "deleted" here into the log.', tr: 'En yeni mesajını sormadan siler ("🗑 Herkesten sil" gibi) ve hangisini sildiğini ve burada kaç satırın "sildi" dediğini kayda yazar.' },
   },
+  'queue.playlist': {
+    title: { en: 'Queue: add a fixture YouTube Music album', tr: 'Sıra: örnek bir YouTube Music albümü ekle' },
+    help: { en: 'Adds three fixture songs to the queue the way a pasted playlist or album link does (no YouTube call) and writes how many went in.', tr: 'Yapıştırılan bir çalma listesi ya da albüm linki gibi sıraya üç örnek şarkı ekler (YouTube\'a sorulmaz) ve kaçının girdiğini yazar.' },
+  },
   'endcard.show': {
     title: { en: 'Show the "Video ended" card', tr: '"Video bitti" kartını göster' },
     help: { en: 'Opens the card people see when a video ends and the next one does not start by itself (a sample title; "Start next" only closes it). Run it again to read what is showing.', tr: 'Bir video bitince ve sıradaki kendiliğinden başlamayınca görünen kartı açar (örnek başlık; "Sıradakini başlat" yalnızca kapatır). Yeniden çalıştırınca açık olanı yazar.', },

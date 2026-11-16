@@ -11,8 +11,9 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (fresh session 16 Nov, evening):
   - [x] SH3 #499, VC1 #501 live in v0.9.97.155, VC3 #502 live in v0.9.97.156 (live e2e green): Done lines, cards in
     `archive/cards-done.md`, hand tests 27u–27x; GMP-b's duplicate 27p renumbered 27p2.
-  - [ ] MSG1 (delete a chat message for everyone; host deletes others'): built on `claude/msg1-delete-message` (e2e
-    `chat-delete.mjs`, harness `chat-delete`, QA1 done); PR open → merge, deploy, live e2e, Done line + hand test.
+  - [x] MSG1 #509 live in v0.9.97.157 (live e2e green): Done line, card in `archive/cards-done.md`, hand test 27y. The
+    tag job back-filled `v0.9.97.141` (TAG_TOKEN); `v0.9.97.113` was not (outside its 80-commit lookback, it seems).
+  - [ ] CR2 (YouTube Music playlists / albums → queue) on `claude/cr2-yt-playlists`: PR → merge, deploy, live e2e.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
@@ -32,7 +33,6 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-  - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio (session 16 Nov, 16:20; handoff at the end of it):
   [x] #491 `claude/drag-capture` merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
   [x] #483 `claude/gmp-b-players` GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.
@@ -193,6 +193,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27w. [VC1] On a YouTube video drag YouTube's own volume slider: it follows the mouse (the cloud can't test real
   YouTube).
 - [ ] 27x. [VC3, 0.9.97.156] With a VPN on, join voice: after ~10 s "Your voice isn't reaching the others" and an ⓘ.
+- [ ] 27y. [MSG1, 0.9.97.157] With a friend: open ⋯ on your message (on a phone, press and hold it), "🗑 Delete for
+  everyone": you both see "… deleted a message"; as the host delete your friend's message; reload: the lines stay.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
@@ -283,4 +285,4 @@ bash scripts/harness/run-all.sh                   # every run.cjs harness in one
   connections per IP and minute (`CONNECT_LIMIT`, also simulated by `wrangler dev`): a test that opens many
   connections in a burst gets `429`.
 - GitHub: no `gh`; use the GitHub MCP tools for PRs; `git push` works.
-- Deploys from the cloud go through GitHub Actions (no `wrangler login`); keys are in repo Secrets.
+- Deploys from the cloud go through GitHub Actions (no `wrangler login`); deploy keys are `production` environment secrets (`TAG_TOKEN` is the only repository secret).
