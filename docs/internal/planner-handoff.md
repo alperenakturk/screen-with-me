@@ -4,40 +4,36 @@ The Planner's working memory, so a fresh Planner session can continue without th
 "keep contexts small, everything needed must be in the repo"). The Planner rewrites this file at every handoff;
 rules stay in `CLAUDE.md`, cards in `CARDS.md` / `cards-games.md` / `cards-proposed.md`, the owner's lists in `STATUS.md`.
 
-## State on 16 Nov 2026, 21:40 UTC (handoff 3; Planner session_015Fyri4tNaodxWjvbDYpkqT)
+## State on 17 Nov 2026, 02:20 Istanbul (handoff 4; previous Planner session_015Fyri4tNaodxWjvbDYpkqT)
 
-**Live:** v0.9.97.156. Since .147: Quiz tournament + jokers (.148), Window Garden WG2 (.149), Shorts start together
-SH1-2 (.150), feeds SH2 (.151), speaking ring SH1-3, EC1 "Video ended" dialog, GMP b (Duel + Sea Battle 2–6), lazy games
-window (room JS 139 → 125 kB), GT1 "❓ How to play", TikTok share links SH1-4 (.153), docs (.154), SH3 Shorts chat
-panel + VC1 🎧 deafen / YouTube volume drag fix + #505 live e2e race fixes (.155), VC3 "voice isn't reaching" note (.156).
-Red live e2e on 16 Nov (four runs) was test races under post-deploy latency, not code or overlapping deploys
-(reference.md CI "16 Nov 2026"): live e2e files wait for state, never fixed sleeps.
+**Live:** v0.9.97.157 (MSG1). Tags complete except v0.9.97.113 (left missing on purpose: GitHub's release page can't
+reach the old commit; the owner's draft was deleted). TAG_TOKEN works (back-filled .141).
 
-**Sessions:** only lane A runs ("ScreenWithMe · 🔨 Developer", session_015Fyri2uT2Xhd9RrdYztMEC): SH3 / VC1 / VC3
-Done lines + archive + hand tests, then MSG1. Every other Sidelit session is archived (16 Nov, owner asked: the old
-Planner, all finished lane / games / B2 sessions, and the idle Design, Research, Field Research, Security, Developer B,
-Developer W). Open a role again only when it has work (B2: YTQ1 after `sidelit.app`; games: QZ2 Quiz cards for GT1,
-the games layout ideas if the owner picks them). Sessions reach 300k+ in 1–2 hours: give each one card.
-The owner's two non-Sidelit sessions ("Bana muzu anlatan cool slayt", "Pomodoro ve Life App projesi") are his to keep
-or delete; the Planner does not touch them.
+**Sessions:**
+- Lane A "ScreenWithMe · 🔨 Developer" (session_015Fyri2uT2Xhd9RrdYztMEC): CR2 #512 (YouTube Music lists) merging; it
+  is the FIRST deploy with the rolled Cloudflare token: check its deploy + live e2e + tag. Then DM1 (needs the owner's
+  Dailymotion Player ID). Its context is large: open a fresh lane A when it hands off.
+- Game Studio "ScreenWithMe · 🎮 Game Studio" (session_015Fyri6VqZiy5iJ9AUoRvzv): card GW3 (only videos go fullscreen).
 
-**Owner, waiting on him:** TAG_TOKEN (steps on the board's Decisions tab), VIMEO_TOKEN, `sidelit.app` after the
-trademark check, the security guide (15 Nov PDF), deleting branches `tagtest-probe-do-not-use`, `claude/qa2-shots`,
-`claude/yt-logo-official`. Hand test SH1 start: he says whether the ≤1.5 s pause before a swiped Short feels slow (if
-slow: a fixed ~0.8 s hold for manual swipes, lane A).
+**Owner decisions on 17 Nov (all in the repo):** secrets all in the `production` environment, repository secrets only
+TAG_TOKEN, every secret in KeePass (CLAUDE.md §5 KeePass fields rule); Dailymotion yes (DM1); Vimeo search yes
+(VIMEO_TOKEN, he adds it later); SoundCloud later; film page intro decided right before the store; TV plan (STATUS);
+**only videos go fullscreen** (CLAUDE.md §7, GW3: when he says "tam ekran" for a game he means the video's place; warn
+him if a request breaks it); no DRM tricks like screen-sharing paid services (already a rule).
 
-**Owner decisions still open:** competitor names on "alternative" pages (recommend yes after 1.0); order of
-no-extension sources (YT Music → SoundCloud → HLS → Twitch → Kick, after 0.9.98); CR1–CR8 in `cards-proposed.md`;
-stopping new features for the 0.9.98 gate; Fable security + privacy audit (only on "Fable ile güvenlik denetimini
-başlat").
+**Waiting on the owner (board "Kararların" tab):** Dailymotion Player ID, VIMEO_TOKEN, the source picker pick: design
+`docs/internal/design/source-picker.md` (#516), options A grid (recommended) / B shelves / C bigger ⠿ menu; ask him
+again with clickable choices, then write the lane A card replacing SRC1's popover (Test Lab `sources.picker`).
+Passed hand test: VC1's YouTube volume drag (tell lane A to move it to the archive). Also still open from before:
+`sidelit.app` after the trademark check, security guide (2FA), competitor names on alternative pages, CR1–CR8, the
+0.9.98 gate, Fable audit (only on his words).
 
-**The owner's board** (Artifact `NWZG7GLH4JzAnZt1rNgrJo`) is current at 0.9.97.156 (version 60). Its source is not in
-the repo: `Artifact` read with `path: "index.html"`, strip the document skeleton (keep from `<title>` to the last
-`</script>`), add TESTS items (`d` phone | pc | ext, group "🆕 Yeni (önce bunlar)"), republish to the same URL. Two
-hand tests are both numbered 27p in STATUS (WG2, GMP-b): renumber one when STATUS C is next edited.
+**The owner's board** (Artifact `NWZG7GLH4JzAnZt1rNgrJo`) is current (version 67). Its source is not in the repo:
+`Artifact` read with `path: "index.html"`, keep from `<title>` to the last `</script>`, add TESTS items (`d` phone |
+pc | ext, group "🆕 Yeni (önce bunlar)"), republish to the same URL.
 
-**Scheduled:** "Daily context check" (trig_01TajuA38ByAnD6Q72fjgSiR, 18:41 Europe/Istanbul) fires into the Planner.
-The old Planner (session_015Fyri4VJ2JA1XRi7Y6v5Zy) is archived once the owner writes to the new one.
+**Scheduled:** "Daily context check" (trig_01TajuA38ByAnD6Q72fjgSiR, 18:41 Istanbul) fires into the session it was
+made in; the new Planner re-creates it bound to itself and deletes the old one.
 
 **Room JS budget:** 145 kB guard, ~125 kB after the lazy games window (#493). Never raise it; move code into lazy chunks.
 
