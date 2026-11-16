@@ -29,6 +29,18 @@ if (live) {
   ok(answer.error === 'off' || Array.isArray(answer.items), `Local answer has a known shape (${answer.error ?? 'items'})`);
 }
 
+// Card CR2: playlist / album links (`/api/youtube/playlist`). Bad ids and mixes are refused; another site may not use
+// it; an unknown list answers no items (live) or `off` (locally, no key), never an error page.
+const playlist = (list, init) => fetch(`${http}/api/youtube/playlist?hl=en&list=${encodeURIComponent(list)}`, init);
+ok((await playlist('short')).status === 400, 'Playlist: a malformed list id is refused');
+ok((await playlist('RDdQw4w9WgXcQ0000')).status === 400, 'Playlist: a mix (RD…) is refused (the API cannot read it)');
+ok((await playlist('PLe2eUnknownList000000000', { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Playlist: another site may not use it');
+const listAnswer = await (await playlist('PLe2eUnknownList000000000')).json();
+ok(
+  ['off', 'quota', 'busy'].includes(listAnswer.error) || (Array.isArray(listAnswer.items) && listAnswer.items.length === 0),
+  `Playlist: an unknown list gives no items (${listAnswer.error ?? listAnswer.items.length + ' items'})`,
+);
+
 // Card SRC1: Vimeo search (the ⠿ Sources picker). The same input rules; without the VIMEO_TOKEN secret it answers
 // `off` (locally always, live until the owner adds it), and an answer never carries the token or extra fields.
 const vimeo = (q, init = {}) => fetch(`${http}/api/vimeo/search`, { method: 'POST', body: new URLSearchParams({ q }), ...init });

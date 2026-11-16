@@ -81,16 +81,6 @@ None of them adds an account, ads, a paywall, re-broadcasting or any DRM workaro
 - Tests: the help harness checks both languages have the table with the same rows; `check-texts.mjs`.
 - Owner's pick: the wording (public text); no service name unless it really works (`CLAUDE.md` §6).
 
-### CR2. YouTube Music playlists and albums into the queue (Research, 15 Nov 2026; lane B)
-- Why: `music.youtube.com/watch?v=` already plays (`media.ts` accepts the host), but playlist / album links don't;
-  SyncUp lists YouTube Music as a no-extension source (`research/competitors/no-extension-sources.md`).
-- Done when: a `music.youtube.com/playlist?list=` (and `browse/` album link where it resolves to a playlist id) adds its
-  videos to the queue through the Data API calls we already make (quota counted in the usage book); an
-  embedding-disabled track shows the existing "can't play here" state and is skipped; help says YouTube Music links
-  work; a Test Lab scenario adds a fixture playlist.
-- Tests: unit (link parsing in `media.ts`), e2e with a mocked playlist answer, the owner's real check.
-- Owner's pick: none needed (folds into "More players without the extension").
-
 ### CR3. More sources without the extension, first wave: SoundCloud, HLS / audio files, Twitch (Research, 15 Nov 2026; lane B)
 - Why: SyncUp and Watch2Gether play these without an extension; we don't. Research's order (`no-extension-sources.md`,
   correcting `more-players.md`): SoundCloud widget (no key, 1× lock) → HLS `.m3u8` + audio files in the `html5` kind

@@ -262,7 +262,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   title's words, `titleWords`, 101 units a page; `yt-like1`). Feed sources are `FeedSource` (`topic` / `pool` /
   `like` / `channel`, `sessionStorage` with the feed). **Card 10 (0.9.96.1):** a channel link / @handle in the ♾ window →
   `/api/youtube/channel?c=UC…|@handle` (`youtubeChannel`: channels.list by id or `forHandle`, the uploads playlist, its
-  page of 50, videos.list = 3 units a page, `yt-chan1` per channel + day); Discover's `region` (`opt:poolRegion`, 🌍 select:
+  page of 50, videos.list = 3 units a page, `yt-chan1` per channel + day). **Card CR2:** a YouTube Music / YouTube
+  playlist or album link (`/playlist?list=`, `parsePlaylist` + `isPlaylistId` in `media.ts`; mixes `RD…` and `LL` /
+  `WL` / `LM` are not lists; `watch?v=…&list=` stays one video) pasted in the link box (or anywhere, `takeLink`) →
+  `/api/youtube/playlist?list&hl&page` (`youtubePlaylist`: playlistItems 50 + videos.list = 2 units, usage kind
+  `playlist`, `yt-list1` per list + day; a YouTube 404 = no items) → `addPlaylist` / `queuePlaylistItems` in `room.ts`
+  queue the first page in the playlist's order with titles, 300 ms apart, only as many as `QUEUE_MAX_LENGTH` leaves
+  room for ("Play now": the first one loads); `playlist.*` texts for empty / quota / failed. Test Lab `queue.playlist`
+  (three fixture tracks); harness `scripts/harness/playlist` (endpoint faked, CI `site`); e2e `search.mjs` (input
+  rules). Album `browse/MPREb_…` links are not read (no API for them): help says Share → Copy link. Discover's `region` (`opt:poolRegion`, 🌍 select:
   auto = `cf.country`, world, or `POOL_REGIONS`), the pool cache is per kind + region + language + day (`yt-pool2`). **Switch measurement:** `?measure=1` (the old `?olcum=1` too) once in a tab → `#shorts-measure` by
   ▲▼ shows how many ms after the room switched (server time, `state.updatedAt`) this Short started moving, and the
   average of the last 5 (`measureSwitch`; nothing is sent).

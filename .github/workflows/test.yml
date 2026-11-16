@@ -320,6 +320,10 @@ jobs:
       - name: Delete a chat message
         run: node scripts/harness/chat-delete/run.cjs http://localhost:8787
 
+      # Card CR2: a YouTube Music album / playlist link fills the queue in order (the endpoint faked; EN computer, TR phone).
+      - name: YouTube Music playlists
+        run: node scripts/harness/playlist/run.cjs http://localhost:8787
+
       # Card SH1 (1): after "↩ Room view" a playing Short offers "📱 Shorts view" (phone: the Room tab's strip; computer:
       # beside Next), and it works again and again. Needs YouTube.
       - name: Shorts view way back

@@ -11,8 +11,9 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (fresh session 16 Nov, evening):
   - [x] SH3 #499, VC1 #501 live in v0.9.97.155, VC3 #502 live in v0.9.97.156 (live e2e green): Done lines, cards in
     `archive/cards-done.md`, hand tests 27u–27x; GMP-b's duplicate 27p renumbered 27p2.
-  - [ ] MSG1 (delete a chat message for everyone; host deletes others'): built on `claude/msg1-delete-message` (e2e
-    `chat-delete.mjs`, harness `chat-delete`, QA1 done); PR open → merge, deploy, live e2e, Done line + hand test.
+  - [ ] MSG1 #509 (`claude/msg1-delete-message`) merged (e8335623): check deploy + live e2e, then the Done line and
+    hand test; the same run's tag job should back-fill `v0.9.97.141` and `v0.9.97.113` (TAG_TOKEN added 17 Nov).
+  - [ ] CR2 (YouTube Music playlists / albums → queue) on `claude/cr2-yt-playlists`: PR → merge, deploy, live e2e.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
@@ -32,7 +33,6 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-  - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio (session 16 Nov, 16:20; handoff at the end of it):
   [x] #491 `claude/drag-capture` merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
   [x] #483 `claude/gmp-b-players` GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.

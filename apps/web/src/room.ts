@@ -6,7 +6,7 @@ import { createRoomMoreMenu, roomMoreItems } from './ui/room-more.ts';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { isForwardedKey, isRelayable } from '@swm/shared/embed';
-import { isTikTokShortLink, parseMediaInput, parseMediaList, samePage } from '@swm/shared/media';
+import { isTikTokShortLink, parseMediaInput, parseMediaList, parsePlaylist, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
@@ -32,6 +32,7 @@ import {
   type Media,
   type PlaybackState,
   type QueueItem,
+  QUEUE_MAX_LENGTH,
   type RoomSettings,
   type ServerMessage,
 } from '@swm/shared/protocol';
@@ -3527,6 +3528,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       addMany(list.items, list.skipped, mode);
       return;
     }
+    // Card CR2: a YouTube Music (or YouTube) playlist or album link fills the queue with its songs.
+    const playlist = parsePlaylist(mediaInput.value);
+    if (playlist) {
+      search.close();
+      void addPlaylist(playlist, mode);
+      return;
+    }
     // TikTok app share links (vm.tiktok.com/…): the server follows them to the video first (0.9.91.18).
     if (isTikTokShortLink(mediaInput.value)) {
       void resolveTikTok(mediaInput.value, mediaInput).then((media) => {
@@ -3556,7 +3564,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * away from the room. Not on the film page (no link box there).
    */
   function takeLink(text: string): boolean {
-    if (isShell || (!parseMediaInput(text) && parseMediaList(text).items.length < 2 && !isTikTokShortLink(text))) return false;
+    if (isShell || (!parseMediaInput(text) && !parsePlaylist(text) && parseMediaList(text).items.length < 2 && !isTikTokShortLink(text))) return false;
     mediaInput.value = text.trim();
     mediaForm.requestSubmit(mediaForm.querySelector<HTMLButtonElement>('button[value=enqueue]'));
     return true;
@@ -3693,6 +3701,70 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (failed) flashHint(anchor, t('tiktokResolveFailed'), 5000);
     })();
   }
+
+  /**
+   * Card CR2: a playlist / album link → its first 50 songs and videos (`/api/youtube/playlist`, 2 units, cached for the
+   * day), in the playlist's order and only as many as the queue has room for. With "Play now" the first one opens.
+   */
+  async function addPlaylist(list: string, mode: 'load' | 'enqueue'): Promise<void> {
+    const anchor = mediaInput;
+    let answer: { items?: { id: string; title?: string }[]; error?: string } | null = null;
+    try {
+      const response = await fetch(`/api/youtube/playlist?list=${encodeURIComponent(list)}&hl=${lang()}`);
+      answer = response.ok ? await response.json() : { error: 'failed' };
+    } catch {
+      answer = { error: 'failed' };
+    }
+    if (answer?.error || !Array.isArray(answer?.items)) {
+      flashHint(anchor, t(answer?.error === 'quota' ? 'playlist.quota' : 'playlist.failed'), 6000);
+      return;
+    }
+    queuePlaylistItems(answer.items, mode);
+  }
+  /** CR2: the playlist's videos into the queue (also the Test Lab's fixture), a short gap between them. */
+  function queuePlaylistItems(items: { id: string; title?: string }[], mode: 'load' | 'enqueue'): number {
+    const room = Math.max(0, QUEUE_MAX_LENGTH - queue.length + (mode === 'load' ? 1 : 0));
+    const take = items.filter((item) => isValidMedia({ kind: 'youtube', id: item.id })).slice(0, room);
+    if (!take.length) {
+      flashHint(mediaInput, t(items.length ? 'playlist.full' : 'playlist.empty', { n: 0 }), 6000);
+      return 0;
+    }
+    mediaInput.value = '';
+    setAdding(false);
+    const done = $('#media-done');
+    done.textContent = t(take.length < items.length ? 'playlist.full' : 'playlist.adding', { n: take.length });
+    done.hidden = false;
+    setTimeout(() => (done.hidden = true), 5000);
+    void (async () => {
+      for (const [i, item] of take.entries()) {
+        if (i > 0) await new Promise((resolve) => setTimeout(resolve, 300));
+        const media: Media = { kind: 'youtube', id: item.id };
+        const kind = i === 0 && mode === 'load' ? 'load' : 'enqueue';
+        send(item.title ? { t: kind, media, title: item.title } : { t: kind, media });
+      }
+    })();
+    return take.length;
+  }
+  debugHooks.register('playlist', () => ({
+    commands: [
+      {
+        // Card CR2: three fixture songs as if a YouTube Music album link had been pasted (no YouTube call).
+        id: 'queue.playlist',
+        tab: 'friends',
+        run: () => {
+          const n = queuePlaylistItems(
+            [
+              { id: 'aqz-KE-bpKQ', title: 'Lab album · Track 1' },
+              { id: 'dQw4w9WgXcQ', title: 'Lab album · Track 2' },
+              { id: 'jNQXAC9IVRw', title: 'Lab album · Track 3' },
+            ],
+            'enqueue',
+          );
+          return JSON.stringify({ queued: n });
+        },
+      },
+    ],
+  }));
 
   /** `fromList`: "＋ Queue" on a results list (card SR2): the box keeps its words and the list stays open. */
   function addMedia(media: Media, mode: 'load' | 'enqueue', title?: string, fromList = false): void {
