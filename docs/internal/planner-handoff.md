@@ -28,6 +28,14 @@ shows on request only (never by itself), covers the current session (a new sessi
 picks up to 8 random fact cards (duration first; videos, speed, top talker, reactor, sad / laugh, top emoji, pins,
 pauser, seeker, crowd of 3+; summary + PNG last) and can be saved (5 or 20 per room, 90 days).
 
+**Design options ready (PR #521):** FD1 `design/feed-start.md` (A right drawer, 3 steps on one screen, recommended /
+B one question per step / C ready-made feed cards) and RC1 `design/session-recap.md` (Q1 look: night stage
+recommended / filmstrip / postcards; Q2 who starts: host shows, guests ask recommended / anyone with 10 s cancel /
+everyone alone; Q3 where: ✨ on the rail when ready recommended / top-bar chip / Profile menu; Q4 music: our own Web
+Audio recommended / CC0 track / none). Tell him the defaults without asking: nudges N1, N2, N4 (one per person per
+session, "Don't remind me"), the session rule with Design's 4 improvements. Ask with clickable choices, then turn the
+picks into lane A build steps in FD1 / RC1.
+
 **Waiting on the owner (board "Kararların" tab):** Dailymotion Player ID, VIMEO_TOKEN, the source picker pick: design
 `docs/internal/design/source-picker.md` (#516), options A grid (recommended) / B shelves / C bigger ⠿ menu; ask him
 again with clickable choices, then write the lane A card replacing SRC1's popover (Test Lab `sources.picker`).
