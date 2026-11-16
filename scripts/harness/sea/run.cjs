@@ -196,9 +196,13 @@ async function unnamed(page) {
     status: document.querySelector('#game-stage .sea-status')?.textContent ?? '',
     fire: document.querySelector('#game-stage .sea-fire')?.textContent ?? '',
   }));
+  // CI (16 Nov 2026): the zoom is a 0.25 s transition; read after a fixed 400 ms on a busy runner it was still on its
+  // way (scale under 1.9). Wait for the zoomed state itself.
+  const zoomedOk = (z) => z.zoomed && z.q === '0' && z.scale > 1.9 && z.whole;
+  await until(async () => zoomedOk(await zoom()), 4000);
   const z1 = await zoom();
   check(aimed.cells.length === 1 && aimed.cells[0] === other && /aiming at [A-J]\d+/i.test(aimed.status) && /fire at [A-J]\d+/i.test(aimed.fire), "phone: Sam's first tap only aims (crosshair, the cell's name, a Fire button)", aimed);
-  check(z1.zoomed && z1.q === '0' && z1.scale > 1.9 && z1.whole, 'phone: the first tap zooms into that quarter (cells twice as big), "Whole sea" shows (44 px)', z1);
+  check(z1.zoomed && z1.q === '0' && z1.scale > 1.9 && z1.whole, 'phone: the first tap zooms into that quarter (cells twice as big), "Whole sea" shows (44 px)', JSON.stringify(z1));
   // B2's find (0.9.97.118): "Whole sea" never sits over the zoomed grid (it covered H10 in the bottom-right quarter).
   const clear = await sam.page.evaluate(() => {
     const f = document.querySelector('#game-stage .sea-theirs .sea-zoom').getBoundingClientRect();
