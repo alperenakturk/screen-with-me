@@ -12,7 +12,8 @@ One handoff per lane or role; each session updates only its own lines and delete
   (0.9.97.141, Planner's order).
 - [ ] Game Studio 2, QZ2 PR 2: ~600 new questions, 3 new categories, typed answers, hard bonus, protocol 3, Lab
   `quiz.typed`; 0.9.97.145, branch `claude/quiz-questions`, merges after #458 (and .143 / .144).
-- [ ] Game Studio 2, QZ2 PR 3: Double + Second chance jokers, tournament (1 or 2 laps), hook `quiz.tournament`.
+- [ ] Game Studio 2, QZ2 PR 3 (0.9.97.146): Double + Second chance jokers, tournament (1 or 2 laps), hook
+  `quiz.tournament`; branch `claude/quiz-tournament`, merges after #463.
 - [ ] Game Studio 2, WG2: Window Garden steady buttons, backgrounds, small customisations, hook `garden.decor`.
 - [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
   (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
@@ -141,7 +142,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27n. [QZ2b, 0.9.97.145] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
-- [ ] 27k. [QZ2c, 0.9.97.14x] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
+- [ ] 27o. [QZ2c, 0.9.97.146] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
   turn. Try ×2 (Double) and ↺ (Second chance: answer wrong first, then try again). The winner has the most round wins.
 
 

@@ -1238,7 +1238,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   and keeps it as `said`, sent only in the reveal with the right `answer` (a player's `pick` there is 0 right / 1 wrong).
   Points × `quizLevelBonus` (easy 1, medium 1.2, hard 1.5; typed × 1.3). `QUIZ_PROTOCOL_VERSION` 3. Test Lab
   `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part.
-  **QZ2 jokers and tournament (0.9.97.14x):** jokers `QUIZ_JOKERS` (`{t:'joker', n, kind}`, no kind = 50:50), each kind
+  **QZ2 jokers and tournament (0.9.97.146):** jokers `QUIZ_JOKERS` (`{t:'joker', n, kind}`, no kind = 50:50), each kind
   once a game and one per question (`used`, `jokerAt`): 50:50 (typed: `typedHint`, first letter + a dot per letter),
   Double (×2 if right) and Second chance (`armed[key].tried`: a first wrong answer is kept aside, only that player gets
   `{t:'again', n, wrong?}`, the second try scores half; time up = the first answer stands). Tournament (`mode`, `laps`
