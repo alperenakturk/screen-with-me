@@ -89,6 +89,18 @@ Two sessions never edit the same lines; the Planner splits work by files.
   other), phone long-press harness, the owner's hand test.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 
+### DM1. Dailymotion links play in sync without the extension (owner, 17 Nov 2026; lane A, after CR2)
+- Why: Dailymotion is the most visited entertainment site in Turkey (research `docs/internal/research/video-sources.md`).
+- What: a `dailymotion` media kind like Vimeo's (`players/vimeo.ts` as the model): links `dailymotion.com/video/<id>`
+  and `dai.ly/<id>`; the official player with the owner's Player ID (from `site.config.json`, not a secret); play,
+  pause, seek, time and ended through the engine's `command()`; Dailymotion's own ads covered by the everyone-ready
+  wait; CSP hosts in `_headers`; privacy page line in both languages; public texts only say "Dailymotion links work".
+  First verify web seek and whether the iframe's postMessage is enough without their SDK script.
+- Done when: a Dailymotion link plays, pauses and seeks in sync for two people on a computer and a phone; Test Lab
+  hook `player.dailymotion`; fake-player harness in the `site` job; the owner's real check.
+- Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
+- Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
+
 Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 
 ## Proposed
