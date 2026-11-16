@@ -2405,4 +2405,4 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
   and laptop, and the owner's hand test with friends.
 - Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
   studio says which and why before using them.
-- Done: branch `claude/gmp-b-players` (Game Studio, 16 Nov 2026): (a) word lists + watchers in 0.9.97.138, (b) 2–6 players for the Duel and Sea Battle.
+- Done: #483 (Game Studio, 16 Nov 2026): (a) word lists + watchers in 0.9.97.138, (b) 2–6 players for the Duel and Sea Battle.
