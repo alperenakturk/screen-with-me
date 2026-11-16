@@ -20,6 +20,7 @@ import {
   expectedPosition,
   isShortMedia,
   SHORT_LEAD_MS,
+  SHORT_START_MARGIN_MS,
   waitPausePosition,
   parseClientMessage,
   stickerId,
@@ -299,6 +300,8 @@ export class Room extends DurableObject<Env> {
   private readonly waitCooldowns = new Map<string, number>();
   /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
   private counted: string | null = null;
+  /** Card SH1 (2): the Short in its lead-in and whose players are primed for it (memory only: lost, the cap still starts it). */
+  private lead: { itemId: string; primed: Set<string> } | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
   /** Atılanlar: kişi anahtarı (keyOf) → yasak. */
@@ -902,6 +905,7 @@ export class Room extends DurableObject<Env> {
         this.waits.setReady(me.id, message.ready || ad);
         await this.evaluateWait();
         await this.saveWaits();
+        if (message.primed) await this.primed(me.id, message.primed);
         return;
       }
       case 'settings': {
@@ -2117,6 +2121,24 @@ export class Room extends DurableObject<Env> {
   }
 
   /**
+   * Card SH1 (2): a Short's lead-in ends early once every viewer's player is primed (loaded, holding at 0:00):
+   * the start moves to SHORT_START_MARGIN_MS from now, never later than the lead-in's own cap. TVs are not waited for.
+   */
+  private async primed(memberId: string, itemId: string): Promise<void> {
+    const lead = this.lead;
+    const state = this.room.state;
+    const now = Date.now();
+    if (!lead || lead.itemId !== itemId || state.item?.id !== itemId || state.paused) return;
+    if (state.updatedAt <= now + SHORT_START_MARGIN_MS) return void (this.lead = null);
+    lead.primed.add(memberId);
+    if (!this.joined().filter((a) => !a.tv).every((a) => lead.primed.has(a.id))) return;
+    this.lead = null;
+    this.room = { ...this.room, state: { ...state, updatedAt: now + SHORT_START_MARGIN_MS } };
+    await this.ctx.storage.put('room', this.room);
+    this.broadcast({ t: 'state', state: this.room.state, action: 'play', by: SYSTEM });
+  }
+
+  /**
    * "3-2-1, together" (0.9.93.2, owner): the first time an item starts playing from its beginning, with two or more
    * people (by browser, TVs aside), it starts COUNTDOWN_MS later for everyone: `updatedAt` lies ahead, the engines hold
    * the player at the start until then (it buffers meanwhile) and every page shows the countdown. Not for Shorts /
@@ -2133,6 +2155,7 @@ export class Room extends DurableObject<Env> {
     // Card SH1 (2): a Short has no countdown, but a short silent lead-in: everyone has it loaded and starts at 0:00.
     if (isShortMedia(item.media)) {
       this.room = { ...this.room, state: { ...state, position: 0, updatedAt: now + SHORT_LEAD_MS } };
+      this.lead = { itemId: item.id, primed: new Set() };
       return;
     }
     if (this.settings.countdown === false || !countdownMedia(item.media)) return;

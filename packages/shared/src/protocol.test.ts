@@ -48,6 +48,9 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'ready', ready: false, ad: true })).toEqual({ t: 'ready', ready: false, ad: true });
     expect(parse({ t: 'ready', ready: true })).toEqual({ t: 'ready', ready: true });
     expect(parse({ t: 'ready', ready: true, ad: 'evet' })).toEqual({ t: 'ready', ready: true });
+    // Card SH1 (2): `primed` is an item id; anything else is dropped.
+    expect(parse({ t: 'ready', ready: true, primed: 'abc123' })).toEqual({ t: 'ready', ready: true, primed: 'abc123' });
+    expect(parse({ t: 'ready', ready: true, primed: { x: 1 } })).toEqual({ t: 'ready', ready: true });
   });
 
   it('accepts pages with a cleaned title, and drops titles for other media', () => {

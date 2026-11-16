@@ -184,9 +184,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `COUNTDOWN_MS` (3 s) ahead; not for Shorts / TikTok / film pages / the sync test (`countdownMedia`), a resumed saved
     video, or with `settings.countdown === false` (Room rules, host); once per item (`counted`, storage). The page shows
     the seconds over the video (`showCountdown`, `.countdown`). A user's play during the hold starts the room at once.
-    A Short (`isShortMedia`: YouTube Short or TikTok) gets no countdown but a silent lead-in instead: the server holds
-    it at 0:00 for `SHORT_LEAD_MS` (1.5 s, alone too), so every viewer has it loaded and starts from 0:00 together
-    (card SH1 (2)); `showCountdown` draws nothing for it (nothing of ours over the YouTube player).
+    A Short (`isShortMedia`: YouTube Short or TikTok) gets no countdown but a silent lead-in instead (card SH1 (2)):
+    the server holds it at 0:00 for at most `SHORT_LEAD_MS` (1.5 s, alone too). Each viewer's engine, when it
+    attaches a player during the lead-in (loaded, holding at 0:00), sends `{t:'ready', primed: itemId}`; once every
+    joined non-TV viewer is primed the server moves the start to `SHORT_START_MARGIN_MS` (250 ms) from now (`primed`,
+    memory-only `lead`) and broadcasts it as a SYSTEM `play`. `showCountdown` draws nothing for a Short (nothing of
+    ours over the YouTube player). e2e `shorts-start.mjs` measures swipe → start: both primed at once ≈ 0.3 s, one
+    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap.
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait

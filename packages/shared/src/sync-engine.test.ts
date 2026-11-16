@@ -104,7 +104,7 @@ beforeEach(() => {
   clock.addSample(Date.now(), Date.now());
   engine = new SyncEngine({
     clock,
-    send: (message) => (message.t === 'ready' ? readyReports.push(message.ready) : sent.push(message)),
+    send: (message) => (message.t === 'ready' && !message.primed ? readyReports.push(message.ready) : sent.push(message)),
     onAutoplayBlocked: () => autoplayBlocked++,
     onEnded: (itemId) => ended.push(itemId),
     wallNow: () => Date.now(),
@@ -377,6 +377,19 @@ describe('"3-2-1, together" (a start held a few seconds ahead)', () => {
     expect(player.time).toBeLessThan(0.5);
     expect(readyReports).toEqual([]);
     expect(sent).toEqual([]);
+  });
+
+  // Card SH1 (2): a player put in place during the lead-in tells the room it is primed for that item (once), so the
+  // server can end the lead-in as soon as everyone is; outside a lead-in it says nothing.
+  it('a player attached during the lead-in reports itself primed', async () => {
+    const short = { id: 'short2', media: { kind: 'youtube' as const, id: 'aqz-KE-bpKQ', short: true as const }, title: null, by: 'Alex' };
+    engine.receive(state({ item: short, position: 0, updatedAt: Date.now() + SHORT_LEAD_MS }));
+    engine.attach(player);
+    expect(sent).toEqual([{ t: 'ready', ready: true, primed: 'short2' }]);
+    engine.attach(player);
+    await run(SHORT_LEAD_MS + 100);
+    engine.attach(player);
+    expect(sent.filter((m) => m.t === 'ready' && m.primed)).toHaveLength(2);
   });
 
   it('the user pressing play during the countdown starts the room now', async () => {

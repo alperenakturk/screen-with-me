@@ -459,7 +459,11 @@ export type ClientMessage =
    * Sunucu takılan biri olduğunda odayı kısa süre bekletir. `ad`: film sayfasında reklam oynuyor; oda bu kişiyi
    * beklemez (reklamı herkes farklı anda görür), kişiler listesinde "reklamda" yazar, reklam bitince kişi yetişir.
    */
-  | { t: 'ready'; ready: boolean; ad?: boolean }
+  /**
+   * `primed` (card SH1 (2)): my player has loaded this item and holds at its start, so a Short's lead-in can end as
+   * soon as everyone is primed (an optional field: no protocol bump).
+   */
+  | { t: 'ready'; ready: boolean; ad?: boolean; primed?: string }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
   | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; countdown?: boolean; knock?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
@@ -672,6 +676,8 @@ export type ServerMessage =
  * loaded it and they all start from 0:00 together, instead of joining a second or two in.
  */
 export const SHORT_LEAD_MS = 1500;
+/** Card SH1 (2): once every viewer is primed, a Short starts this long later (time for the "start" to reach them all). */
+export const SHORT_START_MARGIN_MS = 250;
 /** Card SH1 (2): a room that waits for someone this early in a video waits at 0:00, so nobody loses the start. */
 export const WAIT_REWIND_S = 3;
 
@@ -1016,7 +1022,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
       if (typeof m.ready !== 'boolean') return null;
-      return typeof m.ad === 'boolean' ? { t: 'ready', ready: m.ready, ad: m.ad } : { t: 'ready', ready: m.ready };
+      return { t: 'ready', ready: m.ready, ...(typeof m.ad === 'boolean' ? { ad: m.ad } : {}), ...(isItemId(m.primed) ? { primed: m.primed } : {}) };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
       for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'countdown', 'knock'] as const) {
