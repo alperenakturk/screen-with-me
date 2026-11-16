@@ -1,6 +1,8 @@
 // Card CH1: the room's chat stays (at least 1,000 messages until the room is deleted), not just the last 50. Six
 // people write 130 numbered messages; a newcomer gets the newest pages on joining and every older one on request,
-// all 130 in order; asking for older pages is rate-limited and a made-up page gives nothing.
+// all 130 in the order the room sent them live; asking for older pages is rate-limited and a made-up page gives nothing.
+// "In order" is the server's order (what everyone saw live), not the order the six sockets sent in: against live, a
+// message sent 20 ms after another on a different socket can reach the room first.
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const room = 'chathist' + Math.random().toString(36).slice(2, 8);
 const TOTAL = 130;
@@ -33,6 +35,12 @@ for (const [i, name] of names.entries()) {
   await c.wait((m) => m.t === 'welcome', `welcome ${name}`);
   writers.push(c);
 }
+/** The chat as the first writer saw it live: the room's own order. */
+const live = [];
+writers[0].ws.addEventListener('message', (e) => {
+  const m = JSON.parse(e.data);
+  if (m.t === 'chat' && m.message.text.startsWith('History ')) live.push(m.message.id);
+});
 // 130 messages, one writer after another, within each person's chat limit (8 at once, then 1 a second): a quick
 // start, then six people at about one message a second each.
 for (let n = 1; n <= TOTAL; n++) {
@@ -60,8 +68,17 @@ while (more !== undefined) {
   more = page.more;
   await sleep(300);
 }
-const numbers = all.map((m) => m.text).filter((t) => t.startsWith('History ')).map((t) => Number(t.slice(8)));
-ok(numbers.length === TOTAL && numbers.every((n, i) => n === i + 1), `All ${TOTAL} messages come back, in order, none twice`);
+const history = all.filter((m) => m.text.startsWith('History '));
+const numbers = history.map((m) => Number(m.text.slice(8)));
+const sameAsLive = history.length === live.length && history.every((m, i) => m.id === live[i]);
+const each = new Set(numbers).size === TOTAL && numbers.length === TOTAL && numbers.every((n) => n >= 1 && n <= TOTAL);
+if (!sameAsLive || !each) {
+  const bad = history.findIndex((m, i) => m.id !== live[i]);
+  console.log(`  stored ${numbers.length}, seen live ${live.length}, distinct ${new Set(numbers).size}, first difference at ${bad}`);
+  console.log(`  stored order around it: ${numbers.slice(Math.max(0, bad - 3), bad + 6).join(' ')}`);
+}
+ok(each, `All ${TOTAL} messages come back, each once`);
+ok(sameAsLive, 'In the order the room sent them live');
 ok(new Set(all.map((m) => m.id)).size === all.length, 'Every message has its own id');
 
 // A page that is not there gives nothing; a bad page number is refused; asking too fast is rate-limited.
