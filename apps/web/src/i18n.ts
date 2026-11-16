@@ -779,6 +779,8 @@ const en = {
   'voice.fullHint': 'Voice is full ({n}/{max}). Everyone sends their voice to everyone directly, so more people would overload home connections. You can join when someone leaves.',
   'voice.lastSeat': '{n} left',
   'voice.camFullHint': '{n}/{max} cameras are on. Video goes to everyone separately, so there is a limit; you can turn yours on when someone turns theirs off.',
+  'voice.unreachable': 'Your voice isn’t reaching the others. A VPN or this network may be blocking it — turn the VPN off and try again.',
+  'voice.unreachableFor': 'Voice isn’t connecting with {name} (a VPN or the network may be blocking it)',
   'voice.p2pFailed': 'Couldn’t connect voice with {name} (some school/work networks and mobile carriers block it).',
   'voice.blocked':
     'Your browser blocks direct connections, so voice, cameras and streams reach nobody. Brave / Vivaldi: Settings → Privacy → "WebRTC IP handling policy" → Default. uBlock Origin: turn off "Prevent WebRTC from leaking local IP addresses". Opera: turn off the VPN.',

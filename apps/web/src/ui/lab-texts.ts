@@ -45,6 +45,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Player: is the keyboard focus in it', tr: 'Oynatıcı: klavye odağı onda mı' },
     help: { en: 'Writes whether the keyboard focus is inside the player\'s frame now (after a click there it comes back to the room, later while YouTube\'s volume is being dragged) and the player\'s volume into the log.', tr: 'Klavye odağının şu an oynatıcının çerçevesinde olup olmadığını (oraya tıklayınca odaya geri döner, YouTube\'un sesi sürüklenirken daha geç) ve oynatıcının ses düzeyini kayda yazar.' },
   },
+  'voice.blocked': {
+    title: { en: 'Voice: links that can\'t connect (VPN, strict networks)', tr: 'Ses: bağlanamayan bağlantılar (VPN, sıkı ağlar)' },
+    help: { en: 'Writes whether the "your voice isn\'t reaching the others" note shows, whose link with me never connected (after 10 s) and the state of each voice link into the log.', tr: '"Sesin diğerlerine ulaşmıyor" notunun görünüp görünmediğini, kiminle bağlantımın hiç kurulamadığını (10 sn sonra) ve her ses bağlantısının durumunu kayda yazar.' },
+  },
   'shorts.chat': {
     title: { en: 'Shorts: the chat panel on a computer', tr: 'Shorts: bilgisayardaki sohbet paneli' },
     help: { en: 'Writes whether 💬 left the chat panel open, whether it shows now, how many messages came in while it was closed, its box and whether it covers the video (it never should) into the log.', tr: '💬 ile sohbet panelinin açık bırakılıp bırakılmadığını, şu an görünüp görünmediğini, kapalıyken kaç mesaj geldiğini, kutusunu ve videoyu örtüp örtmediğini (hiç örtmemeli) kayda yazar.' },

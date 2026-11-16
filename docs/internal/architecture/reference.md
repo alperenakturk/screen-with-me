@@ -1110,6 +1110,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `focusBackFrom` now watches the player's volume / mute: unchanged after 400 ms → focus back (Enter etc. work again);
   changing → it waits until they rest 1.2 s (at most 10 s). Test Lab `player.focus`; harness
   `scripts/harness/yt-focus/run.cjs` (the drag is played by changing the volume from the page).
+  **Voice that can't connect (card VC3, 16 Nov 2026):** with a VPN or a strict network the direct path is blocked and
+  a link sits in "new" / "checking" without ever failing. `voice.ts` `watchLinks` (every second, peer to peer only)
+  times each other person in voice whose link with me isn't `connected` (`P2pVoice.peerStates()`); after
+  `LINK_WAIT_MS` (10 s) they go into `badLinks`: the voice card shows `#voice-unreachable` ("Your voice isn't reaching
+  the others…", plain words, owner's pick: a note only, no relay server yet) and their face an ⓘ `.voice-link-bad`.
+  Both clear by themselves when the link connects or they leave voice. Help: "Voice and VPNs" (EN + TR). Test Lab
+  `voice.blocked`; harness `scripts/harness/voice-blocked/run.cjs` (drops every ICE candidate on both sides).
 - **PlayWithMe (in-room games; since 0.9.75 there is NO separate game page/room, user's decision):** 🎮 (`#game-btn`)
   in the toolbar under the video → menu (XOX, Dört Taş/Connect Four, Çiz-Bil/Draw & Guess, Bilgi yarışması/Quiz) →
   `{t:'game', kind}`. A room holds one game at a time (`RoomGame {kind, id, by, at}`, storage `game` + opener's

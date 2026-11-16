@@ -611,6 +611,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div id="voice-cams" class="voice-cams" hidden>
           </div>
           <p id="voice-hint" class="muted small voice-hint" data-i18n="voice.headphones" hidden></p>
+          <p id="voice-unreachable" class="small voice-unreachable" role="status" data-i18n="voice.unreachable" hidden></p>
         </section>
 
         <section class="card tabs-card">
