@@ -1,5 +1,5 @@
 // 🚢 Sea Battle (Game Studio): two people place and fire; the server keeps the fleets hidden. Checks: each player gets
-// only their own ships (and the other side's sunk ones), a watcher gets none until the game is over, shots out of turn
+// only their own ships (and the other side's sunk ones), a watcher sees every ship live (GMP), shots out of turn
 // or twice are refused, a bad fleet is refused, a hit shoots again and a miss passes the turn, the game ends when a
 // fleet is sunk and everyone then sees both fleets; a reload keeps the seat; Stub plays a whole game.
 import { GameSocket } from './game-socket.mjs';
@@ -47,7 +47,8 @@ const sam = client('Sam', 'b'.repeat(32));
 ok(await until(() => sam.state?.seat === 1), 'Sam sits in seat 2');
 const watcher = client('Robin', 'c'.repeat(32));
 ok(await until(() => watcher.state?.seat === -1), 'Robin watches');
-ok(!watcher.state.seas[0].ships && !watcher.state.seas[1].ships, 'the watcher sees no ships');
+// GMP (owner, 15 Nov 2026): a watcher sees both fleets live; the players still see only their own.
+ok(await until(() => watcher.state.seas[0].ships?.length === 5), 'the watcher sees Alex\'s fleet live');
 ok(!alex.state.seas[1].ships && !sam.state.seas[0].ships, "nobody sees the other player's ships");
 
 // A bad fleet is refused (overlapping ships).
@@ -91,7 +92,8 @@ for (const [n, cell] of samShips.entries()) {
 }
 // Alex's view arrives first; Sam's own copy of the same shot can be a moment behind on live.
 ok(await until(() => sam.state.seas[1].sunk.length === 5), 'every ship of Sam is sunk');
-ok(leaks(alex, 1).length === 0 && leaks(sam, 0).length === 0 && leaks(watcher, 0).length === 0 && leaks(watcher, 1).length === 0, 'no message ever carried a hidden ship');
+ok(leaks(alex, 1).length === 0 && leaks(sam, 0).length === 0, 'no message to a player ever carried the other fleet');
+ok(watcher.inbox.some((m) => m.t === 'state' && m.phase === 'play' && m.seas[0]?.ships?.length && m.seas[1]?.ships?.length), 'the watcher saw both fleets during the battle');
 ok(await until(() => alex.state.phase === 'over' && alex.state.winner === 0), 'Alex sinks the whole fleet and wins');
 ok(await until(() => watcher.state.seas[0].ships && watcher.state.seas[1].ships), 'after the game everyone sees both fleets');
 ok(alex.state.players[0].wins === 1, 'the score counts the win');

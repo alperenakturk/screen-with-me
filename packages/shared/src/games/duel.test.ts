@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boardDone, boardSolved, duelGuess, duelOutcome, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
+import { boardDone, boardSolved, duelGuess, duelOutcome, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
 import { MAX_TRIES } from './five-frames.ts';
 
 const ANSWER = 'crane';
@@ -108,5 +108,24 @@ describe('Five Frames Duel: hard mode and best of three (NG1)', () => {
     expect(parseDuelMessage(JSON.stringify({ t: 'settings', bestOf: 3, hard: true }))).toEqual({ t: 'settings', bestOf: 3, hard: true });
     expect(parseDuelMessage(JSON.stringify({ t: 'settings', bestOf: 2 }))).toBeNull();
     expect(parseDuelMessage(JSON.stringify({ t: 'settings', hard: 'yes' }))).toBeNull();
+  });
+});
+
+// GMP (owner, 15 Nov 2026): watchers see every board's letters live; a player only their own (the others as marks).
+describe('who sees the letters', () => {
+  it('a player sees only their own letters while the game goes on', () => {
+    expect(duelWordsVisible(0, 0, false, false)).toBe(true);
+    expect(duelWordsVisible(0, 1, false, false)).toBe(false);
+  });
+  it('a seated player never gets the watcher view', () => {
+    expect(duelWordsVisible(1, 0, true, false)).toBe(false);
+  });
+  it('a watcher (no seat) sees every board\'s letters live; a connection without hello sees none', () => {
+    expect(duelWordsVisible(-1, 0, true, false)).toBe(true);
+    expect(duelWordsVisible(-1, 1, true, false)).toBe(true);
+    expect(duelWordsVisible(-1, 0, false, false)).toBe(false);
+  });
+  it('everyone sees every board at the end', () => {
+    expect(duelWordsVisible(1, 0, false, true)).toBe(true);
   });
 });
