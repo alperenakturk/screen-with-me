@@ -16,6 +16,14 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.145 — 16 Nov
+
+- Quiz: **587 new questions** (about half again as many), all written for Sidelit in English and Turkish and checked
+  one by one, with three new topics: **Languages and words**, **The human body** and **World and cultures**.
+- Some questions are now **typed**: write the answer yourself (20 seconds). Capitals, accents and one small typo don't
+  matter; what others typed shows only when the answer is revealed.
+- Hard questions are worth more (×1.5, medium ×1.2), and a typed answer adds ×1.3.
+
 ### 0.9.97.142 — 15 Nov
 
 - Quiz: your answer counts on the first click or tap. Before, an answer pressed just as another player answered

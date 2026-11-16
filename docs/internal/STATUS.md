@@ -11,7 +11,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Game Studio 2, QZ2 PR 1 (0.9.97.142): Quiz first-click fix, PR #458; merges after CH1 #455
   (0.9.97.141, Planner's order).
 - [ ] Game Studio 2, QZ2 PR 2: ~600 new questions, 3 new categories, typed answers, hard bonus, protocol 3, Lab
-  `quiz.typed`; branch `claude/quiz-questions` (ask the Planner for a version).
+  `quiz.typed`; 0.9.97.145, branch `claude/quiz-questions`, merges after #458 (and .143 / .144).
 - [ ] Game Studio 2, QZ2 PR 3: Double + Second chance jokers, tournament (1 or 2 laps), hook `quiz.tournament`.
 - [ ] Game Studio 2, WG2: Window Garden steady buttons, backgrounds, small customisations, hook `garden.decor`.
 - [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
@@ -132,7 +132,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
 - [ ] 27i. [QZ2a, 0.9.97.142] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
   click, also when the friend answers at the same moment.
-- [ ] 27j. [QZ2b, 0.9.97.14x] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
+- [ ] 27j. [QZ2b, 0.9.97.145] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 

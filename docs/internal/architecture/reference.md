@@ -1221,7 +1221,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   before the reveal. Piece `games/quiz.ts`: a question's nodes are built once (`buildQuestion`) and later states only
   patch them; an option answers on `pointerdown` (keys and screen readers come as a click; `answer` counts once), so a
   state arriving mid-press no longer swallows the answer (QZ2, 0.9.97.142; harness `quiz-click`).
-  **QZ2 questions (0.9.97.14x):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
+  **QZ2 questions (0.9.97.145):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
   line by line) adds the categories `language`, `body`, `world` and typed-answer entries (`typed`, `a` = accepted answers,
   the first shown at the reveal; no options, `QUIZ_TYPED_MS` 20 s). An answer is `{t:'answer', n, text}`: `parseQuizMessage`
   runs `cleanText` and caps it at `QUIZ_TYPED_MAX` (40); the server checks it with `matchTyped` (`foldAnswer`: case, accents,
