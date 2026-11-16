@@ -11,6 +11,7 @@ import {
   boardSolved,
   duelGuess,
   duelOutcome,
+  duelWordsVisible,
   hardModeMiss,
   matchOver,
   matchWinner,
@@ -413,6 +414,8 @@ export class Duel extends DurableObject<Env> {
     const d = this.data;
     const mine = key ? this.seatOf(key) : -1;
     const over = d.phase === 'over';
+    // GMP: a watcher (said hello, no seat) sees every board's letters live (`duelWordsVisible`).
+    const watcher = !!key && mine < 0 && !!d.people[key];
     const players: (DuelPlayer | null)[] = d.seats.map((s, i) => {
       if (!s) return null;
       const person = d.people[s.key];
@@ -426,7 +429,7 @@ export class Duel extends DurableObject<Env> {
         wins: s.wins,
         // Marks only while the game goes on (no letters); an empty board between games.
         marks: d.answer ? s.guesses.map((w) => score(w, d.answer)) : [],
-        ...(i === mine || over ? { words: [...s.guesses] } : {}),
+        ...(duelWordsVisible(mine, i, watcher, over) ? { words: [...s.guesses] } : {}),
         solved: !!d.answer && boardSolved(board, d.answer),
         out: !!d.answer && boardDone(board, d.answer) && !boardSolved(board, d.answer),
       };

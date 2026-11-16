@@ -1,0 +1,48 @@
+# Turkish answers picked by eye from Zemberek's five-letter lemmas (card GMP): common, clean words.
+# Left out on purpose: insults, slang, drugs, weapons, illness and death, religion, brands and names.
+abide ahali ahbap akkor aksak aktar alaca aleni amade amele amper amigo anane anons antre araka arazi ardıç arife
+artçı aşevi aşina aşırı atari ataşe avans avare aydın aygır aylak ayraç ayrık azami açlık açmaz
+baget bando banjo banko barem baret bariz barok basık basım batak baton batıl bağış beleş bemol berat beşer betik
+bezek bilir biliş binek bitik bitim biçem bizon bohem bohça bolca boran borda boyun boğuk bronş buhur bunca burma
+buruk büküm bıçkı
+canan cemal cenin cenup cirit civan ciğer conta cunta cüruf cüsse cılız cıvık
+dadaş daimi dalak davar dağcı dağlı dekar delgi demeç denim denli depar deyiş değme deşik dikim dikiz dikme dikte
+dimağ dinek dizge dizgi doyum dozer doğaç doğma draje duble duvak duyum dökme dönek dönüm dövüş dübel dürüm dürtü
+düşey düşün
+edebi egzoz ejder eklem ekler ender entel etlik evlat eşraf
+facia fahiş fahri fasıl fatih fauna fedai felek ferah ferdi fiili fikri filet flüor fokus folyo fonem frank fresk
+freze fuaye fırka
+gafil galip galon galoş gayda gayrı geniz genom getto geviş geyşa giriş giysi gocuk göbek gönye gönül gözcü göçer
+göçük gübre güdüm güleç güruh güveç gıcır gıdık gıpta
+hacet haciz hakir halef halis haliç hamil haraç harbi hasım hasis hasıl havai hazan hazin heder helak helis hertz
+heybe hiciv hippi hisar hissi hizip hoppa humma humor hüzme hırka hışım hızar
+idari idrak iffet iflas ifrat ihlal ihraç ikame ikbal ikmal ilmik imbat imbik imleç indis infaz insaf islim istem
+istif ithaf itham ivedi izlek içkin içrek içyüz işlek işlik jikle
+kabil kabza kahya kaide kakma kalas kalay kalıt kamer kamus karın karış kasti katip katot kekre kepez kesme keton
+keyfi kinci kinik kiriş kobay kolcu konik kopuk kopuz kopça korno koton kovuk koyak koçan koğuş koşut krank kroşe
+kuduz kulun kunda kupür kurna kuver kuvöz kuytu kuzin kuşet köhne köken körpe kötek kükre kıraç kırba kısık kısır
+lades lanse latif lavta layık legal leziz lenfa levye likit likör limbo lirik lisan lobut lojik lügat lümen
+mahal mahya majör maksi malik mamur manca manej maraz marke maron masif mason masör matah mavna mayna mazur mebus
+mecal mecra melik mesul metan metil meşin meşum miyop mizan moher mopet mucit munis mısra
+nahoş nakdi nalın nasır natür nazal nazır naçiz nebat nebze nefer nezih nifak nipel
+ofset oktan olmaz oniks otluk oylum ozmos
+pafta papak paraf parya payet peder pelte pelüş penye perva peyda piket piyaz plise potin potur pruva punto pünez
+pürüz pıhtı
+racon radde radon rafya ragbi rahle ramak rasyo raunt rayiç rebap refüj reyon rijit riyal rodaj rosto rotor rugan
+rulet rögar rötuş rızık
+saban safra sahan sahih sakar saklı salaş salim salto salvo samur sanrı savan savcı sayım sazan saçma sebat sefil
+sefir seher selvi semiz senet seren sever sevim seyis seçki sifon silaj silik silme simya sinik sinüs sonda sonlu
+sorum spazm steno stent streç suare sufle sumak sunum sunuş supap sürek sürme sürüm süsen sözcü sözel sülük sülün
+sıtma sırlı sırık sığla
+tabii tabip tabir tadil tadım tafra tafta takat takoz talan talip tapir taviz tavus tayga tayın taşra teber tecil
+tefek tekil tekin tekir telef telif telve temin tenor terfi tesir tezat tezek teğet teyit tiner tiran titan tonik
+tonoz torik tosun tuğra tümel tünek tüzel tıkaç tımar
+umacı umman umumi usanç uyruk uçkur uçmak uğrak
+vahim vakıf valör varis vasıf vatka vebal veciz verev vezin viral viran virüs visal viyol vizon vizör volta
+yalak yalaz yalpa yalım yamak yanık yarık yatık yaver yavan yaygı yayım yazım yazıt yekun yenik yergi yeşim yitik
+yokuş yontu yortu yumuk yutak yüküm yıkık
+zabıt zahir zerde zevce zifir zigot zihni zombi zıpır zırva zıvır
+çakma çalar çalım çapul çaput çarık çekik çekme çello çerçi çiroz çizik çoluk çömez çöpçü çözük çıban çıkma çıktı
+çırpı çıyan
+ödlek öksüz ölçer öncül öncel örgün özdek öznel özgül ülser üfleç üzeri üstel ıslah ırgat
+şahsi şakul şaman şayan şayia şebek şekli şifon şilep şurup şümul
