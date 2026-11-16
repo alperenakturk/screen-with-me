@@ -336,3 +336,44 @@ describe('cuttings for friends (side games 2, pick 8)', () => {
     expect(loaded.pots[0]?.gifted).toBe(true);
   });
 });
+
+describe('Window Garden extras (WG2)', () => {
+  it('a view and a pot colour, kept in the save; unknown values fall back', async () => {
+    const { GARDEN_VIEWS, POT_COLORS } = await import('./garden.ts');
+    const g = freshGarden();
+    expect(g.view).toBe('lights');
+    expect(g.potColor).toBe('clay');
+    g.view = 'sea';
+    g.potColor = 'sage';
+    const back = loadGarden(saveGarden(g));
+    expect(back.view).toBe('sea');
+    expect(back.potColor).toBe('sage');
+    expect(loadGarden(JSON.stringify({ ...JSON.parse(saveGarden(g)), view: 'mars', potColor: 'gold' }))).toMatchObject({ view: 'lights', potColor: 'clay' });
+    expect(GARDEN_VIEWS).toContain('hills');
+    expect(POT_COLORS).toContain('cream');
+  });
+
+  it('compost: 5 petals become a common seed, never below zero', async () => {
+    const { COMPOST_PETALS, compost } = await import('./garden.ts');
+    const g = freshGarden();
+    g.petals = COMPOST_PETALS + 2;
+    const seeds = g.seeds.common;
+    expect(compost(g)).toBe(true);
+    expect(g.petals).toBe(2);
+    expect(g.seeds.common).toBe(seeds + 1);
+    expect(compost(g)).toBe(false);
+    g.petals = 50;
+    g.seeds.common = SEEDS_MAX;
+    expect(compost(g)).toBe(false);
+  });
+
+  it('water all: only the thirsty pots that still grow', async () => {
+    const { waterAll } = await import('./garden.ts');
+    const g = freshGarden();
+    g.pots = [{ plant: 'fern', growth: 0.3, water: 0.1 }, { plant: 'mint', growth: 1, water: 0 }, { plant: 'sunbell', growth: 0.5, water: 0.9 }];
+    expect(waterAll(g, 0.25)).toBe(1);
+    expect(g.pots[0]!.water).toBe(1);
+    expect(g.pots[1]!.water).toBe(0);
+    expect(g.pots[2]!.water).toBe(0.9);
+  });
+});

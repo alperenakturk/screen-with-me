@@ -485,6 +485,18 @@ describe('rate lock (extension)', () => {
     expect(sent).toEqual([]);
   });
 
+  it('card UI2: a custom speed from the picker (1.35×) is played and shared once, and kept', async () => {
+    engine.requestRate(1.35);
+    await run(500);
+    expect(player.rate).toBe(1.35);
+    expect(sent.map((m) => m.t)).toEqual(['rate']);
+    // The room echoes it back as its state: nothing more is commanded or sent.
+    engine.receive(state({ rate: 1.35 }));
+    await run(2000);
+    expect(player.rate).toBe(1.35);
+    expect(sent.map((m) => m.t)).toEqual(['rate']);
+  });
+
   it('still shares a speed picked from our own menu', async () => {
     engine.requestRate(1.5);
     await run(500);

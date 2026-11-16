@@ -89,10 +89,11 @@ const shown = (page, selector) =>
   check(exitHint.hint.includes('Add a video first') && !exitHint.fs, '⛶ says "add a video first", no fullscreen', JSON.stringify(exitHint));
   await page.click('#dock-more');
   await page.waitForTimeout(150);
-  await page.click('#dock-more-pop .dock-speed-opt[data-rate="2"]', { force: true });
+  // Card UI2: speed is one "⏩ Speed · 1×" row; without a video it says so and its picker stays closed.
+  await page.click('#dock-speed-row', { force: true });
   await page.waitForTimeout(150);
-  const speed = await page.evaluate(() => ({ hint: [...document.querySelectorAll('.hint-bubble')].some((b) => b.textContent === 'Add a video first'), on: document.querySelector('.dock-speed-opt[data-rate="2"]').classList.contains('on') }));
-  check(speed.hint && !speed.on, 'speed 2× says "add a video first" and changes nothing', JSON.stringify(speed));
+  const speed = await page.evaluate(() => ({ hint: [...document.querySelectorAll('.hint-bubble')].some((b) => b.textContent === 'Add a video first'), picker: !document.querySelector('#dock-more-picker').hidden }));
+  check(speed.hint && !speed.picker, 'the speed row says "add a video first" and opens nothing', JSON.stringify(speed));
   await page.keyboard.press('Escape');
   await page.click('#dock-game');
   await page.waitForTimeout(300);

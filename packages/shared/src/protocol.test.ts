@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, isShortMedia, waitPausePosition, WAIT_REWIND_S, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, fitRate, PRESET_RATES, stepRateFor, isPublicMedia, isShortMedia, waitPausePosition, WAIT_REWIND_S, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -346,5 +346,37 @@ describe('isShortMedia', () => {
     expect(isShortMedia({ kind: 'youtube', id: 'dQw4w9WgXcQ', short: true })).toBe(true);
     expect(isShortMedia({ kind: 'tiktok', id: '6718335390845095173' })).toBe(true);
     expect(isShortMedia({ kind: 'youtube', id: 'dQw4w9WgXcQ' })).toBe(false);
+  });
+});
+
+describe('speed picker (card UI2)', () => {
+  const file = { kind: 'html5', url: 'https://example.com/a.mp4' } as const;
+  const youtube = { kind: 'youtube', id: 'aqz-KE-bpKQ' } as const;
+  it('keeps a custom speed on 0.05 steps between 0.25× and 3× for a file', () => {
+    expect(fitRate(file, 1.3)).toBe(1.3);
+    expect(fitRate(file, 1.33)).toBe(1.35);
+    expect(fitRate(file, 0.1)).toBe(0.25);
+    expect(fitRate(file, 4)).toBe(3);
+    expect(fitRate(file, Number.NaN)).toBe(1);
+  });
+  it('snaps a custom speed to the nearest of YouTube\'s own', () => {
+    expect(fitRate(youtube, 1.3)).toBe(1.25);
+    expect(fitRate(youtube, 1.4)).toBe(1.5);
+    expect(fitRate(youtube, 3)).toBe(2);
+    expect(PRESET_RATES.every((r) => fitRate(youtube, r) === r)).toBe(true);
+  });
+  it('steps by 0.05 on a file and by YouTube\'s own speeds on YouTube, stopping at the ends', () => {
+    expect(stepRateFor(file, 1, 1)).toBe(1.05);
+    expect(stepRateFor(file, 1.05, -1)).toBe(1);
+    expect(stepRateFor(file, 3, 1)).toBe(3);
+    expect(stepRateFor(file, 0.25, -1)).toBe(0.25);
+    expect(stepRateFor(youtube, 1, 1)).toBe(1.25);
+    expect(stepRateFor(youtube, 1, -1)).toBe(0.75);
+    expect(stepRateFor(youtube, 2, 1)).toBe(2);
+    expect(stepRateFor(youtube, 0.25, -1)).toBe(0.25);
+  });
+  it('keeps TikTok and Vimeo at 1×', () => {
+    expect(fitRate({ kind: 'tiktok', id: '1' } as never, 2)).toBe(1);
+    expect(stepRateFor({ kind: 'vimeo', id: '1' } as never, 1, 1)).toBe(1);
   });
 });

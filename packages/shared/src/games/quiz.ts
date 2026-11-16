@@ -107,7 +107,21 @@ export function decodeSeen(text: string): number[] {
 }
 
 export type QuizLang = 'tr' | 'en';
-export type QuizPhase = 'lobby' | 'question' | 'reveal' | 'over';
+/** `pick` (QZ2 tournament): the round's picker chooses one of the offered categories. */
+export type QuizPhase = 'lobby' | 'pick' | 'question' | 'reveal' | 'over';
+/** QZ2: Classic (one run of questions) or Tournament (rounds; each player picks a round's category in turn). */
+export type QuizMode = 'classic' | 'tournament';
+/** A tournament goes round the table once or twice. */
+export const QUIZ_LAPS = [1, 2] as const;
+export type QuizLaps = (typeof QUIZ_LAPS)[number];
+/** Questions in a tournament round, the categories a picker is offered, and the time to pick. */
+export const QUIZ_ROUND_QUESTIONS = 3;
+export const QUIZ_OFFER = 3;
+export const QUIZ_PICK_MS = 10_000;
+/** QZ2 jokers, each once per game and at most one per question: 50:50 (on a typed question: the first letter and the
+ * length), Double (×2 points if right) and Second chance (a wrong answer may be tried once more, for half points). */
+export const QUIZ_JOKERS = ['fifty', 'double', 'second'] as const;
+export type QuizJoker = (typeof QUIZ_JOKERS)[number];
 /** `mix`: every category. */
 export type QuizTopic = QuizCategory | 'mix';
 export { QUIZ_CATEGORIES, type QuizCategory };
@@ -130,19 +144,26 @@ export interface QuizPlayer {
   streak: number;
   /** The 50:50 joker is used up (once per game). */
   joker: boolean;
+  /** QZ2: every joker this player used this game. */
+  jokers?: QuizJoker[];
+  /** Tournament: rounds won so far, and this round's points. */
+  wins?: number;
+  round?: number;
   online: boolean;
 }
 
 export type QuizClientMessage =
   | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; lang?: QuizLang; seen?: string }
   /** Host only, in the lobby or on the podium. */
-  | { t: 'settings'; lang?: QuizLang; topic?: QuizTopic; count?: QuizCount }
+  | { t: 'settings'; lang?: QuizLang; topic?: QuizTopic; count?: QuizCount; mode?: QuizMode; laps?: QuizLaps }
   | { t: 'start' }
   /** `n`: which question (a late answer must not count for the next). `pick` an option, or `text` a typed answer. */
   | { t: 'answer'; n: number; pick: number }
   | { t: 'answer'; n: number; text: string }
-  /** 50:50 on question `n` (before answering, once per game). */
-  | { t: 'joker'; n: number }
+  /** A joker on question `n` (before answering; each kind once per game, one per question). No `kind`: 50:50. */
+  | { t: 'joker'; n: number; kind?: QuizJoker }
+  /** Tournament: the round's picker chooses a category from the offer. */
+  | { t: 'pick'; cat: QuizCategory }
   /** Test Lab (DL3b): end the current phase now; `typed` (QZ2): the next game asks only typed questions. Only a local
    * lab server acts on it. */
   | { t: 'lab'; op: 'skip' | 'typed' }
@@ -170,6 +191,15 @@ export type QuizServerMessage =
       /** The reveal of a typed question: the right answer as shown. */
       answer?: string;
       endsAt: number | null;
+      /** QZ2. A tournament's round (1-based) of `rounds`, the round's picker (a player id) and the offered categories
+       * (in the pick phase), and who won the round that just ended (player ids; empty when nobody scored). */
+      mode?: QuizMode;
+      laps?: QuizLaps;
+      round?: number;
+      rounds?: number;
+      picker?: string;
+      offer?: QuizCategory[];
+      roundWin?: string[];
       lang: QuizLang;
       topic: QuizTopic;
       count: QuizCount;
@@ -177,14 +207,17 @@ export type QuizServerMessage =
       host: string | null;
     }
   /** Only to the player who used the 50:50: the two wrong options to hide. */
-  | { t: 'fifty'; n: number; hide: number[] }
+  | { t: 'fifty'; n: number; hide: number[]; hint?: string }
+  /** Only to a player with Second chance whose first answer on question `n` was wrong: try once more. */
+  | { t: 'again'; n: number; wrong?: number }
   | { t: 'error'; code: QuizErrorCode }
   | { t: 'pong'; now: number };
 
 export type QuizErrorCode = 'version' | 'bad' | 'full' | 'rate' | 'too_few' | 'not_host' | 'lab_off';
 
 const isInt = (x: unknown, min: number, max: number): x is number => Number.isInteger(x) && (x as number) >= min && (x as number) <= max;
-const maxQuestions: number = Math.max(...QUIZ_COUNTS);
+/** The longest game: 15 questions, or a tournament of 8 players × 2 laps × 3 questions. */
+const maxQuestions: number = Math.max(...QUIZ_COUNTS, QUIZ_MAX_PLAYERS * Math.max(...QUIZ_LAPS) * QUIZ_ROUND_QUESTIONS);
 
 export function parseQuizMessage(raw: string): QuizClientMessage | null {
   if (raw.length > 1000) return null;
@@ -211,6 +244,8 @@ export function parseQuizMessage(raw: string): QuizClientMessage | null {
       if (m.lang === 'tr' || m.lang === 'en') out.lang = m.lang;
       if (m.topic === 'mix' || (QUIZ_CATEGORIES as readonly unknown[]).includes(m.topic)) out.topic = m.topic as QuizTopic;
       if ((QUIZ_COUNTS as readonly unknown[]).includes(m.count)) out.count = m.count as QuizCount;
+      if (m.mode === 'classic' || m.mode === 'tournament') out.mode = m.mode;
+      if ((QUIZ_LAPS as readonly unknown[]).includes(m.laps)) out.laps = m.laps as QuizLaps;
       return Object.keys(out).length > 1 ? out : null;
     }
     case 'answer': {
@@ -220,8 +255,13 @@ export function parseQuizMessage(raw: string): QuizClientMessage | null {
       const text = cleanText(m.text, QUIZ_TYPED_MAX).trim();
       return text ? { t: 'answer', n: m.n, text } : null;
     }
-    case 'joker':
-      return isInt(m.n, 1, maxQuestions) ? { t: 'joker', n: m.n } : null;
+    case 'joker': {
+      if (!isInt(m.n, 1, maxQuestions)) return null;
+      if (m.kind === undefined) return { t: 'joker', n: m.n };
+      return (QUIZ_JOKERS as readonly unknown[]).includes(m.kind) ? { t: 'joker', n: m.n, kind: m.kind as QuizJoker } : null;
+    }
+    case 'pick':
+      return (QUIZ_CATEGORIES as readonly unknown[]).includes(m.cat) ? { t: 'pick', cat: m.cat as QuizCategory } : null;
     case 'lab':
       return m.op === 'skip' || m.op === 'typed' ? { t: 'lab', op: m.op } : null;
     case 'start':
@@ -293,6 +333,31 @@ export function pickQuestions(
   // A game warms up: easier questions first, harder towards the end (unknown difficulty counts as medium).
   const level = (q: QuizQuestion) => QUIZ_BANK[q.id]!.d ?? 2;
   return out.map((q, i) => ({ q, i })).sort((a, b) => level(a.q) - level(b.q) || a.i - b.i).map(({ q }) => q);
+}
+
+/** 50:50 on a typed question (QZ2): the first letter, then a dot per further letter or digit (spaces kept). */
+export function typedHint(answer: string): string {
+  const chars = Array.from(answer.trim());
+  return chars.map((c, i) => (i === 0 ? c.toLocaleUpperCase() : /\s/.test(c) ? ' ' : /[\p{L}\p{N}]/u.test(c) ? '·' : c)).join('');
+}
+
+/** The categories a tournament picker is offered: `QUIZ_OFFER` different ones with questions in the language. */
+export function quizOffer(lang: QuizLang, random: () => number = Math.random): QuizCategory[] {
+  const cats = QUIZ_CATEGORIES.filter((c) => quizPool(lang, c).length >= QUIZ_ROUND_QUESTIONS * 4);
+  const out: QuizCategory[] = [];
+  while (out.length < QUIZ_OFFER && cats.length) out.push(cats.splice(Math.floor(random() * cats.length), 1)[0]!);
+  return out;
+}
+
+/** A round's winners: the keys with the most round points (all of them on a tie); nobody when nobody scored. */
+export function roundWinners(points: Readonly<Record<string, number>>): string[] {
+  const best = Math.max(0, ...Object.values(points));
+  return best > 0 ? Object.keys(points).filter((k) => points[k] === best) : [];
+}
+
+/** Tournament standings: most round wins first, a tie goes to points (equal in both: a shared place). */
+export function tournamentOrder<T extends { wins?: number; score: number }>(players: readonly T[]): T[] {
+  return [...players].sort((a, b) => (b.wins ?? 0) - (a.wins ?? 0) || b.score - a.score);
 }
 
 /** 50:50: two random wrong options to hide (none on a true / false question). */
