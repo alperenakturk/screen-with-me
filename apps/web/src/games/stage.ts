@@ -1103,7 +1103,17 @@ export function createGameStage(opts: StageOptions) {
     void tables.reduce((chain, load) => chain.then(load).catch(() => undefined), Promise.resolve<unknown>(undefined));
   }
 
+  // GP1: how long the last game took from the click in the hall to its first frame (the Test Lab's `games.openTime`).
+  let openClickAt = 0;
+  let lastOpen: { kind: string; ms: number } | null = null;
+  const markOpened = (kind: string): void => {
+    if (!openClickAt) return;
+    const from = openClickAt;
+    openClickAt = 0;
+    requestAnimationFrame(() => (lastOpen = { kind, ms: Math.round(performance.now() - from) }));
+  };
   function openTable(kind: RoomGameKind): void {
+    openClickAt = performance.now();
     wanted = kind;
     wantedAt = Date.now();
     // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
@@ -1184,6 +1194,7 @@ export function createGameStage(opts: StageOptions) {
     else if (table.kind === 'duel') stop = (await import('./duel.ts')).mountDuel(body, table.id, name, avatar);
     else stop = (await import('./match.ts')).mountMatch(body, table.kind, table.id, name, avatar);
     queueFit();
+    markOpened(table.kind);
     // Switched or closed while loading: close at once.
     if (current?.id !== table.id) stop();
     else unmount = stop;
@@ -1243,6 +1254,7 @@ export function createGameStage(opts: StageOptions) {
 
   /** Opens a solo game on the side; my table (if any) is left first: the window shows one game at a time. */
   async function openSolo(kind: SoloKind): Promise<void> {
+    openClickAt ||= performance.now();
     document.getElementById('game-invite')?.remove();
     endIntro();
     if (stage.hidden) slideIn(stage);
@@ -1268,6 +1280,7 @@ export function createGameStage(opts: StageOptions) {
           ? (await import('./five-frames.ts')).mountFiveFrames(body)
           : (await import('./snack-bar.ts')).mountSnackBar(body, soloRoom);
     queueFit();
+    markOpened(kind);
     if (solo !== kind) stop();
     else unmount = stop;
   }
@@ -1475,6 +1488,18 @@ export function createGameStage(opts: StageOptions) {
           const box = stage.getBoundingClientRect();
           return JSON.stringify({ mode: tableMode(), place: mode, realFullscreen: realFull(), pausedForFull, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() });
         },
+      },
+      {
+        // GP1: the open time of the last game I opened from the hall (the card's budget: ≤ 300 ms for Classics and Snack Bar).
+        id: 'games.openTime',
+        title: { en: 'Games: how fast the last game opened', tr: 'Oyunlar: son oyun ne kadar hızlı açıldı' },
+        help: {
+          en: 'Writes which game I opened last and how many milliseconds passed from the click in the hall to its first frame.',
+          tr: 'En son açtığım oyunu ve salondaki tıklamadan ilk karesine kadar kaç milisaniye geçtiğini yazar.',
+        },
+        tab: 'games',
+        available: () => (lastOpen ? true : { en: 'open a game from the hall first', tr: 'önce salondan bir oyun aç' }),
+        run: () => JSON.stringify(lastOpen),
       },
       {
         id: 'gameWindow.hall',
