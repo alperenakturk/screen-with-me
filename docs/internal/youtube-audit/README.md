@@ -26,8 +26,7 @@ address. Google gives no review time; plan for 4–12 weeks.
 5. The Planner records the answer; once granted, the new quota goes into `docs/internal/costs.md`.
 
 ## Status
-- Self-check: every item passes (see `self-check.md`) except two that are open: YouTube's official full logo (the owner
-  downloads it from the brand page, light + dark SVG, with the size rules; B2 swaps it into #452) and the screenshots
-  on the final domain.
-- Still open before submitting: the own domain (owner), the official YouTube logo files (owner's download, then B2),
-  the screenshots and the screencast (B2, on the live domain).
+- Self-check: every item passes (see `self-check.md`) except the screenshots on the final domain, with one gap stated
+  openly: the YouTube logo is YouTube's own file but drawn 20 px tall, below the brand page's 100 px (it can't fit our
+  260 px windows or a phone; the form says so, `form-answers.md` §8).
+- Still open before submitting: the own domain (owner), the screenshots and the screencast (B2, on the live domain).

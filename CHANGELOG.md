@@ -16,6 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.140 — 15 Nov
+
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
+  from YouTube" (light or dark to match the theme); it links to YouTube.
+
 ### 0.9.97.139 — 15 Nov
 
 - Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
