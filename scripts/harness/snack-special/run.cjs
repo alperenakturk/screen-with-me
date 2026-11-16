@@ -46,13 +46,22 @@ async function snackAt(browser, day) {
   await page.fill('#name', 'Alex');
   await page.click('#name-form button.primary');
   await page.waitForSelector('.room');
-  await page.evaluate((v) => {
-    const i = document.querySelector('#media-input');
-    i.value = v;
-    i.form.requestSubmit();
-  }, VIDEO);
+  // CI (16 Nov 2026): a link sent before the room's live connection was open got lost on a slow runner (no item after
+  // 20 s). Wait for the connection, and send the link again once if no item shows.
+  await page.waitForSelector('.room-title-dot[data-status="open"]', { state: 'attached', timeout: 20000 }).catch(() => {});
+  const send = () =>
+    page.evaluate((v) => {
+      const i = document.querySelector('#media-input');
+      i.value = v;
+      i.form.requestSubmit();
+    }, VIDEO);
+  await send();
   // CI3: the state itself, with room for a slow runner (8 s timed out now and then; adding the item waits on the server).
-  await page.waitForFunction(() => document.querySelector('.room.has-item'), null, { timeout: 20000, polling: 100 });
+  const added = () => page.waitForFunction(() => document.querySelector('.room.has-item'), null, { timeout: 10000, polling: 100 });
+  await added().catch(async () => {
+    await send();
+    await added();
+  });
   await page.waitForTimeout(1200);
   await page.evaluate(() => document.querySelector('#dock-game')?.click());
   await page.waitForSelector('#game-menu:not([hidden])');
