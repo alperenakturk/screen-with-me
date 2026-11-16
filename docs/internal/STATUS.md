@@ -19,25 +19,15 @@ One handoff per lane or role; each session updates only its own lines and delete
     Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
   - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
-- [ ] B2 (handoff 16 Nov, 14:50; everything below is on main, no unmerged B2 branch):
-  - [x] CI3 built and live (#464, #472, #473, #480, #482): tested-code mark, settle, CI numbering
-    (`release-series.txt`, `changelog/next/`, `check-version-edits.mjs`), nightly date sweep, 3 live shards, PR
-    jobs folded (7 per PR). Measured: 1 PR whose code a PR tested ≈ 13 min (merge → live e2e end); 2-PR untested
-    combination 22 min (#473 + #474); 3-PR batch on a busy office 38 min (#480 + 17f4101 + cabe433, before #482:
-    ≈ 9 min waiting for the previous deploy + 4–9 min runner queue). [ ] Measure the next multi-PR batch after #482
-    (main's runs since 14:40 UTC: first merge → live e2e end, test jobs' start delay after `changes`), write the quiet
-    vs busy numbers into CI3's Done line and move the card verbatim to `archive/cards-done.md` (DOCS2).
-  - [x] GR1 server part (#477): deploys keep earlier builds' assets 7 days (live: kept 41 → 85 → 131 files). Client
-    note ("Sidelit was updated · ↻ Refresh") is lane A's.
-  - [ ] SH2 (feeds ♾ Shorts / ▶ Videos), after lane A's SH1: not started. Card in CARDS.md; start from
-    `apps/web/src/ui/` Shorts / Discover code and `apps/server/src/youtube.ts` (1-unit calls first, `search.list` cached
-    per room in the Worker), played ids on the room object (one-time room wipes; saved room 2,000 ids / 30 days), Test
-    Lab hook `feed.state`.
+- [ ] B2 (session 16 Nov, 15:40):
+  - [x] CI3 closed (measured batch after #482 in its Done line; card in `archive/cards-done.md`).
+  - [ ] SH2 feeds: PR #488 (`claude/sh2-feeds`): shared feed on the room object, ▶ video feed, Queue row, steer window,
+    played-id memory, Test Lab `feed.state`, harness `feed`. Merge-tree clean against lane A's `claude/sh1-ring` and
+    `claude/sh1-start`. Then: merge when green, deploy + live e2e check, Done line, card to archive.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - [ ] state-matrix hover check still flaky after its 2 s poll: "1366 garden: a head button lights up under the
-    mouse" failed on main run 43886203220 (#466, quiz-only; GS2's report). Find why the hover style doesn't change
-    (pointer not over the button? a toast over it?) rather than waiting longer; `scripts/harness/state-matrix/run.cjs`.
+  - Game Studio owns the state-matrix hover flake ("1366 garden: a head button lights up under the mouse", main run
+    43886203220).
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
