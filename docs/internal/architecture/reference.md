@@ -347,10 +347,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
-  Test Lab `sources.state` (source, Vimeo on, last search). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
+  - **♪ TikTok (card SR2):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
+    stays): TikTok has no search API. It opens `tiktokUrl(words)` (`https://www.tiktok.com/search?q=<words>`, the home
+    page with no words or a link in the box) with `window.open(..., '_blank', 'noopener')`; on a phone the TikTok app
+    takes the link when installed. Coming back (`visibilitychange` / `focus`) shows `#sources-paste` "📋 Paste and play"
+    (a sibling after `#media-form`, borrowed into the phone's Search tab with it; it hides after 2 minutes or on any
+    submit). A tap reads `navigator.clipboard.readText()` (the browser may ask; refused or empty → the box gets focus
+    with "Paste the video's link here"), puts the text in the box and `requestSubmit`s with the box's "Play now" button:
+    one link plays, several queue after the first. No TikTok logo (a plain ♪), no scraping, no extension.
+  Test Lab `sources.state` (source, Vimeo on, last search or TikTok action, `pasteShown`). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
   Vimeo app token, scope public) goes up with the other Worker secrets. Tests: `vimeo-search.test.ts`, e2e
   `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
-  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile).
+  `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile, SR2's row tap / ＋ Queue,
+  TikTok tab and Paste and play).
+- **Results rows (card SR2):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
+  `ui/vimeo-results.ts`, podcast episodes `ui/podcasts.ts`) builds its rows with `ui/result-row.ts` `resultRow`: the
+  row's `.search-main` button plays now (`'load'`, the list closes and the box empties; on a phone the Search tab goes
+  back to the Room tab, `phone-room.ts`), and `.search-queue` "＋ Queue" / "＋ Sıraya" queues (`'enqueue'`; `room.ts`
+  `addMedia(..., fromList)` keeps the box's words and the list open; the button reads "✓ Added" for 2 s). Arrow keys
+  still move between rows' `.search-main`; Tab reaches the queue button. A podcast show's row (`data-show`) only opens
+  its episodes. The list's styles are `ui/search-list.css`, loaded with the tiny `ui/search-list.ts` chunk on the first
+  search (room CSS budget); context rules (film page, Shorts view, phone tab) stay in `room.css`. Test Lab
+  `search.results` (each row's title, play name, queue label and sizes). The Shorts bar's "＋ Add" search
+  (`shorts-search.ts`) is a queue-only list and keeps one tap = queue.
 - **Media kinds:** `youtube`, `html5`, `tiktok`, `vimeo` and `test` play on the site; `page` (any other web address) plays on the film
   site itself, everyone in their own tab, with the room overlay opened by the extension (see "Shell").
 - **Extension rules:** does nothing while not in a room (frames check `storage.session` `sessions`; sleeps if there is
@@ -694,7 +713,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Phone room as an app screen (0.9.92.3, owner's picks 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A on
   https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu; step 1 of 3, `ui/phone-room.ts` + phone.css):** `<html class=
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
-  not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). The desktop DOM stays: `.stage`, `.side`,
+  not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). **`ui/phone-room.ts` is a lazy chunk (card
+  BUD2):** room.ts loads it when the phone layout is on at start or first turns on (`onPhoneLayout`), so a computer
+  never downloads it, and a phone starts fetching it while the name form is up (`renderRoom`), so the layout is there when the room opens. Harnesses wait for `html.ph-room` on a phone-sized page before looking (`scripts/harness/phone-ready.cjs`). room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
+  (`deps.gamesButton`), since games/stage.ts takes its triggers when the room starts. The desktop DOM stays: `.stage`, `.side`,
   `.together-card`, `.tabs-card` are `display: contents`, so the column is the theater (edge to edge, `order` 1) → the
   faces strip `.together-strip` (`#voice-people` + `#strip-voice` quick 🎙 / 📷 / 🖥️ (voice.ts quick id `strip`; 🖥️ only
   while someone streams) + `#strip-more` ⋯ with the connection dot from `.room-title-dot`) → the chat panel → the chat
@@ -836,7 +858,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `navigator.onLine` is true, see the Live line):** `reloadForNewVersion` does nothing while `navigator.onLine` is false (a reload then showed the browser's
   offline page and threw the room away after a Wi-Fi blip); chunks missed offline are fetched again on `online` and the
   page reloads only if one still fails (in Chrome always: it keeps a failed module import for the page's life); harness
-  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. Voice, streams and watching fail closed when
+  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. **Never a silent reload in a room (card
+  GR1):** `staleChunk` in main.ts routes every failed chunk; in a room (`/r/<id>`) it shows `#update-note` ("Sidelit was
+  updated · ↻ Refresh", styles.css, built without any chunk) and reloads only on the tap; elsewhere it is
+  `reloadForNewVersion` as before. Harness `scripts/harness/offline-reload` (CI) checks both the gone chunk and the
+  network-back path; Test Lab `app.staleChunk` fires a `vite:preloadError`. Voice, streams and watching fail closed when
   their chunks can't load (harness `scripts/harness/lazy-gates/run.cjs` in CI blocks `voice-check` and `live-engine`;
   the IP notice chunk it used to block was removed by card SIMP1). Measure a module's share of the
   room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).
@@ -2309,7 +2335,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
     `snack-special` (waits up to 20 s for `.room.has-item` instead of 8) and the games sweep's Duel race (waits for the
     table's `data-table` id before Sam's socket joins, and up to 20 s for the race; read too early, the id was
-    undefined and Sam joined no table).
+    undefined and Sam joined no table). The state matrix's first page waits for the room's live connection and for the games' Test Lab commands
+    (registered by the lazily loaded `lab-tools.ts`), and a game that does not open is tried for 8 s and reported with
+    the lab's answer: on a slow runner the first cell's six tables all "did not open" (16 Nov 2026, run 43855473075).
   - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
     extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
