@@ -67,11 +67,12 @@ const openGame = async (page, kind) => {
     () =>
       page.evaluate((isSolo) => {
         const s = document.getElementById('game-stage');
-        return !s.hidden && !s.querySelector('.game-stage-loading') && s.classList.contains('solo-game') === isSolo;
+        // The game's own area (the hall may sit in the head with its own '…' while its code loads).
+        return !s.hidden && !s.querySelector('.game-fit > .game-stage-loading') && s.classList.contains('solo-game') === isSolo;
       }, solo),
     12000,
   );
-  if (!shown) check(false, `${kind} opens`);
+  if (!shown) check(false, `${kind} opens`, await page.evaluate(() => { const s = document.getElementById('game-stage'); return { hidden: s.hidden, cls: s.className, loading: !!s.querySelector('.game-fit > .game-stage-loading'), title: s.querySelector('.game-stage-title')?.textContent }; }));
   await page.evaluate(() => document.querySelector('#game-stage .htp:not([hidden]) .htp-skip')?.click());
   await wait(500);
 };
@@ -90,7 +91,7 @@ const box = (page) =>
     const hit = (a) => r.left < a.right - 1 && a.left < r.right - 1 && r.top < a.bottom - 1 && a.top < r.bottom - 1;
     return {
       x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height),
-      hidden: s.hidden, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)),
+      hidden: s.hidden, mode: ['float', 'stage', 'below', 'full', 'max'].find((m) => s.classList.contains(m)),
       overPlayer: hit(t), overVideo: hit(v), onScreen: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
       inVideo: s.parentElement?.classList.contains('player-wrap') ?? false,
     };
@@ -169,7 +170,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     // W2 (GW2): a table opens in ⛶ full screen (no video), and its 🎮 shows the hall there.
     await openGame(page, 'classics');
     let b = await box(page);
-    const full = (x) => x.mode === 'max' && x.x <= 0 && x.y <= 0 && x.w >= viewport.width - 1;
+    const full = (x) => x.mode === 'max' && x.x <= 0 && x.y <= 0 && x.w >= 1365;
     check(full(b), `${L} W2: a table opens in ⛶, filling the screen (no video)`, b);
     await page.click('#game-stage .game-hub-open');
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in ⛶ opens the hall, visible`);
@@ -428,11 +429,12 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       check((await playing(alex.page)) && (await playing(sam.page)), '114: opening a side game never pauses the video');
       await openGame(alex.page, 'classics');
       const paused = await until(async () => !(await playing(alex.page)) && !(await playing(sam.page)), 6000);
-      check(!!paused, "114: opening a table in the video's place pauses the video for everyone");
+      check(!!paused, '114 + GW2: opening a table in ⛶ pauses the video for everyone');
       check(await alex.page.evaluate(() => [...document.querySelectorAll('.hint, [role="status"]')].some((e) => /paused for the game/i.test(e.textContent))), '114: a short note says "Video paused for the game"');
       await alex.page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
-      await wait(2000);
-      check(!(await playing(alex.page)) && !(await playing(sam.page)), "114: putting the table away doesn't play the video again");
+      // GW2 (Planner's pick A): leaving ⛶ plays the video again, for everyone, when ⛶ paused it.
+      const again = await until(async () => (await playing(alex.page)) && (await playing(sam.page)), 6000);
+      check(!!again, '114 + GW2: putting the table away plays the video again for everyone');
     }
     await alex.ctx.close();
     await sam.ctx.close();

@@ -306,6 +306,10 @@ export function createGameStage(opts: StageOptions) {
     const parent = inTab ? gamesPanel()! : narrow.matches ? document.body : mode === 'float' || mode === 'max' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
     for (const m of ['float', 'stage', 'below', 'full', 'max'] as const) stage.classList.toggle(m, mode === m);
+    if ((current?.id ?? null) !== placedTable) {
+      placedTable = current?.id ?? null;
+      tableChangedAt = Date.now();
+    }
     syncFullscreen();
     modeButton.node.hidden = !tableHere;
     const toFrame = mode === 'max';
@@ -353,6 +357,13 @@ export function createGameStage(opts: StageOptions) {
   // ---- GW2: ⛶ full screen for tables ----
   /** Did my table's full screen pause the room's video (so leaving it plays the video again)? */
   let pausedForFull = false;
+  /** We are leaving the browser's full screen ourselves (a table closed or went to its frame), not Esc. */
+  let leavingFull = false;
+  /** The table the browser's full screen was asked for (a switch to another table is not "I pressed Esc"). */
+  let fullFor: string | null = null;
+  /** When the window last showed a different table (see the fullscreenchange listener). */
+  let tableChangedAt = 0;
+  let placedTable: string | null = null;
   /** Is the window in the browser's real full screen (else, in the fallback, it fills the browser window). */
   const realFull = () => document.fullscreenElement === stage;
   /**
@@ -362,9 +373,11 @@ export function createGameStage(opts: StageOptions) {
   function syncFullscreen(): void {
     const want = mode === 'max' && !stage.hidden;
     if (want && !realFull() && document.fullscreenEnabled && !document.fullscreenElement) {
+      fullFor = current?.id ?? null;
       stage.requestFullscreen?.().catch(() => {});
     } else if (!want && realFull()) {
-      void document.exitFullscreen().catch(() => {});
+      leavingFull = true;
+      void document.exitFullscreen().catch(() => (leavingFull = false));
     }
     // The video plays again when my table leaves ⛶ (to the frame, minimized, closed), if the full screen paused it.
     if (!want && pausedForFull) {
@@ -382,12 +395,27 @@ export function createGameStage(opts: StageOptions) {
   }
   // Esc (or the browser's own exit) leaves the real full screen: the table goes back to its frame.
   addEventListener('fullscreenchange', () => {
-    if (mode === 'max' && !realFull() && !stage.hidden && !document.fullscreenElement) setTableMode('frame');
+    // Our own exit's event arrives later, maybe with the next table already open in ⛶: that one stays in ⛶ (and asks
+    // for the browser's full screen again).
+    if (leavingFull && !document.fullscreenElement) {
+      leavingFull = false;
+      if (mode === 'max' && !stage.hidden) syncFullscreen();
+      return;
+    }
+    if (mode !== 'max' || realFull() || stage.hidden || document.fullscreenElement) return;
+    // Another table took the window meanwhile (the browser leaves full screen by itself while the window switches from
+    // one table to the next): it stays in ⛶.
+    if (current?.id !== fullFor || Date.now() - tableChangedAt < 2000) return syncFullscreen();
+    setTableMode('frame');
   });
   // The fallback has no browser full screen to leave with Esc: Esc goes back to the frame there too.
   addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && mode === 'max' && !realFull() && !stage.hidden) setTableMode('frame');
-  });
+    // Esc closes the games hall or a dialog first (they listen for it too); only a bare Esc leaves ⛶.
+    if (event.key !== 'Escape' || mode !== 'max' || realFull() || stage.hidden || event.defaultPrevented) return;
+    if (!menu.hidden || document.querySelector('dialog[open], .confirm-dialog:not([hidden]), #game-stage .htp:not([hidden])')) return;
+    setTableMode('frame');
+    // Heard first (capture), before the hall or a dialog closes itself on the same key.
+  }, true);
 
   /** Below the video (narrow screens): the window starts where the video ends. */
   function placeBelow(): void {
