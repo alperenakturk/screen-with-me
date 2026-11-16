@@ -580,6 +580,10 @@ jobs:
     # can live there instead of the repository, so no other job or branch can read them. Repository secrets still reach
     # it until the owner moves them; GitHub creates the environment on first use if it doesn't exist yet.
     environment: production
+    # CI3c: `actions: read` lists the released-number records (scripts/release-version.mjs); no write.
+    permissions:
+      contents: read
+      actions: read
     # Card OPS1 / QA1: `deployed` is true only when this run deployed and the new version answers; the live e2e
     # (`live-e2e`) and the `tag` job read it.
     outputs:
@@ -617,6 +621,9 @@ jobs:
       - name: Number this release
         id: number
         if: steps.keys.outputs.ok == 'true'
+        env:
+          # Lists the `released-<version>` records (actions: read); nothing else.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/release-version.mjs --apply
 
       - name: Install and build
@@ -754,8 +761,23 @@ jobs:
           RELEASE_VERSION: ${{ needs.deploy.outputs.version }}
         run: node scripts/tag-live.mjs
 
+      # CI3c: record the number as released (it is live and its live e2e passed), whether or not the tag push worked:
+      # the next deploy counts it (scripts/release-version.mjs), so a refused tag never makes a number come back.
+      - name: Record the released number
+        if: needs.deploy.outputs.version != ''
+        env:
+          VERSION: ${{ needs.deploy.outputs.version }}
+        run: mkdir -p .released && echo "$VERSION $GITHUB_SHA" > .released/version
+      - name: Save the released number's record
+        if: needs.deploy.outputs.version != ''
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .released
+          key: released-${{ needs.deploy.outputs.version }}
+
       # Card CI3b: the release's notes, from the changelog/next/ files added since the previous tag (user-facing English,
-      # one block), as a GitHub release on the tag. Never red: a missing release never hides a good deploy.
+      # one block), as a GitHub release on the tag. CI3c: when the tag is missing (refused), the release is made on this
+      # commit instead, and if that is refused too the notes go into the run's summary. Never red.
       - name: Release notes
         if: needs.deploy.outputs.version != ''
         env:
@@ -764,10 +786,15 @@ jobs:
           VERSION: ${{ needs.deploy.outputs.version }}
         run: |
           git fetch --quiet --tags origin
-          if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then echo "::warning::v$VERSION is not tagged; no release notes."; exit 0; fi
-          node scripts/changelog.mjs notes "$VERSION" "v$VERSION" > "$RUNNER_TEMP/notes.md"
+          node scripts/changelog.mjs notes "$VERSION" "$GITHUB_SHA" > "$RUNNER_TEMP/notes.md"
           cat "$RUNNER_TEMP/notes.md"
-          gh release view "v$VERSION" >/dev/null 2>&1 || gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag || echo "::warning::The release v$VERSION could not be created."
+          { echo "## Release v$VERSION"; echo; cat "$RUNNER_TEMP/notes.md"; } >> "$GITHUB_STEP_SUMMARY"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then exit 0; fi
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag || echo "::warning::The release v$VERSION could not be created; its notes are in this run's summary."
+          else
+            gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --target "$GITHUB_SHA" || echo "::warning::v$VERSION has no tag and no release (refused); its notes are in this run's summary, its number is recorded."
+          fi
 
   # Card CI3: the date sweep's result as an issue (label `date-sweep`): opened when a night fails, with the forced date;
   # closed by the next green night. Nobody has to watch the Actions tab.

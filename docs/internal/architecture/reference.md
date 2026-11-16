@@ -2233,11 +2233,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
     `scripts/release-version.mjs --apply`, numbers the batch: the series in `release-series.txt` (three parts, e.g.
     `0.9.97`; it changes only when the owner moves the third part, and the next release is then `<series>.1`) + the
-    highest tag's fourth part + 1, written into the footer (`apps/web/index.html`) and the extension
+    highest fourth part already used + 1 (CI3c: used = tagged, or recorded as released, or committed on main; the
+    tag job saves a cache `released-<version>` after every green live e2e even when GitHub refuses the tag, as it did
+    for 0.9.97.141, whose commit's workflow files differed from main's; the deploy job lists those records with
+    `actions: read`; the committed footer / extension number is the last per-PR one), written into the footer (`apps/web/index.html`) and the extension
     (`apps/extension/package.json`) of the checkout before the build, never committed, so both always show the same
     number. The `tag` job tags it (`RELEASE_VERSION` → `tag-live.mjs`) only after every live e2e shard passed; a
     failed run makes no tag, and the next run gives the same number again (none burnt). The tag job then publishes a
-    GitHub release `v<version>` whose notes are the `changelog/next/` files added since the previous tag
+    GitHub release `v<version>` (on the tag, or on the run's commit when the tag was refused; if that is refused too,
+    the notes stay in the run's summary) whose notes are the `changelog/next/` files added since the previous tag
     (`scripts/changelog.mjs notes`). Now and then a docs PR runs `node scripts/changelog.mjs fold`: one block per tag
     not yet in `CHANGELOG.md` (newest first, the same text) and the folded files deleted. The PR check
     `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension

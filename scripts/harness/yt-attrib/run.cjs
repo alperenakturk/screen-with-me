@@ -22,10 +22,13 @@ const items = Array.from({ length: 4 }, (_, i) => ({ id: `aqz-KE-bpK${i}`, title
 const attribution = (page, scope) =>
   page.evaluate((scope) => {
     const line = [...document.querySelectorAll(`${scope} .yt-attrib`)].find((e) => e.getClientRects().length > 0);
-    const link = line?.querySelector('a');
-    return line ? { text: line.textContent.trim(), href: link?.href, target: link?.target, rel: link?.rel } : null;
+    // The Terms link (YTQ1 put YouTube's logo, a link to youtube.com, first on the line).
+    const link = line?.querySelector('a[href="https://www.youtube.com/t/terms"]') ?? line?.querySelector('a:not(.yt-logo)');
+    const logo = line?.querySelector('a.yt-logo');
+    return line ? { text: line.textContent.trim(), href: link?.href, target: link?.target, rel: link?.rel, logo: logo ? { href: logo.href, target: logo.target, img: !!logo.querySelector('img') } : null } : null;
   }, scope);
-const good = (a, lang) => !!a && a.href === 'https://www.youtube.com/t/terms' && a.target === '_blank' && a.rel.includes('noopener') && (lang === 'tr' ? /YouTube’dan/.test(a.text) && /Hizmet Şartları/.test(a.text) : /from YouTube/.test(a.text) && /Terms of Service/.test(a.text));
+// YTQ1: YouTube's own logo first on the line, a link to youtube.com.
+const good = (a, lang) => !!a && !!a.logo && a.logo.href === 'https://www.youtube.com/' && a.logo.target === '_blank' && a.logo.img && a.href === 'https://www.youtube.com/t/terms' && a.target === '_blank' && a.rel.includes('noopener') && (lang === 'tr' ? /YouTube’dan/.test(a.text) && /Hizmet Şartları/.test(a.text) : /from YouTube/.test(a.text) && /Terms of Service/.test(a.text));
 
 (async () => {
   const browser = await chromium.launch();
