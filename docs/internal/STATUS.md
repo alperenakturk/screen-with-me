@@ -30,9 +30,9 @@ One handoff per lane or role; each session updates only its own lines and delete
   order; no version bumps (CI3), notes in changelog/next/.
 - [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
 - [ ] Game Studio (session 16 Nov, 16:20; handoff at the end of it):
-  [x] #491 merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
-  [x] #483 GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.
-  [x] #493 games window as a lazy chunk merged (room JS 139.1 → 124.8 kB).
+  [x] #491 `claude/drag-capture` merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
+  [x] #483 `claude/gmp-b-players` GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.
+  [x] #493 `claude/stage-lazy` games window as a lazy chunk merged (room JS 139.1 → 124.8 kB).
   [ ] #496 `claude/gt1-tutorials` (card GT1): "❓ How to play" in the head, fuller cards, Test Lab `games.tutorial`.
   Green → merge → deploy check → card GT1 to the archive. Quiz's cards wait for Game Studio 2's QZ2.
 
