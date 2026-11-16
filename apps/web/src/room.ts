@@ -3043,10 +3043,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'rail.speed',
         tab: 'video',
-        title: { en: 'Speed picker: the room\'s speed and the ⋯ menu', tr: 'Hız seçici: odanın hızı ve ⋯ menüsü' },
+        title: { en: 'Speed picker', tr: 'Hız seçici' },
         help: {
-          en: 'Writes the room\'s speed, the speeds this video can take, whether the ⋯ menu\'s picker is open, the ⋯ menu\'s height and whether "Keep the controls open" is on into the log.',
-          tr: 'Odanın hızını, bu videonun alabileceği hızları, ⋯ menüsündeki seçicinin açık olup olmadığını, ⋯ menüsünün yüksekliğini ve "Kontroller hep açık" ayarını kayda yazar.',
+          en: 'Logs the speed, this video\'s speeds, the ⋯ picker and "Keep the controls open".',
+          tr: 'Hızı, videonun hızlarını, ⋯ seçicisini ve "Kontroller hep açık"ı kayda yazar.',
         },
         run: () => {
           const media = roomState?.item?.media;
