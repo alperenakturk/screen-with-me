@@ -5,6 +5,7 @@
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-rail/run.cjs [site]
 const { viaYouTube } = require('../via-youtube.cjs');
+const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -32,6 +33,7 @@ async function openShort(ctx, query = '') {
   await page.click('#name-form button.primary');
   await page.waitForSelector('#media-input, #add-toggle', { state: 'attached' });
   // On a phone the link box is in the Search tab (PH1).
+  await phoneReady(page);
   if (!(await page.isVisible('#media-input'))) await page.getByRole('tab', { name: /Search|Ara/ }).click();
   await page.fill('#media-input', 'https://www.youtube.com/shorts/aqz-KE-bpKQ');
   await page.click('#media-form button[value=load]');

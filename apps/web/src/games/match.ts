@@ -444,7 +444,8 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       const cell = el('button', { type: 'button', class: grid8() ? 'dama-cell' : 'xox-cell', 'aria-label': cellLabel(i) });
       cell.addEventListener('click', () => press(i));
       if (kind === 'four') {
-        cell.addEventListener('pointerenter', () => hoverCol(colOf(i)));
+        // GP1: a mouse only (a tap's enter would leave the ghost disc behind on a touch screen).
+        cell.addEventListener('pointerenter', (event) => event.pointerType === 'mouse' && hoverCol(colOf(i)));
         cell.addEventListener('pointerleave', () => hoverCol(-1));
       }
       return cell;

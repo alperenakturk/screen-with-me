@@ -6,6 +6,7 @@
 // `FILM_VIDEO=… node scripts/harness/embed/film-server.mjs`, which serves it on :5300):
 //   NODE_PATH=$(npm root -g) node scripts/harness/phone/run.cjs [http://localhost:5173] [http://localhost:5300/video.webm]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 const SITE = process.argv[2] || 'http://localhost:5173';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
 let fails = 0;
@@ -36,6 +37,7 @@ async function enter(page, room) {
 
 /** Puts links / words in the room's link box: on a phone through the Search tab. */
 async function addMedia(page, text, mode) {
+  await phoneReady(page);
   if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
   await page.fill('#media-input', text);
   if (mode) await page.click(`#media-form button[value=${mode}]`);
@@ -120,7 +122,7 @@ const sheetName = (page) => page.evaluate(() => {
     // With a video: the strip has 📌 ⏩ 🔄 ⏭ (one tap each), the input row 🔗 · box · 🎙 · 📷 · 😀 at the bottom.
     const strip = await rect(page, '.together-strip');
     const video = await rect(page, '#theater');
-    const toolNames = await page.locator('.ph-strip-tools button').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label')));
+    const toolNames = await page.locator('.ph-strip-tools button:not([hidden])').evaluateAll((b) => b.map((x) => x.getAttribute('aria-label')));
     check(!!strip && Math.abs(strip.y - video.b) <= 2 && toolNames.length === 3, 'phone: the strip under the video holds 📌 🔄 ⏭ (no ⏩ Speed on a phone)', JSON.stringify({ toolNames, strip, video }));
     const row = await page.evaluate(() => ['#chat-invite', '#chat-input', '#strip-mic', '#strip-cam', '#chat-send', '#chat-react'].map((s) => {
       const r = document.querySelector(s)?.getBoundingClientRect();
@@ -128,7 +130,7 @@ const sheetName = (page) => page.evaluate(() => {
     }));
     const form = await rect(page, '#chat-form');
     check(row[0] >= 0 && row[0] < row[1] && row[1] < row[2] && row[2] < row[3] && row[3] < row[5] && row[4] === -1 && !!form && Math.abs(form.b - tabsBox.y) <= 2, 'phone: one input row 🔗 · box · 🎙 · 📷 · 😀 above the tabs (no ➤ while empty)', JSON.stringify({ row, form }));
-    const sizes = await page.evaluate(() => ['#chat-invite', '#strip-mic', '#chat-react', '.ph-strip-tools button'].map((s) => {
+    const sizes = await page.evaluate(() => ['#chat-invite', '#strip-mic', '#chat-react', '.ph-strip-tools button:not([hidden])'].map((s) => {
       const b = document.querySelector(s);
       const r = b.getBoundingClientRect();
       return [Math.round(r.width), Math.round(r.height), getComputedStyle(b).borderRadius, getComputedStyle(b).boxShadow];

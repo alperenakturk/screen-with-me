@@ -430,12 +430,19 @@ async function offlineChunk(browser) {
   check(await p.page.evaluate(() => window.__samePage === true).catch(() => false), 'offline chunk: the page does not reload while offline');
   await p.ctx.setOffline(false);
   await wait(3000);
+  // Card GR1: in a room it never reloads by itself. Chrome keeps the failed import, so back online the "Sidelit was
+  // updated · ↻ Refresh" note shows; its tap reloads once. (A browser that loads the chunk again needs no reload.)
+  const note = await until(() => p.page.evaluate(() => !!document.getElementById('update-note')), 6000);
+  if (note) {
+    check(await p.page.evaluate(() => window.__samePage === true).catch(() => false), 'offline chunk: back online, the note shows and the page has not reloaded by itself');
+    await p.page.click('#update-note button');
+  }
   await p.page.waitForFunction(() => !!document.querySelector('#game-btn'), null, { timeout: 20000 }).catch(() => {});
   if (!(await p.page.evaluate(() => !!document.querySelector('.shortcuts-dialog')))) {
     await p.page.evaluate(() => document.activeElement?.blur());
     await p.page.keyboard.press('?');
   }
-  check(!!(await until(() => p.page.evaluate(() => !!document.querySelector('.shortcuts-dialog')))), 'offline chunk: back online (after at most one reload), the shortcuts card opens');
+  check(!!(await until(() => p.page.evaluate(() => !!document.querySelector('.shortcuts-dialog')))), 'offline chunk: back online (after at most one tapped reload), the shortcuts card opens');
   check(!p.errors.length, 'offline chunk: no page errors', p.errors.slice(0, 2).join(' | '));
   await p.ctx.close();
 }

@@ -27,6 +27,8 @@ import { confirmDialog } from '../ui/confirm.ts';
 import { gameLive } from './live.ts';
 import { flashHint } from '../ui/hint.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { loadChunk } from '../ui/lazy.ts';
+import type { WindowLab } from './lab-tools.ts';
 
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker', classics: 'game-four', sea: 'game-sea', duel: 'game-duel' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
@@ -50,6 +52,14 @@ const PLACES: readonly Place[] = ['float', 'stage'];
  * and a side game with no room beside the video opens as its free window at the right edge.
  */
 const STAGE_READY = true;
+/**
+ * GW2 (owner, 15 Nov 2026; Planner's pick A): a table plays in ⛶ full screen (the whole monitor, the video paused) or in
+ * the 🪟 frame (the free window), switched any time from its head. A table opens in the mode I used last, ⛶ the first
+ * time. Narrow screens (phones, PH2's Games tab) keep their own placements.
+ */
+type TableMode = 'full' | 'frame';
+const TABLE_MODE_KEY = 'gameMode';
+const tableMode = (): TableMode => (load(TABLE_MODE_KEY) === 'frame' ? 'frame' : 'full');
 /** The placement I picked for a game with the switch (null: none yet). */
 const savedPlace = (kind: Kind): Place | null => {
   const saved = load(`gamePlace:${kind}`);
@@ -76,6 +86,8 @@ const EDGE = 8;
 type Box = { left: number; top: number; width: number; height: number };
 /** The least zoom at which a strip of the screen still counts as room for the free window (tablets, YouTube). */
 const MIN_ZOOM = 0.45;
+/** GP1: the least zoom a table's frame starts at (its usual 13 px text stays ≥ 11 px). */
+const READ_ZOOM = 0.85;
 /** PROP: the most the video's place scales a game up, and the free window's head + border its `size` includes. */
 const MAX_STAGE = 2.2;
 const CHROME_W = 2;
@@ -124,6 +136,8 @@ interface StageOptions {
    * server stays the source of truth). False when nothing played or I may not control it (host-only rooms).
    */
   pauseVideo?: () => boolean;
+  /** GW2: plays the room's video again (after a table's full screen paused it); false when it can't. */
+  playVideo?: () => boolean;
 }
 
 /** The Test Lab is switched on in this tab (the same switch `debug-lab.ts` keeps). */
@@ -157,7 +171,9 @@ export function createGameStage(opts: StageOptions) {
 
   const titleText = el('b', { class: 'game-stage-title-text' });
   const titleIcon = el('span', { class: 'game-stage-title-icon', 'aria-hidden': 'true' });
-  const title = el('span', { class: 'game-stage-title' }, titleIcon, titleText);
+  // GP1: the phone's "Video paused for the game" line takes the title's place for a moment (the label redraws leave it).
+  const titleNote = el('b', { class: 'game-stage-title-text game-paused-note', role: 'status', hidden: '' });
+  const title = el('span', { class: 'game-stage-title' }, titleIcon, titleText, titleNote);
   // Head buttons: icon + text (icon only on phones).
   const headButton = (glyph: string, cls = '') => {
     const text = el('span', { class: 'game-head-text' });
@@ -171,6 +187,17 @@ export function createGameStage(opts: StageOptions) {
   // QA2 (Planner's pick 1): an upright phone's head is one row, [video thumbnail = back] [name] [?] [🎙] [🎮] [⋯]; the
   // ⋯ holds "Leave table" and "Close table" (with their words) in the phone's bottom sheet. Sideways they sit in the head.
   const moreButton = headButton('⋯', 'game-more');
+  // GW2: ⛶ full screen / 🪟 frame (tables on a computer or tablet).
+  const modeButton = headButton('⛶', 'game-mode');
+  modeButton.node.addEventListener('click', () => {
+    // GP1 (owner via the Planner, 16 Nov 2026: both modes always there): 🪟 pressed where no readable frame fits beside a
+    // YouTube player opens the frame at the right edge at its readable size, over part of the player: I chose it
+    // (CLAUDE.md §7), so `place` saves it as a spot of mine (a double click on the head forgets it: ⛶ again).
+    const toFrame = mode === 'max';
+    frameAsked = toFrame;
+    setTableMode(toFrame ? 'frame' : 'full');
+    frameAsked = false;
+  });
   const morePop = el('div', { class: 'live-menu game-more-pop', role: 'menu' });
   morePop.hidden = true;
   // Placement switch: free window / in the video's place (narrow screens: below / large).
@@ -188,7 +215,7 @@ export function createGameStage(opts: StageOptions) {
   const placeSwitch = el('span', { class: 'game-place', role: 'group' }, ...placeButtons);
   // A game may put its own small buttons here (Classics: "Change game"); it empties the slot when it closes.
   const headSlot = el('span', { class: 'game-head-slot' });
-  const head = el('header', { class: 'game-stage-head' }, title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, hubButton.node, leaveButton.node, endButton.node, moreButton.node, minimizeButton.node);
+  const head = el('header', { class: 'game-stage-head' }, title, el('span', { class: 'game-stage-gap' }), headSlot, placeSwitch, modeButton.node, hubButton.node, leaveButton.node, endButton.node, moreButton.node, minimizeButton.node);
   // The game mounts into `body`, a box the size of the frame divided by its scale (see `refit`).
   const body = el('div', { class: 'game-fit' });
   /**
@@ -233,7 +260,11 @@ export function createGameStage(opts: StageOptions) {
   /** Cinema mode (card 14): the side panel hidden, the video as large as the page allows. */
   const cinemaOn = () => document.documentElement.classList.contains('cinema-on');
   /** The placement in use now. */
-  let mode: Place | 'below' | 'full' = 'stage';
+  let mode: Place | 'below' | 'full' | 'max' = 'stage';
+  /** GP1: no readable frame fits beside the YouTube player (nor under it): the table opens in ⛶ (🪟 then puts it over the player). */
+  let frameForced = false;
+  /** GP1: 🪟 was just pressed (a forced ⛶ becomes a frame of mine at the right edge). */
+  let frameAsked = false;
   /**
    * Card YTG (the YouTube audit): YouTube's rules allow nothing of ours in front of its player. On a computer, while the
    * room's item is YouTube, a game never sits on the player: "in the video's place" acts as the free window, and the free
@@ -268,7 +299,35 @@ export function createGameStage(opts: StageOptions) {
     mode = narrow.matches ? (!youtube && (want === 'stage' || shortsView() || isPhoneLayout()) ? 'full' : 'below') : want;
     // YTG: no room beside the YouTube player for the free window: under it instead.
     // QA2: a tablet's side panel is a place clear of the player too (the game fitted to it), so no "under it" there.
-    if (mode === 'float' && youtube && !inFullscreen() && !besidePlayer() && !(kind && isTablet() && homeBox(kind))) mode = 'below';
+    // GW2: a table on a computer or tablet is ⛶ full screen or the 🪟 frame, with or without a video (YouTube too: in
+    // full screen the player isn't on the screen at all, so nothing of ours sits over it).
+    const tableHere = !!current && !narrow.matches && !shortsView();
+    // GP1 (Planner, 16 Nov 2026: "never open a frame whose text is below 11 px"): a table's frame starting beside a
+    // YouTube player gets only the strip beside it (≈ 350 px on a laptop, its text ≈ 7 px). Where no readable frame fits
+    // there it opens under the player when the screen has room for it there, else in ⛶ (`frameForced`; 🪟 in its head
+    // then opens the frame at a readable size over part of the player, as my own choice).
+    frameForced = false;
+    let tableBelow = false;
+    if (tableHere && tableMode() === 'frame' && youtube && !inFullscreen() && kind && !readPair(spotKey(kind))) {
+      const beside = besidePlayer();
+      const [w, h] = sizeOf(kind).size;
+      const fits = (b: Box | null) => !!b && Math.min((b.width - 2 * EDGE) / w, (b.height - 2 * EDGE) / h) >= READ_ZOOM;
+      if (!fits(beside)) {
+        const under = theater.getBoundingClientRect().bottom;
+        tableBelow = innerHeight - under - 2 * EDGE >= h * READ_ZOOM && innerWidth - 2 * EDGE >= w * READ_ZOOM;
+        frameForced = !tableBelow;
+        if (frameForced && frameAsked) {
+          frameForced = false;
+          spotFor = kind;
+          spot = { ...SPOT_HOME };
+          side = null;
+          saveSpot();
+        }
+      }
+    }
+    if (tableHere) mode = tableMode() === 'full' || frameForced ? 'max' : tableBelow ? 'below' : 'float';
+    // GW2: a frame I placed myself stays a frame (it may sit over the player).
+    if (mode === 'float' && youtube && !inFullscreen() && !(kind && readPair(spotKey(kind))) && !besidePlayer() && !(kind && isSoloKind(kind) && isTablet() && homeBox(kind))) mode = 'below';
     // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
     // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
     // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
@@ -283,9 +342,21 @@ export function createGameStage(opts: StageOptions) {
     }
     // The free window lives on the page, or in the fullscreen view while there is one (or it would be hidden).
     const inTab = phoneTab() && !!gamesPanel();
-    const parent = inTab ? gamesPanel()! : narrow.matches ? document.body : mode === 'float' ? (inFullscreen() ? theater : document.body) : wrap;
+    // GW2: ⛶ lives on the page (it asks for the browser's full screen itself), or inside the video's fullscreen while
+    // there is one (it fills that view; on the page it would be hidden behind it).
+    const parent = inTab ? gamesPanel()! : narrow.matches ? document.body : mode === 'float' || mode === 'max' ? (inFullscreen() ? theater : document.body) : wrap;
     if (stage.parentElement !== parent) parent.append(stage);
-    for (const m of ['float', 'stage', 'below', 'full'] as const) stage.classList.toggle(m, mode === m);
+    for (const m of ['float', 'stage', 'below', 'full', 'max'] as const) stage.classList.toggle(m, mode === m);
+    if ((current?.id ?? null) !== placedTable) {
+      placedTable = current?.id ?? null;
+      tableChangedAt = Date.now();
+    }
+    syncFullscreen();
+    modeButton.node.hidden = !tableHere;
+    const toFrame = mode === 'max';
+    (modeButton.node.firstElementChild as HTMLElement).textContent = toFrame ? '🪟' : '⛶';
+    modeButton.label(t(toFrame ? 'game.toFrame' : 'game.toFull'));
+    modeButton.node.setAttribute('aria-pressed', String(toFrame));
     stage.classList.toggle('in-tab', inTab);
     // For the games' own CSS (card .113): the placement in use, also as an attribute.
     stage.dataset.place = mode;
@@ -324,6 +395,69 @@ export function createGameStage(opts: StageOptions) {
     dispatchEvent(new Event('swm-layout'));
   }
 
+  // ---- GW2: ⛶ full screen for tables ----
+  /** Did my table's full screen pause the room's video (so leaving it plays the video again)? */
+  let pausedForFull = false;
+  /** We are leaving the browser's full screen ourselves (a table closed or went to its frame), not Esc. */
+  let leavingFull = false;
+  /** The table the browser's full screen was asked for (a switch to another table is not "I pressed Esc"). */
+  let fullFor: string | null = null;
+  /** When the window last showed a different table (see the fullscreenchange listener). */
+  let tableChangedAt = 0;
+  let placedTable: string | null = null;
+  /** Is the window in the browser's real full screen (else, in the fallback, it fills the browser window). */
+  const realFull = () => document.fullscreenElement === stage;
+  /**
+   * The browser's full screen follows the mode: in ⛶ the window asks for it (a refusal, in an iframe or on iOS Safari,
+   * leaves it filling the browser window: `.game-stage.max` is fixed and 100dvh tall); out of ⛶ it gives it back.
+   */
+  function syncFullscreen(): void {
+    const want = mode === 'max' && !stage.hidden;
+    if (want && !realFull() && document.fullscreenEnabled && !document.fullscreenElement) {
+      fullFor = current?.id ?? null;
+      stage.requestFullscreen?.().catch(() => {});
+    } else if (!want && realFull()) {
+      leavingFull = true;
+      void document.exitFullscreen().catch(() => (leavingFull = false));
+    }
+    // The video plays again when my table leaves ⛶ (to the frame, minimized, closed), if the full screen paused it.
+    if (!want && pausedForFull) {
+      pausedForFull = false;
+      opts.playVideo?.();
+    }
+  }
+  /** Switches my table between ⛶ full screen and the 🪟 frame (remembered for the next table). */
+  function setTableMode(next: TableMode): void {
+    save(TABLE_MODE_KEY, next);
+    place();
+    if (next === 'full') autoPause();
+    queueFit();
+    dispatchEvent(new Event('swm-layout'));
+  }
+  // Esc (or the browser's own exit) leaves the real full screen: the table goes back to its frame.
+  addEventListener('fullscreenchange', () => {
+    // Our own exit's event arrives later, maybe with the next table already open in ⛶: that one stays in ⛶ (and asks
+    // for the browser's full screen again).
+    if (leavingFull && !document.fullscreenElement) {
+      leavingFull = false;
+      if (mode === 'max' && !stage.hidden) syncFullscreen();
+      return;
+    }
+    if (mode !== 'max' || realFull() || stage.hidden || document.fullscreenElement) return;
+    // Another table took the window meanwhile (the browser leaves full screen by itself while the window switches from
+    // one table to the next): it stays in ⛶.
+    if (current?.id !== fullFor || Date.now() - tableChangedAt < 2000) return syncFullscreen();
+    setTableMode('frame');
+  });
+  // The fallback has no browser full screen to leave with Esc: Esc goes back to the frame there too.
+  addEventListener('keydown', (event) => {
+    // Esc closes the games hall or a dialog first (they listen for it too); only a bare Esc leaves ⛶.
+    if (event.key !== 'Escape' || mode !== 'max' || realFull() || stage.hidden || event.defaultPrevented) return;
+    if (!menu.hidden || document.querySelector('dialog[open], .confirm-dialog:not([hidden]), #game-stage .htp:not([hidden])')) return;
+    setTableMode('frame');
+    // Heard first (capture), before the hall or a dialog closes itself on the same key.
+  }, true);
+
   /** Below the video (narrow screens): the window starts where the video ends. */
   function placeBelow(): void {
     // YTG: under the whole theater over a YouTube video (its frame may reach past the video's box).
@@ -339,7 +473,9 @@ export function createGameStage(opts: StageOptions) {
       return { left: r.left, top: r.top, width: r.width, height: r.height };
     }
     const room = pageRoom();
-    return overYoutube() ? besidePlayer() ?? room : room;
+    // GW2 (owner, 15 Nov 2026): once I moved or sized the frame myself it may go anywhere, over a YouTube player too;
+    // only where we place it (its home) keeps to the strip beside the player.
+    return overYoutube() && !spot ? besidePlayer() ?? room : room;
   }
   /**
    * Where the free window may be moved: the fullscreen view, or the page (on a tablet: clear of the chat). Over a YouTube
@@ -559,7 +695,9 @@ export function createGameStage(opts: StageOptions) {
       spot = readPair(spotKey(kind));
       side = null;
     }
-    const home = !spot && zoom === undefined ? homeBox(kind) : null;
+    // GW2: a table's frame starts at the right edge at its own size (grown with the screen, never past it); the home in
+    // the column right of the video is for the small side games (a table squeezed there was unreadable).
+    const home = !spot && zoom === undefined && isSoloKind(kind) ? homeBox(kind) : null;
     if (home) {
       stage.style.left = `${home.left}px`;
       stage.style.top = `${home.top}px`;
@@ -575,12 +713,10 @@ export function createGameStage(opts: StageOptions) {
     const room = posRoom();
     const x = Math.min(1, Math.max(0, where.x));
     const y = Math.min(1, Math.max(0, where.y));
-    const at = clearOfPlayer(
-      { left: room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x, top: room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y },
-      width,
-      height,
-      room,
-    );
+    const wanted = { left: room.left + EDGE + Math.max(0, room.width - 2 * EDGE - width) * x, top: room.top + EDGE + Math.max(0, room.height - 2 * EDGE - height) * y };
+    // GW2 (owner, 15 Nov 2026; CLAUDE.md §7): a frame I dragged stays where I dropped it, over a YouTube player too. We
+    // never put it there ourselves: its home (no spot yet) keeps clear of the player.
+    const at = spot ? wanted : clearOfPlayer(wanted, width, height, room);
     stage.style.left = `${Math.round(at.left)}px`;
     stage.style.top = `${Math.round(at.top)}px`;
     stage.style.width = `${width}px`;
@@ -667,7 +803,9 @@ export function createGameStage(opts: StageOptions) {
     spot = null;
     side = null;
     saveSpot();
-    if (mode === 'float') placeFloat();
+    // GP1: a table's frame over YouTube without a spot of mine may have no readable place left beside the player (⛶).
+    if (mode === 'float') current ? place() : placeFloat();
+    if (mode === 'max') autoPause();
     dispatchEvent(new Event('swm-layout'));
   }
   head.addEventListener('dblclick', (event) => {
@@ -818,7 +956,9 @@ export function createGameStage(opts: StageOptions) {
       const iw = sw - (stage.offsetWidth - W);
       const ih = sh - (stage.offsetHeight - H);
       const up = Math.min(W / iw, H / ih);
-      if (up > 1.001) {
+      // GW2: a table's frame smaller than its own size scales its own layout down too (squeezing it cut the Classics
+      // picker's cards on an upright tablet); the side games keep their own small-window layouts.
+      if (up > 1.001 || (!isSoloKind(kind) && up < 0.999)) {
         scale = up;
         own = [iw, ih];
       }
@@ -828,7 +968,8 @@ export function createGameStage(opts: StageOptions) {
       const ih = Math.max(H, TAB_H);
       scale = H / ih;
       own = [Math.round(W / scale), ih];
-    } else if (!narrow.matches && mode === 'stage') {
+    } else if (!narrow.matches && (mode === 'stage' || mode === 'max')) {
+      // GW2: ⛶ full screen scales the game to the screen the same way.
       // PROP (owner: "the same experience in both modes"): in the video's place the game keeps its own shape too, scaled
       // to the box like the free window, from the shape that suits the box best: its own (`size`) or its wide one (`wide`).
       const info = sizeOf(kind) as { size: readonly [number, number]; wide?: readonly [number, number] };
@@ -990,6 +1131,8 @@ export function createGameStage(opts: StageOptions) {
 
   // Card R8: the side games' chunks (their pictures and "How to play" cards are inlined in them) start loading as soon
   // as the hall opens, so a game picked from it shows its cards at once instead of after a network round trip.
+  // GP1 (owner, 15 Nov 2026: "Classics stutters while opening"): the tables' chunks too, the most played first, each
+  // after the previous one so the hall itself keeps drawing smoothly.
   let soloWarm = false;
   function warmSolo(): void {
     if (soloWarm) return;
@@ -997,9 +1140,21 @@ export function createGameStage(opts: StageOptions) {
     void import('./snack-bar.ts').catch(() => (soloWarm = false));
     void import('./garden.ts').catch(() => (soloWarm = false));
     void import('./five-frames.ts').catch(() => (soloWarm = false));
+    const tables: (() => Promise<unknown>)[] = [() => import('./match.ts'), () => import('./sea.ts'), () => import('./duel.ts'), () => import('./quiz.ts'), () => import('./draw.ts'), () => import('./poker.ts')];
+    void tables.reduce((chain, load) => chain.then(load).catch(() => undefined), Promise.resolve<unknown>(undefined));
   }
 
+  // GP1: how long the last game took from the click in the hall to its first frame (the Test Lab's `games.openTime`).
+  let openClickAt = 0;
+  let lastOpen: { kind: string; ms: number } | null = null;
+  const markOpened = (kind: string): void => {
+    if (!openClickAt) return;
+    const from = openClickAt;
+    openClickAt = 0;
+    requestAnimationFrame(() => (lastOpen = { kind, ms: Math.round(performance.now() - from) }));
+  };
   function openTable(kind: RoomGameKind): void {
+    openClickAt = performance.now();
     wanted = kind;
     wantedAt = Date.now();
     // Card R1: pressed while the room connection was reconnecting (a deploy, a network blip) the request used to
@@ -1080,6 +1235,7 @@ export function createGameStage(opts: StageOptions) {
     else if (table.kind === 'duel') stop = (await import('./duel.ts')).mountDuel(body, table.id, name, avatar);
     else stop = (await import('./match.ts')).mountMatch(body, table.kind, table.id, name, avatar);
     queueFit();
+    markOpened(table.kind);
     // Switched or closed while loading: close at once.
     if (current?.id !== table.id) stop();
     else unmount = stop;
@@ -1093,15 +1249,24 @@ export function createGameStage(opts: StageOptions) {
    * stays in view), never for side games (the free window), and closing the table doesn't play it again.
    */
   function autoPause(): void {
-    if ((mode !== 'stage' && !stage.classList.contains('in-tab')) || !current || !opts.pauseVideo?.()) return;
+    if ((mode !== 'stage' && mode !== 'max' && !stage.classList.contains('in-tab')) || !current || !opts.pauseVideo?.()) return;
     pausedAt = Date.now();
+    if (mode === 'max') pausedForFull = true;
     // QA2: under the head, on the game's top (on the 🎮 it covered the tops of ?, 🎮 and Leave).
     // 0.9.97.135: on a phone the Games tab shows a moment after the game opens (ui/phone-room.ts), so the note waits for
     // its head to be on screen; before that it measured an empty box and fell over the video strip (never over a
     // player: YouTube's rules).
     const note = () => flashHint(head, t('game.pausedForGame'), 2800, true);
     if (!stage.classList.contains('in-tab')) return note();
-    requestAnimationFrame(() => requestAnimationFrame(() => head.getBoundingClientRect().height > 0 && note()));
+    // GP1 (first look): in a phone's Games tab a note under the head covered the game's own title and buttons, so the
+    // head's title line says it for the same 2.8 s instead (it covers nothing there).
+    titleNote.textContent = `⏸ ${t('game.pausedForGame')}`;
+    titleNote.hidden = false;
+    titleText.hidden = true;
+    setTimeout(() => {
+      titleNote.hidden = true;
+      titleText.hidden = false;
+    }, 2800);
   }
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */
@@ -1130,6 +1295,7 @@ export function createGameStage(opts: StageOptions) {
 
   /** Opens a solo game on the side; my table (if any) is left first: the window shows one game at a time. */
   async function openSolo(kind: SoloKind): Promise<void> {
+    openClickAt ||= performance.now();
     document.getElementById('game-invite')?.remove();
     endIntro();
     if (stage.hidden) slideIn(stage);
@@ -1155,6 +1321,7 @@ export function createGameStage(opts: StageOptions) {
           ? (await import('./five-frames.ts')).mountFiveFrames(body)
           : (await import('./snack-bar.ts')).mountSnackBar(body, soloRoom);
     queueFit();
+    markOpened(kind);
     if (solo !== kind) stop();
     else unmount = stop;
   }
@@ -1327,64 +1494,44 @@ export function createGameStage(opts: StageOptions) {
   addEventListener('langchange', labels);
   labels();
 
-  // Test Lab (bug W1–W5): the game window's state and its reset, offered while the lab is on.
-  debugHooks.register('gameWindow', () => ({
-    commands: [
-      {
-        id: 'gameWindow.reset',
-        title: { en: 'Game window: back to its home beside the video', tr: 'Oyun penceresi: videonun yanındaki yerine' },
-        help: { en: 'The same as a double click on the free window’s head: the open game’s window forgets where I put it and goes back to the column right of the video (never over the video).', tr: 'Serbest pencerenin başlığına çift tıklamakla aynı: açık oyunun penceresi koyduğum yeri unutur, videonun sağındaki sütuna döner (videonun üstüne hiç çıkmaz).' },
-        tab: 'games',
-        available: () => (shownKind() ? true : { en: 'no game open', tr: 'açık oyun yok' }),
-        run: resetFloat,
-      },
-      {
-        id: 'gameWindow.autoPause',
-        title: { en: 'Game window: pause as a table would', tr: 'Oyun penceresi: masa açılınca olduğu gibi durdur' },
-        help: { en: 'Runs what opening a table in the video’s place does: if the video plays, it pauses for everyone and a short note says why.', tr: 'Bir masa videonun yerinde açılınca olanı yapar: video oynuyorsa herkes için durur ve kısa bir not nedenini söyler.' },
-        tab: 'games',
-        available: () => (current && mode === 'stage' ? true : { en: 'no table open in the video’s place', tr: 'videonun yerinde açık masa yok' }),
-        run: autoPause,
-      },
-      {
-        id: 'gameWindow.hall',
-        title: { en: 'Game window: open the hall from its 🎮', tr: 'Oyun penceresi: 🎮 ile salonu aç' },
-        help: { en: 'Presses the 🎮 in the open game window’s head: the games hall opens right under it.', tr: 'Açık oyun penceresinin başındaki 🎮’ya basar: oyun salonu hemen altında açılır.' },
-        tab: 'games',
-        available: () => (!stage.hidden ? true : { en: 'no game window on screen', tr: 'ekranda oyun penceresi yok' }),
-        run: () => hubButton.node.click(),
-      },
-      {
-        id: 'gameWindow.more',
-        title: { en: 'Game window: the phone head’s ⋯ menu', tr: 'Oyun penceresi: telefon başlığının ⋯ menüsü' },
-        help: { en: 'On an upright phone with a table open: presses ⋯ in the head, which holds “Leave table” and “Close table” (each asks first where it did before).', tr: 'Dik telefonda bir masa açıkken başlıktaki ⋯’ya basar: içinde “Masadan kalk” ve “Masayı kapat” var (önceden sorduklarında yine sorarlar).' },
-        tab: 'games',
-        available: () => (!moreButton.node.hidden && !stage.hidden ? true : { en: 'no ⋯ in the head (an upright phone with a table only)', tr: 'başlıkta ⋯ yok (yalnız dik telefonda, masa açıkken)' }),
-        run: () => moreButton.node.click(),
-      },
-      {
-        id: 'phoneGames.state',
-        tab: 'games',
-        title: { en: 'Phone games: the tab, the game and its fit', tr: 'Telefonda oyunlar: sekme, oyun ve sığması' },
-        help: {
-          en: 'Writes the open tab, the game in the Games tab, whether it fits the panel (its scale, anything cut off) and whether the room is held upright into the log.',
-          tr: 'Açık sekmeyi, Oyunlar sekmesindeki oyunu, panele sığıp sığmadığını (ölçeği, kesilen bir şey) ve odanın dik tutulup tutulmadığını kayda yazar.',
-        },
-        available: () => phoneTab() || { en: 'not the phone room', tr: 'telefon odası değil' },
-        run: () => JSON.stringify(phoneGamesState()),
-      },
-    ],
+  // Test Lab (bug W1–W5, GW2, GP1): the game window's commands live in the lab's own chunk (lab-tools.ts), so the room
+  // page doesn't download their texts (scripts/size-budget.mjs). With the lab off nothing loads.
+  const windowLab: WindowLab = {
+    kind: shownKind,
+    place: () => mode,
+    table: () => !!current,
+    reset: resetFloat,
+    autoPause,
+    modeShown: () => !modeButton.node.hidden,
+    setMode: (arg) => {
+      if (arg === 'full' || arg === 'frame') setTableMode(arg);
+      else if (!arg) setTableMode(tableMode() === 'full' ? 'frame' : 'full');
+      const box = stage.getBoundingClientRect();
+      return { mode: tableMode(), place: mode, forced: frameForced, realFullscreen: realFull(), pausedForFull, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
+    },
+    lastOpen: () => lastOpen,
+    shown: () => !stage.hidden,
+    hall: () => hubButton.node.click(),
+    moreShown: () => !moreButton.node.hidden,
+    more: () => moreButton.node.click(),
+    phoneTab,
+    phoneState: phoneGamesState,
     status: () => {
       const kind = shownKind();
-      if (!kind) return [];
+      if (!kind) return '';
       const where = stage.hidden ? 'minimized' : mode;
       const home = mode === 'float' && !spot ? ' · home' : '';
       const hall = !menu.hidden && menu.parentElement === headMenuWrap ? ` · hall ${headMenuWrap.dataset.side ?? ''}` : '';
       const labelled = stage.classList.contains('head-labels') ? ' · labels' : '';
       const paused = pausedAt ? ` · paused the video ${Math.round((Date.now() - pausedAt) / 1000)} s ago` : '';
-      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`]];
+      return `${kind} · ${where}${home}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`;
     },
-  }));
+  };
+  const loadWindowLab = () => void loadChunk(() => import('./lab-tools.ts')).then((m) => m?.registerWindowLab(windowLab));
+  // The lab already on: ready at once (the harnesses run these right after a game opens). Switched on later: the first
+  // look at the lab loads the chunk, which registers the real commands in place of this empty entry.
+  if (labIsOn()) loadWindowLab();
+  else debugHooks.register('gameWindow', () => (loadWindowLab(), { commands: [] }));
 
   return {
     /**
