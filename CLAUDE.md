@@ -24,7 +24,7 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 
 | What | Where |
 |---|---|
-| Where we are, owner's hand tests, owner's to-dos and decisions, "Ideas waiting for the owner's pick", task queue | `docs/internal/STATUS.md` |
+| Where we are, owner's hand tests, owner's to-dos and decisions, "Ideas waiting for the owner's pick", task queue | `docs/internal/STATUS.md` (+ the Planner's `planner-handoff.md`) |
 | Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` (+ `cards-games.md`, `cards-proposed.md`) |
 | What to work on now / next / frozen, milestone gates, plan to 1.0 | `docs/internal/ROADMAP.md` "Focus" and "Milestone gates to 1.0" |
 | What each release changed (user-facing, one block per release) | `CHANGELOG.md` |
@@ -83,6 +83,11 @@ Rules for all:
   (a decision, a test, a secret) and otherwise sends **one short summary when a group of work is finished**, never a
   message per release. The owner will name product changes himself; until then nothing in the product is reworked for
   "tidiness" unless it is clearly broken.
+- **Fresh sessions, small contexts (owner, 16 Nov 2026):** a big context costs usage on every turn. A building
+  session works one card group, writes its handoff (STATUS task queue, its cards, branch names) and stops; the Planner
+  archives it and opens a fresh one. Past ~300k tokens a session finishes its current PR, hands off and stops; the
+  Planner past ~400k rewrites `docs/internal/planner-handoff.md` and hands off to a fresh Planner. A daily scheduled
+  check (`get_session` `context_usage`) does this without being asked.
 - Never start work that has no card; an idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
   pick". Each role edits only its own files, so two sessions never change the same lines.
 - Every change goes through a branch + PR, never a push to `main`; a docs-only PR may be merged by its session once CI
