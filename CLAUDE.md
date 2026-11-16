@@ -25,7 +25,7 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 | What | Where |
 |---|---|
 | Where we are, owner's hand tests, owner's to-dos and decisions, "Ideas waiting for the owner's pick", task queue | `docs/internal/STATUS.md` |
-| Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` |
+| Job cards (In progress → Ready → Proposed → Done), lanes, run order | `docs/internal/CARDS.md` (+ `cards-games.md`, `cards-proposed.md`) |
 | What to work on now / next / frozen, milestone gates, plan to 1.0 | `docs/internal/ROADMAP.md` "Focus" and "Milestone gates to 1.0" |
 | What each release changed (user-facing, one block per release) | `CHANGELOG.md` |
 | How every feature works: files, messages, constants, keys, tests | `docs/internal/architecture/reference.md` (to be split into area files) |
@@ -60,9 +60,9 @@ Each session has one role (first message or session title; none given = **Develo
 
 | Role | Does | Edits |
 |---|---|---|
-| 🧭 **Planner** (hub, no code; `role:planner`) | Talks to the owner; turns ideas into cards (what, why, done when, tests), orders and routes them, assigns versions; keeps the owner's board current by itself (a live fix becomes a test, a passed test or answered question goes, one line to the owner); `llm-council` for big decisions | `CLAUDE.md`, `CARDS.md`, `ROADMAP.md` Focus, `STATUS.md` decisions / ideas, the board |
-| 🔨 **Developer: lane A** (room / site), **lane B** (players, Shorts, extension, ops; an extra lane-B session such as "B2" when the Planner opens one) | Top Ready card of its lane → In progress → build + test → PR → merge → deploy and live e2e checked → `Done: <PR link>`. A fresh session per milestone step | Its cards' code and tests, the feature's reference section, the `CHANGELOG.md` block, `STATUS.md` task queue / hand tests |
-| 🎮 **Game Studio** (`role:games`) | The games end to end: tables, side games, art, sounds, tutorials, server objects | Games code and tests, `docs/internal/design/games/`, the games' reference sections, `CHANGELOG.md` blocks |
+| 🧭 **Planner** (hub, no code; `role:planner`) | Talks to the owner; turns ideas into cards (what, why, done when, tests), orders and routes them, sets the merge order; keeps the owner's board current by itself (a live fix becomes a test, a passed test or answered question goes, one line to the owner); `llm-council` for big decisions | `CLAUDE.md`, `CARDS.md`, `ROADMAP.md` Focus, `STATUS.md` decisions / ideas, the board |
+| 🔨 **Developer: lane A** (room / site), **lane B** (players, Shorts, extension, ops; an extra lane-B session such as "B2" when the Planner opens one) | Top Ready card of its lane → In progress → build + test → PR → merge → deploy and live e2e checked → `Done: <PR link>`. A fresh session per milestone step | Its cards' code and tests, the feature's reference section, its `changelog/next/<branch>.md`, `STATUS.md` task queue / hand tests |
+| 🎮 **Game Studio** (`role:games`) | The games end to end: tables, side games, art, sounds, tutorials, server objects | Games code and tests, `docs/internal/design/games/`, the games' reference sections, `changelog/next/` files |
 | 🛡️ **Security** (read-only) | Bugs, security, privacy (KVKK / GDPR via `kvkk-gdpr-denetim`'s `SKILL.md`) | `docs/internal/security-review-<n>.md`, "Proposed" cards |
 | 🔎 **Research** (read-only) | Market, competitors, users, technical questions | `docs/internal/research/<topic>.md`, "Proposed" cards |
 | 🎨 **Design** (`role:design`) | Logo, mascot, brand, screens; a picked design becomes a card | `docs/internal/design/<topic>.md`, art the scripts copy; never product code |
@@ -86,8 +86,8 @@ Rules for all:
 - Never start work that has no card; an idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
   pick". Each role edits only its own files, so two sessions never change the same lines.
 - Every change goes through a branch + PR, never a push to `main`; a docs-only PR may be merged by its session once CI
-  is green. Branch `claude/<short-english-slug>` (or the session's). Commits: imperative English summary, the version
-  in parentheses for a release (`Fix film-page cover flash (0.9.83)`), trailing `Co-Authored-By`; never model names.
+  is green. Branch `claude/<short-english-slug>` (or the session's). Commits: imperative English summary (no version:
+  CI numbers releases, §9), trailing `Co-Authored-By`; never model names.
   Delete a merged branch (`.claude/settings.json` allows `git push origin --delete <branch>`; check first with
   `git merge-base --is-ancestor`).
 - **Finished work leaves the live files in the same PR (DOCS2, 11 Nov 2026):** a card that is done or a hand test that
@@ -183,8 +183,8 @@ Each line names its section in `docs/internal/architecture/reference.md` ("ref: 
   of its own (only the overlay iframe and the "Start watching" card); never redirects anyone without asking; no own
   ad-block list, `window.open` wrapper or ad skipping; no film re-broadcasting (`tabCapture`). ref: Extension rules,
   Shell, Resilience to ads, Streaming.
-- **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality). ref: Shorts view, One
-  remote; archive 0.9.97.74 (`overYoutube`).
+- **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality), except a game frame the user
+  drags there himself (owner, 15 Nov 2026, card GW2). ref: Shorts view, One remote; archive 0.9.97.74 (`overYoutube`).
 - **DRM is never bypassed.** ref: §10 Known limits.
 - **Lazy chunks:** load with `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`; a
   chunk that gates privacy (the IP notice) fails closed. ref: Room chunk.
@@ -255,18 +255,21 @@ UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
 ## 9. Release checklist
 Milestone gates to 1.0 (what must be fully done before the third version part moves, and "live e2e green on the
 first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates to 1.0".
-0. **Version numbers (owner's rule, 29 Oct 2026):** releases count in a fourth part (0.9.97.91, 0.9.97.92 …). The third
-   part moves **only when the owner says** "this one is big, go up one". The Planner assigns versions. Chrome
-   extensions accept up to four numeric parts; the site footer shows the same number.
+0. **Version numbers (owner's rule, 29 Oct 2026; CI numbers them since card CI3, 16 Nov 2026):** releases count in a
+   fourth part (0.9.97.141, 0.9.97.142 …). Main's deploy numbers each batch (`release-series.txt` + highest tag + 1)
+   and tags it after a green live e2e; a failed run's number is reused. The third part moves **only when the owner
+   says** "this one is big, go up one" (the one line in `release-series.txt`). Footer and extension always show the
+   same number (Chrome accepts four numeric parts).
 1. `npm run typecheck && npm test` (if the server changed: `wrangler dev` + `npm run e2e`; if the extension changed:
    the embed harness, see §10 "Cloud sessions"); the checks of the area you touched.
-2. Bump the site version in the footer (`apps/web/index.html` `.footer-version`). The extension version is kept at
-   the same number (the owner thought differing numbers meant "outdated"): `apps/extension/package.json` (the zip on
-   the site and the extension page read it).
+2. **Never** edit the footer version, `apps/extension/package.json`'s version or a `CHANGELOG.md` version heading
+   (`check-version-edits.mjs` fails the PR); the build writes the number into both. Green PRs whose files don't
+   overlap merge without updating from main; merges within 2 min go out as one deploy.
 2b. **First look (owner, 10 Nov 2026, card QA1):** a UI change runs `scripts/shots.cjs` (the screens the diff touches, at
    1366, 1920, tablet and phone) and gives a fresh subagent only `.shots/<branch>/` (`REVIEW.md` is its brief); the PR
    lists each finding as fixed or answered. Tests check rules; this checks what a person sees.
-3. Add the release's block to `CHANGELOG.md` (user-facing, English); update the feature's section in
+3. Add `changelog/next/<branch>.md` (user-facing English `- ` bullets; the tag's GitHub release and
+   `node scripts/changelog.mjs fold` turn them into `CHANGELOG.md` blocks); update the feature's section in
    `docs/internal/architecture/`; `README.md` + `README.tr.md` together when they are affected; `STATUS.md` (and
    ROADMAP checkboxes). Never a release paragraph in this file.
 4. Commit (English, `Co-Authored-By` at the end), push, PR. When it lands on `main`, GitHub Actions deploys

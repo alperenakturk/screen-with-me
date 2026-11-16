@@ -15,6 +15,7 @@ import {
   fleetSunk,
   parseSeaMessage,
   randomFleet,
+  seaShipsVisible,
   shotResult,
   sunkShips,
   type SeaBotLevel,
@@ -420,10 +421,15 @@ export class Sea extends DurableObject<Env> {
     return this.sockets(except).some((ws) => (ws.deserializeAttachment() as Attachment | null)?.key === key);
   }
 
-  /** What one connection may see: its own ships, the other sea's shots and sunk ships; everything once the game is over. */
+  /**
+   * What one connection may see: a player its own ships, the other sea's shots and sunk ships; everything once the game
+   * is over. GMP (owner, 15 Nov 2026: "it's fine if they see, they are friends"): a watcher (someone who said hello and
+   * has no seat) sees every ship live. A seated player never gets that view, also not in a second tab.
+   */
   private view(key: string | undefined, except?: WebSocket): SeaServerMessage {
     const d = this.data;
     const mine = key ? this.seatOf(key) : -1;
+    const watcher = !!key && mine < 0 && !!d.people[key];
     const fleets = [0, 1].map((i) => this.ships(i));
     const players: (SeaPlayer | null)[] = d.seats.map((s, i) => {
       if (!s) return null;
@@ -446,7 +452,7 @@ export class Sea extends DurableObject<Env> {
         shots: shots.map((c) => [c, ships.some((s) => s.includes(c)) ? 1 : 0] as const),
         sunk: sunkShips(ships, shots).map((n) => ships[n]!),
       };
-      if (i === mine || d.phase === 'over') side.ships = ships;
+      if (seaShipsVisible(mine, i, watcher, d.phase === 'over')) side.ships = ships;
       return side;
     });
     const seated = new Set(d.seats.map((s) => s?.key));

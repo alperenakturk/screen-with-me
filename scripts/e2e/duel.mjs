@@ -1,5 +1,6 @@
 // ⚔️ Five Frames Duel (card FFDUEL): two people race to the same word; the server holds it. Checks: before the end no
-// message to a player or a watcher carries the answer or the other player's letters (only marks); bad guesses are
+// message to a player carries the answer or the other player's letters (only marks), a watcher sees every board's
+// letters live but never the answer (GMP); bad guesses are
 // refused one by one; a watcher can't guess or take a seat mid-game; a reconnect keeps a board; two winning guesses at
 // the same moment give exactly one winner, the same for everyone; then everyone sees the word and both boards; a
 // rematch is a practice word (never the day's); two used-up boards are a draw.
@@ -101,7 +102,7 @@ ok(await until(() => alex.state.players[0].marks.length === 2 && alex.state.play
 ok(JSON.stringify(alex.state.players[1].marks) === JSON.stringify(samWords.map((w) => score(w, answer))), "Alex gets Sam's marks, right ones");
 ok(!alex.state.players[1].words && !sam.state.players[0].words, "nobody gets the other player's words");
 ok(alex.state.players[0].words?.join() === alexWords.join(), 'each gets their own words');
-ok(!robin.state.players[0].words && !robin.state.players[1].words, 'the watcher gets marks only');
+ok(robin.state.players[0].words?.join() === alexWords.join() && robin.state.players[1].words?.join() === samWords.join(), 'the watcher sees both boards\' letters live (GMP)');
 alex.inbox.length = 0;
 alex.send({ t: 'guess', word: alexWords[0] });
 ok(await until(() => alex.inbox.some((m) => m.code === 'repeat')), 'the same word twice is refused');
@@ -115,7 +116,7 @@ ok(sam.state.players[1].words?.join() === samWords.join(), '… with his three g
 
 // Nothing leaked so far: no message to Alex or Robin named the answer or a word of Sam's; none to Sam named Alex's.
 ok(leaked(alex, [answer, ...samWords]).length === 0, "Alex never got the answer or Sam's letters");
-ok(leaked(robin, [answer, ...samWords, ...alexWords]).length === 0, 'Robin never got the answer or any letters');
+ok(leaked(robin, [answer]).length === 0, 'Robin never got the answer');
 ok(leaked(sam, [answer, ...alexWords]).length === 0, "Sam never got the answer or Alex's letters");
 
 // Both find it at the same moment: one winner, the same for everyone; the late one is told.

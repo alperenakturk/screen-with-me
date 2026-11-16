@@ -16,17 +16,41 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
+### 0.9.97.141 — 15 Nov
+
+- A room's chat now keeps its last 1000 messages until the room is deleted (it was only the last 50, so older
+  messages seemed to vanish). People who join get the newest messages; "Show earlier messages" or scrolling up brings
+  older ones back. A busy room's activity lines no longer push messages out of the chat.
+
+### 0.9.97.140 — 15 Nov
+
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
+  from YouTube" (light or dark to match the theme); it links to YouTube.
+
+### 0.9.97.139 — 15 Nov
+
+- Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
+  it floats on the page: drag it anywhere and make it bigger or smaller from its corner; it keeps its shape, and its
+  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it, and in a
+  YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
+  "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
+
 ### 0.9.97.138 — 15 Nov
 
-- In the Shorts view, whoever is talking in voice gets a green ring that glows and grows a little with their voice, on
-  the computer's seats and in the phone's Shorts bar. Your own face shows it too, so you can see your microphone is
-  heard. With "reduce motion" on, only the ring shows.
+- 👁 **Watch a game live:** join a full Sea Battle or Five Frames Duel table from the games hall and you see both
+  fleets as they are shot, or both boards with every letter, while the players still see only their own. On a phone
+  the watcher follows the sea being shot at.
+- 🎟️ **Five Frames knows far more words:** over 11,000 English and 15,000 Turkish words are accepted as guesses
+  (Turkish forms such as "evler" or "kitabı" too), and the daily word now comes from over 2,000 common, clean words in
+  each language. The day's word changes with this update.
 
 ### 0.9.97.137 — 15 Nov
 
 - After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip
   under the video, and on a computer it sits beside Next above the video. It works as many times as you like.
 - ⠿ → **Search the web** now opens Google Search.
+- Snack Bar on an upright tablet: the day's special no longer makes the whole game smaller (its text stayed readable
+  only on some days).
 
 ### 0.9.97.136 — 14 Nov
 

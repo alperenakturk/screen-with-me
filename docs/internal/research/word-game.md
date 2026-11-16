@@ -82,15 +82,26 @@ Owner's pick for the daily word game. Web search only (registries not reachable 
 - **Verdict: 🟢/🟡 usable.** No collision found; mind "Framed" (expectation, not law) and keep the board a film strip,
   not a square grid. Registry check (TÜRKPATENT / TMview / USPTO, class 9 / 41) still the owner's step before 1.0.
 
-## Shipped lists (Developer B, 3 Nov 2026, Five Frames 0.9.95.5)
-- **English guesses:** ENABLE `enable1.txt` (copy from github.com/dolph/dictionary), every word of exactly five
-  letters a–z: 8,636. **Answers:** 977 common words picked by hand (our selection, checked to be in ENABLE; no
-  plurals, no grim words such as death / abuse / tumor). 12dicts could not be downloaded from the cloud session, so it
-  was not used.
-- **Turkish guesses:** Zemberek-NLP `master-dictionary.dict`, five-letter lemmas without proper nouns, abbreviations
-  or punctuation, lower-cased the Turkish way, â / î / û written a / i / u: 4,793. **Answers:** 1,606 common words
-  picked by hand from that list (lemmas only, "no suffixes"; grim words left out).
-- Both ship in the game's lazy chunks (`packages/shared/src/games/words/`; the Five Frames Duel server reads them too), answers as base-36 positions (not plain text).
-  Credits and the full Apache 2.0 text: `apps/web/public/third-party-notices.txt`, linked from the game.
-- To change a list: edit the picks, regenerate the two modules (all guesses glued, answers as positions). Changing the
+## Shipped lists (Game Studio, 15 Nov 2026, card GMP; first lists by Developer B, 0.9.95.5)
+Built by `scripts/words/build-words.py` (downloads the sources into a cache outside the repo; only the final modules,
+the build script and our pick / exclude files are committed). Sources must be open: MIT, Apache, BSD, CC0 or CC BY
+with credit; hunspell-tr (MPL 2.0) was looked at and left out, the Leipzig corpora could not be reached from the cloud.
+- **English guesses (11,509):** ENABLE (public domain) ∪ SCOWL 2020.12.07 sizes ≤ 80 (Kevin Atkinson's permissive
+  licence, notice kept), five letters a–z. **Answers (2,052):** the 977 shipped before (`en-answers-v1.txt`) ∪ SCOWL
+  english / american words of size ≤ 35 that are not plurals, past forms, comparatives or -ing forms of another word,
+  and not proper nouns ∪ `en-extra.txt` (hand picks), minus `en-exclude.txt` (the eye review: names, brands, slang,
+  grim, body, religious words, leftover inflections) minus LDNOOBW.
+- **Turkish guesses (15,057):** Zemberek `master-dictionary.dict` (Apache 2.0): five-letter lemmas (no proper nouns,
+  abbreviations or punctuation; Turkish lower case, â / î / û → a / i / u) plus the five-letter forms we make from every
+  noun, adjective and verb lemma with its marks (Voicing, NoVoicing, LastVowelDrop, Doubling, InverseHarmony): plural,
+  locative, -lı / -sız / -cı / -ca, accusative, dative, possessives, genitive; verb stem, -dı, -mış, -sın, -ma(k),
+  -sa, -an, -ın. **Answers (2,235):** the 1,606 shipped before (`tr-answers-v1.txt`) ∪ `tr-extra.txt` (643 lemmas picked
+  by eye from the 3,039 five-letter lemmas not yet used: common and clean only) minus `tr-exclude.txt` (insults,
+  alcohol, weapons, religion) minus LDNOOBW tr.
+- `words.test.ts` checks both: ≥ 10,000 guesses, ≥ 2,000 answers, letters of the alphabet, Turkish lower case, every
+  answer a guess, no answer in `words/blocked.ts` (LDNOOBW five-letter words + our excludes, test only).
+- Both ship in the game's lazy chunks (`packages/shared/src/games/words/`; the Five Frames Duel server reads them too),
+  answers as base-36 positions (not plain text). Credits, the SCOWL notice and the full Apache 2.0 text:
+  `apps/web/public/third-party-notices.txt`, linked from the game.
+- To change a list: edit the pick / exclude files, run `python3 scripts/words/build-words.py`. Changing the
   answers changes the daily word for everyone on the same day (everyone gets the new list together after a deploy).

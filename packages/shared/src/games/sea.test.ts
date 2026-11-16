@@ -3,6 +3,7 @@ import {
   SEA_RULES,
   around,
   botShot,
+  seaShipsVisible,
   checkFleet,
   fleetSunk,
   knownEmpty,
@@ -146,5 +147,28 @@ describe('sea battle messages', () => {
     expect(parseSeaMessage('not json')).toBeNull();
     const hello = parseSeaMessage(JSON.stringify({ t: 'hello', v: 1, name: 'Alex', cid: 'c'.repeat(32), extra: 1 }));
     expect(hello).toEqual({ t: 'hello', v: 1, name: 'Alex', cid: 'c'.repeat(32) });
+  });
+});
+
+// GMP (owner, 15 Nov 2026): watchers see every ship live; a player only their own; everyone at the end.
+describe('who sees the ships', () => {
+  it('a player sees only their own sea\'s ships while the game goes on', () => {
+    expect(seaShipsVisible(0, 0, false, false)).toBe(true);
+    expect(seaShipsVisible(0, 1, false, false)).toBe(false);
+    expect(seaShipsVisible(1, 0, false, false)).toBe(false);
+  });
+  it('a seated player never gets the watcher view, even if marked as a watcher by mistake', () => {
+    expect(seaShipsVisible(0, 1, true, false)).toBe(false);
+  });
+  it('a watcher (no seat) sees every ship live', () => {
+    expect(seaShipsVisible(-1, 0, true, false)).toBe(true);
+    expect(seaShipsVisible(-1, 1, true, false)).toBe(true);
+  });
+  it('a connection that has not said hello yet sees no ship', () => {
+    expect(seaShipsVisible(-1, 0, false, false)).toBe(false);
+  });
+  it('everyone sees every ship once the game is over', () => {
+    expect(seaShipsVisible(0, 1, false, true)).toBe(true);
+    expect(seaShipsVisible(-1, 1, false, true)).toBe(true);
   });
 });

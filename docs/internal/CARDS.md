@@ -7,9 +7,8 @@ owner decide whether they become Ready. Roles, who edits what and how the owner 
 on now: `ROADMAP.md` "Focus: now / next / frozen". The owner's tick view is the Planner's board Artifact (`CLAUDE.md` §2).
 
 **A finished card leaves this file in the same PR that writes its `Done:` line**: it moves verbatim to
-`docs/internal/archive/cards-done.md` (DOCS2, 11 Nov 2026; that file also holds the old header, the owner's test rounds
-1 and 2, the run order to the test round and every card finished before then). CI (`scripts/check-docs.mjs`) proves no
-card heading or backticked identifier of the board is lost in a move.
+`docs/internal/archive/cards-done.md` (DOCS2, 11 Nov 2026). CI (`scripts/check-docs.mjs`) proves no card heading or
+backticked identifier is lost in a move.
 
 Card format:
 
@@ -28,6 +27,7 @@ Card format:
 | A | 🔨 Developer: room / site | the site, the room page and the room server, their tests and reference sections | `STATUS.md` task queue "Lane A" |
 | B (+ B2) | 🔨 Developer: players, Shorts, extension, ops | players, Shorts, the extension, CI and the shared test tooling | QA1 below |
 | W | 🔨 Developer: game windows (opened by the Planner when needed) | `apps/web/src/games/stage.ts`, game-window head / drag / fit, `catalog.ts` sizes, the game-window rules in `room.css` | idle (0.9.97.121 live) |
+| Games 2 | 🎮 Game Studio 2 (opened 15 Nov 2026) | the Quiz and Window Garden files only (QZ2, WG2) | its PRs |
 | Games | 🎮 Game Studio | the games' code, art, sounds, tutorials, server objects, `docs/internal/design/games/` | `STATUS.md` task queue "Game Studio" |
 | — | 🛡️ Security · 🔎 Research · 🎨 Design | their own docs; cards go to Proposed | — |
 
@@ -35,292 +35,278 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## In progress
 
-(none written on the board; the lanes' handoffs are in `STATUS.md` "Task queue")
+(see `STATUS.md` "Task queue")
 
 ## Ready
 
-### SRC1. A "⠿ Sources" picker beside 🔍 Search: YouTube, Vimeo, search the web (owner, 14 Nov 2026; lane A)
-- Why: the owner wants people to find a video without leaving Sidelit. Research (`research/competitors-how.md`) checked
-  which sources are legal. The owner picked only these three: "only Vimeo, YouTube and search the internet; no archive
-  stuff". Voice/camera servers (SFU) stay for later.
+### CH1. PRIORITY: chat history kept until the room is deleted (owner, 15 Nov 2026; lane A, right after SH1 item 0/1)
+- Why: the owner and a friend saw their chat "deleted at random". The server keeps only the last 50 messages
+  (`CHAT_HISTORY = 50` in `apps/server/src/room.ts`), so older ones vanish, after a reload or for someone who joins. A
+  one-time room is wiped 24 h after it empties, a saved one after 30 days; that part stays.
 - What:
-  - A ⠿ button beside the search box (computer room and the phone's 🔍 Search tab) opens a small grid of three tiles.
-    The chosen source sticks per device.
-  - **YouTube:** today's search (Data API), unchanged.
-  - **Vimeo:** results from the Vimeo API (title, thumbnail, length) through a Worker route that holds the
-    `VIMEO_TOKEN` secret. Never call Vimeo from the browser with the token. Rate-limit the route like the other search
-    routes. Results play in our existing Vimeo player; only embeddable videos are shown.
-  - **Search the web:** opens a new browser tab with a general web search for the typed words (one search engine, no
-    "video site" list, no site filters). On return, a "Paste the link" hint focuses the box; a pasted link plays as it
-    does today. No in-app browser and no page scraping.
-  - No piracy site is named, suggested or special-cased anywhere. We stay a neutral sync tool.
-  - Texts in `i18n.ts` and `i18n-tr.ts`; CSP gets only the hosts actually needed (Vimeo API through the Worker, so
-    likely none in the page).
+  - Keep the chat until the room is deleted: at least the last 1,000 messages. Older ones are dropped quietly only past
+    that cap ("compressed": their images and reactions go first, then the oldest texts).
+  - A Durable Object value is capped at 128 KiB, so store the chat in pages (e.g. 100 messages per key) or in the
+    object's SQLite storage. Never one big array.
+  - On join, send the last 100; scrolling up loads older pages on demand. Rate-limited, `readCapped` rules apply.
+  - Confirm that a deploy or a restart never clears the chat (the storage reload in the constructor). If something
+    else wiped it, say what.
+  - Images keep their current lifetime (IMG2). Message deletion (MSG1) works on the paged store.
+  - The privacy page: chat is kept until the room is deleted (both languages, dated line).
 - Done when:
-  - Each tile works on a computer and on a phone, in EN and TR.
-  - Vimeo search returns and plays.
-  - With the Vimeo secret unset, the Vimeo tile shows "not available yet" and nothing breaks.
-  - Search the web opens one tab with the words in it.
-  - Test Lab hook `sources.state` reports the chosen source and the last search.
-- Tests: Worker unit tests for the Vimeo route (validation, cap, rate limit, no token leak); e2e search → play with a
-  stubbed Vimeo answer; phone and computer harness for the grid; `check-texts`.
-- Owner's step (when lane A asks): a free Vimeo developer app and its access token, saved in KeePass and added as a
-  secret. The Planner gives the exact entry name and where to put it at that moment.
-- Owner's pick: "only Vimeo, YouTube and search the internet" (Planner chat, 14 Nov 2026).
+  - 1,200 messages in a room: a reload shows the last 100, and scrolling reaches the 1,000th.
+  - The chat survives a deploy (a harness restarts the object) and an empty room within its lifetime.
+  - Test Lab hook `chat.history` (count, pages).
+- Tests: room server unit tests (paging, cap, compaction, restart), e2e reload + scroll back, the owner's hand test.
+- Owner's pick: "don't delete chat unless the room is deleted; maybe compress past some count; you decide" (Planner
+  chat, 15 Nov 2026).
 
-### PH1. An app-like phone room: bottom tabs, one input row, chat sideways, join sound in step (owner, 13 Nov 2026; lane A)
-- Why: on a phone, everyday actions hide behind the ＋ and ⋯ sheets (search a video is 2 taps away, games 3), the
-  sheets repeat what Settings already has, and the join sound comes out of sync. The owner asked which phone features
-  are needed, showed a competitor app's phone layout ("bottom tabs, one input row; do it our own way") and asked for a
-  design pass ("more basic, fast, matching the PC").
-- Spec: `docs/internal/design/phone-room.md` (Design, PR #422), **option A**, picked by the owner. Phone layout only
-  (`html.ph-room`); computers and tablets are unchanged, and no feature code is deleted (things move or hide).
+### SR2. A search result plays on a click; a clear "＋ Queue" button adds it (owner, 15 Nov 2026; lane A, with CH1)
+- Why: today a click on a search result's row adds it to the queue, and people expect it to open; "▶ Play now" is the
+  only way to play.
 - What:
-  - **Bottom tab bar** (`role=tablist`, the computer's `.tab` look): 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me. Four
-    panels, no router.
-  - **Room tab:** the video, then a strip with the faces (tap → People + Invite) and 📌 Pin · ⏩ Speed · 🔄 Sync ·
-    ⏭ Skip, then the chat with activity lines inline in italics, then ONE input row: 🔗 Invite · box · 🎙 · 📷 · 😀.
-    ➤ swaps in for 🎙📷 while typing; 😀 holds the reactions and 🖼 Send an image. The ＋, ⋯ and Add-a-video sheets go.
-  - **Search tab:** our own search / link box and results with thumbnails, plus "Up next" (the queue). It borrows
-    `#media-form` and calls the same code as `openAdd()`.
-  - **Games tab:** the games hall as a list (tables, then side games).
-  - **Me tab:** Profile + Settings as grouped cards, each row a toggle or ›, with a one-line help text. It includes
-    Save the room, Room rules, Film time (host), Theme, Sound & camera, Language, Help, Privacy and Terms.
-  - **The owner's earlier picks stay, inside A:**
-    - the 🧪 Sync test is gone from the phone (the Test Lab keeps it);
-    - Recap only in Me;
-    - the empty room says "🔍 Search a video" (goes to the Search tab) and "🔗 Invite";
-    - sideways with a video: video + a column of ⛶ Watch fullscreen, 💬 and 🎙, with the tabs and input row hidden;
-    - Shorts upright: the 9:16 video fills, and the feed becomes a 💬 sheet with a count;
-    - the phone home page has no extension box.
-  - **Fast:** no blur, shadow or grip on sheets; one 44 px radius-10 button shape; `room.css`'s phone section gets
-    smaller (the md's rule table: about 26 rules out, 22 in).
-  - **Join sound in step:** today `playIntro()` runs on the server's `welcome`, and `intro-sound.ts` makes a fresh
-    `AudioContext` that waits at most 250 ms for `resume()`, so on a phone the sound comes late or not at all.
-    - Unlock or reuse the shared context on the "Enter room" tap.
-    - Start the picture and the sound from one clock: once the context is running, or the picture alone, never the
-      sound late.
-  - Nothing goes over the YouTube player.
-- **Phone essentials** (owner, 13 Nov 2026, later the same day: "make the phone version more optimized and basic,
-  many features can go; later we point to the app"). The Planner decided the list:
-  - The phone keeps the essentials:
-    - the video in sync, plus Search and Up next;
-    - chat with images and reactions;
-    - 🎙 and 📷 (flip included);
-    - Invite and People (the host's kick and ban stay);
-    - 📌 Pin, 🔄 Sync and ⏭ Skip;
-    - the Games tab (tables and side games);
-    - the Shorts view's bar.
-  - These leave the phone (still on computers and tablets):
-    - ⏩ Speed (this overrides the earlier "kept" note);
-    - the camera size presets;
-    - ✨ Recap and its history;
-    - ⏰ Film time (setting it; a set time still shows as the banner);
-    - editing 👑 Room rules (the rules still apply);
-    - font choice and picture themes (the colour themes stay);
-    - the Shorts ⋯ ♾ Feed and 🔁 Loop;
-    - the first-time tips (the tabs make them unnecessary);
-    - starting a screen share.
-  - The Me tab is only: name + avatar, theme colour, language, sounds on/off, "check before joining voice", Save the
-    room, Help, Feedback, Privacy, Terms.
-  - **Note for phones and tablets.** It shows on touch devices without a mouse (`device.ts`, no sniffing): one small
-    muted line under "Enter room" on the join card, and under "Create room" on the home page. It is not a pop-up and has
-    no close button. Text (`i18n.ts` / `i18n-tr.ts`):
-    - EN: "Sidelit is made for computers. Phones and tablets get the essentials; an app for them is on the way."
-    - TR: "Sidelit bilgisayar için tasarlandı. Telefon ve tablette temel özellikler var; onlar için uygulamamız
-      yolda."
-    - When the app exists, the same line becomes the link to it (PWA1 / later Play).
-- Done when:
-  - On a phone each tab is one tap, and the four tabs fit at 360 px in Turkish.
-  - The input row works: typing swaps in ➤, 😀 sends a reaction and an image.
-  - Search adds and plays a video.
-  - The Me tab holds exactly the essentials list; the phones-and-tablets note shows on touch devices only.
-  - Sideways and Shorts behave as in the spec.
-  - The intro sound starts with the picture or not at all.
-  - The Test Lab hook `phoneRoom.state` reports the tab, the input-row state and the visible controls.
-  - Nothing changes on a computer or a tablet.
-- Tests:
-  - `scripts/harness/phone/run.cjs` rewritten with text-based selectors for the tabs and input row.
-  - `shorts-rail`, `room-more`, `settings`, `phone-sideways`, `first-tips`, `check-texts` and the size budget.
-  - First look: `shots.cjs` phone and phone-land, EN + TR, Night + Matinee + one scene theme.
-  - Owner's hand test: the phone room on his own phone.
-- Owner's pick: council + Planner review and the owner's answers in the Planner chat, 13 Nov 2026 (removals: the
-  duplicates and the sync test; promote: empty-room buttons, chat sideways, no extension box on the phone home page,
-  Help); layout option A of `phone-room.md`, 13 Nov 2026. Kept on purpose: 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save
-  room.
+  - A click or tap anywhere on a result row plays it now, the same as "▶ Play now".
+  - Each row gets a small, clearly labelled **"＋ Queue"** button (icon and word, "＋ Sıraya" in Turkish, with a
+    tooltip and aria-label). It adds the video to the queue without playing, with a short "Added to queue" confirmation.
+  - The same rule for every source list (YouTube, Vimeo, Discover, feeds) and on the phone's Search tab. Targets
+    ≥ 44 px on a phone. Keyboard: Enter plays; the button is reachable with Tab.
+- Done when: a click plays, "＋ Queue" queues, and both are clear in EN and TR on a computer and a phone. Test Lab hook
+  `search.results`.
+- Tests: the sources and search harnesses, a phone harness, `check-texts`.
+- **Also in SR2 (owner, 15 Nov 2026): a ♪ TikTok tile in "Where to search".** TikTok gives no search API, so the
+  tile opens TikTok: a new tab on a computer, the TikTok app on a phone. It says "Copy a video's link and come back".
+  When the person comes back, a big "📋 Paste and play" button appears; it reads the clipboard after a tap and asks
+  first if needed. A pasted TikTok plays in the Shorts view, and several links go to the queue. The tile reads
+  "TikTok" in plain text with a generic music-note icon: no TikTok logo without permission (Research
+  `tiktok-shorts.md` §3). No scraping and no extension involvement.
+- Owner's pick: his screenshot and message (Planner chat, 15 Nov 2026); the TikTok tile, option A.
 
-### PH2. Games on a phone: played inside the Games tab, upright only (owner, 13 Nov 2026; W + Game Studio, after PH1)
-- Why: the owner wants the phone's games to live in the bottom bar's 🎮 Games tab: pick an idle game (Snack Bar, Window
-  Garden, Five Frames) or an online table and play it right there, upright. His words: "every game fits upright; none
-  has a landscape mode; nothing happens when the phone is turned."
+### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
+- Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
+  every room. The video and Shorts feeds (SH2), search and the Sources picker all depend on it. YouTube grants more
+  quota for free after its "YouTube API Services Audit and Quota Extension" review. The owner: "important and urgent".
 - What:
-  - **W (stage, `games/stage.ts` + the game-window rules in `room.css`):**
-    - On a phone (`html.ph-room`) a game opens **inside the Games tab panel**: the video stays on top, and the tab bar
-      stays at the bottom. It no longer takes the full screen with a small video in its head.
-    - Leaving the tab keeps the game running (a dot on 🎮); coming back shows it again.
-    - Tables still pause the video for everyone with the note.
-    - The head shrinks to one row: name, "?", Leave / Close in ⋯.
-    - **Turning the phone does nothing while a game is open.** No landscape game layout and no sideways room layout;
-      the upright column stays, centred and scaled to the height.
-    - When the game closes, the room's normal sideways behaviour comes back.
-  - **Game Studio (every game's own layout):**
-    - Every game (Classics, Sea Battle, Draw & Guess, Quiz, Last Heart, the Duel, Snack Bar, Window Garden, Five
-      Frames) has one upright layout that fits the Games tab panel at 360×640 and up, without scrolling (only lists
-      that grow scroll).
-    - Every game's landscape-only phone rules go (`html.sideways` game rules).
-    - The 44 px phone targets and the 13 px text floor hold.
-  - Computers and tablets are unchanged.
-- Done when:
-  - On a phone, every game opens and plays inside the Games tab with the video above and the tabs below.
-  - Turning the phone with a game open changes nothing.
-  - games-sweep passes at phone sizes for every game.
-  - Test Lab hook `phoneGames.state` reports the tab, the open game and its fit.
-- Tests:
-  - `game-window-head` / `state-matrix` get a phone Games-tab section and a "rotate with a game open" check.
-  - games-sweep and game-proportions run at 360×640 and 390×844.
-  - Owner's hand test: Snack Bar and one table with a friend on his phone, turning it mid-game.
-- Owner's pick: "games in a bottom tab, upright; no landscape mode; nothing happens when the phone is turned" (Planner
-  chat, 13 Nov 2026).
+  1. **Research** (first, short): the current audit form and its requirements, how long reviews take, what gets
+     rejected (Developer Policies, Required Minimum Functionality, branding, privacy, data storage limits), and whether
+     the workers.dev address is acceptable or the own domain should come first. Write `research/youtube-audit.md`.
+  2. **B2** (the pack):
+     - a compliance self-check against the Developer Policies, with screenshots: no overlays on the player, YouTube
+       branding, the privacy policy's YouTube section with the Google Privacy Policy link, the API data we store and
+       for how long, and deletion;
+     - fix anything that fails;
+     - a quota-need estimate from our own usage numbers (QUOTA3 counters);
+     - the form's answers drafted in English.
+  3. **Owner:** submits the form from the Google Cloud project that owns `YOUTUBE_API_KEY` (his Google account). The
+     Planner gives him the click-by-click steps with the drafted answers.
+  3b. **Owner's picks (15 Nov 2026):**
+     - The official YouTube logo, linked to YouTube, shows next to our YouTube result lists (search, Discover, feeds),
+       never over the player. This replaces the earlier "text only" pick, for the audit. B2 builds it; Design checks
+       the size and spacing rules.
+     - The own domain comes first: `sidelit.app` (the owner buys it on Cloudflare; then `custom-domain.md`).
+  4. Meanwhile the code stays quota-light (SH2 rules: cheap calls first, cache searches, no search per video).
+- Done when: the audit pack is in `docs/internal/youtube-audit/`, every self-check item passes, and the owner has
+  submitted. Later: the granted quota is recorded in `costs.md`.
+- Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
+- Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
 
-### SAFE1. Report a person and "block for me" in the room (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; lane A, after PH1)
-- Why: a room has no way to report someone or to stop seeing one person's messages. This matters for safety at 1.0,
-  and app stores require it (Apple 1.2). The owner said "yes, before 1.0".
+### SH1. Shorts view fixes: the way back on a phone, the first seconds, who is talking (owner, 15 Nov 2026; lane A)
+- Why: three things the owner found in the Shorts view.
 - What:
-  - The person menu (computer) and the person sheet (phone, PH1's People) get two rows: **🔇 Block for me** and
-    **🚩 Report**.
-  - **Block for me** is local only: that person's chat, reactions and images are hidden for you. It is kept per room
-    (`me:<room>` style), reversible from the same menu, and sends nothing to the server. Your own messages still reach
-    them.
-  - **Report** sends a short form (reason chips + optional text, `cleanText`) through the existing `POST /api/feedback`
-    path, labelled `report`. It carries the room id, the reported person's shown name, the last few chat lines they
-    sent and a time. It never sends `cid`, IP or anything hidden. The server rate-limits it like feedback.
-  - Hosts already have kick and ban; Report links to `terms.html#abuse` for the 72-hour process.
-  - **Privacy:** reports are new data. `privacy.html` gets a dated "Changes" line in both languages (what a report
-    holds, where it goes, how long it is kept).
+  0. **Urgent, the computer too (owner, 15 Nov 2026 evening):** the owner finds no "📱 Shorts view" button on a
+     computer either after "↩ Room view". Today `#shorts-enter` sits in the toolbar under the video and shows only while
+     a Short plays. Find why he can't see it (hidden layout, toolbar folded, SIMP1) and make the way back obvious on
+     every device. Ship this first, alone if needed.
+  1. **The way back on a phone:** after "↩ Room view" a phone has no way back into the Shorts view. `.shorts-enter` is
+     hidden in `html.ph-room`, and `shortsOff:<room>` stays in session storage. While a Short plays, give the phone a
+     clear "📱 Shorts view" entry in the Room tab (the strip under the video), and keep the computer's button.
+  2. **The first 2–3 seconds:** when the next Short starts by itself, the owner misses its first 2–3 seconds. Find out
+     why (preload, `command()` seek, the start being swallowed, the late-join offset) and fix it, so every viewer sees a
+     Short from 0:00 together. Add a `sync-engine.test.ts` scenario if the sync engine is involved.
+  3. **Who is talking:** in the Shorts bar's faces (and the phone strip's faces), a person who is speaking in voice
+     gets a visible ring around their round avatar (a green glow and a slight grow), driven by the existing voice
+     level.
+     - It respects reduced motion (ring only, no grow).
+     - It shows for yourself too, so you know your mic is going out.
+  4. **TikTok, small (Research `research/tiktok-shorts.md` §6):**
+     - Accept short `vm.`/`vt.tiktok.com` links when pasting many links; the Worker resolves them one by one.
+     - When a TikTok plays, the ♾ window says that TikTok has no public feed and points to pasting or sharing links.
+     - A harness swipes through a queue that mixes YouTube Shorts and TikToks.
+     - No TikTok search or feed: TikTok offers none legally.
 - Done when:
-  - Block hides that person's messages for you only, survives a reload and can be undone.
-  - A report reaches the private feedback repository with the fields above and no hidden ids.
-  - It is rate-limited.
-  - The privacy page is updated in TR and EN.
-  - Test Lab hook `safety.state` lists the blocked people and the last report result.
-- Tests:
-  - Server unit test for the report validation and its cap.
-  - e2e: block, then a message from the blocked person is hidden for one client and shown for another.
-  - The help harness checks that both privacy languages match.
-  - `check-texts`.
-  - Owner's hand test: block and report a friend in a real room.
-- Owner's pick: "Yes, before 1.0" (Planner chat, 13 Nov 2026).
+  - On a phone you can leave and re-enter the Shorts view any number of times.
+  - An auto-advanced Short starts at 0:00 for everyone (a harness measures `currentTime` at start).
+  - A speaking avatar lights up in the Shorts bar on a computer and a phone.
+  - Test Lab hook `shorts.state` reports the view, the start offset and the speakers.
+- Tests: the shorts-rail / shorts-door harnesses, a phone harness for the way back, a unit scenario for the start, and
+  the owner's hand test.
+- Owner's pick: his three points (Planner chat, 15 Nov 2026).
 
-### PWA1. A better home-screen app (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; B2, after PH1)
-- Why: the owner picked "the web app first". It is free and needs no store; Google Play comes after 1.0 and the own
-  domain, and iOS only if Play shows demand.
+### SH2. Feeds: ♾ Shorts and ▶ Videos, reachable from the room, steerable, no repeats (owner, 15 Nov 2026; B2, after SH1)
+- Why: the infinite Shorts feed only lives inside the Shorts view, its window is confusing, and a new feed brings back
+  Shorts the room has already watched.
 - What:
-  - `manifest.webmanifest`:
-    - `lang: en` with an English name and description;
-    - `id`, screenshots (phone + wide);
-    - shortcuts ("Create room");
-    - a `share_target` so a YouTube / video link shared from another app opens Sidelit ready to add it.
-  - **Wake lock while a video plays**, released on pause or leave (a small module; one call from the room, agreed
-    with lane A).
-  - **iOS "Add to Home Screen" hint:** once, on the home page, iOS Safari only, dismissible, plain words.
-  - Check standalone behaviour: the back button, the theme colour, opening invite links in the installed app.
-  - The service worker rule stands: it never caches files.
+  1. **Reach it from the normal room:** the Queue ("Up next" / Sıra) shows the active ♾ feed as a row (its name and
+     what it follows). It can be paused, resumed and steered there without entering the Shorts view.
+  2. **A simple, clear ♾ window:** one screen with the active feed on top and plain choices. Steer the running feed
+     instead of making a new one:
+     - "Continue from this channel";
+     - "Same topic, other country";
+     - "More like this one";
+     - "Change the topic".
+     One line explains each; changes apply to the next Shorts without a restart.
+  2b. **▶ Video feed (owner, 15 Nov 2026 evening):** the same idea for normal YouTube videos. The Queue gets two
+     buttons, "♾ Shorts feed" and "▶ Video feed". A video feed starts from:
+     - "like this video" (a pasted link or the playing one);
+     - "this channel" (newest / random / most viewed);
+     - "popular now" (country and category);
+     - "a topic".
+     It is steerable the same way.
+     - **Quota-aware:** `search.list` costs 100 units of the 10,000 a day, so prefer the cheap calls: `playlistItems`
+       of a channel's uploads, the `videos` `chart=mostPopular` with region and category, `videos.list` (1 unit each).
+     - Cache per room and per query in the Worker.
+     - Never call search per video.
+     - Planner's extra ideas, for the studio to pick from if cheap: length filter (short / medium / long), "two
+       channels mixed", continue a pasted playlist, "room votes between 3 next videos" (reuse voting), "each person's
+       turn".
+  3. **No repeats:** the room remembers the Short ids it has played, on the room's server object, ids only. A new or
+     steered feed skips them.
+     - A one-time room forgets them when it is deleted.
+     - A saved room keeps the last 2,000 ids for 30 days.
+     - The privacy page notes it in both languages if needed (ids of public videos, no personal data).
 - Done when:
-  - Lighthouse PWA "installable" is green.
-  - A link shared to Sidelit from the Android share sheet opens the add box with it.
-  - The screen stays on while playing in the installed app.
-  - The iOS hint shows once.
-  - Test Lab hook `pwa.state` reports installed, wake lock and share target.
-- Tests:
-  - The manifest is checked in `checks` (JSON fields, English).
-  - A harness for share-target URL handling.
-  - Owner's hand test: install on his Android phone, share a YouTube link to it, watch with the screen on.
-- Owner's pick: "Web app first" (Planner chat, 13 Nov 2026). Later and his to decide: Google Play ($25 once, after the
-  domain), push notifications (new data), the iOS store ($99 a year).
+  - The feed is visible and steerable from the Queue on a computer and a phone.
+  - Each steer changes the next Shorts.
+  - A new feed doesn't replay watched ids (unit + e2e).
+  - The memory is wiped with the room.
+  - Test Lab hook `feed.state` (active feed, steer, remembered count).
+- Tests: room server unit tests for the memory and its caps, e2e feed → steer → no repeat, the shorts harnesses, and
+  the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026); the memory length is the Planner's call.
 
-### QA1. Faster CI and fewer bugs reaching the owner (owner, 10 Nov 2026: "why do tests take so long, weren't we cutting them? and how are there so many bugs with this many tests?"; B2, ops)
-- Why: a PR's CI takes ~15–20 min (the `site` job ~15 min, ~4–5 min of it installing), each main run (deploy + live e2e) ~25 min, and
-  releases go one after another, so a small fix needs ~45 min to be live. Harnesses grew with every card. Meanwhile the
-  owner still finds bugs in his first minutes: the checks test what each card named, not what a person sees in states
-  nobody listed (side panel closed, YouTube room, a 1366 laptop, real mouse hover), and they never judge "looks right".
+### VC1. Voice: a deafen button, and the YouTube volume slider (owner, 15 Nov 2026; lane A, after SH1)
+- Why: the owner wants a Discord-like "deafen" in voice, and on YouTube he can't drag the volume, because one click
+  jumps it.
+- What:
+  1. **🎧 Deafen:** in voice, next to 🎙, a headphones button turns off what you hear from voice (everyone's voice,
+     the stream's sound if any). It also mutes your own mic, like Discord, and shows the state to others (a crossed 🎧
+     on your face). It is kept per room over a reload. The film's sound is untouched.
+  2. **Volume dragging:** find why dragging the volume on a YouTube video doesn't work and one click jumps it. Check
+     our rail's `#dock-vol`, an overlay or pointer capture over YouTube's own slider, and touch vs mouse. Make it drag
+     smoothly on a computer and a phone. Never put anything of ours over YouTube's player.
 - Done when:
-  1. **Speed:** a measured table of every CI job and step (median of the last 10 runs) in `docs/internal/architecture/`
-     (CI section); install time cut (cache `node_modules` / Playwright deps keyed on the lockfile); jobs rebalanced so the
-     longest PR job is ≤ 10 min; nothing skipped, no `paths-ignore` (CLAUDE.md), no check weakened. Report before → after.
-  2. **State matrix for game windows and the room's right column:** one harness that opens every game in each allowed
-     place × {side panel open, closed} × {YouTube, file, no video} × {1366, 1920, tablet} and checks: nothing cut off,
-     nothing over a YouTube player, no free window over the video unless dragged, every head button visibly does
-     something. Real-mouse checks (hover, drag, resize) run headful under `xvfb-run`.
-  3. **A "first look" review before merging any UI change:** the PR attaches screenshots at 1366, 1920, tablet and phone
-     of every screen it touched, and a fresh reviewer (a subagent given only the screenshots + CLAUDE.md product rules,
-     not the developer's reasoning) lists what looks wrong; the developer fixes or answers each line in the PR. Written
-     into CLAUDE.md §9 by the Planner once B2 has the tooling (`scripts/shots.mjs` or similar).
-  4. **Fewer, fuller releases:** the Planner batches small fixes into one release per lane where it can (less waiting
-     on deploy + live e2e); no change for B2.
-- Tests: the new harness in CI; CI timings before/after in the PR.
-- Owner's pick: none needed (technical).
+  - Deafen silences voice for you only, shows to others, and survives a reload.
+  - Volume drags smoothly.
+  - Test Lab hook `voice.deafen`.
+- Tests: voice e2e (deafen state), a harness for the volume drag, the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+### MSG1. Delete a chat message for everyone; the host can delete others' (owner, 15 Nov 2026; lane A, after VC1)
+- Why: there is no way to take back a message.
+- What:
+  - **Delete your own message:** in the message's menu (hover ⋯ on a computer, long-press on a phone), "🗑 Delete for
+    everyone". It asks once. The server removes the text, any image and its reactions from the room's history and tells
+    every client. In its place everyone sees a muted line: "Alex deleted a message".
+  - **The host deletes anyone's message:** the same menu item on others' messages, only for the (acting) host. The line
+    reads "The host deleted Sam's message" (or "Alex (host) deleted Sam's message").
+  - Private messages: the sender can delete; the line shows only to the two people.
+  - **Server rules:** validate the message id, check it is the sender's or the caller is host, and rate-limit. The
+    deleted content is gone from the stored history (not just hidden), and replies or pins that quote it show "deleted
+    message". Old clients ignore the new message type (optional field, no protocol bump unless needed).
+  - Texts in `i18n.ts` / `i18n-tr.ts`.
+  - The privacy page notes that deleted messages are removed from the room's history (both languages).
+- Done when:
+  - Your own and the host's deletes work for everyone, live and after a reload, with the right line.
+  - A non-host can't delete others' messages (server-enforced, unit test).
+  - Test Lab hook `chat.delete`.
+- Tests: room server unit tests (permissions, history removal, rate limit), e2e with three clients (sender, host,
+  other), phone long-press harness, the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+### EC1. "Video ended" card in the middle of the screen, not in the chat (owner, 15 Nov 2026; lane A, small, after SR2)
+- Why: with YouTube the "Video ended / ▶ Start next / Close" card sits in the chat panel (5B, 0.9.92.9), where it reads
+  like a chat message and is easy to miss. The owner wants it in the middle of the screen, in a normal clean design.
+- What:
+  - `ui/end-card.ts` `showNextCard`: the card opens as a **centered dialog** over the room view (the same dialog kind as
+    Settings: `role="dialog"`, a light dim behind it, focus on "▶ Start next", Esc / Close / a click outside closes it,
+    the 60 s auto-close stays). Same place for YouTube, video files, fullscreen and the extension overlay; take
+    `.end-card` out of `NOTICES` / `placeNotices` in `room.ts`.
+  - Design: "Video ended" small and muted, the video's title in plain text (at most 2 lines, then …; the link only as
+    a small ↗ next to it, no dotted underline), the two buttons side by side and full width on a phone (≥ 44 px).
+    Fits at 1366, 1920, tablet and phone without scrolling; Design gives it one look before merge.
+  - YouTube RMF: the card only appears after the video has ended, is a page dialog (not a layer attached to the
+    player), and never covers the player while it plays. The Shorts view keeps its own place (BH12).
+- Done when: the card shows centered on computer and phone, YouTube and a video file, normal and fullscreen; Close,
+  Esc, outside click and Start next work; Test Lab hook `endcard.show`; shots reviewed (QA1).
+- Tests: the room harness that covers the end card, `scripts/shots.cjs` for the end card at the 4 sizes.
+- Owner's pick: his message with a screenshot (Planner chat, 15 Nov 2026).
+
+### CI3. Release train: several finished PRs go live together, without the one-by-one wait (owner, 15 Nov 2026; B2, after #452)
+- Why: the owner asked why every release waits on so many tests when most of them find nothing. The tests stay (on
+  15 Nov they caught a Snack Bar text that fell under 11 px, which main's push run had let through). What costs is
+  the queue: each PR is updated from main, runs the full PR CI again (~8.5 min), merges, then waits for its own
+  deploy + live e2e (~11 min) before the next one may start, so three ready PRs take about an hour.
+- What:
+  - **One release for a batch:** PRs that are green merge as soon as they are green (no "update from main and re-run"
+    when the files don't overlap); main's run deploys and runs the live e2e once for whatever has landed. The
+    version and `CHANGELOG.md` block cover the batch (one fourth-part number per batch; the Planner assigns it).
+  - **Main's push run checks what the PRs skipped:** the job that failed on 15 Nov (games-more) never runs on main, so
+    a regression from a combination of two PRs or a date-dependent test reached main unseen. Run the jobs the merged
+    PRs touched once on main before deploying (or a short nightly full run), so main never goes red silently.
+  - **No date- or time-dependent results:** a test that depends on today's date (Snack Bar daily special, seasonal
+    themes, schedules) forces every variant instead (lane A's per-special harness from #447 is the model).
+  - **Keep:** every gate in CLAUDE.md §7 "CI" and §9 (live e2e green before the tag, the canary gate, no
+    `paths-ignore`). Docs-only PRs keep skipping the heavy jobs.
+- Done when: three ready code PRs go live in ≤ 25 min from the first merge (measured on a real batch); main's run
+  catches a regression that only the combination of two PRs causes (a forced test case); no test result depends on the
+  date (a forced-date run in CI); `docs/internal/architecture/reference.md` "CI" updated.
+- Tests: the CI itself (a dry run on a test branch), the measurement in the PR.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+### UI2. Rail ⋯ menu: one compact speed control; "Keep the controls open" starts off (owner, 15 Nov 2026; lane A, after EC1)
+- Why: 12 speed buttons tire the eye; the owner found "Keep the controls open" ticked.
+- What:
+  - **Speed:** one row "⏩ Speed · 1×" instead of the grid. Tapping it opens a small picker: 0.5 / 1 / 1.25 / 1.5 / 2
+    plus − / + (or a slider) for a custom speed from 0.25× to 3× in 0.05 steps. YouTube only plays its own rates, so
+    there the custom value snaps to the nearest one. Same control in the phone ＋ sheet; the menu gets shorter.
+  - **Keep the controls open:** `opt:railPin` must start off for everyone. Check that nothing (a migration, Test Lab,
+    a default) turns it on by itself; if nothing does, the owner's browser saved it once (tell the Planner).
+- Done when: speed row + picker work on YouTube, a file and the extension, synced; a fresh browser has the pin off;
+  Test Lab hook `rail.speed`.
+- Tests: sync-engine scenario for a custom rate, room harness for the menu height, phone ＋ sheet harness.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026).
+
+### TH3. Home: a Neon that looks neon, four neutral people, other ideas for the screens (owner, 15 Nov 2026; Design → lane A)
+- Why: the Neon home is "not neon at all"; the people under the devices are tied to one culture; he wants other
+  ideas for the device screens.
+- What:
+  - **Neon home:** glow on the wordmark, buttons and device frames on a dark base, so it reads as neon, but calm:
+    contrast ≥ 4.5:1, no flashing, soft glow. Other themes unchanged.
+  - **The people (every theme):** 4 avatars, 2 women and 2 men, neutral (nothing tied to one nation, culture or
+    religion); the line becomes "4 watching · 2 in voice" (both languages).
+  - **The screens:** Design proposes 2–3 alternatives to today's sunset (a short preview each) and sends them to the
+    Planner as text; the owner picks in the Planner chat; lane A builds the pick. Today's screens stay until then.
+- Done when: Neon home and the 4 people are live in every theme; the screen pick is built or the owner kept today's;
+  shots reviewed (QA1); contrast check green.
+- Tests: `scripts/shots.cjs` home at 4 sizes, every theme; the contrast job.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026); the screens: pending his pick.
+
+### SH3. Shorts view on a computer: the chat in a panel you can open and close (owner's friend, 15 Nov 2026; lane A, after SH1)
+- Why: in the Shorts view on a computer, 💬 opens only a box to send a message; you can't read the chat. A friend of
+  the owner asked to see it, with a panel that opens and closes.
+- What: 💬 in the Shorts view (computer) toggles a chat panel beside the upright video, in the empty space on the
+  right: the room's chat list (newest at the bottom), the message box and 😀, ✕ to close. It never covers the video
+  (nothing over the YouTube player); the open / closed choice is remembered per room (`shortsChat:<room>`); unread
+  count on 💬 while closed. The phone keeps its 💬 sheet (PH1).
+- Done when: open / close, send, read, unread count at 1366 and 1920 and on a sideways tablet; Test Lab hook
+  `shorts.chat`.
+- Tests: Shorts view harness (panel open, no overlap with the player), shots (QA1).
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 
 ## Proposed
 
-### Security: Worker and Durable Object hygiene (R4-6, R4-7, R4-8; lane A)
-- Severity: low
-- Why: small gaps against Cloudflare's best practices: the usage book loses updates under concurrent requests, some abuse
-  buckets live only in memory, failed feedback sends burn the daily cap, `/api/youtube/usage` is unlimited, the poker
-  deck uses `Math.random`, the probe WebSocket never closes, one floating promise, a heavy room constructor, API answers
-  without `nosniff` / `no-store`, observability without traces.
-- Done when: `usage.ts` reads the body before `get`/`put`; feedback checks the token before the gate and has fetch
-  timeouts; `/api/youtube/usage` has a limit; the server shuffles with crypto randomness; the probe socket closes after
-  10 s; `fallback.ts:271` goes through `finish()`; the room loads small keys in one `get([...])` and images at join time;
-  a JSON helper sets `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`; `observability.traces.enabled`.
-- Tests: unit (usage book under two interleaved adds, shuffle source); e2e existing suites; a header check in e2e for
-  one `/api/*` answer.
-- Owner's pick: none needed.
-
-### Security: custom-domain hardening checklist (R3-3)
-- Severity: medium (do it together with the domain purchase)
-- Why: on `workers.dev` there is no WAF, rate-limiting rule, bot protection or HSTS setting; when the domain comes,
-  the old address and preview URLs must not stay open beside it.
-- Done when: `wrangler.jsonc` has the custom domain, `"workers_dev": false`, `"preview_urls": false`;
-  `allowedOrigin`, the extension's `SITE_URL` and the CSP name the new origin; production `localhost` origins are
-  gone; `_headers` sends HSTS; the owner has turned on Always Use HTTPS, minimum TLS 1.2, DNSSEC and one rate-limiting
-  rule on `/api/*` (Bot Fight Mode only after a test that WebSockets, the fallback and the extension still connect).
-- Tests: live e2e against the new domain; the old `workers.dev` address no longer answers (or redirects); embed
-  harness with the extension built for the new origin.
-- Owner's pick: needed (the domain itself, and the zone settings in the dashboard).
-
-### Security: TV link hardening before the TV leaves the lab (M8)
-- Severity: medium (only while `?tvlab=1` hides the TV)
-- Why: a TV token is the whole person including host rights, a QR shown by someone else can phish it, and pairing
-  codes can be guessed (limit keyed on a browser id the client chooses).
-- Done when: a `tv:true` connection may only send ping / tv / listen-only voice / react; the phone confirms before
-  pairing; `tv-link` is limited per IP hash and per room (plus a Worker rate limit); codes are 8 digits.
-- Tests: e2e `tv.mjs` (TV connection's `kick` / `make-host` / `settings` refused; brute-force attempts limited),
-  harness `tv/run.cjs`.
-- Owner's pick: none needed (part of the TV version after 1.0).
-
-### More players without the extension: which services and how (Research first; owner's idea, 2 Nov 2026)
-- Why: Watch2Gether's search box has a source picker (YouTube, Vimeo, Dailymotion, SoundCloud-like audio, podcasts,
-  web radio…); embeds play on our site for everyone without the extension.
-- Done when: Research lists candidate services with: official embed / player API, can we play / pause / seek / read the
-  time (sync), search API and its cost, terms (overlays, commercial use, audits), CSP hosts, and a ranked shortlist;
-  the owner picks which to build and when (not before 0.9.95).
-- Tests: none (research); each built service later gets its harness like `tiktok/run.cjs`.
-- Research (2 Nov 2026, `research/more-players.md`), ranked: 1 Vimeo (player.js, full control, rate only on PRO
-  videos → 1×), 2 podcasts (iTunes Search → RSS → audio file in today's `html5` kind), 3 SoundCloud (Widget API, links
-  only, 1×), 4 Dailymotion (needs a Player ID from the owner's free account), 5 Twitch (after the domain move:
-  `parent=`), 6 web radio (CSP `media-src https:` needs a security look). Not recommended: Spotify, Apple Music,
-  Streamable, Kick, Mixcloud, Bilibili.
-- Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
-
-### G1–G5. Growth after 1.0 (owner agreed 3 Nov 2026; ROADMAP §7 "Growth plan")
-- G1 Store listing for search words + reviews from the first 20 users (with the store submission).
-- G2 Search pages (EN first): Shorts together, W2G without ads, free Teleparty alternative, TikTok with friends.
-- G3 A weekly 15–30 s clip (TikTok / Reels / Shorts); tools: `hyperframes` / `video-use` / `earshot` on the owner's
-  computer (his catalogue).
-- G4 Communities + a Product Hunt day; copy polished with `humanizer`.
-- G5 Every room a referral: shareable recap image, one-click "Add to Chrome" on the film card (store link once listed).
-- Done when / tests: each becomes its own Ready card when 1.0 is near; the Planner details them then.
-- Owner's pick: agreed (3 Nov 2026).
+Security and Research suggestions: `docs/internal/cards-proposed.md`.
 
 ## Done
 

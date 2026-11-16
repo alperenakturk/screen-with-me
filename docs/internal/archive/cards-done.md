@@ -2086,3 +2086,249 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 ### Root cause of the live e2e first-attempt failures
 - Done: https://github.com/alperenakturk/screen-with-me/pull/113, https://github.com/alperenakturk/screen-with-me/pull/114
   (deploys restarted test rooms mid-test; the deploy job now waits for the new version).
+
+## Moved 15 Nov 2026 (shipped 0.9.97.127–.136)
+
+### SRC1. A "⠿ Sources" picker beside 🔍 Search: YouTube, Vimeo, search the web (owner, 14 Nov 2026; lane A)
+- Why: the owner wants people to find a video without leaving Sidelit. Research (`research/competitors-how.md`) checked
+  which sources are legal. The owner picked only these three: "only Vimeo, YouTube and search the internet; no archive
+  stuff". Voice/camera servers (SFU) stay for later.
+- What:
+  - A ⠿ button beside the search box (computer room and the phone's 🔍 Search tab) opens a small grid of three tiles.
+    The chosen source sticks per device.
+  - **YouTube:** today's search (Data API), unchanged.
+  - **Vimeo:** results from the Vimeo API (title, thumbnail, length) through a Worker route that holds the
+    `VIMEO_TOKEN` secret. Never call Vimeo from the browser with the token. Rate-limit the route like the other search
+    routes. Results play in our existing Vimeo player; only embeddable videos are shown.
+  - **Search the web:** opens a new browser tab with a general web search for the typed words (one search engine, no
+    "video site" list, no site filters). On return, a "Paste the link" hint focuses the box; a pasted link plays as it
+    does today. No in-app browser and no page scraping.
+  - No piracy site is named, suggested or special-cased anywhere. We stay a neutral sync tool.
+  - Texts in `i18n.ts` and `i18n-tr.ts`; CSP gets only the hosts actually needed (Vimeo API through the Worker, so
+    likely none in the page).
+- Done when:
+  - Each tile works on a computer and on a phone, in EN and TR.
+  - Vimeo search returns and plays.
+  - With the Vimeo secret unset, the Vimeo tile shows "not available yet" and nothing breaks.
+  - Search the web opens one tab with the words in it.
+  - Test Lab hook `sources.state` reports the chosen source and the last search.
+- Tests: Worker unit tests for the Vimeo route (validation, cap, rate limit, no token leak); e2e search → play with a
+  stubbed Vimeo answer; phone and computer harness for the grid; `check-texts`.
+- Owner's step (when lane A asks): a free Vimeo developer app and its access token, saved in KeePass and added as a
+  secret. The Planner gives the exact entry name and where to put it at that moment.
+- Owner's pick: "only Vimeo, YouTube and search the internet" (Planner chat, 14 Nov 2026).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/443 (0.9.97.136)
+
+### PH1. An app-like phone room: bottom tabs, one input row, chat sideways, join sound in step (owner, 13 Nov 2026; lane A)
+- Why: on a phone, everyday actions hide behind the ＋ and ⋯ sheets (search a video is 2 taps away, games 3), the
+  sheets repeat what Settings already has, and the join sound comes out of sync. The owner asked which phone features
+  are needed, showed a competitor app's phone layout ("bottom tabs, one input row; do it our own way") and asked for a
+  design pass ("more basic, fast, matching the PC").
+- Spec: `docs/internal/design/phone-room.md` (Design, PR #422), **option A**, picked by the owner. Phone layout only
+  (`html.ph-room`); computers and tablets are unchanged, and no feature code is deleted (things move or hide).
+- What:
+  - **Bottom tab bar** (`role=tablist`, the computer's `.tab` look): 🎬 Room · 🔍 Search · 🎮 Games · 👤 Me. Four
+    panels, no router.
+  - **Room tab:** the video, then a strip with the faces (tap → People + Invite) and 📌 Pin · ⏩ Speed · 🔄 Sync ·
+    ⏭ Skip, then the chat with activity lines inline in italics, then ONE input row: 🔗 Invite · box · 🎙 · 📷 · 😀.
+    ➤ swaps in for 🎙📷 while typing; 😀 holds the reactions and 🖼 Send an image. The ＋, ⋯ and Add-a-video sheets go.
+  - **Search tab:** our own search / link box and results with thumbnails, plus "Up next" (the queue). It borrows
+    `#media-form` and calls the same code as `openAdd()`.
+  - **Games tab:** the games hall as a list (tables, then side games).
+  - **Me tab:** Profile + Settings as grouped cards, each row a toggle or ›, with a one-line help text. It includes
+    Save the room, Room rules, Film time (host), Theme, Sound & camera, Language, Help, Privacy and Terms.
+  - **The owner's earlier picks stay, inside A:**
+    - the 🧪 Sync test is gone from the phone (the Test Lab keeps it);
+    - Recap only in Me;
+    - the empty room says "🔍 Search a video" (goes to the Search tab) and "🔗 Invite";
+    - sideways with a video: video + a column of ⛶ Watch fullscreen, 💬 and 🎙, with the tabs and input row hidden;
+    - Shorts upright: the 9:16 video fills, and the feed becomes a 💬 sheet with a count;
+    - the phone home page has no extension box.
+  - **Fast:** no blur, shadow or grip on sheets; one 44 px radius-10 button shape; `room.css`'s phone section gets
+    smaller (the md's rule table: about 26 rules out, 22 in).
+  - **Join sound in step:** today `playIntro()` runs on the server's `welcome`, and `intro-sound.ts` makes a fresh
+    `AudioContext` that waits at most 250 ms for `resume()`, so on a phone the sound comes late or not at all.
+    - Unlock or reuse the shared context on the "Enter room" tap.
+    - Start the picture and the sound from one clock: once the context is running, or the picture alone, never the
+      sound late.
+  - Nothing goes over the YouTube player.
+- **Phone essentials** (owner, 13 Nov 2026, later the same day: "make the phone version more optimized and basic,
+  many features can go; later we point to the app"). The Planner decided the list:
+  - The phone keeps the essentials:
+    - the video in sync, plus Search and Up next;
+    - chat with images and reactions;
+    - 🎙 and 📷 (flip included);
+    - Invite and People (the host's kick and ban stay);
+    - 📌 Pin, 🔄 Sync and ⏭ Skip;
+    - the Games tab (tables and side games);
+    - the Shorts view's bar.
+  - These leave the phone (still on computers and tablets):
+    - ⏩ Speed (this overrides the earlier "kept" note);
+    - the camera size presets;
+    - ✨ Recap and its history;
+    - ⏰ Film time (setting it; a set time still shows as the banner);
+    - editing 👑 Room rules (the rules still apply);
+    - font choice and picture themes (the colour themes stay);
+    - the Shorts ⋯ ♾ Feed and 🔁 Loop;
+    - the first-time tips (the tabs make them unnecessary);
+    - starting a screen share.
+  - The Me tab is only: name + avatar, theme colour, language, sounds on/off, "check before joining voice", Save the
+    room, Help, Feedback, Privacy, Terms.
+  - **Note for phones and tablets.** It shows on touch devices without a mouse (`device.ts`, no sniffing): one small
+    muted line under "Enter room" on the join card, and under "Create room" on the home page. It is not a pop-up and has
+    no close button. Text (`i18n.ts` / `i18n-tr.ts`):
+    - EN: "Sidelit is made for computers. Phones and tablets get the essentials; an app for them is on the way."
+    - TR: "Sidelit bilgisayar için tasarlandı. Telefon ve tablette temel özellikler var; onlar için uygulamamız
+      yolda."
+    - When the app exists, the same line becomes the link to it (PWA1 / later Play).
+- Done when:
+  - On a phone each tab is one tap, and the four tabs fit at 360 px in Turkish.
+  - The input row works: typing swaps in ➤, 😀 sends a reaction and an image.
+  - Search adds and plays a video.
+  - The Me tab holds exactly the essentials list; the phones-and-tablets note shows on touch devices only.
+  - Sideways and Shorts behave as in the spec.
+  - The intro sound starts with the picture or not at all.
+  - The Test Lab hook `phoneRoom.state` reports the tab, the input-row state and the visible controls.
+  - Nothing changes on a computer or a tablet.
+- Tests:
+  - `scripts/harness/phone/run.cjs` rewritten with text-based selectors for the tabs and input row.
+  - `shorts-rail`, `room-more`, `settings`, `phone-sideways`, `first-tips`, `check-texts` and the size budget.
+  - First look: `shots.cjs` phone and phone-land, EN + TR, Night + Matinee + one scene theme.
+  - Owner's hand test: the phone room on his own phone.
+- Owner's pick: council + Planner review and the owner's answers in the Planner chat, 13 Nov 2026 (removals: the
+  duplicates and the sync test; promote: empty-room buttons, chat sideways, no extension box on the phone home page,
+  Help); layout option A of `phone-room.md`, 13 Nov 2026. Kept on purpose: 📌 Pin, ⏭ Skip, 🔄 Sync, 💾 Save
+  room.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/428 (0.9.97.127)
+
+### PH2. Games on a phone: played inside the Games tab, upright only (owner, 13 Nov 2026; W + Game Studio, after PH1)
+- Why: the owner wants the phone's games to live in the bottom bar's 🎮 Games tab: pick an idle game (Snack Bar, Window
+  Garden, Five Frames) or an online table and play it right there, upright. His words: "every game fits upright; none
+  has a landscape mode; nothing happens when the phone is turned."
+- What:
+  - **W (stage, `games/stage.ts` + the game-window rules in `room.css`):**
+    - On a phone (`html.ph-room`) a game opens **inside the Games tab panel**: the video stays on top, and the tab bar
+      stays at the bottom. It no longer takes the full screen with a small video in its head.
+    - Leaving the tab keeps the game running (a dot on 🎮); coming back shows it again.
+    - Tables still pause the video for everyone with the note.
+    - The head shrinks to one row: name, "?", Leave / Close in ⋯.
+    - **Turning the phone does nothing while a game is open.** No landscape game layout and no sideways room layout;
+      the upright column stays, centred and scaled to the height.
+    - When the game closes, the room's normal sideways behaviour comes back.
+  - **Game Studio (every game's own layout):**
+    - Every game (Classics, Sea Battle, Draw & Guess, Quiz, Last Heart, the Duel, Snack Bar, Window Garden, Five
+      Frames) has one upright layout that fits the Games tab panel at 360×640 and up, without scrolling (only lists
+      that grow scroll).
+    - Every game's landscape-only phone rules go (`html.sideways` game rules).
+    - The 44 px phone targets and the 13 px text floor hold.
+  - Computers and tablets are unchanged.
+- Done when:
+  - On a phone, every game opens and plays inside the Games tab with the video above and the tabs below.
+  - Turning the phone with a game open changes nothing.
+  - games-sweep passes at phone sizes for every game.
+  - Test Lab hook `phoneGames.state` reports the tab, the open game and its fit.
+- Tests:
+  - `game-window-head` / `state-matrix` get a phone Games-tab section and a "rotate with a game open" check.
+  - games-sweep and game-proportions run at 360×640 and 390×844.
+  - Owner's hand test: Snack Bar and one table with a friend on his phone, turning it mid-game.
+- Owner's pick: "games in a bottom tab, upright; no landscape mode; nothing happens when the phone is turned" (Planner
+  chat, 13 Nov 2026).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/434 (0.9.97.130)
+
+### SAFE1. Report a person and "block for me" in the room (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; lane A, after PH1)
+- Why: a room has no way to report someone or to stop seeing one person's messages. This matters for safety at 1.0,
+  and app stores require it (Apple 1.2). The owner said "yes, before 1.0".
+- What:
+  - The person menu (computer) and the person sheet (phone, PH1's People) get two rows: **🔇 Block for me** and
+    **🚩 Report**.
+  - **Block for me** is local only: that person's chat, reactions and images are hidden for you. It is kept per room
+    (`me:<room>` style), reversible from the same menu, and sends nothing to the server. Your own messages still reach
+    them.
+  - **Report** sends a short form (reason chips + optional text, `cleanText`) through the existing `POST /api/feedback`
+    path, labelled `report`. It carries the room id, the reported person's shown name, the last few chat lines they
+    sent and a time. It never sends `cid`, IP or anything hidden. The server rate-limits it like feedback.
+  - Hosts already have kick and ban; Report links to `terms.html#abuse` for the 72-hour process.
+  - **Privacy:** reports are new data. `privacy.html` gets a dated "Changes" line in both languages (what a report
+    holds, where it goes, how long it is kept).
+- Done when:
+  - Block hides that person's messages for you only, survives a reload and can be undone.
+  - A report reaches the private feedback repository with the fields above and no hidden ids.
+  - It is rate-limited.
+  - The privacy page is updated in TR and EN.
+  - Test Lab hook `safety.state` lists the blocked people and the last report result.
+- Tests:
+  - Server unit test for the report validation and its cap.
+  - e2e: block, then a message from the blocked person is hidden for one client and shown for another.
+  - The help harness checks that both privacy languages match.
+  - `check-texts`.
+  - Owner's hand test: block and report a friend in a real room.
+- Owner's pick: "Yes, before 1.0" (Planner chat, 13 Nov 2026).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/432 (0.9.97.131)
+
+### PWA1. A better home-screen app (owner, 13 Nov 2026, from Research's `research/mobile-app.md`; B2, after PH1)
+- Why: the owner picked "the web app first". It is free and needs no store; Google Play comes after 1.0 and the own
+  domain, and iOS only if Play shows demand.
+- What:
+  - `manifest.webmanifest`:
+    - `lang: en` with an English name and description;
+    - `id`, screenshots (phone + wide);
+    - shortcuts ("Create room");
+    - a `share_target` so a YouTube / video link shared from another app opens Sidelit ready to add it.
+  - **Wake lock while a video plays**, released on pause or leave (a small module; one call from the room, agreed
+    with lane A).
+  - **iOS "Add to Home Screen" hint:** once, on the home page, iOS Safari only, dismissible, plain words.
+  - Check standalone behaviour: the back button, the theme colour, opening invite links in the installed app.
+  - The service worker rule stands: it never caches files.
+- Done when:
+  - Lighthouse PWA "installable" is green.
+  - A link shared to Sidelit from the Android share sheet opens the add box with it.
+  - The screen stays on while playing in the installed app.
+  - The iOS hint shows once.
+  - Test Lab hook `pwa.state` reports installed, wake lock and share target.
+- Tests:
+  - The manifest is checked in `checks` (JSON fields, English).
+  - A harness for share-target URL handling.
+  - Owner's hand test: install on his Android phone, share a YouTube link to it, watch with the screen on.
+- Owner's pick: "Web app first" (Planner chat, 13 Nov 2026). Later and his to decide: Google Play ($25 once, after the
+  domain), push notifications (new data), the iOS store ($99 a year).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/433 (0.9.97.132)
+
+### QA1. Faster CI and fewer bugs reaching the owner (owner, 10 Nov 2026: "why do tests take so long, weren't we cutting them? and how are there so many bugs with this many tests?"; B2, ops)
+- Why: a PR's CI takes ~15–20 min (the `site` job ~15 min, ~4–5 min of it installing), each main run (deploy + live e2e) ~25 min, and
+  releases go one after another, so a small fix needs ~45 min to be live. Harnesses grew with every card. Meanwhile the
+  owner still finds bugs in his first minutes: the checks test what each card named, not what a person sees in states
+  nobody listed (side panel closed, YouTube room, a 1366 laptop, real mouse hover), and they never judge "looks right".
+- Done when:
+  1. **Speed:** a measured table of every CI job and step (median of the last 10 runs) in `docs/internal/architecture/`
+     (CI section); install time cut (cache `node_modules` / Playwright deps keyed on the lockfile); jobs rebalanced so the
+     longest PR job is ≤ 10 min; nothing skipped, no `paths-ignore` (CLAUDE.md), no check weakened. Report before → after.
+  2. **State matrix for game windows and the room's right column:** one harness that opens every game in each allowed
+     place × {side panel open, closed} × {YouTube, file, no video} × {1366, 1920, tablet} and checks: nothing cut off,
+     nothing over a YouTube player, no free window over the video unless dragged, every head button visibly does
+     something. Real-mouse checks (hover, drag, resize) run headful under `xvfb-run`.
+  3. **A "first look" review before merging any UI change:** the PR attaches screenshots at 1366, 1920, tablet and phone
+     of every screen it touched, and a fresh reviewer (a subagent given only the screenshots + CLAUDE.md product rules,
+     not the developer's reasoning) lists what looks wrong; the developer fixes or answers each line in the PR. Written
+     into CLAUDE.md §9 by the Planner once B2 has the tooling (`scripts/shots.mjs` or similar).
+  4. **Fewer, fuller releases:** the Planner batches small fixes into one release per lane where it can (less waiting
+     on deploy + live e2e); no change for B2.
+- Tests: the new harness in CI; CI timings before/after in the PR.
+- Owner's pick: none needed (technical).
+- Done: QA1 shipped by B2 in Nov 2026 (CI 12:27 → 8:29, live e2e in 2 shards, canary gate, state matrix, shots.cjs); gate and retry hardened in #435 / #436.
+
+### ST1. Watching a screen share: one button, fullscreen or a free window (owner, 15 Nov 2026; B2)
+- Why: the stream viewer has too many confusing controls (fill the screen, frame, shrink, grow).
+- What:
+  - The stream viewer gets **one** control: "⛶ Fullscreen" ⇄ "🪟 Window".
+  - In window mode the stream is a free window that can be dragged anywhere and resized from its corner, keeping its
+    shape and its place after a reload, the same way the camera window does.
+  - Everything else goes from the viewer: fill, frame, ±.
+  - The phone keeps its own sideways behaviour.
+- Done when:
+  - A viewer on a computer has exactly one toggle.
+  - Fullscreen and window both work, and the window drags and resizes smoothly.
+  - Nothing goes over the YouTube player.
+  - Test Lab hook `stream.view`.
+- Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
+- Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
+- Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.

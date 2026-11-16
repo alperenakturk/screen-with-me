@@ -1,0 +1,21 @@
+# Common words the automatic pick (SCOWL size <= 35, no inflections) leaves out: nouns that end like a comparative or a
+# past form, and well-known words from SCOWL size 40-50. Picked by eye (Game Studio, GMP, 15 Nov 2026).
+boxer caper diner eater ether foyer gamer hiker idler joker liter liver loser miser mixer mover mower pager poker
+racer riser saver sewer sneer taker taper wafer wiper defer deter infer sever waver udder naked jaded creed bleed
+shred embed
+amigo anime artsy avian axial bylaw combo comfy condo credo cumin curvy decaf decal derby detox dicey dingo emoji
+epoxy fjord flyby funky futon gizmo guava gusto haiku heist helix henna inbox karma kazoo latte lemur login macro
+magma manga maven meaty modem mogul nexus oldie pilaf promo quasi rehab rerun rumba samba scuba segue sepia sitar
+sonar spiky stash sushi tangy tarot teary titan wacky xenon yucky zilch geode hertz lasso joust joule macaw mambo
+pooch pylon quaff satay scion swami tapir taupe tibia tithe waxen gauzy frizz bebop bidet binge bloat cabby cadre
+canto chive chomp clunk conch coupe crimp crone cubit doggy dowel drake druid dryad duchy egret elfin emcee ennui
+fugue gaffe glyph grail guppy gypsy hooky howdy hubby igloo ingot inset islet joist kiddo klutz knave lotto manna
+mooch mosey nerdy octet offal opine orate parry payee pinup posse prate refit sable sappy shard skiff sloop slurp
+snaky soupy spiel spiny stilt stoic tizzy tryst tubby twang whelp whiny wormy
+adieu afire amino argon aspic atoll auger augur avast awash bicep bilge boggy bonny borax boron cairn calyx caret
+chock chump conga conic copse coven cress crier croup cruet cushy demur deuce diode divan divot divvy dorky edify
+elate emote feral femur folio gassy geeky gorse grist grout guano gutsy hydra icily idyll imbue kooky kudzu laity
+larch leggy legit lipid loamy locus loopy matzo musky myrrh nadir natal nervy oaten ovoid owlet palsy pasha plait
+plunk posit pupal radon rangy raspy rebus renal ritzy ruble rupee satyr scamp shale shush shyly softy steed stein
+stile sully swank swath sylph teeny terry testy tenon throe toady trike trope truss vapid vaunt vixen weepy whelk
+whorl woozy wryly xylem yahoo zonal unzip unpin quoth thine
