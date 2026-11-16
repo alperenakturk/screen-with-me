@@ -1055,6 +1055,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   size limit only apply to its home). Narrow screens and PH2's Games tab keep their placements (⛶ there is the tab).
   Lab: `games.mode` (`full` / `frame` / flip; writes the mode, `realFullscreen`, `pausedForFull`, the box). Harnesses:
   `state-matrix` (both modes in every state), `games-youtube`, `game-proportions` (⛶ rows = the old video's place).
+  **GP1 (owner, 15 Nov 2026: "Classics stutters while opening"):** opening the hall (`setHub(true)` → `warmSolo`) loads
+  the side games' chunks and then the tables' chunks one after another (match, sea, duel, quiz, draw, poker), so a card
+  picked from the hall draws at once; Snack Bar's art is inline SVG in its chunk (no late images). `markOpened` records
+  the time from the click (`openTable` / `openSolo`) to the first frame with the game (Lab `games.openTime`). Measured on
+  a laptop: every game 40–110 ms; at CPU 4× with 150 ms latency, Classics and Snack Bar 230–320 ms. The game window's
+  Lab commands (`gameWindow.*`, `games.mode`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
+  (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
+  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
+  Connect Four's column highlight follows a mouse only. Five Frames has a compact tier for windows under 430 px tall (a
+  sideways tablet's side-game window, catalog `fit` 388 px), so it keeps 13 px text instead of being scaled down.
+  Harness `game-open` (CI games-more): every game opens with one click, Classics and Snack Bar in ≤ 300 ms, and on a touch
+  tablet real taps open the hall, the Classics table, Connect Four, seat Stub and drop a disc, each on the first tap.
   The free window's **home** (`homeBox`): with the side panel showing, the window lines up with it (its top and right
   edge, down to just above `#chat-form`, at least the game's `minSize` wide, never over the video box itself), so no
   sliver of chat shows and the message box stays free (0.9.97.117, Game Studio's review); otherwise the column right of the theater, under the top bar, over the side panel,

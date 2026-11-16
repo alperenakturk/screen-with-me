@@ -2349,3 +2349,12 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: his messages (Planner chat, 15 Nov 2026).
 - Done: branch `claude/gw2-game-modes` (Game Studio, 16 Nov 2026; option A, real full screen, Planner 15 Nov).
 
+### GP1. Games open at once and answer the first tap (owner, 15 Nov 2026; Game Studio, with GW2)
+- Why: Classics stutter while opening; Snack Bar stutters and its pictures arrive late or missing.
+- What: preload a game's chunk and art when the hall opens (or on hover / touch-start), decode images before the first
+  frame, no layout jank while opening; Classics and Snack Bar ready in ≤ 300 ms after the click on the CI machine with
+  the hall open. Check every game for a click that needs two taps (Quiz has one; GS2 fixes Quiz itself).
+- Done when: open time measured in the PR for every game; no missing image on first open; Test Lab hook `games.open`.
+- Tests: a games-hall timing harness, the snack-bar harnesses.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: branch `claude/gp1-fast-open` (Game Studio, 16 Nov 2026).

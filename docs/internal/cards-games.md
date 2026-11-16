@@ -37,15 +37,6 @@ Game Studio 2 QZ2 → WG2.
 - Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
   studio says which and why before using them.
 
-### GP1. Games open at once and answer the first tap (owner, 15 Nov 2026; Game Studio, with GW2)
-- Why: Classics stutter while opening; Snack Bar stutters and its pictures arrive late or missing.
-- What: preload a game's chunk and art when the hall opens (or on hover / touch-start), decode images before the first
-  frame, no layout jank while opening; Classics and Snack Bar ready in ≤ 300 ms after the click on the CI machine with
-  the hall open. Check every game for a click that needs two taps (Quiz has one; GS2 fixes Quiz itself).
-- Done when: open time measured in the PR for every game; no missing image on first open; Test Lab hook `games.open`.
-- Tests: a games-hall timing harness, the snack-bar harnesses.
-- Owner's pick: his message (Planner chat, 15 Nov 2026).
-
 ### GT1. Clearer tutorials and a "❓ How to play" button in every game (owner, 15 Nov 2026; Game Studio, after GMP)
 - Why: the first-run tutorials are a little thin; players can't see them again.
 - What: each tutorial a little more detailed and plain (EN + TR); "❓ How to play" in each game's menu replays it;

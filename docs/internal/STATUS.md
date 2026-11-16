@@ -12,8 +12,8 @@ One handoff per lane or role; each session updates only its own lines and delete
   (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
   merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
   merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
-- [ ] Game Studio: GW2 (⛶ / 🪟 for tables) on claude/gw2-game-modes (PR, merge, deploy check); then GP1 (games open at
-  once; Five Frames' compact layout for a sideways tablet's short window), GMP (b) (2–6 players), GT1 (tutorials).
+- [ ] Game Studio: [ ] GW2 #470 merged + deploy check; [x] GP1 on claude/gp1-fast-open (open times, first taps, Five
+  Frames compact, phone note); [ ] GP1 PR, merged, deploy check; then GMP (b) (2–6 players), GT1 (tutorials).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -130,6 +130,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Join the table: you watch, and you see both fleets as they are shot; the friend never sees yours. Same in the Five
   Frames Duel: the phone shows both boards with their letters. Five Frames in English and Turkish: new everyday words
   are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
+- [ ] 27l. [GP1] On a computer, open 🎮 and pick Classics, then Snack Bar: each shows at once, pictures complete, no
+  blank moment. On an iPad held sideways, open Five Frames: its letters and the ticket numbers are easy to read.
 - [ ] 27k. [GW2] On a computer with a friend and a YouTube video playing: open Classics from 🎮: it fills the whole
   screen and the video pauses for both of you. Press 🪟 (or Esc): a frame at the right edge, the video plays again.
   Drag the frame over the video: it stays there. Open Sea Battle: it opens as a frame (the mode you used last); ⛶ in
