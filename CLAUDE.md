@@ -123,7 +123,8 @@ Rules for all:
   KeePass, in a folder per project (`Sidelit`). Whenever a step asks him to create or save a secret, give him every
   KeePass field at that moment, one per line (owner, 17 Nov): Title (`Where – What for`, e.g.
   `GitHub – LAB_CODE (test panel code)`), User name, Password (where to copy it from), URL, Notes (what for, where
-  stored, expiry), and the generator's characters (letters + digits only when it goes into an address). Don't list future entries in advance. Never ask him to paste a secret into the chat.
+  stored, expiry), and the generator's characters (letters + digits only when it goes into an address).
+  Don't list future entries in advance. Never ask him to paste a secret into the chat.
 - **Tell the Planner at once when anything runs out (owner, 4 Nov 2026):** tokens, usage limits, Actions minutes or
   billing, API quotas, disk, anything: every session sends the Planner a `send_message` the moment it sees it.
 - **Skills and tools:** the owner's catalogue is `alperenakturk/my-awesome-list` (private, `add_repo`). When a task
