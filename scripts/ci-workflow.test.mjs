@@ -118,3 +118,13 @@ test('CI3: the nightly date sweep tests on another day, in its own group, and ne
   assert.match(prepare, /if: env\.SWM_TEST_DAYS != ''/);
   assert.match(prepare, /NODE_OPTIONS=--require \$GITHUB_WORKSPACE\/scripts\/harness\/forced-date\.cjs/);
 });
+
+test('CI3b: CI numbers the release before the build, the tag job tags that number, a PR may not set one', () => {
+  const deploy = all.deploy.block;
+  assert.ok(deploy.indexOf('node scripts/release-version.mjs --apply') < deploy.indexOf('npm run build'), 'numbered before the build');
+  assert.match(deploy, /version: \$\{\{ steps\.number\.outputs\.version \}\}/);
+  assert.match(all.tag.block, /RELEASE_VERSION: \$\{\{ needs\.deploy\.outputs\.version \}\}/);
+  assert.match(all.tag.block, /node scripts\/changelog\.mjs notes/);
+  assert.match(all.changes.block, /node scripts\/check-version-edits\.mjs "\$BASE"/);
+  assert.match(all.changes.block, /if: github\.event_name == 'pull_request'\n\s+env:\n\s+BASE: origin\/\$\{\{ github\.base_ref \}\}/);
+});

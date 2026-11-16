@@ -78,7 +78,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:
@@ -89,6 +89,14 @@ jobs:
       # Cards DOCS1 + DOCS2: CLAUDE.md, STATUS.md and CARDS.md stay small, and nothing of them is lost against the PR's
       # base (or the previous commit on main): every backticked identifier and card heading is still somewhere in docs/.
       # Here, not in `checks`, because a docs-only change skips `checks`.
+      # Card CI3b: a PR carries no version (CI numbers every release when it goes live); its user-facing lines go into
+      # changelog/next/<branch>.md. Here, not in `checks`, because a docs-only PR (CHANGELOG.md) skips `checks`.
+      - name: No version set by hand
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: node scripts/check-version-edits.mjs "$BASE"
+
       - name: Docs stay small, nothing lost
         env:
           BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
@@ -566,6 +574,8 @@ jobs:
     # (`live-e2e`) and the `tag` job read it.
     outputs:
       deployed: ${{ steps.deployed.outputs.ok }}
+      # Card CI3b: the number this run gave the release (footer + extension); the `tag` job tags it.
+      version: ${{ steps.number.outputs.version }}
     # Two quick pushes must not deploy at the same time; the next one waits.
     concurrency:
       group: deploy
@@ -590,6 +600,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+
+      # Card CI3b: CI numbers every release: the series in release-series.txt + the highest tag's fourth part + 1, written
+      # into the footer and the extension of this checkout before the build (never committed). Untagged until the live
+      # e2e passes, so a failed run's number is given again by the next run.
+      - name: Number this release
+        id: number
+        if: steps.keys.outputs.ok == 'true'
+        run: node scripts/release-version.mjs --apply
 
       - name: Install and build
         if: steps.keys.outputs.ok == 'true'
@@ -723,7 +741,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           TAG_TOKEN: ${{ secrets.TAG_TOKEN }}
+          RELEASE_VERSION: ${{ needs.deploy.outputs.version }}
         run: node scripts/tag-live.mjs
+
+      # Card CI3b: the release's notes, from the changelog/next/ files added since the previous tag (user-facing English,
+      # one block), as a GitHub release on the tag. Never red: a missing release never hides a good deploy.
+      - name: Release notes
+        if: needs.deploy.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.deploy.outputs.version }}
+        run: |
+          git fetch --quiet --tags origin
+          if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then echo "::warning::v$VERSION is not tagged; no release notes."; exit 0; fi
+          node scripts/changelog.mjs notes "$VERSION" "v$VERSION" > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+          gh release view "v$VERSION" >/dev/null 2>&1 || gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag || echo "::warning::The release v$VERSION could not be created."
 
   # Card CI3: the date sweep's result as an issue (label `date-sweep`): opened when a night fails, with the forced date;
   # closed by the next green night. Nobody has to watch the Actions tab.

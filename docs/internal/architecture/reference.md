@@ -2209,6 +2209,21 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
   - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
     style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
+  - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
+    extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
+    `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
+    `scripts/release-version.mjs --apply`, numbers the batch: the series in `release-series.txt` (three parts, e.g.
+    `0.9.97`; it changes only when the owner moves the third part, and the next release is then `<series>.1`) + the
+    highest tag's fourth part + 1, written into the footer (`apps/web/index.html`) and the extension
+    (`apps/extension/package.json`) of the checkout before the build, never committed, so both always show the same
+    number. The `tag` job tags it (`RELEASE_VERSION` → `tag-live.mjs`) only after every live e2e shard passed; a
+    failed run makes no tag, and the next run gives the same number again (none burnt). The tag job then publishes a
+    GitHub release `v<version>` whose notes are the `changelog/next/` files added since the previous tag
+    (`scripts/changelog.mjs notes`). Now and then a docs PR runs `node scripts/changelog.mjs fold`: one block per tag
+    not yet in `CHANGELOG.md` (newest first, the same text) and the folded files deleted. The PR check
+    `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
+    version, leaves them on different numbers, or adds a block for an untagged version. The repository's footer and
+    extension files keep the last per-PR number (the one local builds show).
   - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
     PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
     from the first merge.
