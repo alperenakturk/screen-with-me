@@ -19,15 +19,12 @@ One handoff per lane or role; each session updates only its own lines and delete
     Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
   - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
-- [ ] B2 (session 16 Nov, 15:40):
-  - [x] CI3 closed (measured batch after #482 in its Done line; card in `archive/cards-done.md`).
-  - [ ] SH2 feeds: PR #488 (`claude/sh2-feeds`): shared feed on the room object, ▶ video feed, Queue row, steer window,
-    played-id memory, Test Lab `feed.state`, harness `feed`. Merge-tree clean against lane A's `claude/sh1-ring` and
-    `claude/sh1-start`. Then: merge when green, deploy + live e2e check, Done line, card to archive.
+- [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
+  - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - Game Studio owns the state-matrix hover flake ("1366 garden: a head button lights up under the mouse", main run
-    43886203220).
+  - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
+    `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
