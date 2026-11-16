@@ -2316,3 +2316,18 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: none needed (technical).
 - Done: QA1 shipped by B2 in Nov 2026 (CI 12:27 → 8:29, live e2e in 2 shards, canary gate, state matrix, shots.cjs); gate and retry hardened in #435 / #436.
 
+### TH3. Home: a Neon that looks neon, four neutral people, other ideas for the screens (owner, 15 Nov 2026; Design → lane A)
+- Why: the Neon home is "not neon at all"; the people under the devices are tied to one culture; he wants other
+  ideas for the device screens.
+- What:
+  - **Neon home:** glow on the wordmark, buttons and device frames on a dark base, so it reads as neon, but calm:
+    contrast ≥ 4.5:1, no flashing, soft glow. Other themes unchanged.
+  - **The people (every theme):** 4 avatars, 2 women and 2 men, neutral (nothing tied to one nation, culture or
+    religion); the line becomes "4 watching · 2 in voice" (both languages).
+  - **The screens:** Design proposes 2–3 alternatives to today's sunset (a short preview each) and sends them to the
+    Planner as text; the owner picks in the Planner chat; lane A builds the pick. Today's screens stay until then.
+- Done when: Neon home and the 4 people are live in every theme; the screen pick is built or the owner kept today's;
+  shots reviewed (QA1); contrast check green.
+- Tests: `scripts/shots.cjs` home at 4 sizes, every theme; the contrast job.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026); the screens: pending his pick.
+- Done: 0.9.97.143, PR on branch claude/home-neon-people (Developer A2, 16 Nov 2026).
