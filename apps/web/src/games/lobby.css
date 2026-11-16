@@ -189,3 +189,8 @@
 #game-stage.in-tab .draw-page:not(.draw-lobby) .draw-left:has(> .draw-tools:not([hidden])) + .draw-side :is(.draw-form, .draw-feed) { display: none; }
 /* The eraser swatch's ⌫ reads at 13 px (the running-table sweep, PH2). */
 .draw-color { font-size: 13px; }
+
+/* QZ2: the pickers sit on the option's top edge, so the answer text never reflows at the reveal. */
+.quiz-option .quiz-pickers { position: absolute; top: -10px; right: 10px; }
+/* QZ2: once an answer is locked in, the other options look out of reach. */
+.quiz-option:disabled:not(.picked, .correct, .wrong) { opacity: 0.6; }
