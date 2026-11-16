@@ -146,6 +146,9 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
     });
     return;
   }
+  // Card BUD2: a phone starts fetching its phone-room chunk while the name form is up, so the phone layout is there
+  // when the room opens (startPhoneRoom below then finds the module already loaded).
+  if (!isShell && isPhoneLayout()) void loadChunk(() => import('./ui/phone-room.ts'));
   if (tvLab() && !tvModules) {
     void loadTv().then(() => renderRoom(app, roomId, waited));
     return;
@@ -2753,6 +2756,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const seenShorts: string[] = [];
 
   // Card SH1: the Shorts view in the Test Lab (the start of the latest Short and who is speaking come with SH1 2 / 3).
+  // Card GR1: a chunk that is gone after a deploy shows "Sidelit was updated · ↻ Refresh" (main.ts), never a reload.
+  debugHooks.register('app', () => ({
+    commands: [
+      {
+        id: 'app.staleChunk',
+        tab: 'status',
+        title: { en: 'A missing chunk after an update', tr: 'Güncellemeden sonra eksik parça' },
+        help: {
+          en: 'Acts as if a chunk failed to load: the "Sidelit was updated" note shows, the room stays. Run again to read it.',
+          tr: 'Bir parça yüklenemedi gibi davranır: "Sidelit güncellendi" notu çıkar, oda kalır. Tekrar çalıştırınca okur.',
+        },
+        run: () => {
+          const note = document.getElementById('update-note');
+          if (note) return JSON.stringify({ note: note.textContent, inRoom: true });
+          dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+          return 'sent';
+        },
+      },
+    ],
+  }));
   debugHooks.register('shorts', () => ({
     commands: [
       {

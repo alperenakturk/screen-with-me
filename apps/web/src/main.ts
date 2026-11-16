@@ -4,7 +4,7 @@ import { markDevice } from './device.ts';
 import { isShell, syncStore } from './storage.ts';
 import { keepFloatingInFullscreen } from './ui/fs-layer.ts';
 import { HANDOFF_PREFIX, onAlias } from './site.ts';
-import { loadLang } from './i18n.ts';
+import { loadLang, t } from './i18n.ts';
 
 markDevice();
 keepFloatingInFullscreen();
@@ -39,6 +39,29 @@ function reloadForNewVersion(reason?: unknown): void {
       // Depo kapalı: yine de bir kez yenile.
     }
     if (Date.now() - last > 30_000) location.reload();
+  });
+}
+/**
+ * Card GR1: never a silent reload in a room (it threw the owner out of the room when a game's chunk was gone after a
+ * deploy). In a room a calm note offers the reload instead and nothing happens until the tap; elsewhere the page
+ * reloads as before. The note lives here, not in a chunk: chunks are exactly what is missing.
+ */
+function staleChunk(reason?: unknown): void {
+  if (!/^\/r\/[^/]+\/?$/.test(location.pathname)) return reloadForNewVersion(reason);
+  if (!navigator.onLine) return rememberMissed(reason);
+  void originAnswers().then((up) => {
+    if (!up) return rememberMissed(reason);
+    if (document.getElementById('update-note')) return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn primary small-btn';
+    button.textContent = `↻ ${t('app.refresh')}`;
+    button.addEventListener('click', () => location.reload());
+    const note = document.createElement('div');
+    note.id = 'update-note';
+    note.setAttribute('role', 'status');
+    note.append(t('app.updated'), button);
+    document.body.append(note);
   });
 }
 /** How long the reachability check waits for our site before calling the network down. */
@@ -79,16 +102,16 @@ function backOnline(): void {
   missedOffline.clear();
   const retry = (url: string): Promise<unknown> =>
     !url ? Promise.reject(new Error('unknown chunk')) : url.endsWith('.css') ? fetch(url).then((r) => (r.ok ? r : Promise.reject(new Error(String(r.status))))) : import(/* @vite-ignore */ url);
-  Promise.all(urls.map(retry)).catch(() => reloadForNewVersion());
+  Promise.all(urls.map(retry)).catch(() => staleChunk());
 }
 addEventListener('online', () => setTimeout(backOnline, 1000));
 addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
-  reloadForNewVersion((event as Event & { payload?: unknown }).payload);
+  staleChunk((event as Event & { payload?: unknown }).payload);
 });
 addEventListener('unhandledrejection', (event) => {
   const message = String((event.reason as Error | undefined)?.message ?? event.reason ?? '');
-  if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) reloadForNewVersion(event.reason);
+  if (/dynamically imported module|Importing a module script failed|error loading dynamically/i.test(message)) staleChunk(event.reason);
 });
 
 /**
