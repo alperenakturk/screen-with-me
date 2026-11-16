@@ -34,8 +34,8 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
   },
   'shorts.state': {
-    title: { en: 'Shorts: which view, the way back and who speaks', tr: 'Shorts: hangi görünüm, geri dönüş yolu ve kim konuşuyor' },
-    help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking and how many seat faces show the green ring into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu ve kaç koltuk yüzünde yeşil halka olduğunu kayda yazar.' },
+    title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
+    help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },
   },
   'sources.state': {
     title: { en: 'Search sources: the chosen one and the last search', tr: 'Arama kaynakları: seçili olan ve son arama' },
