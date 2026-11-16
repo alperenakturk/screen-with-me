@@ -24,6 +24,14 @@ games' tip jar, cuttings and badges.
   the sunset, at the same spot on the laptop, the tablet and the phone at every moment (it stays still if your device
   asks for less motion).
 
+### 0.9.97.139 — 15 Nov
+
+- Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
+  it floats on the page: drag it anywhere and make it bigger or smaller from its corner; it keeps its shape, and its
+  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it, and in a
+  YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
+  "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
+
 ### 0.9.97.138 — 15 Nov
 
 - 👁 **Watch a game live:** join a full Sea Battle or Five Frames Duel table from the games hall and you see both

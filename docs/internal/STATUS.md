@@ -124,6 +124,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   Join the table: you watch, and you see both fleets as they are shot; the friend never sees yours. Same in the Five
   Frames Duel: the phone shows both boards with their letters. Five Frames in English and Turkish: new everyday words
   are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
+- [ ] 27j. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
+  it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
+  watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.
 
 - [ ] 16d. [TH3, 0.9.97.143] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

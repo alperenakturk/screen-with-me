@@ -361,7 +361,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="live-bar">
                 <span id="live-title" class="live-title"></span>
                 <button id="live-hide-self" type="button" class="icon-btn" data-i18n-title="live.hideSelf" hidden>🙈</button>
-                <button id="live-big" type="button" class="icon-btn" data-i18n-title="live.bigger">⤢</button>
+                <button id="live-mode" type="button" class="btn small-btn live-mode"></button>
                 <button id="live-close" type="button" class="icon-btn" data-i18n-title="close">✕</button>
               </div>
             </div>
