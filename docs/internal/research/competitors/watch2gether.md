@@ -128,8 +128,8 @@ the session's network settings). **WEAK** = single / vendor / SEO source, **GUES
 - No 2026 announcement found: no app, no new source, no price change [37].
 
 ## Against Sidelit
-- **Where they are ahead:** 15+ years of name and SEO; ~1 M Chrome users; many built-in sources (Vimeo, Dailymotion,
-  podcasts, web radio, Mixcloud, Apple Music…) that work **without an extension and on phones**; huge rooms (hundreds);
+- **Where they are ahead:** 15+ years of name and SEO; ~1 M Chrome users; many built-in sources (Dailymotion, web
+  radio, Mixcloud, Apple Music…; Sidelit already has Vimeo and podcasts) that work **without an extension and on phones**; huge rooms (hundreds);
   10 cams vs our 4; a public API for bots / communities; Firefox, Edge and Opera extensions; Firefox Android support.
 - **Where Sidelit is ahead:** no ads and no paid tier at all; saved rooms with no account; server-time sync engine with
   everyone-ready and "3-2-1 together" (their top complaint is drift); the extension overlays the room on the film page
@@ -138,10 +138,12 @@ the session's network settings). **WEAK** = single / vendor / SEO source, **GUES
   site; HTTP fallback; English + Turkish UI.
 
 ## Ideas worth taking
-1. **A source picker with more official players** (Vimeo, Dailymotion, podcasts, web radio, Mixcloud). W2G's strongest
+1. **A source picker with more official players** (Dailymotion, web radio, Mixcloud; Sidelit's ⠿ Sources picker
+   already has YouTube, Vimeo and the web, and podcasts are built). W2G's strongest
    point is that most sources need no extension and work on phones. Effort M per player (L for all); fit lane B; order
    already proposed in `../competitors-how.md` §4 and `../more-players.md`.
-2. **"Paste a page link → the extension takes over" in one step.** W2gSync makes each person link their tab by hand;
+2. **"Paste a page link → the extension takes over" in one step** (check first: our "Go to the film" card may
+   already cover this). W2gSync makes each person link their tab by hand;
    we can turn a pasted non-embeddable link into a "Start watching" card on that page for everyone. Effort S–M; lane B.
 3. **A tiny public "create a room" link API** (e.g. `/new?v=<url>` that opens a room with the video queued), for
    Discord bots and community sites, the way W2G's `streamkey` API is used. No key, rate-limited on the server. Effort
