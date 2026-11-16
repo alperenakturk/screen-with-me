@@ -62,8 +62,8 @@ test('the live e2e runs in shards on separate runners, only after a deploy, neve
   assert.match(c, /needs\.deploy\.outputs\.deployed == 'true'/);
   const block = all['live-e2e'].block;
   assert.match(block, /fail-fast: false/);
-  assert.match(block, /shard: \[1, 2\]/);
-  assert.match(block, /SWM_E2E_SHARD: \$\{\{ matrix\.shard \}\}\/2/);
+  assert.match(block, /shard: \[1, 2, 3\]/);
+  assert.match(block, /SWM_E2E_SHARD: \$\{\{ matrix\.shard \}\}\/3/);
   assert.match(block, /npm run e2e -- /);
 });
 

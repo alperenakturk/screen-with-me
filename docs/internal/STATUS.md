@@ -8,6 +8,9 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
+- [ ] B2, card CI3 (claude/ci3-release-train): [x] tested-code mark + main tests untested combinations; [x] settle
+  (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [ ] the Planner's answer on
+  batch versions (CI numbers / release PR / per-PR); [ ] PR, merge, first real batch measured (3 PRs ≤ 25 min).
 - [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
   (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
 
