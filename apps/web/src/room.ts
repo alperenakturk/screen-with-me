@@ -2994,17 +2994,18 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   {
     const row = $<HTMLButtonElement>('#dock-speed-row');
     const picker = $('#dock-more-picker');
-    row.addEventListener('click', () => {
-      picker.hidden = !picker.hidden;
-      row.setAttribute('aria-expanded', String(!picker.hidden));
-    });
+    const menu = $('#dock-more-pop');
+    // Open, the picker takes the menu's place (its other rows step aside), so the menu never outgrows a short video.
+    const setPicking = (on: boolean) => {
+      picker.hidden = !on;
+      row.setAttribute('aria-expanded', String(on));
+      menu.classList.toggle('picking', on);
+    };
+    row.addEventListener('click', () => setPicking(picker.hidden === true));
     // Closed again each time the ⋯ menu closes.
     new MutationObserver(() => {
-      if ($('#dock-more-pop').hidden && !picker.hidden) {
-        picker.hidden = true;
-        row.setAttribute('aria-expanded', 'false');
-      }
-    }).observe($('#dock-more-pop'), { attributes: true, attributeFilter: ['hidden'] });
+      if (menu.hidden && !picker.hidden) setPicking(false);
+    }).observe(menu, { attributes: true, attributeFilter: ['hidden'] });
   }
   debugHooks.register('railSpeed', () => ({
     commands: [

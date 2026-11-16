@@ -2247,7 +2247,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Every room: a room that stayed empty for more than 1 min while playing opens paused where the last person left
   (`freezeIfLongEmpty`). Listed under "Kaydedilen odaların" on the home page.
 - **Speed picker (card UI2):** one picker everywhere (`room.ts` `speedPicker`): in the rail's ⋯ (behind the
-  "⏩ Speed · 1×" row, closed again with the menu), the rail's own ⏩ pop `#dock-speed-pop` and the toolbar's
+  "⏩ Speed · 1×" row; open, `#dock-more-pop.picking` hides the menu's other rows so it fits a short video, and it
+  closes again with the menu), the rail's own ⏩ pop `#dock-speed-pop` and the toolbar's
   `#speed-pop`. It holds the ready speeds `PRESET_RATES` (0.5 / 1 / 1.25 / 1.5 / 2, `[data-rate]`, `.on` +
   `aria-pressed` for the room's speed) and − value + (`[data-step]`). `fitRate` / `stepRateFor`
   (`packages/shared/src/protocol.ts`) keep a custom speed between 0.25× and `CUSTOM_MAX_RATE` 3× in 0.05 steps; on
