@@ -268,8 +268,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   average of the last 5 (`measureSwitch`; nothing is sent).
   **0.9.92.2 Shorts rail (owner chose C on https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379: "too small on my
   laptop"):** above 860 px wide the `#shorts-bar` is a column of 48 px icon buttons right of the video (grid column 3,
-  ▲▼ `#shorts-nav` at its foot; names in the titles): 💬 `#shorts-chat-btn` (or Enter) opens the message box as a small
-  window (`.shorts-chat-wrap.open`, Esc / outside click closes), 😀 tray, 🎙 / 📷, ＋, 🎮, ♾, 🔁, ↩. Its windows open right
+  ▲▼ `#shorts-nav` at its foot; names in the titles): 💬 `#shorts-chat-btn` (or Enter) opens the chat panel (card SH3,
+  below), 😀 tray, 🎙 / 📷, ＋, 🎮, ♾, 🔁, ↩. **Card SH3 (16 Nov 2026), the chat panel:** on the rail layout (≥ 861 px,
+  not `html.ph-room`) 💬 / Enter toggles `#shorts-chat-panel` (`aside`, head "Chat" + ✕ `#shorts-chat-close`): the side
+  panel's own chat tab `[data-panel="chat"]` is lent into it (`drawShortsPanel` in `room.ts`; `chatLent` keeps it shown
+  and `chat.setVisible(true)` whatever the tab; closing or leaving the view puts it back and `tabs.refresh()`). It is a
+  fifth grid column right of `#seats-r` (`.room.shorts-chat-open .stage`: `… minmax(0, 1fr) clamp(280px, 24vw, 380px)`,
+  as tall as the video, `contain: size` so a long chat scrolls inside), `main` drops its max width, and the seats'
+  bubbles hide while it is open (they repeat the chat). Open / closed: `localStorage` `shortsChat:<room>`. While closed
+  `#shorts-chat-badge` on 💬 counts single new chat lines from others (a `MutationObserver` on `#chat-list`, as the
+  phone's `ph-unread`). The bar's own message box (`#shorts-chat`) is only for narrow windows now; phones keep their 💬
+  sheet. Test Lab `shorts.chat` (`open`, `shown`, `unread`, `panel`, `overPlayer`); harness `scripts/harness/shorts-chat/run.cjs`. Its windows open right
   of the rail; `fitRailPops` slides one back on screen when the window is small. (0.9.93.1: the rail's 48 px square-button rule skips
   buttons inside its windows (`.shorts-feed-pop *`, `.react-tray *`, `.game-menu *`); a window is capped to the screen
   and scrolls inside; `fitRailPops` also runs when results arrive (`childList`); ＋ Add = box + button on one row, with

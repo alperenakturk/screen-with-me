@@ -9729,22 +9729,66 @@ html.ph-shorts .room #player-error:not([hidden]) {
     overflow-y: auto;
   }
 
+  /* Card SH3: the rail's 💬 opens the room's chat as a panel (below), so the bar's message box is not shown here. */
   .room.shorts .shorts-chat-wrap .shorts-chat {
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 0;
-    z-index: 40;
-    width: 340px;
     display: none;
-    padding: 8px;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    background: var(--surface);
-    box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
   }
 
-  .room.shorts .shorts-chat-wrap.open .shorts-chat {
+  .room.shorts #shorts-chat-btn {
+    position: relative;
+  }
+
+  .room.shorts #shorts-chat-btn > .badge:not([hidden]) {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: inline-block;
+    min-width: 18px;
+    padding: 1px 5px;
+    font-size: 11px;
+    line-height: 16px;
+  }
+
+  /* Card SH3: the chat panel takes a fifth column right of the seats, as tall as the video; `contain: size` keeps a
+     long chat from making the row taller (the list scrolls inside). */
+  html:not(.ph-room) .room.shorts.shorts-chat-open .stage {
+    grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr) clamp(280px, 24vw, 380px);
+  }
+
+  /* The panel takes room from the seats' columns: the page uses the whole width then. The seats' message bubbles
+     say what the panel already shows, and in the narrower columns they grew into tall strips: hidden while it is open. */
+  html.shorts-view:not(.ph-room):has(.room.shorts-chat-open) main {
+    max-width: none;
+  }
+
+  html:not(.ph-room) .room.shorts.shorts-chat-open .seat-bubble {
+    display: none;
+  }
+
+  html:not(.ph-room) .room.shorts.shorts-chat-open .stage > .shorts-chat-panel:not([hidden]) {
+    grid-column: 5;
+    grid-row: 2;
+    align-self: stretch;
     display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    contain: size;
+  }
+
+  .shorts-chat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 6px 6px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .shorts-chat-panel > .chat-panel {
+    flex: 1;
+    min-height: 0;
   }
 }
 

@@ -8,29 +8,17 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (handoff 16 Nov, 18:30; the session hit its context limit; a fresh lane A session continues from here):
-  - [x] Merged 16 Nov: SR2 #460, BUD2 #481, GR1 #476, UI2 #469 (cards archived); SH1 item 2 #486 (live v0.9.97.150);
-    SH1 item 3 #471 (`claude/sh1-ring`, speaking ring); EC1 #465 (`claude/ec1-end-card`); SH1 Test Lab `shorts.state`
-    `start` #495 (`claude/sh1-start-offset`); SH1 item 4 #489 (`claude/sh1-tiktok-small`: `vm.`/`vt.` links in a
-    pasted list, harness `shorts-mixed`, which also checks a swiped TikTok starts at 0:00). SH1 is complete on main.
-  - [x] STOP THE LINE lifted 16 Nov 18:33: run 43923095993 green, tagged v0.9.97.153 (cause: object restarts, B2 note
-    below). Was: no merges to main until live e2e is green again. Main runs 43917089949 and
-    43921749258 deployed but failed live e2e (games: Sea seats / fleets, duel result, sea ws drops, game keepalive;
-    HTTP-fallback 429; emoji rain "40 sent, 0 reached"); a lane B session investigates. Not tagged since v0.9.97.151.
-  - [ ] When live is green: EC1 + SH1 Done lines (PRs above, the live version), both cards verbatim to
-    `archive/cards-done.md` (DOCS2), and these owner hand tests: (1) swipe Shorts with a friend, how long the pause
-    before each Short feels; (2) speak in voice in the Shorts view: your face and your friend's get a green ring;
-    (3) with auto-next off, a video that ends shows a centered "Video ended" dialog (▶ Play next / Close); (4) paste
-    several TikTok app links (vm.tiktok.com) together with YouTube Shorts: they queue in paste order.
-  - [ ] SH3 (Shorts chat panel on a computer): not started; branch it from main. Today the rail's 💬 opens only a message
-    box (`.shorts-chat-wrap`, `setShortsChat` in `room.ts`); `.room.shorts > .side` is `display: none`. Idea: reuse the
-    side panel's chat (`createChatPanel`, `#chat-list`, `#chat-badge`) as a column right of the rail when 💬 is on,
-    without covering `#seats-r` or the player; `shortsChat:<room>` memory; Test Lab `shorts.chat`; QA1 at 1366 / 1920 /
-    tablet-land. Then VC1 + VC3 → MSG1.
+- [ ] Lane A (session 16 Nov, evening; continues from the first unchecked item):
+  - [x] SH1 + EC1 live (v0.9.97.153): Done lines, both cards in `archive/cards-done.md`, hand tests 27q–27t below.
+  - [ ] SH3 #499 (`claude/sh3-shorts-chat`): 💬 opens the room's chat as a panel beside the Shorts view on a
+    computer; harness `shorts-chat` in CI. Green → merge → deploy + live e2e → Done line, card to the archive.
+  - [ ] VC1 + VC3 (deafen 🎧, YouTube volume drag; the "voice isn't reaching the others" note), then MSG1.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
     state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
+  - Note: `scripts/harness/phone/run.cjs` (not in CI) already fails on main (the strip's tools, the games tab, the
+    sideways column's buttons): stale since the phone layout changes; worth a fix pass.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
@@ -194,6 +182,12 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   before the battle. On your turn tap a friend's chip, then fire on their sea; a sunk player is crossed out and only
   watches; at the end the card lists 1st to last. Then the Five Frames Duel with three or more: the race goes on after
   the first one solves, and the end card shows the places.
+- [ ] 27q. [SH1, 0.9.97.153] Swipe Shorts with a friend: each Short starts from 0:00 for both of you; tell the Planner
+  how long the short pause before each one feels.
+- [ ] 27r. [SH1] Join voice in the Shorts view and talk: your face and your friend's get a green ring while speaking.
+- [ ] 27s. [EC1, 0.9.97.153] Auto-next off, let a video end: "Video ended" opens in the middle of the screen (▶ Play
+  next / Close; Esc and a click outside close it too).
+- [ ] 27t. [SH1] Paste several TikTok app links (vm.tiktok.com) together with YouTube Shorts: they queue in paste order.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

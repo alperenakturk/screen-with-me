@@ -155,6 +155,24 @@ const SCREENS = {
       await p.waitForSelector('#sources-paste:not([hidden])');
     },
   },
+  'shorts-chat': {
+    what: 'The Shorts view on a computer with 💬 open: the room\'s chat as a panel right of the rail and the seats (never over the video)',
+    room: true,
+    sizes: ['laptop', 'desktop', 'tablet-land'],
+    after: async (p) => {
+      await searchTab(p);
+      await p.fill('#media-input', 'https://www.youtube.com/shorts/aqz-KE-bpKQ');
+      await p.click('#media-form button[value=load]');
+      await p.waitForFunction(() => document.documentElement.classList.contains('shorts-view'));
+      await p.click('#shorts-chat-btn');
+      for (const text of ['This one is great', 'Next one please!']) {
+        await p.fill('#chat-input', text);
+        await p.press('#chat-input', 'Enter');
+      }
+      await p.locator('#chat-input').blur();
+      await wait(800);
+    },
+  },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
       `settings-${sec}`,
@@ -256,7 +274,10 @@ async function lab(page, id) {
       for (const lang of LANGS) {
         const ctx = await browser.newContext({ ...SIZES[size] });
         await ctx.addInitScript(({ lang, theme }) => {
-          for (const [k, v] of Object.entries({ lang, theme, name: 'Alex', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', extUpdateSeen: '9', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1' })) localStorage.setItem(k, v);
+          // Also runs in a YouTube frame (the Shorts screens), where storage is off limits.
+          try {
+            for (const [k, v] of Object.entries({ lang, theme, name: 'Alex', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', extUpdateSeen: '9', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1' })) localStorage.setItem(k, v);
+          } catch {}
         }, { lang, theme });
         const page = await ctx.newPage();
         page.on('pageerror', (e) => problems.push(`${name} ${size} ${lang}: page error ${e.message}`));
