@@ -313,6 +313,8 @@ export interface MemberVoice {
   switching?: boolean;
   /** Yayın hazır olunca gelir: diğerleri bu üyenin sesini bununla çeker. */
   track?: string;
+  /** Card VC1: deafened (hears no voice or stream; the mic is off too). Optional, old clients ignore it. */
+  deaf?: boolean;
 }
 
 /** Sesli sohbette aynı anda en fazla bu kadar kişi (SFU'da herkes herkesi çeker; maliyet ve kalabalık). */
@@ -495,7 +497,7 @@ export type ClientMessage =
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
-  | { t: 'voice'; on: boolean; mic?: boolean; track?: string; cam?: boolean; switching?: boolean }
+  | { t: 'voice'; on: boolean; mic?: boolean; track?: string; cam?: boolean; switching?: boolean; deaf?: boolean }
   /** Sesli sohbetin bağlantı işi; cevap aynı `id` ile `{t:'rtc'}` olarak gelir. */
   | ({ t: 'rtc'; id: number } & RtcRequest)
   /** Eşler arası seste: bir üyeye bağlantı mesajı (sunucu sadece ikisi de seste ise iletir). */
@@ -1067,6 +1069,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (isTrackName(m.track)) out.track = m.track;
       if (typeof m.cam === 'boolean') out.cam = m.cam;
       if (m.switching === true) out.switching = true;
+      if (m.deaf === true) out.deaf = true;
       return out;
     }
     case 'rtc':

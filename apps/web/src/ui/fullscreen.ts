@@ -7,11 +7,17 @@ import { load, postToExtension, save } from '../storage.ts';
 import { flashHint } from './hint.ts';
 import { setIcon } from './icons.ts';
 import { isTyping } from './reactions.ts';
+import { debugHooks } from '../debug-lab.ts';
 
 /** Tam ekrandaki hızlı mesaj kutusu kısa mesajlar içindir. */
 export const QUICK_CHAT_MAX = 120;
 /** Fare bu kadar süre hareketsiz kalınca kontroller gizlenir. */
 const IDLE_MS = 2500;
+/** Card VC1: a click in the player gives the focus back after this when the volume didn't move… */
+const FOCUS_FIRST_MS = 400;
+/** …or this long after the volume stopped changing (a drag on YouTube's slider), and never later than FOCUS_MAX_MS. */
+const FOCUS_REST_MS = 1200;
+const FOCUS_MAX_MS = 10_000;
 /** "Keep the controls open" changed (the rail's ⋯ or Settings → My screen); the new value is in `opt:railPin`. */
 export const RAIL_PIN_EVENT = 'swm-railpin';
 
@@ -365,7 +371,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       // player's frame, so none of the room's shortcuts (Enter, 1–8, P, M, T…) worked until a click on our page. The
       // page takes the focus back at once; the click itself, YouTube's seek bar, settings and captions still work,
       // only the player's own keyboard shortcuts are given up. Someone who Tabbed into the player keeps it.
-      if (!tabbing) frame.blur();
+      if (!tabbing) focusBackFrom(frame);
       closeRailWindows();
       if (edgeMode()) {
         nearEdge = false;
@@ -373,6 +379,49 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       }
     }),
   );
+
+  /**
+   * Card VC1 (owner: "I can't drag YouTube's volume, one click jumps it"): taking the focus away from the player's frame
+   * at once ends a drag on YouTube's own volume slider. A click that doesn't move the volume (on the video, the seek
+   * bar, a menu) still gives the focus back after a moment (R26); while the player's volume or mute keeps changing, the
+   * person is dragging the slider: the focus waits until it has rested for a while (at most 10 s).
+   */
+  let focusWatch = 0;
+  function focusBackFrom(frame: HTMLIFrameElement): void {
+    const player = getPlayer();
+    const read = () => `${player?.getVolume?.() ?? ''}|${player?.isMuted?.() ?? ''}`;
+    const token = ++focusWatch;
+    const started = Date.now();
+    let last = read();
+    let changedAt = 0;
+    const look = () => {
+      if (token !== focusWatch || document.activeElement !== frame) return;
+      const now = read();
+      if (now !== last) {
+        last = now;
+        changedAt = Date.now();
+      }
+      const waited = Date.now() - started;
+      const done = changedAt ? Date.now() - changedAt >= FOCUS_REST_MS : waited >= FOCUS_FIRST_MS;
+      if (done || waited >= FOCUS_MAX_MS) frame.blur();
+      else setTimeout(look, 100);
+    };
+    setTimeout(look, 100);
+  }
+  // Card VC1: Test Lab `player.focus`: is the keyboard focus in the player's frame now, and the player's volume.
+  debugHooks.register('player-focus', () => ({
+    commands: [
+      {
+        id: 'player.focus',
+        tab: 'status',
+        run: () => {
+          const active = document.activeElement;
+          const text = JSON.stringify({ inPlayer: active instanceof HTMLIFrameElement && theater.contains(active), volume: getPlayer()?.getVolume?.() ?? null });
+          return { en: text, tr: text };
+        },
+      },
+    ],
+  }));
 
   /**
    * The dock shows and hides with the player's own bar (owner: "when one hides, the other hides too"): it shows on

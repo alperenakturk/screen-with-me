@@ -73,6 +73,9 @@ describe('parseClientMessage', () => {
     // CAM1: "camera changing…" only as a plain true; anything else is dropped.
     expect(parse({ t: 'voice', on: true, mic: true, cam: true, switching: true })).toEqual({ t: 'voice', on: true, mic: true, cam: true, switching: true });
     expect(parse({ t: 'voice', on: true, cam: true, switching: 'yes' })).toEqual({ t: 'voice', on: true, cam: true });
+    // Card VC1: deafened is an optional flag; anything but `true` is dropped.
+    expect(parse({ t: 'voice', on: true, mic: false, deaf: true })).toEqual({ t: 'voice', on: true, mic: false, deaf: true });
+    expect(parse({ t: 'voice', on: true, deaf: 'yes' })).toEqual({ t: 'voice', on: true });
     const sdp = 'v=0\r\n' + 'a=x\r\n'.repeat(1500);
     expect(parse({ t: 'rtc', id: 1, op: 'publish', sdp, mid: '0', track: 'mic1' })).toMatchObject({ op: 'publish', mid: '0' });
     expect(parse({ t: 'rtc', id: 2, op: 'publish', sdp: 'hello', mid: '0', track: 'mic1' })).toBeNull();
