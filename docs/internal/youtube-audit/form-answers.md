@@ -59,3 +59,12 @@ A compliance audit to request a quota extension.
 
 ## 8. Evidence
 The screenshots and the screencast link from `self-check.md` and `screencast.md`.
+
+**Note on the logo size** (for any free-text field such as "Additional information"):
+
+> Every YouTube result list shows YouTube's official full-colour logo (the unmodified PNG from the brand site, white or
+> Almost Black wordmark to match the background), linked to youtube.com, at the start of the line "Results from YouTube
+> · YouTube Terms of Service". The logo is drawn 20 px tall, below the brand site's 100 px digital minimum: our result
+> lists open in windows 260 px wide and on phones, where a 100 px logo (about 590 px wide with its clear space) would
+> not fit and would become the most prominent element. If you prefer a different size or placement, tell us and we
+> will change it right away.

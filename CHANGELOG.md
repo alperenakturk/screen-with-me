@@ -16,12 +16,24 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.147 — 16 Nov
+### 0.9.97.141 — 15 Nov
 
-- When a video ends and the next one doesn't start by itself, "Video ended" now opens in the middle of the screen
-  instead of in the chat: the video's name, a small ↗ to its page, and **▶ Play next** or **Close**. Esc or a click
-  outside closes it too, and it goes away by itself when someone starts the next video. Shorts keep their small card
-  beside the video.
+- A room's chat now keeps its last 1000 messages until the room is deleted (it was only the last 50, so older
+  messages seemed to vanish). People who join get the newest messages; "Show earlier messages" or scrolling up brings
+  older ones back. A busy room's activity lines no longer push messages out of the chat.
+
+### 0.9.97.140 — 15 Nov
+
+- YouTube search results, the Shorts view's search and the ♾ Discover window now show YouTube's own logo beside "Results
+  from YouTube" (light or dark to match the theme); it links to YouTube.
+
+### 0.9.97.139 — 15 Nov
+
+- Watching someone's shared screen is simpler: the stream has one button, **⛶ Fullscreen** ⇄ **🪟 Window**. As a window
+  it floats on the page: drag it anywhere and make it bigger or smaller from its corner; it keeps its shape, and its
+  place and size are remembered when you come back. It never covers a YouTube video: it moves beside it, and in a
+  YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
+  "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
 
 ### 0.9.97.138 — 15 Nov
 

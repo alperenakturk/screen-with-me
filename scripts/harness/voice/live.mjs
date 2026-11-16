@@ -2,7 +2,8 @@
 // görüntünün gerçekten aktığı (kareler ilerliyor) ve sınırların göründüğü ölçülür. Sonra ekran paylaşımı denenir
 // (başsız Chrome'da ekran seçimi kendiliğinden yapılır: --auto-select-desktop-capture-source).
 //
-//   node scripts/harness/voice/live.mjs [site]
+//   node scripts/harness/voice/live.mjs [site]   (SWM_W / SWM_H: the browser window, default 1366 × 860; ST1 runs it at
+//   1366, 1920 and a tablet's 1180 × 820)
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launch } from '../embed/cdp.mjs';
@@ -34,11 +35,11 @@ const until = async (fn, ms = 10000) => {
 };
 
 async function person(name, avatar) {
-  const b = await launch({ ext: EXT, out: join(here, `live-${name}`), args: ARGS });
+  const b = await launch({ ext: EXT, out: join(here, `live-${name}`), args: ARGS, width: Number(process.env.SWM_W) || 1366, height: Number(process.env.SWM_H) || 860 });
   await b.navigate(`${SITE}/`);
   await b.sleep(1500);
   await b.evaluate(`localStorage.setItem('name', ${JSON.stringify(name)}); localStorage.setItem('avatar', ${JSON.stringify(avatar)}); localStorage.setItem('lang','tr'); 1`);
-  await b.navigate(`${SITE}/r/${room}#back`);
+  await b.navigate(`${SITE}/r/${room}?debug=1#back`);
   return b;
 }
 const frames = (b) =>
@@ -70,9 +71,10 @@ const viewers = await until(async () => {
 check(!!viewers, 'Alex’te "İzleyen 1/4"', String(viewers));
 await sam.shot('izliyor');
 
-// 0.9.91.14 (owner): the stream window is free like the cameras. Drag it inside the video, pop it out onto the page,
-// resize it from its corner; places are remembered; in fullscreen it lives inside the video.
-const rect = (b) => b.evaluate(`(() => { const w = document.getElementById('live-window'); const r = w.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, inWrap: !!w.closest('.player-wrap'), free: w.classList.contains('free') }; })()`);
+// ST1 (owner, 15 Nov 2026: "one button: fullscreen or a window I can put anywhere; simple"): the viewer has one control,
+// ⛶ Fullscreen ⇄ 🪟 Window. The window floats on the page: drag it anywhere, resize it from its corner (16:9); its place
+// and width survive a reload; in the room's fullscreen it lives inside the video; it never covers a YouTube player.
+const rect = (b) => b.evaluate(`(() => { const w = document.getElementById('live-window'); const r = w.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, inWrap: !!w.closest('.player-wrap'), free: w.classList.contains('free'), full: document.fullscreenElement === w || w.classList.contains('filled') }; })()`);
 const dragBy = async (b, x, y, dx, dy) => {
   await b.mouse('mouseMoved', x, y, { button: 'none' });
   await b.mouse('mousePressed', x, y);
@@ -80,46 +82,75 @@ const dragBy = async (b, x, y, dx, dy) => {
   await b.mouse('mouseReleased', x + dx, y + dy);
   await b.sleep(200);
 };
+// The lab's log line starts with its icon; the JSON follows (as game-window-head's phoneGames.state).
+const labView = (b) => b.evaluate(`window.__swmLab.run('stream.view').then((l) => l.text)`).then((t) => JSON.parse(String(t).replace(/^\S+\s/, ''))).catch(() => null);
+const controls = await sam.evaluate(`[...document.querySelectorAll('#live-window .live-bar button')].filter((x) => !x.hidden).map((x) => x.id)`);
+check(JSON.stringify(controls) === JSON.stringify(['live-mode', 'live-close']), 'ST1: izleyicide tek düğme (⛶ Tam ekran) ve ✕', JSON.stringify(controls));
+const modeLabel = () => sam.evaluate(`document.getElementById('live-mode').textContent`);
+check((await modeLabel()).includes('Tam ekran'), 'ST1: düğme "⛶ Tam ekran" diyor', await modeLabel());
 const before = await rect(sam);
-// It starts in the video's top right (LAYOUT1: clear of the player's own bar), so it is dragged down and left.
-await dragBy(sam, before.x + before.w / 2, before.y + before.h / 2, -160, 60);
+check(before.free && !before.inWrap, 'ST1: yayın penceresi sayfada serbest (videonun içinde değil)', JSON.stringify(before));
+const view = await labView(sam);
+check(view?.mode === 'window' && view.onScreen && !view.overPlayer, 'ST1: Test Panosu stream.view: pencere, ekranda', JSON.stringify(view));
+await dragBy(sam, before.x + before.w / 2, before.y + before.h / 2, -300, 120);
 const moved = await rect(sam);
-check(moved.inWrap && moved.x < before.x - 100 && moved.y > before.y + 30, 'yayın penceresi videonun içinde sürüklenip taşındı', JSON.stringify({ before, moved }));
-await sam.evaluate(`document.querySelector('#live-window .live-pop').click(); 1`);
-await sam.sleep(200);
-const popped = await rect(sam);
-check(!popped.inWrap && popped.free, '⧉ ile pencere sayfaya çıktı (serbest)', JSON.stringify(popped));
-await dragBy(sam, popped.x + popped.w / 2, popped.y + popped.h / 2, -300, 120);
-const freeMoved = await rect(sam);
-check(freeMoved.x < popped.x - 200 && freeMoved.y > popped.y + 80, 'serbest pencere sayfada istenen yere sürüklendi', JSON.stringify({ popped, freeMoved }));
-await dragBy(sam, freeMoved.x + freeMoved.w - 6, freeMoved.y + freeMoved.h - 6, 120, 0);
+check(moved.x < before.x - 200 && moved.y > before.y + 80, 'ST1: pencere sayfada istenen yere sürüklendi', JSON.stringify({ before, moved }));
+await dragBy(sam, moved.x + moved.w - 6, moved.y + moved.h - 6, 120, 0);
 const grown = await rect(sam);
 await sam.mouse('mouseMoved', grown.x + 40, grown.y + 40, { button: 'none' });
 await sam.sleep(300);
 await sam.shot('serbest');
-check(grown.w > freeMoved.w + 80 && Math.abs(grown.w / grown.h - 16 / 9) < 0.05, 'köşeden büyütüldü (16:9 kaldı)', JSON.stringify({ freeMoved, grown }));
+check(grown.w > moved.w + 80 && Math.abs(grown.w / grown.h - 16 / 9) < 0.05, 'ST1: köşeden büyütüldü (16:9 kaldı)', JSON.stringify({ moved, grown }));
+// ⛶ → the stream alone in fullscreen; 🪟 → back to the same window.
+await sam.evaluate(`document.getElementById('live-mode').click(); 1`);
+await sam.sleep(700);
+const full = await rect(sam);
+check(full.full && full.w >= (await sam.evaluate('innerWidth')) - 2, 'ST1: ⛶ ile yayın tam ekran', JSON.stringify(full));
+check((await modeLabel()).includes('Pencere'), 'ST1: tam ekranda düğme "🪟 Pencere" diyor', await modeLabel());
+await sam.shot('tam-ekran');
+await sam.evaluate(`document.getElementById('live-mode').click(); 1`);
+await sam.sleep(700);
+const back = await rect(sam);
+check(!back.full && Math.abs(back.x - grown.x) < 4 && Math.abs(back.w - grown.w) < 4, 'ST1: 🪟 ile aynı yerde aynı boyutta pencereye döndü', JSON.stringify({ grown, back }));
 // A real reload (navigating to the same address with a hash would not reload the page).
 await sam.evaluate(`location.reload(); 1`);
 await sam.sleep(1500);
 await until(() => sam.evaluate(`!document.getElementById('live-watch').hidden && document.getElementById('live-watch').textContent.includes('izle')`), 15000);
 await sam.sleep(1000);
 await sam.evaluate(`document.getElementById('live-watch').click(); 1`);
-// The IP notice asks again after a reload (unless "don't show again" was ticked).
-await until(() => sam.evaluate(`(() => { const b = document.querySelector('.ip-notice')?.closest('.confirm-dialog')?.querySelector('.btn.primary'); if (b) b.click(); return !!b; })()`), 5000);
 await until(() => sam.evaluate(`!document.getElementById('live-window').hidden`), 15000);
 await sam.sleep(300);
 const again = await rect(sam);
-check(again.free && Math.abs(again.x - grown.x) < 4 && Math.abs(again.w - grown.w) < 4, 'yenileyince serbest yeri ve boyutu hatırlandı', JSON.stringify({ grown, again }));
+check(again.free && Math.abs(again.x - grown.x) < 4 && Math.abs(again.w - grown.w) < 4, 'ST1: yenileyince yeri ve boyutu hatırlandı', JSON.stringify({ grown, again }));
 await sam.evaluate(`document.querySelector('.theater').classList.add('fake-fs'); 1`);
 await sam.sleep(300);
 const fs = await rect(sam);
-check(fs.inWrap && !fs.free, 'tam ekranda pencere videonun (tam ekranın) içinde', JSON.stringify(fs));
+check(fs.inWrap && !fs.free, 'odanın tam ekranında pencere videonun (tam ekranın) içinde', JSON.stringify(fs));
 await sam.evaluate(`document.querySelector('.theater').classList.remove('fake-fs'); 1`);
 await sam.sleep(300);
 check((await rect(sam)).free, 'tam ekrandan çıkınca yine serbest');
-await sam.evaluate(`document.querySelector('#live-window .live-pop').click(); 1`);
-await sam.sleep(200);
-check((await rect(sam)).inWrap, '⤓ ile videonun içine geri döndü');
+// Nothing over a YouTube player (the rail class stands in for one: YouTube can't play here): dragged onto the player,
+// the window settles beside it.
+await sam.evaluate(`document.querySelector('.theater').classList.add('yt-rail'); 1`);
+await sam.sleep(300);
+const p = await sam.evaluate(`(() => { const r = document.querySelector('.theater').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; })()`);
+const w0 = await rect(sam);
+await dragBy(sam, w0.x + w0.w / 2, w0.y + w0.h / 2, p.x + p.w / 2 - (w0.x + w0.w / 2), p.y + p.h / 2 - (w0.y + w0.h / 2));
+const yt = await labView(sam);
+check(yt && !yt.overPlayer && yt.onScreen, 'ST1: YouTube oynatıcısının üstüne sürüklenince yanına yerleşti, ekranda', JSON.stringify({ yt, player: p }));
+// In the room's fullscreen on a YouTube video the window hides (nothing of ours over the YouTube player) and the rail's
+// "📺 Stream" leaves fullscreen and shows it again.
+await sam.evaluate(`document.querySelector('.theater').classList.add('fake-fs'); 1`);
+await sam.sleep(400);
+const away = await sam.evaluate(`(() => { const w = document.getElementById('live-window'); const d = document.getElementById('dock-stream'); return { shown: getComputedStyle(w).display !== 'none', dock: !!d && !d.hidden }; })()`);
+const awayView = await labView(sam);
+check(!away.shown && away.dock && awayView?.mode === 'hidden', 'ST1: YouTube tam ekranında yayın penceresi gizli, rayda "📺 Yayın" var', JSON.stringify({ away, awayView }));
+await sam.evaluate(`document.getElementById('dock-stream').click(); 1`);
+await sam.sleep(500);
+const backFromFs = await sam.evaluate(`(() => { const w = document.getElementById('live-window'); return { shown: getComputedStyle(w).display !== 'none', fs: document.querySelector('.theater').classList.contains('fake-fs'), dock: !document.getElementById('dock-stream').hidden }; })()`);
+check(backFromFs.shown && !backFromFs.fs && !backFromFs.dock, 'ST1: "📺 Yayın" tam ekrandan çıkardı, pencere geri geldi', JSON.stringify(backFromFs));
+await sam.evaluate(`document.querySelector('.theater').classList.remove('yt-rail'); 1`);
+await sam.sleep(300);
 
 // The streamer can hide their own preview (viewers still get the stream) and show it again.
 await alex.evaluate(`document.getElementById('live-hide-self').click(); 1`);
@@ -132,9 +163,6 @@ await alex.evaluate(`document.getElementById('live-preview').click(); 1`);
 await alex.sleep(300);
 check(!!(await alex.evaluate(`!document.getElementById('live-window').hidden && document.getElementById('live-preview').hidden`)), 'Alex önizlemesini geri açtı');
 
-await sam.evaluate(`document.getElementById('live-big').click(); 1`);
-await sam.sleep(400);
-await sam.shot('buyuk');
 
 // Bitir: Sam'de pencere kapanır.
 await alex.evaluate(`document.getElementById('live-stop').click(); 1`);
