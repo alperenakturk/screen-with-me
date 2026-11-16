@@ -386,9 +386,10 @@ const sheetName = (page) => page.evaluate(() => {
     const friend = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const fp = await friend.newPage();
     await enter(fp, roomId);
+    // Card SH3: on a computer Enter opens the Shorts view's chat panel with the room's message box.
     await fp.keyboard.press('Enter');
-    await fp.fill('#shorts-input', 'what a great one');
-    await fp.press('#shorts-input', 'Enter');
+    await fp.fill('#chat-input', 'what a great one');
+    await fp.press('#chat-input', 'Enter');
     const toast = await page.waitForFunction(() => { const t = document.querySelector('.ph-toast'); return t && !t.hidden ? t.textContent : null; }, null, { timeout: 8000 }).then((h) => h.jsonValue()).catch(() => null);
     check(!!toast && toast.includes('what a great one'), 'Shorts: a friend\'s message shows in the bar', String(toast));
     // PH1: 💬 in the bar counts it.

@@ -327,6 +327,11 @@ jobs:
       - name: Speaking ring in the Shorts view
         run: node scripts/harness/speak-ring/run.cjs http://localhost:8787
 
+      # Card SH3: the Shorts view's chat panel on a computer and a sideways tablet (opens beside the rail, never over the
+      # video, unread count, send and read, kept over a reload, back to the side panel). Needs YouTube.
+      - name: Shorts chat panel
+        run: node scripts/harness/shorts-chat/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
