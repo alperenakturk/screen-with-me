@@ -64,6 +64,7 @@ import {
 import { avatarNode, openAvatarDialog } from './ui/avatar.ts';
 import { autoInviteOn } from './ui/invite-option.ts';
 import { createChatPanel } from './ui/chat.ts';
+import { ytLogoHtml } from './ui/yt-logo.ts';
 import { createQueuePanel } from './ui/queue.ts';
 import { createFullscreen } from './ui/fullscreen.ts';
 import { createPeoplePanel } from './ui/people.ts';
@@ -361,7 +362,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div class="live-bar">
                 <span id="live-title" class="live-title"></span>
                 <button id="live-hide-self" type="button" class="icon-btn" data-i18n-title="live.hideSelf" hidden>🙈</button>
-                <button id="live-big" type="button" class="icon-btn" data-i18n-title="live.bigger">⤢</button>
+                <button id="live-mode" type="button" class="btn small-btn live-mode"></button>
                 <button id="live-close" type="button" class="icon-btn" data-i18n-title="close">✕</button>
               </div>
             </div>
@@ -532,7 +533,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               </div>
               <ol id="shorts-add-results" class="shorts-results" hidden></ol>
               <p class="muted small" data-i18n="shorts.addNote"></p>
-              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
+              <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
             </form>
           </div>
           <div class="game-menu-wrap shorts-game-wrap">
@@ -552,7 +553,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button class="btn primary small-btn" data-i18n="feed.start"></button>
               </div>
               <p class="muted small" data-i18n="feed.hint"></p>
-              <p class="yt-attrib small"><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></p>
+              <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
             </form>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
@@ -961,6 +962,34 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     chat.render();
     people.render();
   });
+  // Card CH1: the chat kept until the room is deleted, in the Test Lab (and a lab-only fill to try it).
+  debugHooks.register('chat-history', () => ({
+    commands: [
+      {
+        id: 'chat.history',
+        tab: 'status',
+        title: { en: 'Chat: how much is loaded and whether older pages are offered', tr: 'Sohbet: ne kadarı yüklü ve eski sayfalar sunuluyor mu' },
+        help: {
+          en: 'Writes how many chat messages and room-activity lines this tab holds and the older page the room offers (null: everything is here) into the log.',
+          tr: 'Bu sekmede kaç sohbet mesajı ve oda hareketi satırı olduğunu ve odanın sunduğu eski sayfayı (null: hepsi burada) kayda yazar.',
+        },
+        run: () => JSON.stringify(chat.history()),
+      },
+      {
+        id: 'chat.fill',
+        tab: 'friends',
+        title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
+        help: {
+          en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.',
+          tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.',
+        },
+        run: () => {
+          send({ t: 'lab', op: 'chat-fill' });
+          return 'sent';
+        },
+      },
+    ],
+  }));
   // SAFE1: the same two actions in the People tab / the phone's People sheet and in the person menu.
   const safety = {
     isBlocked: (member: Member) => blocks.has(member),
@@ -1544,7 +1573,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         waitingIds = message.waiting ?? [];
         renderWaiting();
         queue.set(message.queue);
-        chat.set(message.chat);
+        chat.set(message.chat, message.chatMore);
         lastBy = null;
         void applyState(message.state);
         pins.set(message.pins ?? null);
@@ -1722,6 +1751,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'chat-image':
         chat.setImage(message.id, message.data);
+        break;
+      case 'chat-older':
+        chat.older(message.messages, message.more);
         break;
       case 'chat': {
         const { by } = message.message;

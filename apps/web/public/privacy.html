@@ -116,8 +116,8 @@
             hours); to remember for 24 hours that the host let your browser in; and to link a TV to you.</li>
           <li><b>Room state:</b> the address and title of the current video or page, playing or paused, position,
             speed, the queue and its 👍 votes, the host's room rules and a planned start time.</li>
-          <li><b>Chat:</b> the last 50 messages of a room (name, avatar, text, time) so people who join later can read
-            them, and the pictures or GIFs of those messages (at most 12; a picture is deleted a day after its message, a week in
+          <li><b>Chat:</b> the last 1000 messages of a room (name, avatar, text, time), kept until the room is deleted so
+            people who join later can read them, and the pictures or GIFs of those messages (at most 12; a picture is deleted a day after its message, a week in
             a saved room). Photos are resized in your browser to at
             most 1024 px first, which also removes hidden photo data such as location; hidden notes inside GIFs are
             removed too. A private message to one person goes only to that person and to you while you are both in the
@@ -341,7 +341,7 @@
         <div class="table-wrap"><table>
           <tr><th>Data</th><th>Kept</th></tr>
           <tr><td>A room's data on our server (state, queue, chat, images, emojis, pins, votes, bans, settings)</td><td>until 24 hours after the last person leaves; 30 days if the host saved the room</td></tr>
-          <tr><td>Chat history</td><td>the last 50 messages (with at most 12 of their images, each deleted a day after its message, a week in a saved room), with the room</td></tr>
+          <tr><td>Chat history</td><td>the last 1000 messages (with at most 12 of their images, each deleted a day after its message, a week in a saved room), with the room</td></tr>
           <tr><td>Saved recaps</td><td>5 per room (20 in a saved room), at most 90 days</td></tr>
           <tr><td>Saved room's video list</td><td>the last 30 videos, until saving is turned off</td></tr>
           <tr><td>A YouTube title in a saved room</td><td>30 days</td></tr>
@@ -388,6 +388,8 @@
         <h2 id="changes">Changes to this policy</h2>
         <p>When this policy changes we update the date at the top and list the change here.</p>
         <ul>
+          <li><b>15 November 2026:</b> a room keeps its last 1000 chat messages (was 50) until the room is deleted
+            (<a href="#retention">How long we keep it</a>).</li>
           <li><b>15 November 2026:</b> "Search the web" now opens Google Search instead of DuckDuckGo
             (<a href="#services">Other services we use</a>).</li>
           <li><b>14 November 2026:</b> the ⠿ Sources picker: Vimeo search through our server and "Search the web" in a
@@ -473,7 +475,8 @@
             aldığı 24 saat hatırlansın; bir TV sana bağlansın.</li>
           <li><b>Oda durumu:</b> açık video ya da sayfanın adresi ve başlığı, oynuyor ya da durdu bilgisi, konum, hız, sıra
             ve 👍 oyları, yöneticinin oda kuralları ve planlı başlangıç saati.</li>
-          <li><b>Sohbet:</b> sonradan gelenler de okuyabilsin diye odanın son 50 mesajı (ad, avatar, metin, saat) ve bu
+          <li><b>Sohbet:</b> sonradan gelenler de okuyabilsin diye odanın son 1000 mesajı (ad, avatar, metin, saat; oda
+            silinene kadar) ve bu
             mesajlardaki fotoğraf ya da GIF'ler (en fazla 12; bir resim mesajından bir gün sonra, kayıtlı odada bir hafta
             sonra silinir). Fotoğraflar önce tarayıcında en fazla 1024 piksele
             küçültülür; bu, konum gibi gizli fotoğraf bilgilerini de siler; GIF'lerin içindeki gizli notlar da silinir.
@@ -694,7 +697,7 @@
         <div class="table-wrap"><table>
           <tr><th>Bilgi</th><th>Süre</th></tr>
           <tr><td>Bir odanın sunucumuzdaki bilgileri (durum, sıra, sohbet, resimler, emojiler, pinler, oylar, yasaklar, ayarlar)</td><td>son kişi çıktıktan 24 saat sonrasına kadar; yönetici odayı kaydettiyse 30 gün</td></tr>
-          <tr><td>Sohbet geçmişi</td><td>son 50 mesaj (resimlerinden en fazla 12'si; her resim mesajından bir gün sonra, kayıtlı odada bir hafta sonra silinir), odayla birlikte</td></tr>
+          <tr><td>Sohbet geçmişi</td><td>son 1000 mesaj (resimlerinden en fazla 12'si; her resim mesajından bir gün sonra, kayıtlı odada bir hafta sonra silinir), odayla birlikte</td></tr>
           <tr><td>Kaydedilen özetler</td><td>odada 5 (kayıtlı odada 20), en fazla 90 gün</td></tr>
           <tr><td>Kayıtlı odanın video listesi</td><td>son 30 video, kayıt kapatılana kadar</td></tr>
           <tr><td>Kayıtlı bir odadaki YouTube başlığı</td><td>30 gün</td></tr>
@@ -741,6 +744,8 @@
         <h2 id="changes-tr">Bu politikadaki değişiklikler</h2>
         <p>Bu politika değişince en üstteki tarihi güncelleriz ve değişikliği buraya yazarız.</p>
         <ul>
+          <li><b>15 Kasım 2026:</b> bir oda son 1000 sohbet mesajını (önceden 50) oda silinene kadar tutar
+            (<a href="#retention-tr">Ne kadar tutuyoruz</a>).</li>
           <li><b>15 Kasım 2026:</b> "Web'de ara" artık DuckDuckGo yerine Google Arama'yı açar
             (<a href="#services-tr">Kullandığımız diğer hizmetler</a>).</li>
           <li><b>14 Kasım 2026:</b> ⠿ kaynak seçici: sunucumuz üzerinden Vimeo araması ve yeni sekmede "Web'de ara"

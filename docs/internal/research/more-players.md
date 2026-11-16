@@ -4,6 +4,12 @@ _Research session, 2 Nov 2026, Job 4 from the Planner (owner's idea "More player
 search box has a source picker: YouTube, Vimeo, Freesound, Web Radio, Apple Music, Podcasts, KLIPY, Coub, Dailymotion,
 Mixcloud, "Streaming"). Read-only._
 
+**Update 15 Nov 2026:** `competitors/no-extension-sources.md` corrects this page. Vimeo and podcasts are built.
+SoundCloud API registration is self-service again, but it needs Artist Pro, so we still accept links only. Twitch's
+400 × 300 minimum is confirmed. Twitch does not have to wait for the domain move, because `parent` is the page's own
+hostname. Kick is confirmed to have no API, and its terms bar unofficial stream URLs. YouTube Music `watch?v=` links
+already work. That page also has the new ranking.
+
 **Limits.** The players' developer sites (developer.vimeo.com, developers.soundcloud.com, dev.twitch.tv,
 developers.dailymotion.com) could not be opened from this cloud session (not in the allowed network domains); facts
 come from web search excerpts of those pages, GitHub (Vimeo's SDK README) and forums. Each row is marked **(firm)** or
