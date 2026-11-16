@@ -324,6 +324,9 @@ jobs:
       - name: Mixed Shorts and TikTok queue
         run: node scripts/harness/shorts-mixed/run.cjs http://localhost:8787
 
+      - name: Speaking ring in the Shorts view
+        run: node scripts/harness/speak-ring/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
@@ -420,6 +423,9 @@ jobs:
           node scripts/harness/pwa/run.cjs http://localhost:8787 http://localhost:5300/video.webm
           # GS QA1 finding 3: chat messages over the video keep clear of an open game window.
           node scripts/harness/toast-game/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+          # Card EC1: "Video ended" is a centered dialog (computer EN, phone TR, tablet EN); Esc / outside / Close /
+          # Start next and the next video close it.
+          node scripts/harness/end-card/run.cjs http://localhost:8787 http://localhost:5300/video.webm
           # Card UI2: the rail's ⋯ has one speed row and a picker (ready speeds, − / +), and the speed reaches everyone.
           node scripts/harness/rail-speed/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 

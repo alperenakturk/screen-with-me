@@ -23,6 +23,36 @@ export interface SeaRules {
 
 export const SEA_RULES: SeaRules = { size: 10, fleet: [5, 4, 3, 3, 2], again: true, touch: false };
 
+/** GMP b (owner, 15 Nov 2026: "Sea Battle for 2–6"): the most seats at a table. Stub plays only at a table of two. */
+export const SEA_MAX_SEATS = 6;
+
+/**
+ * GMP b: the next seat to shoot after `from`, going round the seats that are still `alive` (seated and with ships
+ * afloat). `from` itself comes last (when it is the only one left).
+ */
+export function nextAlive(alive: readonly boolean[], from: number): number {
+  const n = alive.length;
+  for (let k = 1; k <= n; k++) {
+    const i = (from + k) % n;
+    if (alive[i]) return i;
+  }
+  return from;
+}
+
+/**
+ * GMP b: the places at the end. `out` lists the seats in the order their fleets sank; the last one standing is first,
+ * the last one sunk second, and so on. 0 for a seat that didn't play.
+ */
+export function seaRanks(seats: number, winner: number | null, out: readonly number[]): number[] {
+  const ranks = Array.from({ length: seats }, () => 0);
+  if (winner !== null) ranks[winner] = 1;
+  const offset = winner !== null ? 2 : 1;
+  [...out].reverse().forEach((seat, k) => {
+    if (seat !== winner && ranks[seat] === 0) ranks[seat] = offset + k;
+  });
+  return ranks;
+}
+
 /** A ship on the sea: its first (top / left) cell and whether it runs down (else right). Cell = row * size + column. */
 export interface ShipPlace {
   at: number;
@@ -187,7 +217,8 @@ export type SeaClientMessage =
   | { t: 'place'; ships: ShipPlace[] }
   | { t: 'shuffle' }
   | { t: 'ready'; on: boolean }
-  | { t: 'shot'; cell: number }
+  /** GMP b: `target` = the seat whose sea I shoot at (two players: the other one, may be left out). */
+  | { t: 'shot'; cell: number; target?: number }
   | { t: 'bot'; level: SeaBotLevel | 0 }
   | { t: 'sit' }
   | { t: 'rematch' }
@@ -203,6 +234,8 @@ export interface SeaPlayer {
   /** Ships of this player's fleet still afloat (everyone may know how many are left). */
   left: number;
   wins: number;
+  /** GMP b: every ship sunk: out of this game (keeps watching). */
+  out?: boolean;
 }
 
 export interface SeaSideView extends SeaView {
@@ -216,9 +249,9 @@ export type SeaServerMessage =
   | {
       t: 'state';
       phase: SeaPhase;
-      /** Two seats (null = free). */
+      /** Two to six seats (null = free; GMP b). */
       players: (SeaPlayer | null)[];
-      /** The two seas: index i = the sea of seat i (shots fired at it). */
+      /** One sea per seat: index i = the sea of seat i (shots fired at it). */
       seas: SeaSideView[];
       /** Seat index whose turn it is to shoot (play phase). */
       turn: number;
@@ -228,7 +261,9 @@ export type SeaServerMessage =
       /** My fleet while placing (the server's random one at first). */
       places?: ShipPlace[];
       watchers: { id: string; name: string; avatar?: Avatar }[];
-      last?: { by: number; cell: number; result: ShotResult };
+      last?: { by: number; cell: number; result: ShotResult; target?: number };
+      /** GMP b: each seat's place once the game is over (1 = the last fleet afloat; 0 = an empty seat). */
+      ranks?: number[];
       rules: { size: number; fleet: number[]; again: boolean; touch: boolean };
     }
   | { t: 'reveal'; seat: number; ships: number[][] }
@@ -274,8 +309,11 @@ export function parseSeaMessage(raw: string): SeaClientMessage | null {
     }
     case 'ready':
       return isBool(m.on) ? { t: 'ready', on: m.on } : null;
-    case 'shot':
-      return isInt(m.cell, cells) ? { t: 'shot', cell: m.cell } : null;
+    case 'shot': {
+      if (!isInt(m.cell, cells)) return null;
+      if (m.target === undefined) return { t: 'shot', cell: m.cell };
+      return isInt(m.target, SEA_MAX_SEATS) ? { t: 'shot', cell: m.cell, target: m.target } : null;
+    }
     case 'bot':
       return m.level === 0 || m.level === 1 || m.level === 2 ? { t: 'bot', level: m.level } : null;
     case 'lab':

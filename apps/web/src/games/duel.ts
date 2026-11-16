@@ -7,7 +7,7 @@ import './five-frames.css';
 import './duel.css';
 import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
-import { DUEL_PROTOCOL_VERSION, type DuelClientMessage, type DuelPlayer, type DuelServerMessage } from '@swm/shared/games/duel';
+import { DUEL_MAX_SEATS, DUEL_PROTOCOL_VERSION, type DuelClientMessage, type DuelPlayer, type DuelServerMessage } from '@swm/shared/games/duel';
 import { ALPHABET, MAX_TRIES, WORD_LENGTH, letters, normalize, upper, type Lang, type Mark } from '@swm/shared/games/five-frames';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
@@ -34,7 +34,7 @@ const TEXT = {
   en: {
     daily: 'Word of the day #{n}',
     lobbyTitle: 'Five Frames Duel',
-    lobbyRules: 'The same word for both of you, seven tries each. You see their marks, never their letters; the first to find the word wins.',
+    lobbyRules: 'One word for 2 to 6 players, seven tries each. You see their marks, never their letters; first to find it wins.',
     lobbyLang: 'Word language',
     lobbyGames: 'Games',
     oneGame: 'One game',
@@ -56,7 +56,7 @@ const TEXT = {
     practice: 'Practice word',
     langTitle: 'Word language (both play in it)',
     waiting: 'Waiting for a second player…',
-    readyHint: 'Same word, two boards. Press Ready when you are.',
+    readyHint: 'Same word, a board each. Press Ready when you are.',
     readyWait: 'Ready. Waiting for {name}…',
     otherReady: '{name} is ready.',
     ready: 'Ready',
@@ -99,11 +99,21 @@ const TEXT = {
     how2Line: 'You see the other board’s marks as they come: ✓ right place, • in the word, × not in it.',
     how3: 'First to find it wins',
     how3Line: 'If neither finds it in seven tries, it is a draw. Play again for a practice word.',
+    // GMP b: three to six players racing on the same word.
+    raceGo: 'Race on: {n} players, one word!',
+    youSolvedWait: 'Found it! You are {place}. The others are still racing.',
+    youOutMany: 'Out of tries. Watch the others finish.',
+    readyWaitAll: 'Ready. Waiting for everyone…',
+    rematchWaitAll: 'Waiting for the others to play again…',
+    matchLineMany: 'Game {n} of 3',
+    yourPlace: 'You finished {place}.',
+    places: 'Places',
+    noWord: 'no word',
   },
   tr: {
     daily: 'Günün kelimesi #{n}',
     lobbyTitle: 'Beş Kare Düellosu',
-    lobbyRules: 'İkinize aynı kelime, herkese yedi hak. Onun işaretlerini görürsün, harflerini asla; kelimeyi önce bulan kazanır.',
+    lobbyRules: '2–6 kişiye aynı kelime, herkese yedi hak. İşaretleri görürsün, harfleri asla; önce bulan kazanır.',
     lobbyLang: 'Kelime dili',
     lobbyGames: 'Oyun',
     oneGame: 'Tek oyun',
@@ -125,7 +135,7 @@ const TEXT = {
     practice: 'Alıştırma kelimesi',
     langTitle: 'Kelime dili (ikiniz de bu dilde oynarsınız)',
     waiting: 'İkinci oyuncu bekleniyor…',
-    readyHint: 'Aynı kelime, iki tahta. Hazır olunca Hazır’a bas.',
+    readyHint: 'Aynı kelime, herkese bir tahta. Hazır olunca Hazır’a bas.',
     readyWait: 'Hazırsın. {name} bekleniyor…',
     otherReady: '{name} hazır.',
     ready: 'Hazır',
@@ -168,6 +178,15 @@ const TEXT = {
     how2Line: 'Diğer tahtanın işaretlerini anında görürsün: ✓ doğru yerde, • kelimede var, × yok.',
     how3: 'Önce bulan kazanır',
     how3Line: 'Yedi denemede kimse bulamazsa berabere. Yeniden oyna: alıştırma kelimesi gelir.',
+    raceGo: 'Yarış: {n} oyuncu, tek kelime!',
+    youSolvedWait: 'Buldun! {place} sıradasın. Diğerleri hâlâ yarışıyor.',
+    youOutMany: 'Hakların bitti. Diğerlerinin bitirmesini izle.',
+    readyWaitAll: 'Hazırsın. Herkes bekleniyor…',
+    rematchWaitAll: 'Diğerlerinin yeniden oynaması bekleniyor…',
+    matchLineMany: '{n}. oyun / 3',
+    yourPlace: '{place} sırada bitirdin.',
+    places: 'Sıralama',
+    noWord: 'bulamadı',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -272,8 +291,9 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     const box = el('section', { class: 'duel-mini' }, head, grid);
     return { box, head, who, count, cells };
   }
-  const minis = [miniBoard(), miniBoard()];
-  const side = el('div', { class: 'duel-side' }, minis[0]!.box, minis[1]!.box);
+  // GMP b: a small board for every other seat (up to six at the table).
+  const minis = Array.from({ length: DUEL_MAX_SEATS }, () => miniBoard());
+  const side = el('div', { class: 'duel-side' }, ...minis.map((m) => m.box));
   const main = el('div', { class: 'duel-main' }, board, side);
 
   const referee = stubArt('plain', 'duel-glow');
@@ -295,7 +315,12 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const wordLang = (): Lang => state?.lang ?? 'en';
   let langSet = false;
   const nameOf = (i: number) => state?.players[i]?.name ?? '';
-  const other = () => (mySeat() === 0 ? 1 : 0);
+  /** The seated players' seats (GMP b: two to six). */
+  const seated = (): number[] => (state?.players ?? []).flatMap((p, i) => (p ? [i] : []));
+  const many = () => seated().length > 2;
+  /** Two players: the other one; more: the first other seat (only used in two-player texts). */
+  const other = () => seated().find((i) => i !== mySeat()) ?? (mySeat() === 0 ? 1 : 0);
+  const placeName = (n: number): string => (pageLang() === 'tr' ? `${n}.` : `${n}${n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th'}`);
   const me = (): DuelPlayer | null => (mySeat() >= 0 ? (state?.players[mySeat()] ?? null) : null);
   const canType = () => state?.phase === 'play' && !!me() && !me()!.solved && !me()!.out;
 
@@ -439,9 +464,10 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     const s = state!;
     const mine = me();
     const items: HTMLElement[] = [];
-    const two = s.players.every((p) => p);
+    const two = seated().length >= 2;
     if (mySeat() < 0) {
-      const free = s.players.some((p) => !p || !p.online);
+      // GMP b: a free or left seat, or a new one while the table has fewer than six.
+      const free = s.players.some((p) => !p || !p.online) || s.players.length < DUEL_MAX_SEATS;
       if (s.phase !== 'play' && free) items.push(actionButton('duel-sit', tx('sit'), () => send({ t: 'sit' })));
     } else if (s.phase === 'wait' && !two) {
       // QA3: like Start at the other tables, Ready is there but greyed until a second player sits down.
@@ -461,8 +487,20 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     const seat = mySeat();
     const them = s.players[other()];
     if (note) return note;
+    if (many()) {
+      const mine = me();
+      if (s.phase === 'wait') return seat >= 0 && mine?.ready ? tx('readyWaitAll') : tx('readyHint');
+      if (s.phase === 'play') {
+        if (seat < 0) return tx('watchGo');
+        if (mine?.out) return tx('youOutMany');
+        if (mine?.solved) return tx('youSolvedWait', { place: placeName(s.players.filter((p) => p?.solved).length) });
+        return tx('raceGo', { n: seated().length });
+      }
+      const word = s.answer ? tx('theWord', { word: upper(s.answer, s.lang) }) : '';
+      return seat >= 0 && mine?.ready ? `${word} · ${tx('rematchWaitAll')}` : word;
+    }
     if (s.phase === 'wait') {
-      if (!s.players.every((p) => p)) return tx('waiting');
+      if (seated().length < 2) return tx('waiting');
       if (seat < 0) return tx('readyHint');
       if (me()?.ready) return tx('readyWait', { name: them?.name ?? '' });
       return them?.ready ? tx('otherReady', { name: them.name }) : tx('readyHint');
@@ -507,13 +545,30 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       b.title = tx('langTitle');
       b.disabled = mySeat() < 0;
     });
+    // GMP b: every seat, and one free chair while fewer than six sit.
+    const chairs = Array.from({ length: Math.min(DUEL_MAX_SEATS, Math.max(2, s.players.length + (s.players.every((p) => p) ? 1 : 0))) }, (_, i) => i);
     lobbyFaces.replaceChildren(
-      ...[0, 1].map((i) => {
+      ...chairs.map((i) => {
         const p = s.players[i];
         if (!p) return el('li', { class: 'duel-face duel-face-free' }, el('span', { class: 'duel-face-q', 'aria-hidden': 'true' }, '?'), el('span', {}, tx('lobbyWaiting')));
         const face = avatarNode(p.avatar, p.name);
         face.classList.add('duel-avatar');
         return el('li', { class: `duel-face${i === mySeat() ? ' me' : ''}${p.ready ? ' ready' : ''}` }, face, el('span', {}, `${i === 0 ? '👑 ' : ''}${p.name}${i === mySeat() ? ` (${tx('you')})` : ''}${p.ready ? ' ✓' : ''}`));
+      }),
+    );
+  }
+
+  /** GMP b: the places at the end, 1st to 6th (a shared place for everyone who didn't find the word). */
+  function placesList(s: State): HTMLElement {
+    const order = seated().sort((x, y) => (s.ranks?.[x] ?? 9) - (s.ranks?.[y] ?? 9));
+    return el(
+      'ol',
+      { class: 'duel-places', 'aria-label': tx('places') },
+      ...order.map((i) => {
+        const p = s.players[i]!;
+        const face = avatarNode(p.avatar, p.name);
+        face.classList.add('duel-avatar');
+        return el('li', { class: `${i === s.seat ? 'me' : ''}${p.solved ? '' : ' unsolved'}` }, el('b', { class: 'duel-place' }, placeName(s.ranks?.[i] ?? 0)), face, el('span', { class: 'duel-place-name' }, p.name), el('span', { class: 'duel-place-tries' }, p.solved ? tx('tries', { n: p.marks.length }) : tx('noWord')));
       }),
     );
   }
@@ -524,16 +579,28 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     const seat = mySeat();
     box.dataset.phase = s.phase;
     box.classList.toggle('watching', seat < 0);
-    const [a, b] = s.players;
+    box.classList.toggle('many', many());
+    const [a, b] = seated().map((i) => s.players[i]!);
     // Best of three: during a match the bar shows the match score and which game this is.
     const playing = s.phase === 'play';
     const inMatch = s.bestOf === 3 && (playing || (s.match.games > 0 && !s.match.over));
     const gameNo = playing ? s.match.games + 1 : s.match.games;
     score0.textContent = !(a && b)
       ? ''
-      : inMatch
+      : many()
+        ? inMatch
+          ? tx('matchLineMany', { n: gameNo })
+          : // GMP b: six "name 0" never fit; only who has won so far, most wins first (the whole list in the tooltip).
+            seated()
+              .filter((i) => s.players[i]!.wins > 0)
+              .sort((x, y) => s.players[y]!.wins - s.players[x]!.wins)
+              .slice(0, 3)
+              .map((i) => `🏆 ${s.players[i]!.name} ${s.players[i]!.wins}`)
+              .join(' · ')
+        : inMatch
         ? tx('matchLine', { n: gameNo, a: a.name, b: b.name, wa: s.match.wins[0] ?? 0, wb: s.match.wins[1] ?? 0 })
         : `${a.name} ${a.wins} – ${b.wins} ${b.name}`;
+    score0.title = many() ? seated().map((i) => `${s.players[i]!.name} ${s.players[i]!.wins}`).join(' · ') : '';
     tag.textContent = s.phase === 'wait' ? '' : `${s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice')}${s.hard ? ` · ${tx('hardLine')}` : ''}`;
     langButtons.forEach((btn) => {
       const on = btn.dataset.lang === s.lang;
@@ -547,14 +614,14 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     watchers.title = tx('watchersTitle', { names: s.watchers.map((w) => w.name).join(', ') });
     // A player: my board + their marks; a watcher: both players' marks.
     board.hidden = seat < 0;
-    if (seat >= 0) {
-      drawMine(me());
-      minis[0]!.box.hidden = true;
-      drawMini(minis[1]!, other());
-    } else {
-      drawMini(minis[0]!, 0);
-      drawMini(minis[1]!, 1);
-    }
+    // GMP b: a mini board per other seated player (all of them for a watcher).
+    const shown = seated().filter((i) => i !== seat);
+    minis.forEach((mini, k) => {
+      if (k < shown.length) drawMini(mini, shown[k]!);
+      else mini.box.hidden = true;
+    });
+    side.dataset.count = String(shown.length);
+    if (seat >= 0) drawMine(me());
     drawActions();
     drawTray();
     status.textContent = revealed && s.phase === 'play' ? `${statusText()} · (${upper(revealed, s.lang)})` : statusText();
@@ -568,8 +635,10 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         const mw = s.match.winner;
         title = mw === null ? tx('matchTied', { wa, wb }) : mw === seat ? tx('youWonMatch', { wa: Math.max(wa, wb), wb: Math.min(wa, wb) }) : tx('matchWon', { name: nameOf(mw), wa: Math.max(wa, wb), wb: Math.min(wa, wb) });
       }
+      if (many() && !(s.bestOf === 3 && s.match.over)) title = s.draw ? tx('draw') : s.winner === seat ? tx('youWin') : tx('winner', { name: nameOf(s.winner ?? 0) });
       const lineParts = [s.answer ? tx('theWord', { word: upper(s.answer, s.lang) }) : ''];
-      if (s.bestOf === 3 && !s.match.over) lineParts.push(tx('matchLine', { n: s.match.games, a: nameOf(0), b: nameOf(1), wa, wb }));
+      if (many() && seat >= 0 && s.ranks?.[seat]) lineParts.unshift(tx('yourPlace', { place: placeName(s.ranks[seat]!) }));
+      if (s.bestOf === 3 && !s.match.over) lineParts.push(many() ? tx('matchLineMany', { n: s.match.games }) : tx('matchLine', { n: s.match.games, a: nameOf(0), b: nameOf(1), wa, wb }));
       if (s.hard) lineParts.push(tx('hardLine'));
       result.show({
         key: `${s.round}`,
@@ -578,6 +647,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         line: lineParts.filter(Boolean).join(' · '),
         actions: rematch ? [rematch] : [],
         see: tx('seeBoard'),
+        extra: many() ? placesList(s) : null,
       });
     } else result.hide();
     referee.className = `duel-glow${s.phase === 'over' && s.winner === seat && seat >= 0 ? ' cheer' : ''}${s.phase !== 'play' ? ' wait' : ''}`;
@@ -679,7 +749,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     commands: [
       quiet.command('duel', { en: 'Five Frames Duel', tr: 'Beş Kare Düellosu' }),
       // GMP: what this tab sees (players, watchers, and how many boards show their letters here: 1 as a player, all as a watcher).
-      { id: 'duel.state', title: { en: 'Five Frames Duel: what this tab sees', tr: 'Beş Kare Düellosu: bu sekme ne görüyor' }, help: { en: 'Players, their tries, who watches, and how many boards show their letters here (a watcher sees them all).', tr: 'Oyuncular, denemeleri, kim izliyor ve burada kaç tahtanın harfleri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Duel table first', tr: 'önce bir Düello masası aç' }, where: { en: 'at a Five Frames Duel table', tr: 'Beş Kare Düellosu masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, players: s.players.map((p) => p && { name: p.name, ready: p.ready, tries: p.marks.length, solved: p.solved }), watchers: s.watchers.map((w) => w.name), boardsWithLetters: s.players.filter((p) => (p?.words?.length ?? 0) > 0).length }); } },
+      { id: 'duel.state', title: { en: 'Five Frames Duel: what this tab sees', tr: 'Beş Kare Düellosu: bu sekme ne görüyor' }, help: { en: 'Players, their tries, who watches, and how many boards show their letters here (a watcher sees them all).', tr: 'Oyuncular, denemeleri, kim izliyor ve burada kaç tahtanın harfleri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Duel table first', tr: 'önce bir Düello masası aç' }, where: { en: 'at a Five Frames Duel table', tr: 'Beş Kare Düellosu masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, players: s.players.map((p) => p && { name: p.name, ready: p.ready, tries: p.marks.length, solved: p.solved }), seats: s.players.length, ranks: s.ranks ?? null, watchers: s.watchers.map((w) => w.name), boardsWithLetters: s.players.filter((p) => (p?.words?.length ?? 0) > 0).length }); } },
       {
         id: 'duel.answer',
         title: { en: 'Five Frames Duel: show the word (this tab)', tr: 'Beş Kare Düellosu: kelimeyi göster (bu sekmede)' },

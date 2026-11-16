@@ -11,13 +11,13 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (handoff 16 Nov, 15:10; a fresh lane A session continues from here):
   - [x] Merged today: SR2 #460, BUD2 #481 (phone room lazy chunk), GR1 #476 (refresh note + phone-ready fix for BUD2's
     race), UI2 #469. Cards archived to `archive/cards-done.md`.
-  - [ ] EC1 #465 (`claude/ec1-end-card`): green except the state-matrix games-window drag / hover flake (Game Studio's
-    fix, top priority). When state-matrix is green on main: merge main into it, re-run, merge.
-  - [ ] SH1 item 3, #471 (`claude/sh1-ring`): same blocker as EC1; then merge.
+  - [x] EC1 #465 and SH1 item 3 #471 (speaking ring) merged 16 Nov after Game Studio's #491; deploy + live e2e check
+    with the next main run, then both cards' Done lines and the archive move (DOCS2).
   - [x] SH1 item 2, #486: ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on `ready`,
     `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
     the pause before a swiped Short feels.
-  - [ ] After #471: add the start offset to Test Lab `shorts.state` (SH1's "Done when").
+  - [ ] Start offset in Test Lab `shorts.state` (`start`, SH1's "Done when"): PR #495 (`claude/sh1-start-offset`); add a
+    `shorts-mixed` check for it once #489 is on main.
   - [ ] SH1 item 4, #489 (`claude/sh1-tiktok-small`): `vm.`/`vt.` links in a pasted list (Worker lookup, paste order),
     mixed-queue harness `shorts-mixed`; the ♾ TikTok note came with B2's #488. CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
@@ -25,15 +25,12 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
     state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
-- [ ] B2 (session 16 Nov, 15:40):
-  - [x] CI3 closed (measured batch after #482 in its Done line; card in `archive/cards-done.md`).
-  - [ ] SH2 feeds: PR #488 (`claude/sh2-feeds`): shared feed on the room object, ▶ video feed, Queue row, steer window,
-    played-id memory, Test Lab `feed.state`, harness `feed`. Merge-tree clean against lane A's `claude/sh1-ring` and
-    `claude/sh1-start`. Then: merge when green, deploy + live e2e check, Done line, card to archive.
+- [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
+  - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - Game Studio owns the state-matrix hover flake ("1366 garden: a head button lights up under the mouse", main run
-    43886203220).
+  - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
+    `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
@@ -189,6 +186,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 - [ ] 27o. [QZ2c] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
   turn. Try ×2 (Double) and ↺ (Second chance: answer wrong first, then try again). The winner has the most round wins.
+- [ ] 27p. [GMP-b] With two or more friends (phones and computers): open Sea Battle, the others press "Take the seat"
+  before the battle. On your turn tap a friend's chip, then fire on their sea; a sunk player is crossed out and only
+  watches; at the end the card lists 1st to last. Then the Five Frames Duel with three or more: the race goes on after
+  the first one solves, and the end card shows the places.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
