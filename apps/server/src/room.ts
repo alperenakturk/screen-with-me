@@ -18,6 +18,10 @@ import {
   countdownMedia,
   COUNTDOWN_MS,
   expectedPosition,
+  isShortMedia,
+  SHORT_LEAD_MS,
+  SHORT_START_MARGIN_MS,
+  waitPausePosition,
   parseClientMessage,
   stickerId,
   type Avatar,
@@ -43,6 +47,7 @@ import {
   type RoomGame,
   type RoomGameKind,
 } from '@swm/shared/protocol';
+import { readMemory, rememberPlayed, sameFeed, type FeedInfo, type FeedMemoryEntries } from '@swm/shared/feed';
 import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, TITLE_MAX_AGE_MS, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
 import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
@@ -284,6 +289,9 @@ export class Room extends DurableObject<Env> {
   private history: Record<string, HistoryEntry> = {};
   /** Daha önce oynayanlar (en yenisi sonda): "bir önceki" bunlardan gelir. */
   private played: QueueItem[] = [];
+  /** Card SH2: the room's running feed (shown to everyone in the Queue) and the YouTube ids it has played. */
+  private feed: FeedInfo | null = null;
+  private feedMemory: FeedMemoryEntries = [];
   /** Odada açık oyun ve açanın kalıcı anahtarı (anahtar istemcilere gitmez). */
   /** Game tables, oldest first: the game, its opener's key (never sent) and since when nobody has it open. */
   private tables: Table[] = [];
@@ -296,6 +304,8 @@ export class Room extends DurableObject<Env> {
   private readonly waitCooldowns = new Map<string, number>();
   /** The last item that started playing (it got its "3-2-1" then, or didn't need one): no second countdown. */
   private counted: string | null = null;
+  /** Card SH1 (2): the Short in its lead-in and whose players are primed for it (memory only: lost, the cap still starts it). */
+  private lead: { itemId: string; primed: Set<string> } | null = null;
   /** Yönetici ne zamandan beri odada yok (varsa). */
   private hostGoneAt: number | null = null;
   /** Atılanlar: kişi anahtarı (keyOf) → yasak. */
@@ -408,6 +418,8 @@ export class Room extends DurableObject<Env> {
       this.recaps = (await ctx.storage.get<Recap[]>('recaps')) ?? [];
       await this.pruneRecaps(Date.now());
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
+      this.feed = (await ctx.storage.get<FeedInfo>('feed')) ?? null;
+      this.feedMemory = readMemory(await ctx.storage.get('feedMemory'), Date.now());
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
       this.memberIds = (await ctx.storage.get<Record<string, { cid: string; at: number }>>('memberIds')) ?? {};
       this.admitted = (await ctx.storage.get<Record<string, number>>('admitted')) ?? {};
@@ -649,6 +661,28 @@ export class Room extends DurableObject<Env> {
         }
         return;
       }
+      case 'feed': {
+        // Card SH2: a feed fills the queue, so a locked queue locks it too.
+        if (this.settings.lockQueue && !this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        const next = message.feed;
+        if (next === null) this.feed = null;
+        else {
+          // Same feed paused / resumed: the runner stays. Otherwise whoever starts or steers it runs it.
+          const prev = this.feed;
+          const keep = prev !== null && sameFeed(prev, next);
+          const steered = !keep && prev !== null && prev.kind === next.kind;
+          // A runner who left hands it to whoever touches it next (their tab picks it up).
+          const runner = keep && this.joined().some((a) => a.id === prev.by) ? prev.by : me.id;
+          this.feed = { ...next, by: runner, steers: keep || steered ? prev.steers + (steered ? 1 : 0) : 0 };
+        }
+        if (this.feed) await this.ctx.storage.put('feed', this.feed);
+        else await this.ctx.storage.delete('feed');
+        this.broadcast({ t: 'feed', feed: this.feed });
+        return;
+      }
+      case 'feed-played':
+        this.sendTo(ws, { t: 'feed-played', ids: this.feedMemory.map(([id]) => id) });
+        return;
       case 'lab':
         // Test Lab (DL3b): fill the tip jar for the film now, on a local lab server only (`lab.ts`).
         this.lab ||= await labRemembered(this.ctx.storage, this.env);
@@ -899,6 +933,7 @@ export class Room extends DurableObject<Env> {
         this.waits.setReady(me.id, message.ready || ad);
         await this.evaluateWait();
         await this.saveWaits();
+        if (message.primed) await this.primed(me.id, message.primed);
         return;
       }
       case 'settings': {
@@ -969,6 +1004,7 @@ export class Room extends DurableObject<Env> {
         if (!this.devHost && !isPublicMedia(message.media)) return this.sendTo(ws, { t: 'error', code: 'bad_link' });
         // Video beklemeden herkese gider; başlık (biliniyorsa hemen, yoksa) sonradan eklenir.
         const item = this.makeItem(message.media, me, message.title ?? null);
+        if (message.t === 'enqueue' && message.feed) item.feed = true;
         await this.apply(ws, me, { t: message.t, item });
         if (item.title === null) await this.fillTitle(item);
         return;
@@ -1020,6 +1056,8 @@ export class Room extends DurableObject<Env> {
       this.voters = {};
       this.history = {};
       this.played = [];
+      this.feed = null;
+      this.feedMemory = [];
       this.stats = new StatsTracker(null, now);
       this.statsDirty = false;
       this.recaps = [];
@@ -1519,6 +1557,7 @@ export class Room extends DurableObject<Env> {
       voiceMode: realtimeConfig(this.env) ? 'sfu' : 'p2p',
       ...(this.tables.length ? { game: this.tables.at(-1)!.game } : {}),
       tables: this.tables.map((t) => t.game),
+      ...(this.feed ? { feed: this.feed } : {}),
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
     // The person who added an emoji gets `mine` so they can remove it after a reload (the owner key itself never leaves).
@@ -2007,7 +2046,8 @@ export class Room extends DurableObject<Env> {
 
     if (decision.kind === 'start') {
       this.statsTick();
-      this.room = { ...this.room, state: { ...state, paused: true, position: expectedPosition(state, now), updatedAt: now } };
+      // Card SH1 (2): a wait in a video's first seconds holds it at 0:00, so nobody loses the start.
+      this.room = { ...this.room, state: { ...state, paused: true, position: waitPausePosition(state, now), updatedAt: now } };
       await this.ctx.storage.put('room', this.room);
       this.broadcast({ t: 'state', state: this.room.state, action: 'pause', by: SYSTEM });
       this.broadcast({ t: 'waiting', ids: decision.ids });
@@ -2059,6 +2099,11 @@ export class Room extends DurableObject<Env> {
     const opened = this.room.state.item;
     if (opened && opened.id !== before.item?.id) {
       this.stats.video(opened.id, opened.title);
+      // Card SH2: a feed never brings back what this room has played.
+      if (opened.media.kind === 'youtube') {
+        this.feedMemory = rememberPlayed(this.feedMemory, opened.media.id, Date.now());
+        await this.ctx.storage.put('feedMemory', this.feedMemory);
+      }
       // YouTube 2x'ten hızlı oynatmaz, TikTok hep 1×: önceki videodan kalan yüksek hız düşürülür.
       const max = maxRateFor(opened.media);
       if (this.room.state.rate > max) this.room = { ...this.room, state: { ...this.room.state, rate: max } };
@@ -2113,6 +2158,24 @@ export class Room extends DurableObject<Env> {
   }
 
   /**
+   * Card SH1 (2): a Short's lead-in ends early once every viewer's player is primed (loaded, holding at 0:00):
+   * the start moves to SHORT_START_MARGIN_MS from now, never later than the lead-in's own cap. TVs are not waited for.
+   */
+  private async primed(memberId: string, itemId: string): Promise<void> {
+    const lead = this.lead;
+    const state = this.room.state;
+    const now = Date.now();
+    if (!lead || lead.itemId !== itemId || state.item?.id !== itemId || state.paused) return;
+    if (state.updatedAt <= now + SHORT_START_MARGIN_MS) return void (this.lead = null);
+    lead.primed.add(memberId);
+    if (!this.joined().filter((a) => !a.tv).every((a) => lead.primed.has(a.id))) return;
+    this.lead = null;
+    this.room = { ...this.room, state: { ...state, updatedAt: now + SHORT_START_MARGIN_MS } };
+    await this.ctx.storage.put('room', this.room);
+    this.broadcast({ t: 'state', state: this.room.state, action: 'play', by: SYSTEM });
+  }
+
+  /**
    * "3-2-1, together" (0.9.93.2, owner): the first time an item starts playing from its beginning, with two or more
    * people (by browser, TVs aside), it starts COUNTDOWN_MS later for everyone: `updatedAt` lies ahead, the engines hold
    * the player at the start until then (it buffers meanwhile) and every page shows the countdown. Not for Shorts /
@@ -2125,7 +2188,14 @@ export class Room extends DurableObject<Env> {
     if (!item || state.paused || item.id === this.counted) return;
     this.counted = item.id;
     await this.ctx.storage.put('counted', item.id);
-    if (resumed || this.settings.countdown === false || !countdownMedia(item.media) || expectedPosition(state, now) > 1) return;
+    if (resumed || expectedPosition(state, now) > 1) return;
+    // Card SH1 (2): a Short has no countdown, but a short silent lead-in: everyone has it loaded and starts at 0:00.
+    if (isShortMedia(item.media)) {
+      this.room = { ...this.room, state: { ...state, position: 0, updatedAt: now + SHORT_LEAD_MS } };
+      this.lead = { itemId: item.id, primed: new Set() };
+      return;
+    }
+    if (this.settings.countdown === false || !countdownMedia(item.media)) return;
     const people = new Set(this.joined().filter((a) => !a.tv).map((a) => keyOf(a)));
     if (people.size < 2) return;
     this.room = { ...this.room, state: { ...state, position: Math.max(0, expectedPosition(state, now)), updatedAt: now + COUNTDOWN_MS } };
@@ -2351,7 +2421,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'chat-older' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'chat-older' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

@@ -6,6 +6,7 @@
 // `FILM_VIDEO=… node scripts/harness/embed/film-server.mjs`, which serves it on :5300):
 //   NODE_PATH=$(npm root -g) node scripts/harness/phone/run.cjs [http://localhost:5173] [http://localhost:5300/video.webm]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 const SITE = process.argv[2] || 'http://localhost:5173';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
 let fails = 0;
@@ -36,6 +37,7 @@ async function enter(page, room) {
 
 /** Puts links / words in the room's link box: on a phone through the Search tab. */
 async function addMedia(page, text, mode) {
+  await phoneReady(page);
   if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
   await page.fill('#media-input', text);
   if (mode) await page.click(`#media-form button[value=${mode}]`);
@@ -507,11 +509,11 @@ const sheetName = (page) => page.evaluate(() => {
     // A new Shorts feed takes the old feed's Shorts out of the queue (0.9.91.13).
     const queueIds = () => page.evaluate(() => [...document.querySelectorAll('#queue li')].map((li) => li.textContent).join('|'));
     const startFeed = async (topic) => {
-      // ♾ always opens the window (0.9.92.6); a running feed shows on top of it with a stop button.
+      // ♾ always opens the window (0.9.92.6; card SH2: a lazy dialog); a running feed shows on top of it with a stop button.
       await page.click('#shorts-feed');
-      await page.waitForTimeout(200);
-      await page.fill('#shorts-feed-topic', topic);
-      await page.press('#shorts-feed-topic', 'Enter');
+      await page.waitForSelector('#feed-topic');
+      await page.fill('#feed-topic', topic);
+      await page.press('#feed-topic', 'Enter');
       await page.waitForTimeout(4500);
     };
     await startFeed('kediler');
@@ -520,9 +522,9 @@ const sheetName = (page) => page.evaluate(() => {
     const second = await queueIds();
     check(first.includes('kedi') && second.includes('kopek') && !second.includes('kedi'), 'Shorts akışı: yeni akış başlayınca eski akışın videoları sıradan çıkıyor', JSON.stringify({ first: first.slice(0, 120), second: second.slice(0, 120) }));
     await page.click('#shorts-feed');
-    await page.waitForTimeout(300);
-    const now = await page.evaluate(() => ({ open: !document.getElementById('shorts-feed-form').hidden, now: document.getElementById('shorts-feed-now').hidden ? '' : document.getElementById('shorts-feed-now-text').textContent }));
-    await page.click('#shorts-feed-stop');
+    await page.waitForSelector('#feed-window');
+    const now = await page.evaluate(() => ({ open: !!document.getElementById('feed-window'), now: document.getElementById('feed-now-text')?.textContent ?? '' }));
+    await page.click('#feed-stop');
     await page.waitForTimeout(300);
     const stopped = (await page.getAttribute('#shorts-feed', 'aria-pressed')) === 'false';
     check(now.open && now.now.includes('kopek') && stopped, 'Shorts akışı: açıkken ♾ akış penceresini açıyor (üstte açık akış), Durdur durduruyor', JSON.stringify({ now, stopped }));

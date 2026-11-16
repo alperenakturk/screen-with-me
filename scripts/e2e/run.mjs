@@ -42,7 +42,7 @@ async function paceConnects() {
 // pass on that retry is reported as a warning to look into. No retry locally.
 const live = !/localhost|127\.0\.0\.1/.test(base);
 let failed = 0;
-const FILES = ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'uploads.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'roomgame.mjs', 'poker.mjs', 'search.mjs', 'tv.mjs', 'fallback.mjs', 'countdown.mjs', 'feedback.mjs', 'move.mjs', 'gamestream.mjs', 'podcasts.mjs', 'links.mjs', 'abuse.mjs', 'people.mjs', 'knock.mjs', 'private.mjs', 'chat-history.mjs', 'sidegames.mjs', 'classics.mjs', 'classics-switch.mjs', 'sea.mjs', 'duel.mjs', 'ghost.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs'];
+const FILES = ['room.mjs', 'page.mjs', 'avatar.mjs', 'host.mjs', 'handover.mjs', 'wait.mjs', 'pins.mjs', 'stickers.mjs', 'chatimage.mjs', 'uploads.mjs', 'modes.mjs', 'saved.mjs', 'recap.mjs', 'shorts.mjs', 'voice.mjs', 'live.mjs', 'xox.mjs', 'draw.mjs', 'quiz.mjs', 'quiz-tournament.mjs', 'roomgame.mjs', 'poker.mjs', 'search.mjs', 'tv.mjs', 'fallback.mjs', 'countdown.mjs', 'shorts-start.mjs', 'feedback.mjs', 'move.mjs', 'gamestream.mjs', 'podcasts.mjs', 'links.mjs', 'abuse.mjs', 'people.mjs', 'knock.mjs', 'private.mjs', 'chat-history.mjs', 'sidegames.mjs', 'classics.mjs', 'classics-switch.mjs', 'sea.mjs', 'duel.mjs', 'ghost.mjs', 'lab-server.mjs', 'lab-check.mjs', 'quota.mjs'];
 
 // Card QA1: on CI's unpaced local server (SWM_E2E_UNPACED, never live) up to SWM_E2E_PARALLEL files run at once; each
 // file uses its own rooms, and most of the suite's time is waiting (ghost.mjs alone waits 90 s of silence). Files that

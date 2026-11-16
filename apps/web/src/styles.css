@@ -1349,3 +1349,23 @@ html.is-touch.is-standalone .touch-note,
 html.is-touch.ios-hint-on .touch-note {
   display: none;
 }
+
+/* Card GR1: "Sidelit was updated · ↻ Refresh" in a room whose chunk is gone after a deploy (main.ts; no reload until
+   the tap). Here, not in room.css: it must show when chunks fail to load. */
+#update-note {
+  position: fixed;
+  z-index: 2147483000;
+  left: 50%;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+}

@@ -5,6 +5,7 @@
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-rail/run.cjs [site]
 const { viaYouTube } = require('../via-youtube.cjs');
+const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -32,6 +33,7 @@ async function openShort(ctx, query = '') {
   await page.click('#name-form button.primary');
   await page.waitForSelector('#media-input, #add-toggle', { state: 'attached' });
   // On a phone the link box is in the Search tab (PH1).
+  await phoneReady(page);
   if (!(await page.isVisible('#media-input'))) await page.getByRole('tab', { name: /Search|Ara/ }).click();
   await page.fill('#media-input', 'https://www.youtube.com/shorts/aqz-KE-bpKQ');
   await page.click('#media-form button[value=load]');
@@ -86,12 +88,13 @@ const box = (page, sel) =>
     check(typing === 'shorts-input' && chat.x >= video.r && chat.r <= width, `${name}: Enter opens the message box beside the rail`, { typing, chat });
     await page.keyboard.press('Escape');
     await page.click('#shorts-feed');
+    await page.waitForSelector('#feed-window');
     await page.waitForTimeout(300);
-    const feed = await box(page, '#shorts-feed-form');
+    const feed = await box(page, '#feed-window');
     check(feed.r <= width && feed.b <= height && feed.y >= 0, `${name}: the ♾ window stays on screen`, feed);
     // 0.9.93.1: the rail's square-button rule used to squeeze the windows' own buttons into 48 px squares.
-    const start = await box(page, '#shorts-feed-form .feed-topic-row .btn');
-    check(start.w > 60 && start.r <= feed.r, `${name}: "Start the feed" keeps its size inside the window`, { start, feed });
+    const start = await box(page, '#feed-start');
+    check(start.w > 52 && start.r <= feed.r, `${name}: "Start" keeps its size inside the window (not a 48 px square)`, { start, feed });
     await page.keyboard.press('Escape');
     await page.mouse.click(5, height / 2);
     // ＋ Add with search results (faked) stays on screen and its button is a normal button.

@@ -45,10 +45,11 @@ alex.send({ t: 'play', position: 0 });
 const again = await sam.wait((m) => m.t === 'state' && !m.state.paused, 'play again');
 ok(ahead(again.state) < 500, 'The same video played again from the start: no second countdown');
 
-// Shorts flow one into the next: no countdown.
+// Shorts flow one into the next: no countdown, only a short silent lead-in (card SH1 (2): 1.5 s, held at 0:00) so
+// everyone has it loaded and starts from 0:00 together.
 alex.send({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ', short: true } });
 const short = await sam.wait((m) => m.t === 'state' && m.state.item?.media.short, 'short');
-ok(ahead(short.state) < 500, 'A Short starts at once');
+ok(ahead(short.state) > 1000 && ahead(short.state) <= 1600 && short.state.position === 0, 'A Short starts after its short lead-in, from 0:00 (no 3 s countdown)');
 
 // The host turns it off.
 alex.send({ t: 'settings', countdown: false });

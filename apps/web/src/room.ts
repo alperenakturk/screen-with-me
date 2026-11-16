@@ -10,13 +10,15 @@ import { isTikTokShortLink, parseMediaInput, parseMediaList, samePage } from '@s
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
 import {
+  countdownMedia,
   avatarText,
   SYSTEM_MEMBER_ID,
   cleanName,
   cleanRoomName,
   expectedPosition,
-  stepRate,
-  maxRateFor,
+  fitRate,
+  PRESET_RATES,
+  stepRateFor,
   isValidMedia,
   isAvatar,
   randomAvatar,
@@ -35,7 +37,8 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
-import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
+import { isPoolRegionChoice, type PoolRegionChoice } from '@swm/shared/youtube-search';
+import type { FeedKind } from '@swm/shared/feed';
 import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
@@ -71,6 +74,7 @@ import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
 import { createSeats } from './ui/seats.ts';
 import { createShortsFeed } from './ui/shorts-feed.ts';
+import { createFeedRow } from './ui/feed-row.ts';
 import { createPins } from './ui/pins.ts';
 import { closeNextCard, showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
@@ -106,6 +110,16 @@ function openFeedbackDialog(opener: HTMLElement | null): void {
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+/**
+ * Card UI2: one speed picker everywhere (the rail's ⋯ and speed pops, the toolbar's / phone's speed sheet): the ready
+ * speeds, then − value + for a custom one (0.25×–3× in 0.05 steps; YouTube moves through its own speeds).
+ * `preset` is the ready buttons' class: the rail's dark buttons or the page's themed small buttons.
+ */
+function speedPicker(preset: string): string {
+  const presets = PRESET_RATES.map((r) => `<button type="button" class="${preset}" data-rate="${r}" aria-pressed="false">${r}×</button>`).join('');
+  const step = (dir: 1 | -1) => `<button type="button" class="${preset} speed-step" data-step="${dir}" data-i18n-title="${dir > 0 ? 'speedUp' : 'speedDown'}">${dir > 0 ? '+' : '−'}</button>`;
+  return `<div class="dock-more-speeds speed-presets" role="group">${presets}</div><div class="speed-custom">${step(-1)}<output class="speed-value">1×</output>${step(1)}</div>`;
+}
 /** Card YTK: how far ← / → move the room's video, in seconds. */
 const SEEK_STEP = 5;
 
@@ -146,6 +160,9 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
     });
     return;
   }
+  // Card BUD2: a phone starts fetching its phone-room chunk while the name form is up, so the phone layout is there
+  // when the room opens (startPhoneRoom below then finds the module already loaded).
+  if (!isShell && isPhoneLayout()) void loadChunk(() => import('./ui/phone-room.ts'));
   if (tvLab() && !tvModules) {
     void loadTv().then(() => renderRoom(app, roomId, waited));
     return;
@@ -289,17 +306,14 @@ function formatLeft(ms: number): string {
   return t('leftS', { s });
 }
 
-/** Hızı seçimde gösterir; hazır seçeneklerde yoksa en alta "özel" seçenek olarak ekler. */
-function showRate(select: HTMLSelectElement, rate: number): void {
-  select.querySelector('option[data-custom]')?.remove();
-  if (!SPEEDS.includes(rate)) {
-    const option = document.createElement('option');
-    option.value = String(rate);
-    option.textContent = `${rate}x`;
-    option.dataset.custom = '';
-    select.append(option);
+/** Card UI2: every speed picker shows the room's speed (its value, the ready speed that matches, the ⋯ row). */
+function showRates(rate: number): void {
+  for (const value of document.querySelectorAll('.speed-picker .speed-value, .dock-speed-now')) value.textContent = `${rate}×`;
+  for (const button of document.querySelectorAll<HTMLElement>('.speed-picker [data-rate]')) {
+    const on = Number(button.dataset.rate) === rate;
+    button.classList.toggle('on', on);
+    button.setAttribute('aria-pressed', String(on));
   }
-  select.value = String(rate);
 }
 
 /** Aynı site ve yol mu (sorgu/parça farkı önemsiz)? Film oynarken adres sorgusu değişirse aynı sayfa sayılır. */
@@ -422,14 +436,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <div id="dock-react-pop" class="dock-pop" hidden><div class="reaction-bar fs-reactions dock-reactions" role="group"></div></div>
               <div id="dock-vol-pop" class="dock-pop dock-vol" hidden><input id="dock-vol-range" type="range" min="0" max="100" step="1" value="100" /></div>
               <div id="dock-more-pop" class="dock-pop dock-more-pop" hidden>
-                <div class="dock-more-speeds" role="group">${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
+                <button type="button" class="dock-more-item dock-speed-row" id="dock-speed-row" aria-expanded="false" aria-controls="dock-more-picker"><span aria-hidden="true">⏩</span><span data-i18n="speed"></span><span class="dock-speed-now">1×</span></button>
+                <div id="dock-more-picker" class="speed-picker" hidden>${speedPicker('dock-speed-opt')}</div>
                 <button type="button" class="dock-more-item" data-press="#sync-all"><span aria-hidden="true">🔄</span><span data-i18n="syncAll"></span></button>
                 <button type="button" class="dock-more-item" data-press="#skip"><span aria-hidden="true">⏭</span><span data-i18n="skip"></span></button>
                 <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">🎞</span><span id="dock-more-side"></span></button>
                 <button type="button" class="dock-more-item desk-only" data-press="#profile-keys"><span aria-hidden="true">⌨️</span><span data-i18n="keys.open"></span></button>
                 <button type="button" class="dock-more-item rail-pin-item" id="rail-pin" aria-pressed="false"><span class="rail-pin-box" aria-hidden="true"></span><span data-i18n="rail.pin"></span></button>
               </div>
-              <div id="dock-speed-pop" class="dock-pop dock-speeds" hidden>${SPEEDS.map((s) => `<button type="button" class="dock-speed-opt" data-rate="${s}">${s}×</button>`).join('')}</div>
+              <div id="dock-speed-pop" class="dock-pop dock-speeds speed-picker" hidden>${speedPicker('dock-speed-opt')}</div>
             </div>
             <div id="rail-edge" class="rail-edge" aria-hidden="true"></div>
             <div id="empty" class="empty">
@@ -489,11 +504,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="speed-btn" type="button" class="tool-btn labeled speed-btn" aria-haspopup="true" aria-expanded="false" data-i18n-title="speed"><span aria-hidden="true">⏩</span><span id="speed-label" class="speed-label">1×</span></button>
                 <div id="speed-pop" class="speed-pop" data-island hidden>
                   <span class="speed-pop-title" data-i18n="speedTitle"></span>
-                  <div class="speed">
-                    <button id="speed-down" type="button" class="icon-btn speed-step" data-i18n-title="speedDown">−</button>
-                    <select id="speed" data-i18n-title="speed">${SPEEDS.map((s) => `<option value="${s}">${s}x</option>`).join('')}</select>
-                    <button id="speed-up" type="button" class="icon-btn speed-step" data-i18n-title="speedUp">+</button>
-                  </div>
+                  <div class="speed-picker">${speedPicker('btn small-btn speed-opt')}</div>
                 </div>
               </div>
               <button id="side-toggle" type="button" class="icon-btn tool-btn side-toggle"><span id="side-icon" aria-hidden="true">🎞</span><span id="side-badge" class="badge" hidden></span></button>
@@ -540,21 +551,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false" data-i18n-title="tool.game">🎮 <span data-i18n="tool.game"></span></button>
           </div>
           <div class="shorts-feed-wrap">
-            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
-            <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
-              <div class="feed-head phone-only"><b data-i18n="feed.short"></b><button id="shorts-feed-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
-              <div id="shorts-feed-now" class="feed-now" hidden><span id="shorts-feed-now-text"></span><button id="shorts-feed-stop" type="button" class="btn small-btn" data-i18n="feed.stop"></button></div>
-              <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
-              <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span> <select id="shorts-region" class="feed-region" data-i18n-title="feed.region"></select></p>
-              <div id="shorts-pools" class="feed-pools" role="group"></div>
-              <label class="small" for="shorts-feed-topic" data-i18n="feed.topicLabel"></label>
-              <div class="feed-topic-row">
-                <input id="shorts-feed-topic" autocomplete="off" maxlength="80" data-i18n-placeholder="feed.topic" />
-                <button class="btn primary small-btn" data-i18n="feed.start"></button>
-              </div>
-              <p class="muted small" data-i18n="feed.hint"></p>
-              <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
-            </form>
+            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" aria-haspopup="dialog" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
           <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
@@ -646,6 +643,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel" data-panel="queue" hidden>
             <label class="set-row queue-auto"><span class="set-text"><b data-i18n="autoNext"></b></span><input type="checkbox" role="switch" class="switch" id="opt-autonext" /></label>
             <p class="muted small queue-hint" data-i18n="voteExplain"></p>
+            <div id="feed-row" class="feed-qrow"></div>
             <ol id="queue" class="queue"></ol>
             <p id="queue-empty" class="muted small" data-i18n="queueEmpty"></p>
           </div>
@@ -857,7 +855,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const externalEl = $('#external');
   const autoplayEl = $('#autoplay');
   const playerErrorEl = $('#player-error');
-  const speedEl = $<HTMLSelectElement>('#speed');
   const nowPlayingEl = $('#now-playing');
   const nowTitleEl = $('#now-title');
   const skipEl = $<HTMLButtonElement>('#skip');
@@ -1577,6 +1574,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         waitingIds = message.waiting ?? [];
         renderWaiting();
         queue.set(message.queue);
+        feed.set(message.feed ?? null);
         chat.set(message.chat, message.chatMore);
         lastBy = null;
         void applyState(message.state);
@@ -1674,6 +1672,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         renderWaiting();
         break;
       }
+      case 'feed':
+        feed.set(message.feed);
+        return;
+      case 'feed-played':
+        feed.played(message.ids);
+        return;
       case 'settings': {
         // "Film time" reached: the server clears the plan when the time comes (a host clearing it early is quiet).
         const planned = roomSettings.startsAt;
@@ -1876,9 +1880,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     roomState = state;
     // PWA1: the screen stays on while the room's video plays (not on the film page: the film site's own tab plays).
     if (!isShell) wakeLock.set(!!state.item && !state.paused);
-    showRate(speedEl, state.rate);
+    showRates(state.rate);
     $('#speed-label').textContent = `${state.rate}×`;
-    if (SPEEDS.includes(state.rate)) fullscreen.setRate(state.rate);
+    fullscreen.setRate(state.rate);
     renderNowPlaying();
     const itemId = state.item?.id ?? null;
     if (itemId === currentItemId) {
@@ -2567,98 +2571,56 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Shorts görünümü ("Oturma odası"): dikey video ortada, arkadaşlar iki yanında, altta mesaj + emoji.
   // Sıra, sohbet geçmişi ve ayarlar oda görünümünde kalır. ↑/↓ (▲▼, fare tekerleği) önceki/sonraki Shorts. ----
   const roomEl = $('.room');
-  // ---- Endless Shorts feed (0.9.91): a topic keeps the queue full of Shorts (YouTube search, Shorts only). ----
+  // ---- The room's feeds (0.9.91 ♾ Shorts; card SH2: ▶ videos, shared on the room object, steerable from the Queue). ----
   const feedButton = $<HTMLButtonElement>('#shorts-feed');
-  const feedForm = $<HTMLFormElement>('#shorts-feed-form');
-  const feedTopic = $<HTMLInputElement>('#shorts-feed-topic');
   const feed = createShortsFeed({
-    roomId,
     queueItems: () => queue.items,
     current: () => roomState?.item ?? null,
+    myId: () => myId,
+    memberIds: () => members.map((m) => m.id),
     canAdd: () => !(roomSettings.lockQueue && !amHost()),
-    add: (media) => send({ t: 'enqueue', media }),
-    remove: (itemId) => send({ t: 'dequeue', id: itemId }),
+    send,
     note: (text) => flashHint(shortsOn ? feedButton : mediaInput, text, 5000),
     changed: () => renderFeed(),
   });
-  /** The home door's feed: 🎲 Discover "Popular" in the region chosen for Discover (the viewer's own by default). */
-  function startDoorFeed(): void {
-    feed.start(t('pool.popular'), { kind: 'pool', pool: 'popular', region: poolRegion });
-  }
-  function renderFeed(): void {
-    const topic = feed.topic;
-    feedButton.classList.toggle('on', topic !== null);
-    feedButton.setAttribute('aria-pressed', String(topic !== null));
-    $('#shorts-feed-label').textContent = topic ?? t('feed.short');
-    feedButton.title = topic ? t('feed.stopHint', { topic }) : t('feed.hint');
-    // A running feed is shown at the top of its window with a stop button (0.9.92.6, owner: pressing ♾ used to stop
-    // it without a word; now it always opens the window, the feed stops only from there).
-    $('#shorts-feed-now').hidden = topic === null;
-    $('#shorts-feed-now-text').textContent = topic ? t('feed.now', { topic }) : '';
-  }
-  feedButton.addEventListener('click', () => {
-    feedForm.hidden = !feedForm.hidden;
-    renderFeed();
-    // Not on a phone: the keyboard would cover the window before the person chose anything.
-    if (!feedForm.hidden && !isPhoneLayout()) feedTopic.focus();
-  });
-  $('#shorts-feed-stop').addEventListener('click', () => {
-    feed.stop();
-    feedForm.hidden = true;
-  });
-  $('#shorts-feed-close').addEventListener('click', () => (feedForm.hidden = true));
-  // "🎲 Keşfet" (0.9.91.18): one tap starts an endless feed from today's shared pool of a category.
-  const pools = $('#shorts-pools');
-  // Card 10 (owner's pick A): Discover shows the viewer's country by default ("🌍 Auto": the server uses the
+  // Card 10 (owner's pick A): Discover / Popular show the viewer's country by default ("🌍 Auto": the server uses the
   // connection's country, never stored), or a chosen one, or the whole world. Remembered in this browser.
-  const regionSelect = $<HTMLSelectElement>('#shorts-region');
   const savedRegion = load('opt:poolRegion');
   let poolRegion: PoolRegionChoice = isPoolRegionChoice(savedRegion) ? savedRegion : 'auto';
-  regionSelect.addEventListener('change', () => {
-    poolRegion = isPoolRegionChoice(regionSelect.value) ? regionSelect.value : 'auto';
-    save('opt:poolRegion', poolRegion);
-  });
-  const renderPools = () => {
-    const names = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames([lang()], { type: 'region' }) : null;
-    regionSelect.replaceChildren(
-      el('option', { value: 'auto' }, `🌍 ${t('feed.regionAuto')}`),
-      el('option', { value: 'world' }, `🌐 ${t('feed.regionWorld')}`),
-      ...POOL_REGIONS.map((code) => el('option', { value: code }, names?.of(code) ?? code)),
-    );
-    regionSelect.value = poolRegion;
-    pools.replaceChildren(
-      ...POOL_KINDS.map((kind) => {
-        const chip = el('button', { type: 'button', class: 'feed-pool', 'data-pool': kind }, t(`pool.${kind}`));
-        chip.addEventListener('click', () => {
-          feedForm.hidden = true;
-          feed.start(t(`pool.${kind}`), { kind: 'pool', pool: kind, region: poolRegion });
-        });
-        return chip;
-      }),
-    );
-  };
-  renderPools();
-  window.addEventListener('langchange', renderPools);
-  // "✨ Bunun gibi": more from the playing Short's channel, then Shorts with similar titles.
-  $('#shorts-like').addEventListener('click', () => {
-    const media = roomState?.item?.media;
-    feedForm.hidden = true;
-    if (media?.kind !== 'youtube' || !media.short) return flashHint(feedButton, t('feed.likeNone'), 4000);
-    feed.start(t('feed.likeLabel'), { kind: 'like', id: media.id });
-  });
-  feedForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    feedForm.hidden = true;
-    // Card 10: a channel link or @handle follows that channel's Shorts; words stay a topic search.
-    const channel = parseChannelInput(feedTopic.value);
-    if (channel) feed.start('id' in channel ? t('feed.channel') : `@${channel.handle}`, { kind: 'channel', c: channelParam(channel) });
-    else feed.start(feedTopic.value);
-    feedTopic.value = '';
-  });
-  document.addEventListener('pointerdown', (event) => {
-    if (!feedForm.hidden && !(event.target as Element).closest?.('.shorts-feed-wrap')) feedForm.hidden = true;
-    if (!shortsAddForm.hidden && !(event.target as Element).closest?.('.shorts-add-wrap')) setShortsAdd(false);
-  });
+  /** The home door's feed: 🎲 Discover "Popular" in the region chosen for Discover (the viewer's own by default). */
+  function startDoorFeed(): void {
+    feed.start('shorts', t('pool.popular'), { kind: 'pool', pool: 'popular', region: poolRegion });
+  }
+  /** Card SH2: the ♾ / ▶ window (a lazy chunk). */
+  let feedWindowRefresh: (() => void) | null = null;
+  function openFeed(kind: FeedKind): void {
+    void loadChunk(() => import('./ui/feed-window.ts')).then((m) => {
+      if (!m) return;
+      feedWindowRefresh = m.refreshFeedWindow;
+      m.openFeedWindow({
+        kind,
+        feed,
+        playing: () => roomState?.item ?? null,
+        region: () => poolRegion,
+        setRegion: (region) => {
+          poolRegion = region;
+          save('opt:poolRegion', poolRegion);
+        },
+      });
+    });
+  }
+  const feedRow = createFeedRow($('#feed-row'), feed, openFeed);
+  function renderFeed(): void {
+    const info = feed.info;
+    const shortsOnNow = info?.kind === 'shorts';
+    feedButton.classList.toggle('on', shortsOnNow);
+    feedButton.setAttribute('aria-pressed', String(shortsOnNow));
+    $('#shorts-feed-label').textContent = shortsOnNow ? info.label : t('feed.short');
+    feedButton.title = shortsOnNow ? t('feed.stopHint', { topic: info.label }) : t('feed.hint');
+    feedRow.render();
+    feedWindowRefresh?.();
+  }
+  feedButton.addEventListener('click', () => openFeed(feed.info?.kind ?? 'shorts'));
   // Add to the queue from the Shorts bar (0.9.91.5, owner: without going back to the room view). Links only, one or
   // many (searching is the ♾ feed's job); the same paths as the link box.
   const shortsAdd = $<HTMLButtonElement>('#shorts-add');
@@ -2667,10 +2629,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const setShortsAdd = (open: boolean) => {
     shortsAddForm.hidden = !open;
     shortsAdd.setAttribute('aria-expanded', String(open));
-    if (open) {
-      feedForm.hidden = true;
-      shortsAddInput.focus();
-    }
+    if (open) shortsAddInput.focus();
   };
   shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
   $('#shorts-add-close').addEventListener('click', () => setShortsAdd(false));
@@ -2755,6 +2714,26 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const seenShorts: string[] = [];
 
   // Card SH1: the Shorts view in the Test Lab (the start of the latest Short and who is speaking come with SH1 2 / 3).
+  // Card GR1: a chunk that is gone after a deploy shows "Sidelit was updated · ↻ Refresh" (main.ts), never a reload.
+  debugHooks.register('app', () => ({
+    commands: [
+      {
+        id: 'app.staleChunk',
+        tab: 'status',
+        title: { en: 'A missing chunk after an update', tr: 'Güncellemeden sonra eksik parça' },
+        help: {
+          en: 'Acts as if a chunk failed to load: the "Sidelit was updated" note shows, the room stays. Run again to read it.',
+          tr: 'Bir parça yüklenemedi gibi davranır: "Sidelit güncellendi" notu çıkar, oda kalır. Tekrar çalıştırınca okur.',
+        },
+        run: () => {
+          const note = document.getElementById('update-note');
+          if (note) return JSON.stringify({ note: note.textContent, inRoom: true });
+          dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+          return 'sent';
+        },
+      },
+    ],
+  }));
   debugHooks.register('shorts', () => ({
     commands: [
       {
@@ -3012,12 +2991,64 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
   // Filmde motor film çerçevesinde çalışır: hız isteği oraya gider.
   // YouTube 2x'ten hızlı oynatmıyor: orada en fazla 2x istenir.
+  // Card UI2: a speed fits what this video can play (0.25×–3×, YouTube's own speeds, TikTok / Vimeo 1×).
   const requestRate = (wanted: number) => {
-    const rate = Math.min(wanted, maxRateFor(roomState?.item?.media));
+    const rate = fitRate(roomState?.item?.media, wanted);
     if (film) film.control({ action: 'rate', rate });
     else engine.requestRate(rate);
   };
-  speedEl.addEventListener('change', () => requestRate(Number(speedEl.value)));
+  // Every speed picker: a ready speed (outside the rail, which handles its own and closes its pop) or a − / + step.
+  document.addEventListener('click', (event) => {
+    const button = (event.target as Element | null)?.closest?.<HTMLButtonElement>('.speed-picker button');
+    if (!button || button.disabled) return;
+    if (button.dataset.step) requestRate(stepRateFor(roomState?.item?.media, roomState?.rate ?? 1, Number(button.dataset.step) > 0 ? 1 : -1));
+    else if (button.dataset.rate && !button.closest('#fs-dock')) requestRate(Number(button.dataset.rate));
+  });
+  // The rail's ⋯: one "⏩ Speed · 1×" row opens the picker in place (the menu stays short).
+  {
+    const row = $<HTMLButtonElement>('#dock-speed-row');
+    const picker = $('#dock-more-picker');
+    const menu = $('#dock-more-pop');
+    // Open, the picker takes the menu's place (its other rows step aside), so the menu never outgrows a short video.
+    const setPicking = (on: boolean) => {
+      picker.hidden = !on;
+      row.setAttribute('aria-expanded', String(on));
+      menu.classList.toggle('picking', on);
+    };
+    row.addEventListener('click', () => setPicking(picker.hidden === true));
+    // Closed again each time the ⋯ menu closes.
+    new MutationObserver(() => {
+      if (menu.hidden && !picker.hidden) setPicking(false);
+    }).observe(menu, { attributes: true, attributeFilter: ['hidden'] });
+  }
+  debugHooks.register('railSpeed', () => ({
+    commands: [
+      {
+        id: 'rail.speed',
+        tab: 'video',
+        run: () => {
+          const media = roomState?.item?.media;
+          const menu = document.getElementById('dock-more-pop');
+          let pin: string | null = null;
+          try {
+            pin = localStorage.getItem('opt:railPin');
+          } catch {
+            /* private mode */
+          }
+          return JSON.stringify({
+            rate: roomState?.rate ?? null,
+            kind: media?.kind ?? null,
+            ready: PRESET_RATES.map((r) => fitRate(media, r)),
+            up: stepRateFor(media, roomState?.rate ?? 1, 1),
+            down: stepRateFor(media, roomState?.rate ?? 1, -1),
+            pickerOpen: !$('#dock-more-picker').hidden,
+            menuHeight: menu && !menu.hidden ? Math.round(menu.getBoundingClientRect().height) : null,
+            railPin: pin ?? 'unset (off)',
+          });
+        },
+      },
+    ],
+  }));
   // Hız düğmesi "⏩ 1×": basınca küçük pencere (hazır hızlar + ince ayar). Dışarı tıklayınca / Esc ile kapanır.
   {
     const button = $<HTMLButtonElement>('#speed-btn');
@@ -3035,9 +3066,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (event.key === 'Escape' && !pop.hidden) setOpen(false);
     });
   }
-  // İnce hız ayarı: her basış ±0.05 (hazır seçeneklerin dışındaki hız listede "özel" olarak görünür).
-  $('#speed-down').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, -1)));
-  $('#speed-up').addEventListener('click', () => requestRate(stepRate(roomState?.rate ?? 1, 1)));
 
   // ---- Tam ekran: sadece video kalır, fare oynayınca kontroller ve hızlı mesaj belirir. ----
   const fullscreen = createFullscreen({
@@ -3349,7 +3377,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     mediaInput,
     (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode, undefined, mode === 'enqueue'),
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
-    (query) => feed.start(query),
+    (query) => feed.startTopic(query),
     // "🎧 Podcasts" on the results (card P2): an episode is an audio file with its cover art.
     (media, title, mode) => addMedia(media, mode, title, mode === 'enqueue'),
   );
@@ -3467,7 +3495,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       if (countdownTimer !== null) clearInterval(countdownTimer);
       countdownTimer = null;
     };
-    const left = () => (state.paused || !state.item ? 0 : state.updatedAt - clock.now());
+    // Card SH1 (2): a Short's short lead-in is silent (nothing of ours over the YouTube player); only a countdown
+    // video shows the numbers.
+    const left = () => (state.paused || !state.item || !countdownMedia(state.item.media) ? 0 : state.updatedAt - clock.now());
     if (left() <= 0) {
       stop();
       countdownEl?.remove();

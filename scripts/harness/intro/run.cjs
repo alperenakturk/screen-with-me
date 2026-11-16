@@ -41,6 +41,14 @@ const check = (ok, label, extra = '') => {
     }, ms);
 
   const page = await open('no-preference');
+  // Game Studio's iPad test: a tap during the intro reaches what is under it (the rail's 🎮, the video), never the intro.
+  const through = await page.evaluate(() => {
+    const intro = document.querySelector('.swm-intro');
+    const r = intro.getBoundingClientRect();
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return { pointer: getComputedStyle(intro).pointerEvents, hitIntro: !!hit?.closest('.swm-intro') };
+  });
+  check(through.pointer === 'none' && !through.hitIntro, 'a tap during the intro goes to what is under it', JSON.stringify(through));
   const s0 = await at(page, 300);
   const s1 = await at(page, 1150);
   const s2 = await at(page, 1500);

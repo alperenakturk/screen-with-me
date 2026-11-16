@@ -1,121 +1,127 @@
-import type { Media, QueueItem } from '@swm/shared/protocol';
-import { isPoolKind, isPoolRegionChoice, isVideoId, parseChannelParam, parseSearchAnswer, POOL_RESULTS, type PoolKind, type PoolRegionChoice, wordsRequest } from '@swm/shared/youtube-search';
+import type { FeedIn, FeedInfo, FeedKind, FeedSource } from '@swm/shared/feed';
+import { freshIds } from '@swm/shared/feed';
+import type { ClientMessage, Media, QueueItem } from '@swm/shared/protocol';
+import { parseSearchAnswer, POOL_RESULTS, wordsRequest } from '@swm/shared/youtube-search';
 import { lang, t } from '../i18n.ts';
 
 /**
- * Endless Shorts feed (0.9.91, owner: "make Shorts scrolling great, the API is there now"): pick a topic and the
- * queue keeps filling with Shorts about it — when fewer than `LOW_WATER` are left, the next page of a Shorts-only
- * search (`/api/youtube/search?short=1&page=…`, 25 per page, ≈ 1 % of the day's quota) adds the ones not seen yet.
- * The person who started it runs it (remembered for this tab, `sessionStorage` `feed:<room>`); everyone just sees the
- * queue grow. It stops by itself when the topic runs dry or the day's searches are used up.
+ * The room's feeds (0.9.91 ♾ Shorts; card SH2 adds ▶ videos, the Queue row, steering and the room's memory). The feed
+ * itself (what it follows, paused or not) lives on the room's server object, so everyone sees it in the Queue and can
+ * pause, resume or steer it. One tab runs it (`FeedInfo.by`): when fewer than its low water mark are left in the
+ * queue, it asks the Worker for the next page and adds the ones the room has not played (`feed-played`, asked once)
+ * and doesn't hold. A runner who leaves hands it to whoever opens the feed next, or to the first person still in the
+ * room who may change the queue.
  */
-const LOW_WATER = 3;
+const LOW_WATER: Record<FeedKind, number> = { shorts: 3, videos: 2 };
 /** Added per round (the rest of the page waits for the next round). */
-const PER_ROUND = 8;
-const SEEN_MAX = 400;
-
-/**
- * Where the Shorts come from: words (`topic`, a Shorts-only search), "🎲 Keşfet" (`pool`: today's shared pool of a
- * category, shuffled here) or "✨ Bunun gibi" (`like`: the playing Short's channel, then its title's words). 0.9.91.18.
- */
-export type FeedSource =
-  | { kind: 'topic' }
-  | { kind: 'pool'; pool: PoolKind; region?: PoolRegionChoice }
-  | { kind: 'like'; id: string }
-  /** Card 10: one channel's Shorts (`c` = `UC…` or `@handle`, see `channelParam`). */
-  | { kind: 'channel'; c: string };
-
-interface FeedState {
-  /** What the person sees ("kediler", "🎵 Müzik", "✨ Bunun gibi"). */
-  topic: string;
-  source?: FeedSource;
-  next: string | null;
-  seen: string[];
-  /** Found but not added yet (a page has more than one round's worth). */
-  pending: string[];
-  /** The topic has no more pages. */
-  done: boolean;
-}
-/** Pages in a row that brought nothing new before the feed gives up (each one costs a search). */
+const PER_ROUND: Record<FeedKind, number> = { shorts: 8, videos: 3 };
+/** Pages in a row that brought nothing new before the feed gives up (each one costs a call). */
 const EMPTY_PAGES_MAX = 3;
 
+/** What the running tab keeps between rounds (this tab only; a new runner starts from the first page). */
+interface Run {
+  /** The feed it was made for (source + label); a steer makes a new run. */
+  key: string;
+  next: string | null;
+  pending: string[];
+  done: boolean;
+  /** Ids this run found already (so a page found twice adds nothing twice). */
+  seen: Set<string>;
+}
+
 export interface FeedOptions {
-  roomId: string;
   queueItems: () => QueueItem[];
   current: () => QueueItem | null;
+  /** My member id and the ids of everyone in the room now. */
+  myId: () => string | null;
+  memberIds: () => string[];
   /** May I add to the queue (not "only the host" for me)? */
   canAdd: () => boolean;
-  add: (media: Media) => void;
-  /** Takes an item out of the queue (a new feed clears the old feed's Shorts, 0.9.91.13). */
-  remove: (itemId: string) => void;
+  send: (message: ClientMessage) => void;
   /** A short note to the person (feed started, stopped, quota). */
   note: (text: string) => void;
-  /** The feed turned on / off (buttons follow). */
+  /** The feed changed (rows and buttons follow). */
   changed: () => void;
 }
 
+const isShortItem = (item: QueueItem | null) => !!item && ((item.media.kind === 'youtube' && item.media.short === true) || item.media.kind === 'tiktok');
+const runKey = (feed: FeedInfo) => JSON.stringify([feed.kind, feed.label, feed.source]);
+
 export function createShortsFeed(opts: FeedOptions) {
-  const key = `feed:${opts.roomId}`;
-  let state: FeedState | null = (() => {
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(key) ?? 'null') as FeedState | null;
-      return saved && typeof saved.topic === 'string' && saved.topic
-        ? { ...saved, source: cleanSource(saved.source), seen: Array.isArray(saved.seen) ? saved.seen : [], pending: Array.isArray(saved.pending) ? saved.pending : [] }
-        : null;
-    } catch {
-      return null;
-    }
-  })();
+  let info: FeedInfo | null = null;
+  let run: Run | null = null;
+  /** The room's played ids (null until the server answered `feed-played`). */
+  let played: Set<string> | null = null;
+  let asked = false;
   let loading = false;
   let retryAt = 0;
   let emptyPages = 0;
   let later: ReturnType<typeof setTimeout> | undefined;
 
-  const persist = () => {
-    try {
-      if (state) sessionStorage.setItem(key, JSON.stringify({ ...state, seen: state.seen.slice(-SEEN_MAX) }));
-      else sessionStorage.removeItem(key);
-    } catch {
-      // Private mode: the feed just isn't remembered across reloads.
-    }
-  };
+  const mine = () => info !== null && info.by === opts.myId();
+
+  function send(feed: FeedIn | null): void {
+    opts.send({ t: 'feed', feed });
+  }
 
   /** Spread out like a pasted list: the server allows about 4 commands a second. */
-  function add(ids: string[]): void {
-    writeAdded([...readAdded(), ...ids]);
-    ids.forEach((id, i) => setTimeout(() => opts.add({ kind: 'youtube', id, short: true }), i * 300));
+  function add(kind: FeedKind, ids: string[]): void {
+    ids.forEach((id, i) => {
+      const media: Media = kind === 'shorts' ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id };
+      setTimeout(() => opts.send({ t: 'enqueue', media, feed: true }), i * 300);
+    });
     // Until they reach the queue it still looks short: no new round before they are in (or it would overfill).
     if (ids.length) retryAt = Date.now() + ids.length * 300 + 2000;
   }
 
-  /** Shorts the feed put in the queue (also after it stopped): a new feed takes them out again. */
-  const addedKey = `feedAdded:${opts.roomId}`;
-  const readAdded = (): string[] => {
-    try {
-      const list = JSON.parse(sessionStorage.getItem(addedKey) ?? '[]') as unknown;
-      return Array.isArray(list) ? list.filter((x): x is string => typeof x === 'string').slice(-SEEN_MAX) : [];
-    } catch {
-      return [];
-    }
-  };
-  const writeAdded = (list: string[]) => {
-    try {
-      sessionStorage.setItem(addedKey, JSON.stringify(list.slice(-SEEN_MAX)));
-    } catch {
-      // Private mode: only this page knows.
-    }
-  };
-
-  function stop(note?: string): void {
-    state = null;
-    persist();
-    if (note) opts.note(note);
-    opts.changed();
+  /** A new or steered feed: what the last one queued goes again (the one playing finishes). */
+  function clearQueued(): void {
+    const left = opts.queueItems().filter((item) => item.feed);
+    left.forEach((item, i) => setTimeout(() => opts.send({ t: 'dequeue', id: item.id }), i * 300));
+    retryAt = left.length ? Date.now() + left.length * 300 + 800 : 0;
   }
 
-  /** Called whenever the room's queue or video changes. */
+  function stop(note?: string): void {
+    if (info) send(null);
+    if (note) opts.note(note);
+  }
+
+  function path(source: FeedSource, kind: FeedKind): string {
+    const videos = kind === 'videos';
+    switch (source.kind) {
+      case 'pool':
+        return videos ? `/api/youtube/chart?kind=${source.pool}&region=${source.region ?? 'auto'}` : `/api/youtube/pool?kind=${source.pool}&region=${source.region ?? 'auto'}`;
+      case 'like':
+        return `/api/youtube/like?id=${source.id}${videos ? '&videos=1' : ''}`;
+      case 'channel':
+        return `/api/youtube/channel?c=${encodeURIComponent(source.c)}${videos ? '&videos=1' : ''}${source.order === 'popular' ? '&order=popular' : ''}`;
+      case 'chanOf':
+        return `/api/youtube/channel?of=${source.id}${videos ? '&videos=1' : ''}${source.order === 'popular' ? '&order=popular' : ''}`;
+      case 'topic':
+        return `/api/youtube/search?${videos ? 'long=1' : 'short=1'}${source.region && source.region !== 'world' ? `&region=${source.region}` : ''}`;
+    }
+  }
+
+  /** Called whenever the room's queue, video or people change. */
   async function tick(): Promise<void> {
-    if (!state || loading) return;
+    const feed = info;
+    // A runner who left: the first person in the room who may add takes it over (their `feed` makes them the runner).
+    if (feed && !feed.paused && !mine() && opts.canAdd()) {
+      const here = opts.memberIds();
+      if (!here.includes(feed.by) && [...here].sort()[0] === opts.myId()) send({ kind: feed.kind, label: feed.label, source: feed.source, paused: false });
+    }
+    if (!feed || feed.paused || !mine() || loading) return;
+    if (!played) {
+      if (!asked) {
+        asked = true;
+        opts.send({ t: 'feed-played' });
+      }
+      return;
+    }
+    if (!run || run.key !== runKey(feed)) {
+      run = { key: runKey(feed), next: null, pending: [], done: false, seen: new Set(feed.source.kind === 'like' || feed.source.kind === 'chanOf' ? [feed.source.id] : []) };
+      emptyPages = 0;
+    }
     if (Date.now() < retryAt) {
       // Look again when the pause is over (no queue change may come to wake us).
       clearTimeout(later);
@@ -123,38 +129,30 @@ export function createShortsFeed(opts: FeedOptions) {
       return;
     }
     const current = opts.current();
-    // The feed belongs to the Shorts session: if something else is playing now, it waits.
-    if (current && !((current.media.kind === 'youtube' && current.media.short) || current.media.kind === 'tiktok')) return;
+    // A feed belongs to its kind: while a video of the other kind plays, it waits.
+    if (current && isShortItem(current) !== (feed.kind === 'shorts')) return;
     const queue = opts.queueItems();
-    if (queue.length >= LOW_WATER) return;
+    if (queue.length >= LOW_WATER[feed.kind]) return;
     if (!opts.canAdd()) return stop(t('feed.locked'));
-    const have = new Set([...queue.map((item) => (item.media.kind === 'youtube' ? item.media.id : '')), current?.media.kind === 'youtube' ? current.media.id : '']);
-    // Leftovers of the last page first (no search needed).
-    const waiting = state.pending.filter((id) => !have.has(id));
+    const inRoom = new Set([...queue.map((item) => (item.media.kind === 'youtube' ? item.media.id : '')), current?.media.kind === 'youtube' ? current.media.id : '']);
+    const skip = new Set([...played, ...run.seen, ...inRoom]);
+    // Leftovers of the last page first (no call needed).
+    const waiting = run.pending.filter((id) => !played!.has(id) && !inRoom.has(id));
     if (waiting.length > 0) {
-      add(waiting.slice(0, PER_ROUND));
-      state.pending = waiting.slice(PER_ROUND);
-      persist();
+      add(feed.kind, waiting.slice(0, PER_ROUND[feed.kind]));
+      run.pending = waiting.slice(PER_ROUND[feed.kind]);
       return;
     }
-    if (state.done) return stop(t('feed.end', { topic: state.topic }));
+    if (run.done) return stop(t('feed.end', { topic: feed.label }));
     loading = true;
-    const topic = state.topic;
+    const key = run.key;
     try {
-      const page = state.next ? `&page=${encodeURIComponent(state.next)}` : '';
-      const source = state.source ?? { kind: 'topic' };
-      const path =
-        source.kind === 'pool'
-          ? `/api/youtube/pool?kind=${source.pool}&region=${source.region ?? 'auto'}`
-          : source.kind === 'like'
-            ? `/api/youtube/like?id=${source.id}`
-            : source.kind === 'channel'
-              ? `/api/youtube/channel?c=${encodeURIComponent(source.c)}`
-              : `/api/youtube/search?short=1`;
+      const page = run.next ? `&page=${encodeURIComponent(run.next)}` : '';
+      const source = feed.source;
       // Security M6: a topic's words go in the body, never in the address.
-      const response = await fetch(`${path}&hl=${lang()}${page}`, source.kind === 'topic' ? wordsRequest(topic) : undefined);
+      const response = await fetch(`${path(source, feed.kind)}&hl=${lang()}${page}`, source.kind === 'topic' ? wordsRequest(source.q) : undefined);
       const answer = response.ok ? parseSearchAnswer(await response.json(), POOL_RESULTS) : ({ error: 'failed' } as const);
-      if (!state || state.topic !== topic) return;
+      if (!info || !run || run.key !== key || !mine()) return;
       if ('error' in answer) {
         if (answer.error === 'busy' || answer.error === 'failed') {
           retryAt = Date.now() + 30_000;
@@ -162,18 +160,19 @@ export function createShortsFeed(opts: FeedOptions) {
         }
         return stop(t(answer.error === 'quota' ? 'feed.quota' : 'feed.off'));
       }
-      const seen = new Set(state.seen);
-      const fresh = answer.items.map((item) => item.id).filter((id) => !seen.has(id) && !have.has(id));
-      // A pool is the same for every room today: each room plays it in its own random order.
-      if (source.kind === 'pool') shuffle(fresh);
-      state.seen.push(...fresh);
-      add(fresh.slice(0, PER_ROUND));
-      state.pending = fresh.slice(PER_ROUND);
-      state.next = answer.next ?? null;
-      state.done = !answer.next;
+      const fresh = freshIds(
+        answer.items.map((item) => item.id),
+        skip,
+      );
+      // A pool, a chart or a random channel is the same for every room: each room plays it in its own order.
+      if (source.kind === 'pool' || ((source.kind === 'channel' || source.kind === 'chanOf') && source.order === 'random')) shuffle(fresh);
+      for (const id of fresh) run.seen.add(id);
+      add(feed.kind, fresh.slice(0, PER_ROUND[feed.kind]));
+      run.pending = fresh.slice(PER_ROUND[feed.kind]);
+      run.next = answer.next ?? null;
+      run.done = !answer.next;
       emptyPages = fresh.length === 0 ? emptyPages + 1 : 0;
-      if (fresh.length === 0 && (state.done || emptyPages >= EMPTY_PAGES_MAX)) return stop(t('feed.end', { topic }));
-      persist();
+      if (fresh.length === 0 && (run.done || emptyPages >= EMPTY_PAGES_MAX)) return stop(t('feed.end', { topic: feed.label }));
       // A page with nothing new: try the next one shortly (bounded by EMPTY_PAGES_MAX).
       if (fresh.length === 0) setTimeout(() => void tick(), 500);
     } catch {
@@ -183,45 +182,66 @@ export function createShortsFeed(opts: FeedOptions) {
     }
   }
 
+  /** Start a feed, or steer the running one of the same kind (its queued videos go; the next ones follow the steer). */
+  function start(kind: FeedKind, label: string, source: FeedSource): void {
+    const clean = label.replace(/\s+/g, ' ').trim().slice(0, 80);
+    if (!clean) return;
+    if (!opts.canAdd()) {
+      opts.note(t('feed.locked'));
+      return;
+    }
+    clearQueued();
+    send({ kind, label: clean, source, paused: false });
+    opts.note(t(info?.kind === kind ? 'feed.steered' : 'feed.started', { topic: clean }));
+  }
+
   return {
-    get topic(): string | null {
-      return state?.topic ?? null;
+    get info(): FeedInfo | null {
+      return info;
     },
-    start(topic: string, source: FeedSource = { kind: 'topic' }): void {
-      const clean = topic.replace(/\s+/g, ' ').trim().slice(0, 80);
-      if (!clean) return;
-      if (!opts.canAdd()) {
-        opts.note(t('feed.locked'));
-        return;
+    /** Kept for older callers: the running feed's name. */
+    get topic(): string | null {
+      return info?.label ?? null;
+    },
+    /** This tab runs the feed (Test Lab). */
+    get runner(): boolean {
+      return mine();
+    },
+    /** How many played ids this tab knows (Test Lab). */
+    get remembered(): number | null {
+      return played ? played.size : null;
+    },
+    /** The server's feed (welcome or `feed`). */
+    set(next: FeedInfo | null): void {
+      const was = info;
+      info = next;
+      if (!next || (was && runKey(was) !== runKey(next))) run = null;
+      // A runner asks the room's memory again when it (re)starts, so ids played meanwhile are skipped too.
+      if (next && next.by === opts.myId() && (!was || was.by !== next.by || runKey(was) !== runKey(next))) {
+        played = null;
+        asked = false;
       }
-      // A new feed: the old feed's Shorts still waiting in the queue go (owner: "I don't want to see the feed I left");
-      // the one playing now finishes. Spread out like adding: the server allows about 4 commands a second.
-      const old = new Set(readAdded());
-      const leftovers = opts.queueItems().filter((item) => item.media.kind === 'youtube' && old.has(item.media.id));
-      leftovers.forEach((item, i) => setTimeout(() => opts.remove(item.id), i * 300));
-      writeAdded([]);
-      // "More like this" never brings back the Short it started from.
-      state = { topic: clean, source, next: null, seen: source.kind === 'like' ? [source.id] : [], pending: [], done: false };
-      // The new Shorts come after the old ones are gone (or the queue looks full to the first round).
-      retryAt = leftovers.length ? Date.now() + leftovers.length * 300 + 800 : 0;
-      emptyPages = 0;
-      persist();
-      opts.note(t('feed.started', { topic: clean }));
       opts.changed();
       void tick();
+    },
+    played(ids: string[]): void {
+      played = new Set(ids);
+      void tick();
+    },
+    start,
+    /** The 0.9.91 shortcut: a Shorts feed on these words. */
+    startTopic(words: string): void {
+      start('shorts', words, { kind: 'topic', q: words.replace(/\s+/g, ' ').trim().slice(0, 80) });
+    },
+    pause(paused: boolean): void {
+      if (info) send({ kind: info.kind, label: info.label, source: info.source, paused });
     },
     stop: () => stop(),
     tick: () => void tick(),
   };
 }
 
-function cleanSource(value: unknown): FeedSource {
-  const source = (typeof value === 'object' && value !== null ? value : {}) as { kind?: unknown; pool?: unknown; id?: unknown; region?: unknown; c?: unknown };
-  if (source.kind === 'pool' && isPoolKind(source.pool)) return { kind: 'pool', pool: source.pool, region: isPoolRegionChoice(source.region) ? source.region : 'auto' };
-  if (source.kind === 'like' && isVideoId(source.id)) return { kind: 'like', id: source.id };
-  if (source.kind === 'channel' && typeof source.c === 'string' && parseChannelParam(source.c)) return { kind: 'channel', c: source.c };
-  return { kind: 'topic' };
-}
+export type RoomFeed = ReturnType<typeof createShortsFeed>;
 
 function shuffle<T>(list: T[]): void {
   for (let i = list.length - 1; i > 0; i--) {
