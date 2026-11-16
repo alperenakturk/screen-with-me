@@ -185,8 +185,8 @@ npm run e2e          # yerel sunucuya karşı uçtan uca
 Eklenti: `npm run build:extension:dev`, sonra `chrome://extensions` → Geliştirici modu → **Paketlenmemiş öğe yükle** →
 `apps/extension/dist`.
 
-Yayın: `main`'e gelen her değişiklik GitHub Actions'ta test edilip yüklenir (`CLOUDFLARE_API_TOKEN` ve
-`CLOUDFLARE_ACCOUNT_ID` depo sırları gerekir), ardından canlı sunucuya karşı uçtan uca testler koşar.
+Yayın: `main`'e gelen her değişiklik GitHub Actions'ta test edilip yüklenir (`production` ortamının `CLOUDFLARE_API_TOKEN` ve
+`CLOUDFLARE_ACCOUNT_ID` sırları gerekir; etiketleme `TAG_TOKEN` depo sırrını kullanır), ardından canlı sunucuya karşı uçtan uca testler koşar.
 Yerelden: bir kere `npx wrangler login`, sonra `npm run deploy`.
 
 ## Lisans

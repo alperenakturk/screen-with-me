@@ -186,7 +186,7 @@ Extension: `npm run build:extension:dev`, then `chrome://extensions` → Develop
 `apps/extension/dist`.
 
 Deploy: every push to `main` is tested and then deployed by GitHub Actions (needs the `CLOUDFLARE_API_TOKEN` and
-`CLOUDFLARE_ACCOUNT_ID` repository secrets), followed by the end-to-end tests against the live server.
+`CLOUDFLARE_ACCOUNT_ID` secrets of the `production` environment; tagging uses the `TAG_TOKEN` repository secret), followed by the end-to-end tests against the live server.
 Locally: `npx wrangler login` once, then `npm run deploy`.
 
 ## License

@@ -328,7 +328,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `e2e/search.mjs` (chart / `of=` inputs), harness `feed` (CI `site`, computer + phone, a friend pauses and stops).
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `POST /api/youtube/search?hl` with the words as a form body `q` (since 0.9.96.20, security M6: never in the logged address; `wordsRequest`, `readWords`; podcasts search the same) (only on Enter, never while
-  typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with
+  typing). The Worker holds the key (`YOUTUBE_API_KEY`, a `production` environment secret; the deploy job uploads it with
   `wrangler deploy --secrets-file`; without it the answer is `{error:'off'}`, as locally and in CI), calls search.list
   (`type=video`, `videoEmbeddable`, 12 results) + videos.list for durations = 101 of the 10 000 free daily units
   (≈ 100 searches/day). Same words + language are answered from `caches.default` for 24 h; a quota error is remembered
@@ -2384,7 +2384,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Worker and a Durable Object 8 times in a row: objects started on the old code restart later and close every
   connection, which made live e2e files fail on the first attempt, e.g. wait.mjs "timeout waiting d") → e2e against
   live (a file passing only on its retry prints a `::warning::`; every e2e file runs with `scripts/e2e/trace.mjs`, which
-  logs each socket the server or network closed with its code and time). Keys are in repo Secrets (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`);
+  logs each socket the server or network closed with its code and time). Deploy keys are secrets of the `production` environment (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
+  `YOUTUBE_API_KEY`, `USAGE_TOKEN`, `FEEDBACK_GITHUB_TOKEN`, `LAB_CODE`; variable `FEEDBACK_REPO`; owner, 17 Nov 2026); the only
+  repository secret is `TAG_TOKEN` (the tag job);
   without them the job is skipped with a warning.
   **CI diet (Nov 2026; owner's testing rule: "run as many tests as needed, none on unrelated parts, never give up
   quality"):** a first `changes` job (`scripts/ci-changes.mjs`, its own test `scripts/ci-changes.test.mjs` runs

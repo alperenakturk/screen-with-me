@@ -282,4 +282,4 @@ bash scripts/harness/run-all.sh                   # every run.cjs harness in one
   connections per IP and minute (`CONNECT_LIMIT`, also simulated by `wrangler dev`): a test that opens many
   connections in a burst gets `429`.
 - GitHub: no `gh`; use the GitHub MCP tools for PRs; `git push` works.
-- Deploys from the cloud go through GitHub Actions (no `wrangler login`); keys are in repo Secrets.
+- Deploys from the cloud go through GitHub Actions (no `wrangler login`); deploy keys are `production` environment secrets (`TAG_TOKEN` is the only repository secret).
