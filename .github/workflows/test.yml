@@ -306,6 +306,11 @@ jobs:
       # answers are stubbed in the browser, and without the secret the real route says "not available yet".
       - name: Sources picker
         run: node scripts/harness/sources/run.cjs http://localhost:8787
+
+      # Card SH2: the room's feeds from the Queue (start, pause from a friend, steer, stop; YouTube faked).
+      - name: Feeds from the Queue
+        run: node scripts/harness/feed/run.cjs http://localhost:8787
+
       # Card CH1: a long chat stays (500 lab messages), pages back in on scroll-up, and room activity never pushes it out.
       - name: Chat kept until the room is deleted
         run: node scripts/harness/chat-history/run.cjs http://localhost:8787
@@ -314,10 +319,6 @@ jobs:
       # beside Next), and it works again and again. Needs YouTube.
       - name: Shorts view way back
         run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
-
-      # Card SH2: the room's feeds from the Queue (start, pause from a friend, steer, stop; YouTube faked).
-      - name: Feeds from the Queue
-        run: node scripts/harness/feed/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()
