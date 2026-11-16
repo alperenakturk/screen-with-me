@@ -871,6 +871,8 @@ const en = {
   'feed.pausedTag': 'paused',
   'feed.pause': 'Pause the feed',
   'feed.resume': 'Resume the feed',
+  'feed.pauseShort': 'Pause',
+  'feed.resumeShort': 'Resume',
   'feed.steer': 'Steer',
   'feed.steerHint': 'Steer the feed: another channel, country or topic',
   'feed.steered': '🧭 The feed now follows "{topic}"',

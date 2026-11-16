@@ -145,7 +145,7 @@ jobs:
       - name: Game texts (EN = TR keys)
         run: |
           node --test scripts/check-game-text.test.mjs
-          node scripts/check-game-text.mjs apps/web/src/games apps/web/src/ui/report.ts apps/web/src/ui/vimeo-results.ts
+          node scripts/check-game-text.mjs apps/web/src/games apps/web/src/ui/report.ts apps/web/src/ui/vimeo-results.ts apps/web/src/ui/feed-window.ts
 
       # Card SB3: Snack Bar's balance (10 h of film: no strategy dominates, the first new cinema in time).
       - name: Snack Bar balance
@@ -314,6 +314,10 @@ jobs:
       # beside Next), and it works again and again. Needs YouTube.
       - name: Shorts view way back
         run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
+
+      # Card SH2: the room's feeds from the Queue (start, pause from a friend, steer, stop; YouTube faked).
+      - name: Feeds from the Queue
+        run: node scripts/harness/feed/run.cjs http://localhost:8787
 
       - name: Server log (on failure)
         if: failure()

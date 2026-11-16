@@ -2374,7 +2374,7 @@ html:not(.shell) .shell-only {
 }
 
 .feed-qrow-text {
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2382,9 +2382,8 @@ html:not(.shell) .shell-only {
   font-size: 13px;
 }
 
-html.phone .feed-qrow :is(.btn, .icon-btn) {
+html.phone .feed-qrow .btn {
   min-height: 44px;
-  min-width: 44px;
 }
 
 .end-name a {

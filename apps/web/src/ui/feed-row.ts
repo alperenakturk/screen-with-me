@@ -28,9 +28,9 @@ export function createFeedRow(root: HTMLElement, feed: RoomFeed, open: (kind: Fe
     const kind = info.kind === 'shorts' ? `♾ ${t('feed.short')}` : `▶ ${t('feed.videos')}`;
     root.replaceChildren(
       el('span', { class: 'feed-qrow-text', id: 'feed-row-text' }, el('b', {}, kind), ' · ', info.label, info.paused ? el('span', { class: 'muted' }, ` (${t('feed.pausedTag')})`) : ''),
-      button('feed-row-pause', info.paused ? t('feed.resume') : t('feed.pause'), info.paused ? '▶' : '⏸', () => feed.pause(!info.paused), 'icon-btn'),
+      button('feed-row-pause', info.paused ? t('feed.resume') : t('feed.pause'), info.paused ? `▶ ${t('feed.resumeShort')}` : `⏸ ${t('feed.pauseShort')}`, () => feed.pause(!info.paused)),
       button('feed-row-steer', t('feed.steerHint'), `🧭 ${t('feed.steer')}`, () => open(info.kind)),
-      button('feed-row-stop', t('feed.stop'), '✕', () => feed.stop(), 'icon-btn'),
+      button('feed-row-stop', t('feed.stop'), `✕ ${t('feed.stop')}`, () => feed.stop()),
     );
   }
   render();

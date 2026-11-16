@@ -268,6 +268,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`sessionStorage` `feed:<room>`); stops on quota / off, when the topic runs dry or after 3 empty pages, and when only
   the host may change the queue. Each page ≈ 1 % of the day's quota. Since 0.9.92.6 ♾ always opens its window; a running
   feed shows on top (`#shorts-feed-now`, "On now: …" + Stop) and stops only from there (it used to stop on the press).
+- **Room feeds: ♾ Shorts and ▶ videos, steerable from the Queue (card SH2, 16 Nov 2026):** the feed lives on the room
+  object (`packages/shared/src/feed.ts`: `FeedIn` / `FeedInfo {kind: shorts|videos, label, source, paused, by,
+  steers}`; storage key `feed`), so everyone sees it. Client `{t:'feed', feed}` starts / steers / pauses (`null` stops;
+  a locked queue locks it, `not_host`); the server broadcasts `{t:'feed'}` and sends it in `welcome.feed`. Same source +
+  label = pause / resume (the runner stays, unless they left); same kind, other source = a steer (`steers + 1`, the one
+  who steered runs it); another kind = a new feed. Sources (`FeedSource`): `topic {q, region?}` (search.list, 100
+  units, cached per words + region; ▶ uses `long=1`: no Shorts), `pool {pool, region}` (♾ Discover pool; ▶
+  `/api/youtube/chart`: videos.list `chart=mostPopular` by country and category, 1 unit, cached per hour), `like {id}`
+  (`/like`, ▶ adds `videos=1`), `channel {c, order?}` and `chanOf {id, order?}` (`/channel?c=` or `?of=<video>`, the
+  channel looked up with 1 more unit; ▶ `videos=1`; `order=popular` sorts a page by views with `statistics`, `random`
+  is shuffled in the tab). **The runner** (`ui/shorts-feed.ts`, the tab whose member id is `by`) asks `{t:'feed-played'}`
+  once (the room's played ids, oldest first), then fills the queue below 3 Shorts / 2 videos with up to 8 / 3 new ids,
+  `enqueue` with `feed: true` (`QueueItem.feed`); a start or steer first dequeues the queued `feed` items, so the next
+  videos follow it at once. A runner who left: the first remaining person (by member id) who may add takes it over.
+  **Memory:** every YouTube item that starts playing is remembered (`feedMemory`, `[id, at][]`, `rememberPlayed`):
+  ids only, at most `FEED_MEMORY_MAX` 2000 for `FEED_MEMORY_DAYS` 30, wiped with the room (`deleteAll` + reset in the
+  alarm). **UI:** the Queue's `#feed-row` (`ui/feed-row.ts`): no feed → "♾ Shorts feed" / "▶ Video feed"; running →
+  label, ⏸ / ▶, 🧭 Steer, ✕. The window (`ui/feed-window.ts` + `.css`, a lazy chunk with its own `TEXT`; also from the
+  Shorts bar's ♾): tabs ♾ / ▶, the running feed with Pause / Stop, four steers with a line each (📺 continue from this
+  channel = `chanOf`, 🌍 same topic other country, ✨ more like this one = `like`, 🔤 change the topic), then the
+  starters (Discover / Popular-now chips + country, one box for words / a video link / a channel with ▶'s order).
+  Test Lab `feed.state` (active feed, mine, steers, remembered). Tests: `feed.test.ts`, `e2e/shorts.mjs` (feed part),
+  `e2e/search.mjs` (chart / `of=` inputs), harness `feed` (CI `site`, computer + phone, a friend pauses and stops).
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `POST /api/youtube/search?hl` with the words as a form body `q` (since 0.9.96.20, security M6: never in the logged address; `wordsRequest`, `readWords`; podcasts search the same) (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with

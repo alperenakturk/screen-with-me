@@ -873,6 +873,8 @@ export const tr: Record<I18nKey, string> = {
   'feed.pausedTag': 'duraklatıldı',
   'feed.pause': 'Akışı duraklat',
   'feed.resume': 'Akışı sürdür',
+  'feed.pauseShort': 'Duraklat',
+  'feed.resumeShort': 'Sürdür',
   'feed.steer': 'Yönlendir',
   'feed.steerHint': 'Akışı yönlendir: başka kanal, ülke ya da konu',
   'feed.steered': '🧭 Akış artık "{topic}" izliyor',
