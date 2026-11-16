@@ -183,6 +183,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 - [ ] 27o. [QZ2c] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
   turn. Try ×2 (Double) and ↺ (Second chance: answer wrong first, then try again). The winner has the most round wins.
+- [ ] 27p. [GMP-b] With two or more friends (phones and computers): open Sea Battle, the others press "Take the seat"
+  before the battle. On your turn tap a friend's chip, then fire on their sea; a sunk player is crossed out and only
+  watches; at the end the card lists 1st to last. Then the Five Frames Duel with three or more: the race goes on after
+  the first one solves, and the end card shows the places.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

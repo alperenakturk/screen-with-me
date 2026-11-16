@@ -172,3 +172,29 @@ describe('who sees the ships', () => {
     expect(seaShipsVisible(-1, 1, false, true)).toBe(true);
   });
 });
+
+describe('GMP b: Sea Battle for 2–6', () => {
+  it('turns go round the seats still afloat', async () => {
+    const { nextAlive } = await import('./sea.ts');
+    expect(nextAlive([true, true, true], 0)).toBe(1);
+    expect(nextAlive([true, false, true], 0)).toBe(2);
+    expect(nextAlive([true, false, true], 2)).toBe(0);
+    expect(nextAlive([false, true, false, false, true, true], 5)).toBe(1);
+    expect(nextAlive([true, false, false], 0)).toBe(0);
+  });
+
+  it('places: the last fleet afloat first, then the last one sunk', async () => {
+    const { seaRanks } = await import('./sea.ts');
+    // Seats 3, 0, 1 sank in that order (seat 4 empty); seat 2 won.
+    expect(seaRanks(5, 2, [3, 0, 1])).toEqual([3, 2, 1, 4, 0]);
+    expect(seaRanks(2, 1, [0])).toEqual([2, 1]);
+  });
+
+  it('a shot names its target seat; a bad target is refused', async () => {
+    const { parseSeaMessage } = await import('./sea.ts');
+    expect(parseSeaMessage(JSON.stringify({ t: 'shot', cell: 5, target: 3 }))).toEqual({ t: 'shot', cell: 5, target: 3 });
+    expect(parseSeaMessage(JSON.stringify({ t: 'shot', cell: 5 }))).toEqual({ t: 'shot', cell: 5 });
+    expect(parseSeaMessage(JSON.stringify({ t: 'shot', cell: 5, target: 6 }))).toBeNull();
+    expect(parseSeaMessage(JSON.stringify({ t: 'shot', cell: 5, target: -1 }))).toBeNull();
+  });
+});

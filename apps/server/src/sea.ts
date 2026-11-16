@@ -8,13 +8,16 @@ import { RateLimiter } from './rate-limit.ts';
 import type { Avatar } from '@swm/shared/protocol';
 import {
   SEA_BOT_DELAY_MS,
+  SEA_MAX_SEATS,
   SEA_PROTOCOL_VERSION,
   SEA_RULES,
   botShot,
   checkFleet,
   fleetSunk,
+  nextAlive,
   parseSeaMessage,
   randomFleet,
+  seaRanks,
   seaShipsVisible,
   shotResult,
   sunkShips,
@@ -69,12 +72,15 @@ interface Saved {
   /** Who shoots first in the next game (swaps on every rematch). */
   first: number;
   winner: number | null;
-  last?: { by: number; cell: number; result: ShotResult };
+  last?: { by: number; cell: number; result: ShotResult; target?: number };
+  /** GMP b: the seats whose fleets sank this game, in that order; each seat's place once it is over. */
+  out: number[];
+  ranks: number[];
   people: Record<string, Person>;
   emptySince: number | null;
 }
 
-const fresh = (): Saved => ({ seats: [null, null], phase: 'place', shots: [[], []], turn: 0, first: 0, winner: null, people: {}, emptySince: null });
+const fresh = (): Saved => ({ seats: [null, null], phase: 'place', shots: [[], []], turn: 0, first: 0, winner: null, out: [], ranks: [], people: {}, emptySince: null });
 
 /** The platform's secure random numbers for fleets and the bot (never `Math.random`, review 4 R4-7). */
 function secureRandom(): number {
@@ -239,13 +245,22 @@ export class Sea extends DurableObject<Env> {
     return (s && checkFleet(SEA_RULES, s.places)) ?? [];
   }
 
-  /** A fresh game on the same seats: new fleets for Stub, nobody ready, the other player shoots first. */
+  /** GMP b: seated, with ships afloat, during this game. */
+  private alive(): boolean[] {
+    const d = this.data;
+    return d.seats.map((s, i) => !!s && !d.out.includes(i));
+  }
+
+  /** A fresh game on the same seats: new fleets for Stub, nobody ready, the next player shoots first. */
   private newGame(swap: boolean): void {
     const d = this.data;
-    if (swap) d.first = 1 - d.first;
+    const seated = d.seats.map((s) => !!s);
+    if (swap || !seated[d.first]) d.first = nextAlive(seated, d.first);
     d.phase = 'place';
-    d.shots = [[], []];
+    d.shots = d.seats.map(() => []);
     d.winner = null;
+    d.out = [];
+    d.ranks = [];
     delete d.last;
     d.turn = d.first;
     for (const s of d.seats) {
@@ -276,8 +291,14 @@ export class Sea extends DurableObject<Env> {
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (d.phase !== 'place') return;
         d.seats[seat]!.ready = message.on;
-        if (d.seats.every((s) => s?.ready)) {
+        // GMP b: two to six seated, every one of them ready.
+        const seated = d.seats.filter((s): s is Seat => !!s);
+        if (seated.length >= 2 && seated.every((s) => s.ready)) {
           d.phase = 'play';
+          d.out = [];
+          d.ranks = [];
+          while (d.shots.length < d.seats.length) d.shots.push([]);
+          if (!d.seats[d.first]) d.first = nextAlive(d.seats.map((x) => !!x), d.first);
           d.turn = d.first;
         }
         break;
@@ -285,12 +306,17 @@ export class Sea extends DurableObject<Env> {
       case 'shot': {
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (d.phase !== 'play' || d.turn !== seat) return this.sendTo(ws, { t: 'error', code: 'not_your_turn' });
-        if (!this.fire(seat, message.cell)) return this.sendTo(ws, { t: 'error', code: 'shot_twice' });
+        // GMP b: I choose whose sea to shoot at (two players: the other one); never mine, an empty seat or a sunk fleet.
+        const target = message.target ?? (d.seats.length === 2 ? 1 - seat : -1);
+        if (target === seat || !this.alive()[target]) return this.sendTo(ws, { t: 'error', code: 'bad_target' });
+        if (!this.fire(seat, message.cell, target)) return this.sendTo(ws, { t: 'error', code: 'shot_twice' });
         break;
       }
       case 'bot': {
         // Stub takes (or leaves) the other seat; only a seated player asks, and never over a person who is here.
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
+        // GMP b: Stub plays only at a table of two.
+        if (d.seats.length > 2) return this.sendTo(ws, { t: 'error', code: 'too_many' });
         const other = 1 - seat;
         const there = d.seats[other];
         if (message.level === 0) {
@@ -313,6 +339,13 @@ export class Sea extends DurableObject<Env> {
         // Stub's seat too: a person takes it and a new game starts.
         let free = d.seats.findIndex((s) => s === null || (!s.bot && !this.online(s.key)));
         if (free < 0) free = d.seats.findIndex((s) => s?.bot);
+        // GMP b: a new seat while ships are being placed, up to six.
+        if (free < 0 && d.phase !== 'play' && d.seats.length < SEA_MAX_SEATS) {
+          free = d.seats.push(null) - 1;
+          d.shots.push([]);
+          if (d.phase === 'over') this.newGame(false);
+          for (const s of d.seats) if (s && !s.bot) s.ready = false;
+        }
         if (free < 0) return this.sendTo(ws, { t: 'error', code: 'full' });
         const old = d.seats[free];
         if (old && !old.bot) d.seats[free] = { ...old, key };
@@ -332,15 +365,18 @@ export class Sea extends DurableObject<Env> {
         this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
-        if (message.op === 'reveal') return this.sendTo(ws, { t: 'reveal', seat: 1 - seat, ships: this.ships(1 - seat) });
+        const other = nextAlive(d.seats.map((x) => !!x), seat);
+        if (message.op === 'reveal') return this.sendTo(ws, { t: 'reveal', seat: other, ships: this.ships(other) });
         // One ship left on each side: everything else already sunk.
-        if (!d.seats.every((s) => s)) return this.sendTo(ws, { t: 'error', code: 'too_few' });
-        for (const s of d.seats) s!.ready = true;
+        if (d.seats.filter(Boolean).length < 2) return this.sendTo(ws, { t: 'error', code: 'too_few' });
+        for (const s of d.seats) if (s) s.ready = true;
         d.phase = 'play';
         d.winner = null;
+        d.out = [];
+        d.ranks = [];
         delete d.last;
         d.turn = seat;
-        d.shots = [0, 1].map((i) => this.ships(i).slice(0, -1).flat());
+        d.shots = d.seats.map((_, i) => this.ships(i).slice(0, -1).flat());
         break;
       }
       default:
@@ -349,21 +385,26 @@ export class Sea extends DurableObject<Env> {
     await this.changed();
   }
 
-  /** One shot by `seat`; false if that cell was shot before. */
-  private fire(seat: number, cell: number): boolean {
+  /**
+   * One shot by `seat` at `target`'s sea; false if that cell was shot before. GMP b: a sunk fleet is out (keeps
+   * watching); the game ends when one fleet is left afloat. A miss passes the turn to the next seat still afloat.
+   */
+  private fire(seat: number, cell: number, target: number): boolean {
     const d = this.data;
-    const target = 1 - seat;
-    const shots = d.shots[target]!;
+    const shots = (d.shots[target] ??= []);
     if (shots.includes(cell)) return false;
     const ships = this.ships(target);
     const result = shotResult(ships, shots, cell);
     shots.push(cell);
-    d.last = { by: seat, cell, result };
-    if (fleetSunk(ships, shots)) {
+    d.last = { by: seat, cell, result, target };
+    if (fleetSunk(ships, shots) && !d.out.includes(target)) d.out.push(target);
+    const alive = this.alive();
+    if (alive.filter(Boolean).length <= 1) {
       d.phase = 'over';
       d.winner = seat;
       d.seats[seat]!.wins++;
-    } else if (result === 'miss' || !SEA_RULES.again) d.turn = target;
+      d.ranks = seaRanks(d.seats.length, seat, d.out);
+    } else if (result === 'miss' || !SEA_RULES.again) d.turn = nextAlive(alive, seat);
     return true;
   }
 
@@ -391,7 +432,7 @@ export class Sea extends DurableObject<Env> {
     const ships = this.ships(target);
     const shots = d.shots[target]!;
     const view = { shots: shots.map((c) => [c, ships.some((s) => s.includes(c)) ? 1 : 0] as const), sunk: sunkShips(ships, shots).map((i) => ships[i]!) };
-    this.fire(seat, botShot(SEA_RULES, view, bot.bot, secureRandom));
+    this.fire(seat, botShot(SEA_RULES, view, bot.bot, secureRandom), target);
     await this.changed();
   }
 
@@ -430,7 +471,7 @@ export class Sea extends DurableObject<Env> {
     const d = this.data;
     const mine = key ? this.seatOf(key) : -1;
     const watcher = !!key && mine < 0 && !!d.people[key];
-    const fleets = [0, 1].map((i) => this.ships(i));
+    const fleets = d.seats.map((_, i) => this.ships(i));
     const players: (SeaPlayer | null)[] = d.seats.map((s, i) => {
       if (!s) return null;
       const person = d.people[s.key];
@@ -441,13 +482,14 @@ export class Sea extends DurableObject<Env> {
         online: this.online(s.key, except),
         ...(s.bot ? { bot: s.bot } : {}),
         ready: s.ready,
-        left: fleets[i]!.length - sunkShips(fleets[i]!, d.shots[i]!).length,
+        left: fleets[i]!.length - sunkShips(fleets[i]!, d.shots[i] ?? []).length,
         wins: s.wins,
+        ...(d.out.includes(i) ? { out: true } : {}),
       };
     });
-    const seas: SeaSideView[] = [0, 1].map((i) => {
+    const seas: SeaSideView[] = d.seats.map((_, i) => {
       const ships = fleets[i]!;
-      const shots = d.shots[i]!;
+      const shots = d.shots[i] ?? [];
       const side: SeaSideView = {
         shots: shots.map((c) => [c, ships.some((s) => s.includes(c)) ? 1 : 0] as const),
         sunk: sunkShips(ships, shots).map((n) => ships[n]!),
@@ -470,6 +512,7 @@ export class Sea extends DurableObject<Env> {
       ...(mine >= 0 && d.phase === 'place' ? { places: d.seats[mine]!.places } : {}),
       watchers,
       ...(d.last ? { last: d.last } : {}),
+      ...(d.phase === 'over' && d.ranks.length ? { ranks: d.seats.map((s, i) => (s ? (d.ranks[i] ?? 0) : 0)) } : {}),
       rules: { size: SEA_RULES.size, fleet: [...SEA_RULES.fleet], again: SEA_RULES.again, touch: SEA_RULES.touch },
     };
   }

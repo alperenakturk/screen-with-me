@@ -182,3 +182,53 @@ html.phone .sea-bot-label { flex-basis: auto; }
 #game-stage.in-tab .sea-bot-label { white-space: normal; min-width: 0; flex: 0 1 auto; line-height: 1.2; }
 #game-stage.in-tab .sea-watch-open[data-n='0'] { display: none; }
 #game-stage.in-tab .sea-score { flex: none; white-space: nowrap; }
+
+/* GMP b: three to six players. A row of chips in the bar picks the sea in the big box (a player's target); a sunk
+   fleet is crossed out and can't be picked by a player. My own chip only shows in a narrow window (one sea at a time). */
+.sea-score[hidden] { display: none; }
+.sea-targets { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; min-width: 0; }
+.sea-targets[hidden] { display: none; }
+.sea-target {
+  position: relative; display: inline-flex; align-items: center; gap: 5px; min-height: 36px; max-width: 150px; padding: 3px 10px 3px 4px;
+  border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: inherit; font: inherit; font-size: 13px; cursor: pointer;
+}
+.sea-target.small-sea { display: none; }
+.sea-target[aria-pressed='true'] { border-color: var(--sb-gold); box-shadow: 0 0 0 1px var(--sb-gold) inset; font-weight: 700; }
+.sea-target.turn { outline: 2px dashed var(--sb-gold); outline-offset: 1px; }
+.sea-target.out { color: var(--muted); }
+.sea-target.out .sea-target-name { text-decoration: line-through; }
+.sea-target:disabled { cursor: default; opacity: 0.75; }
+.sea-target:focus-visible { outline: 2px solid var(--sb-gold); outline-offset: 2px; }
+.sea-target-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sea-target-left { flex: none; font-variant-numeric: tabular-nums; color: var(--sb-gold); }
+.sea-target.out .sea-target-left { color: var(--muted); }
+/* A narrow window: round chips (a face with its ships left on a badge), the tabs give way to them. */
+@container game (max-width: 560px) {
+  .sea.many .sea-switch { display: none !important; }
+  .sea.many .sea-bar { flex-wrap: nowrap; }
+  .sea.many .sea-targets { flex-wrap: nowrap; gap: 4px; }
+  .sea-target, .sea-target.small-sea { display: inline-flex; justify-content: center; width: 44px; height: 44px; min-height: 44px; padding: 0; flex: none; }
+  .sea-target .sea-avatar.small { width: 30px; height: 30px; }
+  .sea-target-name, .sea-target-ship { display: none; }
+  .sea-target-left {
+    position: absolute; right: -3px; bottom: -3px; min-width: 18px; height: 18px; padding: 0 3px; box-sizing: border-box; border-radius: 9px;
+    background: var(--sb-sea); border: 1px solid var(--sb-gold); font-size: 13px; line-height: 16px; font-weight: 800; text-align: center;
+  }
+  .sea-target.out .sea-target-left { border-color: var(--border); }
+}
+.sea-head.out { opacity: 0.75; }
+.sea-out { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.sea-places { display: flex; flex-direction: column; gap: 3px; margin: 2px auto 0; padding: 0; list-style: none; width: min(100%, 300px); }
+.sea-places li { display: grid; grid-template-columns: 36px 24px minmax(0, 1fr) auto; align-items: center; gap: 6px; font-size: 14px; }
+.sea-places li.me { font-weight: 800; }
+.sea-place { text-align: right; font-variant-numeric: tabular-nums; }
+.sea-place-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.sea-place-left { font-size: 13px; color: var(--muted); }
+@container game (max-width: 560px) {
+  /* A sunk fleet's round chip fades (its name can't be struck through there). */
+  .sea-target.out .sea-avatar { opacity: 0.45; filter: grayscale(1); }
+  /* Six places still fit above a phone's tab bar. */
+  .sea-places { gap: 1px; }
+  .sea-places li { grid-template-columns: 32px 20px minmax(0, 1fr) auto; font-size: 13px; }
+  .sea-places .sea-avatar.small { width: 20px; height: 20px; }
+}
