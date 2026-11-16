@@ -2344,5 +2344,5 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Done when: the above live; the server validates typed answers and jokers; Test Lab hook `quiz.tournament`.
 - Tests: quiz server unit tests (scoring, tie rule, typed match), `GameSocket` e2e with 3 players, harness.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
-- Done: #458 (0.9.97.142, first-press answers), #463 (0.9.97.145, 587 checked questions, 3 new topics, typed answers,
-  hard bonus), #466 (0.9.97.146, Double + Second chance jokers, tournament); Game Studio 2.
+- Done: #458 (first-press answers), #463 (587 checked questions, 3 new topics, typed answers,
+  hard bonus), #466 (Double + Second chance jokers, tournament); Game Studio 2.

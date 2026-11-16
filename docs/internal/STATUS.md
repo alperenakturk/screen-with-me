@@ -8,13 +8,13 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Game Studio 2, QZ2 PR 1 (0.9.97.142): Quiz first-click fix, PR #458; merges after CH1 #455
-  (0.9.97.141, Planner's order).
-- [ ] Game Studio 2, QZ2 PR 2: ~600 new questions, 3 new categories, typed answers, hard bonus, protocol 3, Lab
-  `quiz.typed`; 0.9.97.145, branch `claude/quiz-questions`, merges after #458 (and .143 / .144).
-- [ ] Game Studio 2, QZ2 PR 3 (0.9.97.146): Double + Second chance jokers, tournament (1 or 2 laps), hook
-  `quiz.tournament`; branch `claude/quiz-tournament`, merges after #463.
-- [ ] Game Studio 2, WG2: Window Garden steady buttons, backgrounds, small customisations, hook `garden.decor`.
+- [ ] B2, card CI3 (claude/ci3-release-train): [x] tested-code mark + main tests untested combinations; [x] settle
+  (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
+  merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
+  merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
+- [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
+  order; no version bumps (CI3), notes in changelog/next/.
+- [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
 - [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
   (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
 
@@ -107,6 +107,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27i. [CH1, 0.9.97.141] In a room, chat a while with a friend (or use 🐞 Test Lab → "Chat: add 250 numbered messages" on a
+  test server), leave and come back later: the earlier messages are still there; scroll up and older ones load.
 - [ ] 27f. [SRC1, 0.9.97.136] In a room (computer, then the phone's 🔍 Search tab): press ⠿ → Vimeo, type a few
   words + Enter: before the VIMEO_TOKEN secret the tile and the search say "Not available yet" (the real search is
   27g). ⠿ → Search the web: a new tab opens with your words; come back, the box asks for the link.
@@ -137,12 +139,12 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
   YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
   YouTube"; clicking the logo opens youtube.com in a new tab.
-- [ ] 27m. [QZ2a, 0.9.97.142] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
+- [ ] 27m. [QZ2a] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
   click, also when the friend answers at the same moment.
-- [ ] 27n. [QZ2b, 0.9.97.145] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
+- [ ] 27n. [QZ2b] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
-- [ ] 27o. [QZ2c, 0.9.97.146] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
+- [ ] 27o. [QZ2c] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
   turn. Try ×2 (Double) and ↺ (Second chance: answer wrong first, then try again). The winner has the most round wins.
 
 

@@ -299,11 +299,16 @@ async function runHead(browser, kinds, size) {
         return { x: r.left + r.width / 2, y: r.top + r.height / 2, bg: ['backgroundColor', 'color', 'opacity', 'borderTopColor', 'boxShadow', 'transform', 'filter'].map((k) => getComputedStyle(b)[k]).join('|') };
       });
       await page.mouse.move(hover.x, hover.y, { steps: 4 });
-      await wait(450);
-      const hovered = await page.evaluate(({ x, y }) => {
-        const b = document.elementFromPoint(x, y)?.closest('button');
-        return b ? ['backgroundColor', 'color', 'opacity', 'borderTopColor', 'boxShadow', 'transform', 'filter'].map((k) => getComputedStyle(b)[k]).join('|') : '';
-      }, hover);
+      // CI3: wait for the hover state itself (up to 2 s), not a fixed 450 ms: on a slow runner the transition or the
+      // first mouse event can come late, and a fixed wait failed "lights up" now and then.
+      const hovered = await page
+        .waitForFunction(({ x, y, bg }) => {
+          const b = document.elementFromPoint(x, y)?.closest('button');
+          const now = b ? ['backgroundColor', 'color', 'opacity', 'borderTopColor', 'boxShadow', 'transform', 'filter'].map((k) => getComputedStyle(b)[k]).join('|') : '';
+          return now && now !== bg ? now : false;
+        }, hover, { timeout: 2000, polling: 50 })
+        .then((h) => h.jsonValue())
+        .catch(() => '');
       // Hover needs a real window (headless Chromium has no real hover).
       if (HEADFUL) check(hovered && hovered !== hover.bg, `${size} ${kind}: a head button lights up under the mouse`);
       // Drag by the head: the window follows the mouse and stays whole on screen.

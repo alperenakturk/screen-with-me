@@ -962,6 +962,34 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     chat.render();
     people.render();
   });
+  // Card CH1: the chat kept until the room is deleted, in the Test Lab (and a lab-only fill to try it).
+  debugHooks.register('chat-history', () => ({
+    commands: [
+      {
+        id: 'chat.history',
+        tab: 'status',
+        title: { en: 'Chat: how much is loaded and whether older pages are offered', tr: 'Sohbet: ne kadarı yüklü ve eski sayfalar sunuluyor mu' },
+        help: {
+          en: 'Writes how many chat messages and room-activity lines this tab holds and the older page the room offers (null: everything is here) into the log.',
+          tr: 'Bu sekmede kaç sohbet mesajı ve oda hareketi satırı olduğunu ve odanın sunduğu eski sayfayı (null: hepsi burada) kayda yazar.',
+        },
+        run: () => JSON.stringify(chat.history()),
+      },
+      {
+        id: 'chat.fill',
+        tab: 'friends',
+        title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
+        help: {
+          en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.',
+          tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.',
+        },
+        run: () => {
+          send({ t: 'lab', op: 'chat-fill' });
+          return 'sent';
+        },
+      },
+    ],
+  }));
   // SAFE1: the same two actions in the People tab / the phone's People sheet and in the person menu.
   const safety = {
     isBlocked: (member: Member) => blocks.has(member),
@@ -1538,7 +1566,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         waitingIds = message.waiting ?? [];
         renderWaiting();
         queue.set(message.queue);
-        chat.set(message.chat);
+        chat.set(message.chat, message.chatMore);
         lastBy = null;
         void applyState(message.state);
         pins.set(message.pins ?? null);
@@ -1716,6 +1744,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       }
       case 'chat-image':
         chat.setImage(message.id, message.data);
+        break;
+      case 'chat-older':
+        chat.older(message.messages, message.more);
         break;
       case 'chat': {
         const { by } = message.message;

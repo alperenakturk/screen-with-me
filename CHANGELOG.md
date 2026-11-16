@@ -16,27 +16,11 @@ downloaded), and many new games: the Classics table (tic-tac-toe, Four in a Row,
 Reversi) with Glowbeam as a referee and opponent, Sea Battle, a bigger quiz and Draw & Guess with topics, and the side
 games' tip jar, cuttings and badges.
 
-### 0.9.97.146 — 16 Nov
+### 0.9.97.141 — 15 Nov
 
-- Quiz **Tournament**: the host picks Tournament and 1 or 2 picks each. Each round is 3 questions on a topic that the
-  players choose in turn; the best score in a round wins it, and the most round wins takes the tournament (a tie goes
-  to points). The podium shows round wins and points.
-- Two new **jokers** beside 50:50, each once a game and one per question: **×2 Double** (a right answer scores
-  double) and **↺ Second chance** (a wrong answer may be tried once more, for half points). On a typed question 50:50
-  shows the first letter and the length.
-
-### 0.9.97.145 — 16 Nov
-
-- Quiz: **587 new questions** (about half again as many), all written for Sidelit in English and Turkish and checked
-  one by one, with three new topics: **Languages and words**, **The human body** and **World and cultures**.
-- Some questions are now **typed**: write the answer yourself (20 seconds). Capitals, accents and one small typo don't
-  matter; what others typed shows only when the answer is revealed.
-- Hard questions are worth more (×1.5, medium ×1.2), and a typed answer adds ×1.3.
-
-### 0.9.97.142 — 15 Nov
-
-- Quiz: your answer counts on the first click or tap. Before, an answer pressed just as another player answered
-  sometimes needed a second press.
+- A room's chat now keeps its last 1000 messages until the room is deleted (it was only the last 50, so older
+  messages seemed to vanish). People who join get the newest messages; "Show earlier messages" or scrolling up brings
+  older ones back. A busy room's activity lines no longer push messages out of the chat.
 
 ### 0.9.97.140 — 15 Nov
 
