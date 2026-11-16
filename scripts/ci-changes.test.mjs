@@ -68,7 +68,7 @@ function outputs(dir, env, runs, caches = []) {
         res.end(JSON.stringify({ actions_caches: caches.filter((c) => c.key.startsWith(key)) }));
       } else res.end(JSON.stringify({ workflow_runs: runs }));
     }).listen(0, () => {
-      const out = join(dir, 'out.txt');
+      const out = join(mkdtempSync(join(tmpdir(), 'ci-changes-out-')), 'out.txt'); // outside the repo: never part of its tree
       writeFileSync(out, '');
       execFile(process.execPath, [SCRIPT], {
         cwd: dir,
@@ -145,4 +145,32 @@ test('pull request and manual runs never count as proven', async () => {
   const caches = [{ key: testedKey(tree) }];
   assert.equal((await outputs(dir, { EVENT: 'pull_request' }, [], caches)).proven, 'false');
   assert.equal((await outputs(dir, { EVENT: 'workflow_dispatch' }, [], caches)).proven, 'false');
+});
+
+test('CI3 forced case: two PRs, each green on its own, merged together without updating: main runs the PR test jobs', async () => {
+  const { dir, a } = repo();
+  const git = (...x) => execFileSync('git', x, { cwd: dir, encoding: 'utf8' }).trim();
+  const write = (file, text) => { mkdirSync(dirname(join(dir, file)), { recursive: true }); writeFileSync(join(dir, file), text); };
+  const runs = [{ id: 1, head_branch: 'main', event: 'push', status: 'completed', conclusion: 'success', head_sha: a }];
+  const base = git('rev-parse', 'HEAD');
+  // PR 1 changes the site, PR 2 the shared code; each one's run tests base + its own change.
+  const tested = [];
+  for (const [branch, file] of [['pr1', 'apps/web/src/room.ts'], ['pr2', 'packages/shared/src/x.ts']]) {
+    git('checkout', '-q', '-b', branch, base);
+    write(file, branch);
+    git('add', '-A');
+    git('commit', '-qm', branch);
+    tested.push({ key: testedKey((await outputs(dir, { EVENT: 'pull_request' }, [])).tree), ref: `refs/pull/${branch}/merge` });
+  }
+  // main: PR 1 squash-merged, then PR 2 merged on top without being updated.
+  git('checkout', '-q', 'main');
+  git('merge', '-q', '--squash', 'pr1');
+  git('commit', '-qm', 'pr1 (#1)');
+  const one = await outputs(dir, { EVENT: 'push' }, runs, tested);
+  assert.equal(one.proven, 'true', 'PR 1 alone is exactly what its run tested');
+  git('merge', '-q', '--squash', 'pr2');
+  git('commit', '-qm', 'pr2 (#2)');
+  const both = await outputs(dir, { EVENT: 'push' }, runs, tested);
+  assert.equal(both.proven, 'false', 'no PR run tested both changes together');
+  assert.equal(both.web, 'true', 'so the browser test jobs run on main before the deploy');
 });

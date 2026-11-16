@@ -13,15 +13,26 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Card CI3: the nightly date sweep. Every test job runs on main's code with the browser pages' clock moved 1–60 days
+  # ahead (a different day each night), so no test result depends on the day it runs; it never deploys.
+  schedule:
+    - cron: '17 2 * * *'
 
+# The date sweep has its own group, so it never holds up (or is replaced by) a push to main.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name == 'schedule' && 'date-sweep' || github.event.pull_request.number || github.ref }}
   # Only PR runs are cancelled; a run on main always finishes (it deploys).
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Read-only token: the jobs only check out the code; deploys use the Cloudflare token (security review 2, L10).
 permissions:
   contents: read
+
+# Card CI3, the date sweep only: SWM_TEST_DAYS=sweep makes `.github/actions/prepare` load
+# scripts/harness/forced-date.cjs into every later node process, which moves the clock of each browser page Playwright
+# opens 1–60 days ahead (from the run number). Empty on every other run.
+env:
+  SWM_TEST_DAYS: ${{ github.event_name == 'schedule' && 'sweep' || '' }}
 
 jobs:
   # What changed (scripts/ci-changes.mjs): `code` = anything besides docs (`docs/**`, `*.md`); `web` = the site, the
@@ -67,7 +78,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:
@@ -543,7 +554,7 @@ jobs:
     # the `if` gets an implicit `success()`, which looks at every job up the chain, and a push skips e2e / site / games,
     # so the deploy was skipped too. `!cancelled()` (not `always()`) keeps a cancelled run from deploying; the explicit
     # `needs.test.result` keeps "deploy only when the tests passed".
-    if: ${{ !cancelled() && needs.test.result == 'success' && needs.changes.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.changes.outputs.code == 'true' }}
+    if: ${{ !cancelled() && needs.test.result == 'success' && needs.changes.result == 'success' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && github.event_name != 'schedule' && needs.changes.outputs.code == 'true' }}
     runs-on: ubuntu-latest
     # Card QA1 part 1b: the live e2e is its own job (`live-e2e`, two shards); this one deploys and waits for the version.
     timeout-minutes: 15
@@ -713,3 +724,33 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           TAG_TOKEN: ${{ secrets.TAG_TOKEN }}
         run: node scripts/tag-live.mjs
+
+  # Card CI3: the date sweep's result as an issue (label `date-sweep`): opened when a night fails, with the forced date;
+  # closed by the next green night. Nobody has to watch the Actions tab.
+  date-sweep:
+    needs: test
+    if: ${{ !cancelled() && github.event_name == 'schedule' && github.repository == 'alperenakturk/screen-with-me' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open, update or close the date-sweep issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULT: ${{ needs.test.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          days=$(( 1 + (RUN_NUMBER * 7) % 60 ))
+          day=$(date -u -d "+${days} days" +%F)
+          gh label create date-sweep --color FBCA04 --description "A test result depends on the date (nightly date sweep)" --force >/dev/null
+          open=$(gh issue list --label date-sweep --state open --json number --jq '.[0].number // empty')
+          if [ "$RESULT" = success ]; then
+            if [ -n "$open" ]; then gh issue close "$open" --comment "Green again with the pages on ${day}. [This run]($RUN_URL)."; fi
+            exit 0
+          fi
+          body="The nightly date sweep failed with the browser pages on **${day}** (${days} days ahead; card CI3): a test result depends on the date. Find the failing check in [this run]($RUN_URL); to run it locally on that day: \`SWM_TEST_DATE=${day} NODE_OPTIONS=\"--require \$PWD/scripts/harness/forced-date.cjs\" node scripts/harness/<name>/run.cjs ...\`. A harness that needs a given day sets its own clock (see \`scripts/harness/snack-special/run.cjs\`)."
+          if [ -n "$open" ]; then gh issue comment "$open" --body "$body"; else gh issue create --label date-sweep --title "Date sweep failed: a test depends on the date" --body "$body"; fi

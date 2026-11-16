@@ -104,3 +104,17 @@ test('CI3: main waits for a quiet main first; only that job may cancel a run, an
     if (name !== 'settle') assert.doesNotMatch(job.block, /actions: write/, `${name} must not cancel or start runs`);
   }
 });
+
+test('CI3: the nightly date sweep tests on another day, in its own group, and never deploys', () => {
+  const text = readFileSync(FILE, 'utf8');
+  assert.match(text, /schedule:\n\s+- cron: '[^']+'/);
+  assert.match(text, /group: ci-\$\{\{ github\.workflow \}\}-\$\{\{ github\.event_name == 'schedule' && 'date-sweep' \|\|/, 'never in main\'s group');
+  assert.match(text, /SWM_TEST_DAYS: \$\{\{ github\.event_name == 'schedule' && 'sweep' \|\| '' \}\}/);
+  assert.doesNotMatch(text, /^\s+NODE_OPTIONS:/m, 'NODE_OPTIONS only through prepare (after the checkout), never for the checkout itself');
+  assert.match(cond('deploy'), /github\.event_name != 'schedule'/);
+  assert.match(cond('date-sweep'), /github\.event_name == 'schedule'/);
+  assert.match(all['date-sweep'].block, /issues: write/);
+  const prepare = readFileSync(join(dirname(FILE), '..', 'actions', 'prepare', 'action.yml'), 'utf8');
+  assert.match(prepare, /if: env\.SWM_TEST_DAYS != ''/);
+  assert.match(prepare, /NODE_OPTIONS=--require \$GITHUB_WORKSPACE\/scripts\/harness\/forced-date\.cjs/);
+});
