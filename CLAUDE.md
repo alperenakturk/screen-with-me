@@ -184,7 +184,7 @@ Each line names its section in `docs/internal/architecture/reference.md` ("ref: 
   ad-block list, `window.open` wrapper or ad skipping; no film re-broadcasting (`tabCapture`). ref: Extension rules,
   Shell, Resilience to ads, Streaming.
 - **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality), except a game frame the user
-  drags there himself (owner, 15 Nov 2026, card GW2). ref: Shorts view, One remote; archive 0.9.97.74 (`overYoutube`).
+  puts there himself, by dragging or by choosing 🪟 (owner, 15 Nov 2026, card GW2). ref: Shorts view, One remote; archive 0.9.97.74 (`overYoutube`).
 - **DRM is never bypassed.** ref: §10 Known limits.
 - **Lazy chunks:** load with `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`; a
   chunk that gates privacy (the IP notice) fails closed. ref: Room chunk.

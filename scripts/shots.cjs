@@ -45,10 +45,20 @@ const branch = (() => {
 })();
 const OUT = path.resolve(flag('out', path.join(ROOT, '.shots', branch)));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+/** A phone keeps the link box in its 🔍 Search tab. */
+const searchTab = async (p) => {
+  if (!(await p.isVisible('#media-input'))) await p.click('#ph-tab-search');
+};
+const SEARCH_ITEMS = [
+  { id: 'aqz-KE-bpKQ', title: 'A night walk through the old harbour, filmed in one take', channel: 'Harbour Films', duration: 1832, live: false },
+  { id: 'dQw4w9WgXcQ', title: 'Night walk sounds', channel: 'Calm Channel', duration: 3605, live: false },
+  { id: '9bZkp7q5F8I', title: 'Walking at night, a short', channel: 'Alex', duration: 41, live: false, short: true },
+];
 
 /** The screens, each a way to get there from a fresh page. `room` = a fresh room as its first person (the host). */
 const SCREENS = {
-  home: { what: 'Home page', go: (p) => p.goto(`${SITE}/`) },
+  // TH3: the home art freezes at its middle (the Test Lab's `home.art` class), so every shot is the same frame.
+  home: { what: 'Home page', go: (p) => p.goto(`${SITE}/`), after: (p) => p.evaluate(() => document.documentElement.classList.add('hm-frozen')) },
   help: { what: 'Help page', go: (p) => p.goto(`${SITE}/help.html`) },
   privacy: { what: 'Privacy policy', go: (p) => p.goto(`${SITE}/privacy.html`) },
   terms: { what: 'Terms of use', go: (p) => p.goto(`${SITE}/terms.html`) },
@@ -73,6 +83,33 @@ const SCREENS = {
   // Cinema mode (card 14) is the room's only way to hide the side panel. Computers only: a phone's room is one column
   // and a touch-only tablet doesn't offer it (it needs a mouse for its edges).
   'room-cinema': { what: 'Room playing a video in cinema mode (#side-toggle: the side panel hides, the video fills the page)', room: true, video: true, sizes: ['laptop', 'desktop'], after: (p) => p.evaluate(() => document.querySelector('#side-toggle')?.click()) },
+  // Card SR2: the link box's results and the ⠿ Sources picker. YouTube's answer is a fixed list (no quota, no network).
+  sources: { what: 'The ⠿ Sources picker open beside the link box (YouTube, Vimeo, Search the web, ♪ TikTok)', room: true, after: async (p) => { await searchTab(p); await p.click('#media-sources'); await p.waitForSelector('#sources-pop:not([hidden]) .sources-tile'); } },
+  'search-results': {
+    what: 'YouTube results under the link box while a video file plays: a tap on a row plays it, "＋ Queue" beside each row queues it (the second row was just queued)',
+    room: true,
+    video: true,
+    after: async (p) => {
+      await p.route('**/api/youtube/search**', (route) => route.fulfill({ json: { items: SEARCH_ITEMS } }));
+      await searchTab(p);
+      await p.fill('#media-input', 'night walk');
+      await p.press('#media-input', 'Enter');
+      await p.waitForSelector('#search-results .search-row');
+      await p.click('#search-results .search-row:nth-child(2) .search-queue');
+    },
+  },
+  'tiktok-back': {
+    what: 'Back in the room after the ♪ TikTok tile opened TikTok: the "📋 Paste and play" button',
+    room: true,
+    after: async (p) => {
+      await p.evaluate(() => (window.open = () => null));
+      await searchTab(p);
+      await p.click('#media-sources');
+      await p.click('.sources-tile[data-source="tiktok"]');
+      await p.evaluate(() => dispatchEvent(new Event('focus')));
+      await p.waitForSelector('#sources-paste:not([hidden])');
+    },
+  },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
       `settings-${sec}`,
@@ -88,6 +125,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/public\/terms/, ['terms']],
   [/^apps\/web\/public\/extension|^apps\/extension\//, ['extension']],
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
+  [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],
   [/^apps\/web\/src\/(room\.|ui\/|phone|tablet|i18n)/, ['join', 'room', 'room-video', 'room-cinema']],

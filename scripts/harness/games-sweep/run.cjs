@@ -387,7 +387,11 @@ async function windowPasses(page, label, g, phone) {
         let sam = null;
         if (g.race) {
           // Sam joins the table from this script (a plain socket), says ready, guesses once; I press Ready.
-          const id = await page.evaluate(() => document.querySelector('#game-stage .duel')?.dataset.table);
+          // CI3: wait for the table's id (read too early it was undefined now and then, and Sam joined no table).
+          const id = await page
+            .waitForFunction(() => document.querySelector('#game-stage .duel')?.dataset.table || false, null, { timeout: 10000, polling: 100 })
+            .then((h) => h.jsonValue(), () => null);
+          check(!!id, `${label}: the Duel table has its id`, id);
           sam = new WebSocket(`${SITE.replace(/^http/, 'ws')}/api/duel/${id}/ws`);
           sam.addEventListener('open', () => {
             sam.send(JSON.stringify({ t: 'hello', v: 1, name: 'Sam', cid: 's'.repeat(32) }));
@@ -407,7 +411,7 @@ async function windowPasses(page, label, g, phone) {
               if (document.querySelector('#game-stage .duel')?.dataset.phase === 'play') return true;
               document.querySelector('#game-stage .duel-ready.primary')?.click();
               return false;
-            }, null, { timeout: 10000, polling: 300 })
+            }, null, { timeout: 20000, polling: 300 })
             .then(() => true, () => false);
           check(racing, `${label}: the race with Sam starts`);
           // Two letters typed on my board, and Sam's first row of marks.

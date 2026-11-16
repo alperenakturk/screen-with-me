@@ -4,14 +4,16 @@ import { DurableObject } from 'cloudflare:workers';
 import { PollHub } from './fallback.ts';
 import { labOnRequest, labRemembered } from './lab.ts';
 import {
-  QUIZ_ANSWER_MS,
   QUIZ_MAX_PLAYERS,
   QUIZ_PROTOCOL_VERSION,
   QUIZ_QUESTIONS,
   QUIZ_RECENT,
   QUIZ_REVEAL_MS,
   fiftyFifty,
+  matchTyped,
   parseQuizMessage,
+  quizAnswerMs,
+  quizLevelBonus,
   QUIZ_SEEN_KEEP,
   decodeSeen,
   pickQuestions,
@@ -25,6 +27,7 @@ import {
   type QuizTopic,
 } from '@swm/shared/games/quiz';
 import { quizPoints } from '@swm/shared/games/scoring';
+import { QUIZ_BANK } from '@swm/shared/games/quiz-questions';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
@@ -65,7 +68,7 @@ interface Saved {
   /** Şu anki soru (0'dan). */
   index: number;
   /** Bu sorudaki cevaplar: anahtar → şık, puan ve (doğruysa) kaçıncı doğru. */
-  answers: Record<string, { pick: number; gained: number; rank?: number }>;
+  answers: Record<string, { pick: number; gained: number; rank?: number; said?: string }>;
   endsAt: number | null;
   emptySince: number | null;
   /** Since when fewer than two players are online in a running game (`FEW_GRACE_MS`). */
@@ -79,6 +82,8 @@ interface Saved {
   fifty: Record<string, { n: number; hide: number[] }>;
   /** Right answers in a row, per key. */
   streak: Record<string, number>;
+  /** Test Lab (QZ2): the next game asks only typed questions (local lab server only). */
+  labTyped?: boolean;
 }
 
 const fresh = (): Saved => ({
@@ -276,6 +281,11 @@ export class Quiz extends DurableObject<Env> {
         // Test Lab (DL3b): the current phase ends now, on a local lab server only (`lab.ts`).
         this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
+        if (message.op === 'typed') {
+          this.data.labTyped = true;
+          await this.save();
+          return;
+        }
         if (this.data.endsAt !== null) {
           this.data.endsAt = Date.now();
           await this.advance(this.data.endsAt);
@@ -298,7 +308,8 @@ export class Quiz extends DurableObject<Env> {
         for (const person of Object.values(d.people)) person.score = 0;
         // Avoid what this table asked lately and what the players' browsers have seen (P9: always new questions).
         const seen = this.onlineKeys().flatMap((k) => d.people[k]?.seen ?? []);
-        d.questions = pickQuestions(d.lang, d.count, Math.random, d.topic, [...new Set([...d.recent, ...seen])]);
+        d.questions = pickQuestions(d.lang, d.count, Math.random, d.labTyped ? 'mix' : d.topic, [...new Set([...d.recent, ...seen])], d.labTyped ? (e) => !!e.typed : undefined);
+        d.labTyped = false;
         d.recent = [...d.questions.map((q) => q.id), ...d.recent.filter((id) => !d.questions.some((q) => q.id === id))].slice(0, QUIZ_RECENT);
         d.jokers = [];
         d.fifty = {};
@@ -322,12 +333,28 @@ export class Quiz extends DurableObject<Env> {
       case 'answer': {
         if (d.phase !== 'question' || message.n !== d.index + 1 || d.answers[key]) return;
         const q = d.questions[d.index]!;
-        if (message.pick >= q.options.length || d.fifty[key]?.n === message.n && d.fifty[key]!.hide.includes(message.pick)) return;
-        if (message.pick === q.correct) {
+        // A typed question takes only text, an option question only a pick (QZ2).
+        let right: boolean;
+        let pick: number;
+        let said: string | undefined;
+        if ('text' in message) {
+          if (!q.typed) return;
+          right = matchTyped(message.text, q.accept ?? []);
+          pick = right ? 0 : 1;
+          said = message.text;
+        } else {
+          if (q.typed || message.pick >= q.options.length || d.fifty[key]?.n === message.n && d.fifty[key]!.hide.includes(message.pick)) return;
+          right = message.pick === q.correct;
+          pick = message.pick;
+        }
+        if (right) {
           const rank = Object.values(d.answers).filter((a) => a.rank).length + 1;
           const streak = (d.streak[key] ?? 0) + 1;
-          d.answers[key] = { pick: message.pick, gained: quizPoints((d.endsAt ?? Date.now()) - Date.now(), QUIZ_ANSWER_MS, rank, streak), rank };
-        } else d.answers[key] = { pick: message.pick, gained: 0 };
+          const base = quizPoints((d.endsAt ?? Date.now()) - Date.now(), quizAnswerMs(q.typed), rank, streak);
+          // QZ2: a hard question (and a typed answer) is worth more.
+          const gained = Math.round(base * quizLevelBonus(QUIZ_BANK[q.id]?.d, q.typed));
+          d.answers[key] = { pick, gained, rank, ...(said ? { said } : {}) };
+        } else d.answers[key] = { pick, gained: 0, ...(said ? { said } : {}) };
         // Herkes cevapladıysa beklemeden açıkla.
         if (this.onlineKeys().every((k) => d.answers[k])) await this.reveal();
         else {
@@ -351,7 +378,7 @@ export class Quiz extends DurableObject<Env> {
     } else {
       d.phase = 'question';
       d.answers = {};
-      d.endsAt = Date.now() + QUIZ_ANSWER_MS;
+      d.endsAt = Date.now() + quizAnswerMs(d.questions[d.index]!.typed);
     }
     await this.save();
     this.broadcastState();
@@ -450,7 +477,7 @@ export class Quiz extends DurableObject<Env> {
         ...(p.avatar ? { avatar: p.avatar } : {}),
         score: p.score,
         answered: !!answer,
-        ...(reveal && answer ? { pick: answer.pick, gained: answer.gained, ...(answer.rank ? { rank: answer.rank } : {}) } : {}),
+        ...(reveal && answer ? { pick: answer.pick, gained: answer.gained, ...(answer.rank ? { rank: answer.rank } : {}), ...(answer.said ? { said: answer.said } : {}) } : {}),
         streak: d.streak[k] ?? 0,
         joker: d.jokers.includes(k),
         online: this.online(k, except),
@@ -463,8 +490,9 @@ export class Quiz extends DurableObject<Env> {
       players,
       n: d.phase === 'lobby' ? 0 : Math.min(d.index + 1, d.questions.length),
       total: d.questions.length || d.count,
-      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id } : {}),
-      ...(q && reveal ? { correct: q.correct } : {}),
+      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id, ...(q.typed ? { typed: true } : {}) } : {}),
+      // The accepted answers stay here; the reveal shows the first one.
+      ...(q && reveal ? { correct: q.correct, ...(q.typed ? { answer: q.accept?.[0] ?? '' } : {}) } : {}),
       endsAt: d.endsAt,
       lang: d.lang,
       topic: d.topic,

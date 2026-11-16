@@ -9,6 +9,7 @@ import { formatDuration, wordsRequest } from '@swm/shared/youtube-search';
 import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
+import { resultRow } from './result-row.ts';
 
 const TEXT = {
   en: {
@@ -20,8 +21,6 @@ const TEXT = {
     failed: 'Podcasts can’t be reached right now. Try again later.',
     gone: 'This show can’t be found any more.',
     back: '‹ Shows',
-    add: 'Add to the queue',
-    now: 'Play now',
     by: 'by {name}',
   },
   tr: {
@@ -33,8 +32,6 @@ const TEXT = {
     failed: 'Podcastlere şu an ulaşılamıyor. Sonra tekrar dene.',
     gone: 'Bu program artık bulunamıyor.',
     back: '‹ Programlar',
-    add: 'Sıraya ekle',
-    now: 'Şimdi aç',
     by: '{name}',
   },
 } as const;
@@ -135,16 +132,7 @@ export function showPodcasts(panel: HTMLElement, query: string, close: HTMLEleme
           const meta = [episode.date ? new Date(episode.date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) : '', episode.duration ? formatDuration(episode.duration) : '']
             .filter(Boolean)
             .join(' · ');
-          const main = el(
-            'button',
-            { type: 'button', class: 'search-main', title: t('add') },
-            art(poster),
-            el('span', { class: 'search-text' }, el('span', { class: 'search-title' }, episode.title), el('span', { class: 'muted small search-meta' }, meta)),
-          );
-          main.addEventListener('click', () => pick(media, title, 'enqueue'));
-          const now = el('button', { type: 'button', class: 'btn small-btn search-now', title: t('now') }, `▶ ${t('now')}`);
-          now.addEventListener('click', () => pick(media, title, 'load'));
-          return el('li', { class: 'search-row' }, main, now);
+          return resultRow(art(poster), episode.title, meta, () => pick(media, title, 'load'), () => pick(media, title, 'enqueue'));
         }),
       ),
     );

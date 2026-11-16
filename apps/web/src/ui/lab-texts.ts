@@ -1,0 +1,48 @@
+// Card BUD1: the Test Lab's titles and help lines for commands that features in the room's own chunk register. They
+// live here, in the lab's lazy chunk, so the room page doesn't carry them for everyone (the room's JS budget). A
+// command without `title` / `help` gets them from here by its id (ui/test-lab.ts `allCommands`); the command itself
+// (`run`, `available`, `undo`) stays where the feature registers it, so every hook is registered before the lab opens.
+import type { LabText } from '../debug-lab.ts';
+
+export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: LabText }> = {
+  'chat.fill': {
+    title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
+    help: { en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.', tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.', },
+  },
+  'chat.history': {
+    title: { en: 'Chat: how much is loaded and whether older pages are offered', tr: 'Sohbet: ne kadarı yüklü ve eski sayfalar sunuluyor mu' },
+    help: { en: 'Writes how many chat messages and room-activity lines this tab holds and the older page the room offers (null: everything is here) into the log.', tr: 'Bu sekmede kaç sohbet mesajı ve oda hareketi satırı olduğunu ve odanın sunduğu eski sayfayı (null: hepsi burada) kayda yazar.', },
+  },
+  'phoneRoom.state': {
+    title: { en: 'Phone room: what shows now', tr: 'Telefon odası: şu an ne görünüyor' },
+    help: { en: 'Writes the open tab, the input row and the visible buttons into the log.', tr: 'Açık sekmeyi, yazma satırını ve görünen düğmeleri kayda yazar.' },
+  },
+  'pwa.state': {
+    title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
+    help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
+  },
+  'safety.state': {
+    title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
+    help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
+  },
+  'shorts.state': {
+    title: { en: 'Shorts: which view, the way back and who speaks', tr: 'Shorts: hangi görünüm, geri dönüş yolu ve kim konuşuyor' },
+    help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking and how many seat faces show the green ring into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu ve kaç koltuk yüzünde yeşil halka olduğunu kayda yazar.' },
+  },
+  'sources.state': {
+    title: { en: 'Search sources: the chosen one and the last search', tr: 'Arama kaynakları: seçili olan ve son arama' },
+    help: { en: 'Writes the ⠿ source (YouTube, Vimeo or the web), whether Vimeo search is on at the server and the last search into the log.', tr: '⠿ kaynağını (YouTube, Vimeo ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.', },
+  },
+  'stream.view': {
+    title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },
+    help: { en: 'Writes the stream viewer\'s mode (window or fullscreen), its box, whether it is on the screen and whether it covers a YouTube player (it never should) into the log.', tr: 'İzlediğim yayının hâlini (pencere ya da tam ekran), kutusunu, ekranda olup olmadığını ve bir YouTube oynatıcısını örtüp örtmediğini (hiç örtmemeli) kayda yazar.', },
+  },
+  'voice.camPause': {
+    title: { en: 'My camera freezes for the others for 6 s', tr: 'Kameram diğerlerinde 6 sn donsun' },
+    help: { en: 'My picture stops reaching the others, as when a phone stalls: their tile must say "waiting for the picture…" and come back by itself. A number sets the seconds (1–30).', tr: 'Görüntüm diğerlerine gitmez, telefon takılınca olduğu gibi: onların ekranında "görüntü bekleniyor…" yazmalı ve kendiliğinden geri gelmeli. Bir sayı yazarsan saniye olur (1–30).' },
+  },
+  'voice.switchCam': {
+    title: { en: 'Switch to my next camera', tr: 'Sıradaki kamerama geç' },
+    help: { en: 'My camera changes to the next one on this device without leaving voice (on a phone: front, back, wide); the others see "camera changing…".', tr: 'Kameram sesten çıkmadan bu cihazdaki sıradakine geçer (telefonda: ön, arka, geniş); diğerleri "kamera değişiyor…" görür.' },
+  },
+};

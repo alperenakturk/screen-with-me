@@ -28,6 +28,9 @@ export interface PhoneRoomDeps {
   settings: { sections: () => HTMLElement[]; setInPage: (on: boolean) => void };
   /** The Me tab's head: my avatar and name (a tap opens the profile). */
   meHead: () => HTMLElement;
+  /** The hidden 🎮 the games hall opens beside on the Games tab. Made by room.ts (card BUD2: this module loads only
+   * once the phone layout turns on, but games/stage.ts takes its triggers when the room starts). */
+  gamesButton: HTMLButtonElement;
 }
 
 /** The settings categories the Me tab holds (the phone essentials). */
@@ -238,7 +241,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   let tab: Tab = 'room';
   let lent: Borrowed[] = [];
   /** Hidden trigger the games hall opens beside (games/stage.ts moves its hall next to the 🎮 pressed). */
-  const gamesButton = el('button', { type: 'button', id: 'ph-games-open', class: 'ph-games-open', tabindex: '-1', 'aria-hidden': 'true' }) as HTMLButtonElement;
+  const { gamesButton } = deps;
   const gamesWrap = el('div', { class: 'game-menu-wrap ph-games-wrap' }, gamesButton);
   panels.get('games')?.append(gamesWrap);
   const meBody = el('div', { class: 'ph-me' });
@@ -288,7 +291,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
 
   // 🔍 Search: the room's link box, its results and "Up next" (the queue).
   function fillSearch(panel: HTMLElement): void {
-    const nodes = ['#media-form', '#media-done'].map((sel) => $(sel)).filter((n): n is HTMLElement => !!n);
+    const nodes = ['#media-form', '#sources-paste', '#media-done'].map((sel) => $(sel)).filter((n): n is HTMLElement => !!n);
     const queue = $('[data-panel="queue"]');
     lent = borrow(queue ? [...nodes, queue] : nodes);
     const title = el('h4', { class: 'ph-sub' }, `${t('phone.upNext')} ${$('#queue-count')?.textContent ?? ''}`.trim());
@@ -297,6 +300,12 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   // "Play now" shows the video at once: back to the Room tab. "Add to queue" stays (Up next grows).
   $('#media-form button[value="load"]')?.addEventListener('click', () => {
     if (tab === 'search') setTimeout(() => setTab('room'), 0);
+  });
+  // Card SR2: a tapped result row plays it now, and "📋 Paste and play" plays the pasted link: the same way back. A
+  // podcast show's row (data-show) only opens its episodes, and "＋ Queue" stays.
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element | null;
+    if (tab === 'search' && target?.closest?.('#search-results .search-main:not([data-show]), #sources-paste')) setTimeout(() => setTab('room'), 0);
   });
 
   // 🎮 Games: the hall shows in the panel; picking a game (PH2: it plays in this panel) keeps the tab, closing the hall
@@ -821,8 +830,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     commands: [{
       id: 'phoneRoom.state',
       tab: 'screen',
-      title: { en: 'Phone room: what shows now', tr: 'Telefon odası: şu an ne görünüyor' },
-      help: { en: 'Writes the open tab, the input row and the visible buttons into the log.', tr: 'Açık sekmeyi, yazma satırını ve görünen düğmeleri kayda yazar.' },
       available: () => html.classList.contains('ph-room') || { en: 'not the phone room', tr: 'telefon odası değil' },
       run: () => JSON.stringify(phoneState()),
     }],

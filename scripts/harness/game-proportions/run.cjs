@@ -1,5 +1,5 @@
 // Game proportions (card PROP, owner 10 Nov 2026: "in the video's place the games look out of proportion; I want the
-// same experience in both modes"). Every game, in both placements ("in the video's place" and the free window), on a
+// same experience in both modes"). GW2: for a table the "stage" rows are its ⛶ full screen. Every game, in both placements ("in the video's place" and the free window), on a
 // laptop, a desktop, a wide screen and a tablet both ways: the game uses its box in proportion. On the screen (after
 // the window's scale) the game's usual text is at least 14 px and grows with a big box, nothing is under 12 px, and
 // the game's content covers most of its box (no giant empty bands). Prints a table and saves a screenshot per case.
@@ -131,8 +131,24 @@ async function putBoard(page, g) {
   }
 }
 
-/** Puts the game window in a placement with the head's switch (the way a person does). */
+/**
+ * Puts the game window in a placement with the head's switch (the way a person does). GW2: a table's two modes are ⛶
+ * full screen (class `max`, measured as the big mode) and the 🪟 frame (`float`), switched with the head's ⛶ / 🪟 button.
+ */
 async function placeIn(page, mode) {
+  const table = await page.evaluate(() => {
+    const b = document.querySelector('#game-stage .game-mode');
+    return !!b && !b.hidden;
+  });
+  if (table) {
+    const cls = mode === 'stage' ? 'max' : 'float';
+    await page.evaluate((cls) => {
+      if (!document.getElementById('game-stage')?.classList.contains(cls)) document.querySelector('#game-stage .game-mode')?.click();
+    }, cls);
+    await page.waitForFunction((c) => document.getElementById('game-stage')?.classList.contains(c), cls, { timeout: 4000 }).catch(() => {});
+    await wait(700);
+    return page.evaluate((c) => document.getElementById('game-stage')?.classList.contains(c), cls);
+  }
   const ok = await page.evaluate((m) => {
     const b = document.querySelector(`#game-stage .game-place-btn.place-${m}`);
     if (!b || b.disabled) return false;

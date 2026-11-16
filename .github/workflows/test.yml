@@ -79,7 +79,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/keep-assets.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:
@@ -388,6 +388,9 @@ jobs:
       # the special by the page's day, upright Android tablet): CI no longer depends on the day it runs.
       - name: Snack Bar daily special
         run: node scripts/harness/snack-special/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+      # Card GP1: every game opens with one click on its card, Classics and Snack Bar in ≤ 300 ms (hall open, CI machine).
+      - name: Games open at once
+        run: node scripts/harness/game-open/run.cjs http://localhost:8787
 
       # Lane W: the game window's head and free window (W1–W5, 0.9.97.112–114): no ⛶, 🎮 opens the hall, drag / resize /
       # each game's own spot, never over a YouTube player, side games only in the free window, a table pausing the video
@@ -399,9 +402,10 @@ jobs:
         # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
         run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
-      - name: Snack Bar whole on a laptop and a sideways tablet (EN + TR)
+      - name: Snack Bar and Five Frames whole on a laptop and a sideways tablet (EN + TR)
         # 0.9.97.134 (B2): no text ends in "…" and the SNACK BAR sign is whole, idle and at its busiest.
-        run: GAMES=snack,snackBusy SIZES=laptop,tabland GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+        # GP1: Five Frames keeps its 13 px text in the sideways tablet's short window (its compact tier, not a scale-down).
+        run: GAMES=snack,snackBusy,word SIZES=laptop,tabland GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       # Card PWA1: the home-screen app (share target → a new room that plays the link, "Create room" shortcut, the screen
       # kept on while playing, the one-time iOS hint). Here for the webm the Tablets step serves on :5300.
@@ -583,6 +587,10 @@ jobs:
     # can live there instead of the repository, so no other job or branch can read them. Repository secrets still reach
     # it until the owner moves them; GitHub creates the environment on first use if it doesn't exist yet.
     environment: production
+    # CI3c: `actions: read` lists the released-number records (scripts/release-version.mjs); no write.
+    permissions:
+      contents: read
+      actions: read
     # Card OPS1 / QA1: `deployed` is true only when this run deployed and the new version answers; the live e2e
     # (`live-e2e`) and the `tag` job read it.
     outputs:
@@ -620,6 +628,9 @@ jobs:
       - name: Number this release
         id: number
         if: steps.keys.outputs.ok == 'true'
+        env:
+          # Lists the `released-<version>` records (actions: read); nothing else.
+          GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/release-version.mjs --apply
 
       - name: Install and build
@@ -631,6 +642,13 @@ jobs:
           if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|VIMEO_TOKEN|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN|LAB_CODE)='; then
             echo "::error::A deploy secret is in the install / build environment."; exit 1
           fi
+
+      # Card GR1: a tab opened before this deploy keeps loading its lazy chunks (a game, a panel) after it: the earlier
+      # builds' hashed files are copied from the live site into dist/assets and served for 7 more days. Without this a
+      # missing chunk got the index.html fallback and the page reloaded mid-room. Never fails the deploy.
+      - name: Keep earlier builds' files for open tabs
+        if: steps.keys.outputs.ok == 'true'
+        run: node scripts/keep-assets.mjs "$(node scripts/site-config.mjs origin)"
 
       - name: Deploy to Cloudflare
         if: steps.keys.outputs.ok == 'true'
@@ -757,8 +775,23 @@ jobs:
           RELEASE_VERSION: ${{ needs.deploy.outputs.version }}
         run: node scripts/tag-live.mjs
 
+      # CI3c: record the number as released (it is live and its live e2e passed), whether or not the tag push worked:
+      # the next deploy counts it (scripts/release-version.mjs), so a refused tag never makes a number come back.
+      - name: Record the released number
+        if: needs.deploy.outputs.version != ''
+        env:
+          VERSION: ${{ needs.deploy.outputs.version }}
+        run: mkdir -p .released && echo "$VERSION $GITHUB_SHA" > .released/version
+      - name: Save the released number's record
+        if: needs.deploy.outputs.version != ''
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .released
+          key: released-${{ needs.deploy.outputs.version }}
+
       # Card CI3b: the release's notes, from the changelog/next/ files added since the previous tag (user-facing English,
-      # one block), as a GitHub release on the tag. Never red: a missing release never hides a good deploy.
+      # one block), as a GitHub release on the tag. CI3c: when the tag is missing (refused), the release is made on this
+      # commit instead, and if that is refused too the notes go into the run's summary. Never red.
       - name: Release notes
         if: needs.deploy.outputs.version != ''
         env:
@@ -767,10 +800,15 @@ jobs:
           VERSION: ${{ needs.deploy.outputs.version }}
         run: |
           git fetch --quiet --tags origin
-          if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then echo "::warning::v$VERSION is not tagged; no release notes."; exit 0; fi
-          node scripts/changelog.mjs notes "$VERSION" "v$VERSION" > "$RUNNER_TEMP/notes.md"
+          node scripts/changelog.mjs notes "$VERSION" "$GITHUB_SHA" > "$RUNNER_TEMP/notes.md"
           cat "$RUNNER_TEMP/notes.md"
-          gh release view "v$VERSION" >/dev/null 2>&1 || gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag || echo "::warning::The release v$VERSION could not be created."
+          { echo "## Release v$VERSION"; echo; cat "$RUNNER_TEMP/notes.md"; } >> "$GITHUB_STEP_SUMMARY"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then exit 0; fi
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag || echo "::warning::The release v$VERSION could not be created; its notes are in this run's summary."
+          else
+            gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --target "$GITHUB_SHA" || echo "::warning::v$VERSION has no tag and no release (refused); its notes are in this run's summary, its number is recorded."
+          fi
 
   # Card CI3: the date sweep's result as an issue (label `date-sweep`): opened when a night fails, with the forced date;
   # closed by the next green night. Nobody has to watch the Actions tab.
