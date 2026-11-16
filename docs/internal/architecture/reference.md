@@ -694,7 +694,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **Phone room as an app screen (0.9.92.3, owner's picks 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A on
   https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu; step 1 of 3, `ui/phone-room.ts` + phone.css):** `<html class=
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
-  not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). The desktop DOM stays: `.stage`, `.side`,
+  not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). **`ui/phone-room.ts` is a lazy chunk (card
+  BUD2):** room.ts loads it when the phone layout is on at start or first turns on (`onPhoneLayout`), so a computer
+  never downloads it; room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
+  (`deps.gamesButton`), since games/stage.ts takes its triggers when the room starts. The desktop DOM stays: `.stage`, `.side`,
   `.together-card`, `.tabs-card` are `display: contents`, so the column is the theater (edge to edge, `order` 1) → the
   faces strip `.together-strip` (`#voice-people` + `#strip-voice` quick 🎙 / 📷 / 🖥️ (voice.ts quick id `strip`; 🖥️ only
   while someone streams) + `#strip-more` ⋯ with the connection dot from `.room-title-dot`) → the chat panel → the chat
