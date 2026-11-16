@@ -126,6 +126,15 @@ const playing = (page) =>
         .then(() => true)
         .catch(() => false);
       check(got, `${label} ${i + 1}/${EXPECT.length}: ${want.kind} ${want.id} plays, in paste order`, got ? JSON.stringify(await playing(page)) : `${JSON.stringify(await playing(page))} · connection: ${frames.join(' ')}`);
+      // Card SH1 (2): a TikTok (the fake player starts at 0:00) reports that it started from its very start.
+      if (want.kind === 'tiktok') {
+        let state = 'no start';
+        for (let n = 0; n < 40 && !/"start":\d/.test(state); n++) {
+          state = await page.evaluate(async () => (await window.__swmLab.run('shorts.state')).text).catch(() => 'no start');
+          if (!/"start":\d/.test(state)) await page.waitForTimeout(200);
+        }
+        check(/"start":0[,}]/.test(state), `${label} ${i + 1}: Test Lab shorts.state says the TikTok started at 0:00`, state);
+      }
       // The ♾ window: its TikTok note only while a TikTok plays.
       if (label === 'computer' && (i === 0 || i === 1)) {
         // The ♾ window (card SH2, `ui/feed-window.ts`, a lazy chunk) and its Shorts tab.

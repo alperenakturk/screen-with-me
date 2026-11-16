@@ -16,8 +16,8 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [x] SH1 item 2, #486: ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on `ready`,
     `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
     the pause before a swiped Short feels.
-  - [ ] Start offset in Test Lab `shorts.state` (`start`, SH1's "Done when"): PR #495 (`claude/sh1-start-offset`); add a
-    `shorts-mixed` check for it once #489 is on main.
+  - [x] Start offset in Test Lab `shorts.state` (`start`, SH1's "Done when"): #495 (`claude/sh1-start-offset`) merged;
+    `shorts-mixed` (#489) checks a swiped TikTok starts at 0:00.
   - [ ] SH1 item 4, #489 (`claude/sh1-tiktok-small`): `vm.`/`vt.` links in a pasted list (Worker lookup, paste order),
     mixed-queue harness `shorts-mixed`; the ♾ TikTok note came with B2's #488. CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).

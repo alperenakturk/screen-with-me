@@ -353,7 +353,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `tiktokResolveFailed` note for any that fail. While a TikTok plays, the ♾ window's Shorts tab shows `#feed-tiktok`
     (card SH2's `ui/feed-window.ts`: no public feed, add or share links); there is no TikTok search or feed. Harness
     `scripts/harness/shorts-mixed/run.cjs` (CI job `site`): a pasted YouTube / TikTok share link / TikTok / YouTube
-    list swipes through in that order on a computer (↓) and a phone (▼), the share-link lookup stubbed.
+    list swipes through in that order on a computer (↓) and a phone (▼), the share-link lookup stubbed; each TikTok's
+    `shorts.state` `start` must read 0 (card SH1 (2)).
 - **Vimeo (card P1, `players/vimeo.ts`):** `{kind:'vimeo', id, hash?}` (optional new kind, no version bump: `cleanMedia`
   validates `VIMEO_ID` / `VIMEO_HASH`). Links (`parseVimeo`): `vimeo.com/<id>`, `/<id>/<hash>` (unlisted),
   `/channels/<c>/<id>`, `/groups/<g>/videos/<id>`, `/showcase|album/<n>/video/<id>`, `player.vimeo.com/video/<id>?h=`;
