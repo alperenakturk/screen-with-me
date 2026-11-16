@@ -101,7 +101,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     const voice = constant('packages/shared/src/protocol.ts', 'VOICE_MAX_P2P');
     const cams = constant('packages/shared/src/protocol.ts', 'CAM_MAX');
     const viewers = constant('packages/shared/src/protocol.ts', 'LIVE_MAX_VIEWERS');
-    const chat = constant('apps/server/src/room.ts', 'CHAT_HISTORY');
+    const chat = constant('packages/shared/src/chat-store.ts', 'CHAT_KEEP');
     const saved = constant('apps/server/src/room.ts', 'SAVED_ROOM_TTL_MS') / 86_400_000;
     const empty = constant('apps/server/src/room.ts', 'EMPTY_ROOM_TTL_MS') / 86_400_000;
     const says =
@@ -133,7 +133,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     const n = (file, name) => constant(file, name);
     const DAY = 86_400_000;
     const nums = {
-      chat: n('apps/server/src/room.ts', 'CHAT_HISTORY'),
+      chat: n('packages/shared/src/chat-store.ts', 'CHAT_KEEP'),
       images: n('packages/shared/src/protocol.ts', 'MAX_CHAT_IMAGES'),
       // IMG2: how long a chat image is kept (one-time room in days, saved room in days).
       imageDays: n('apps/server/src/room.ts', 'CHAT_IMAGE_TTL_MS') / 86_400_000,
@@ -406,7 +406,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     const H = 3_600_000;
     const D = 86_400_000;
     const n = {
-      chat: constant('apps/server/src/room.ts', 'CHAT_HISTORY'),
+      chat: constant('packages/shared/src/chat-store.ts', 'CHAT_KEEP'),
       images: constant('packages/shared/src/protocol.ts', 'MAX_CHAT_IMAGES'),
       session: constant('packages/shared/src/recap.ts', 'SESSION_GAP_MS') / H,
       recapsSaved: constant('packages/shared/src/recap.ts', 'RECAPS_KEEP_SAVED'),

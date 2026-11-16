@@ -962,6 +962,8 @@ export const tr: Record<I18nKey, string> = {
   'yt.terms': 'YouTube Hizmet Şartları',
   skipToContent: 'İçeriğe atla',
   skipToVideo: 'Videoya atla',
+  chatOlder: 'Önceki mesajları göster',
+  chatOlderLoading: 'Önceki mesajlar yükleniyor…',
   chatEmpty: 'Henüz mesaj yok. Arkadaşların gelince burada konuşursun\u00a0👋',
   'action.next': 'Sıradaki videoya geçildi: {title}',
   'queue.add': '{name} sıraya ekledi: {title}',

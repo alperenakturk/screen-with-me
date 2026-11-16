@@ -1229,8 +1229,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`: a question's nodes are built once (`buildQuestion`) and later states only
   patch them; an option answers on `pointerdown` (keys and screen readers come as a click; `answer` counts once), so a
-  state arriving mid-press no longer swallows the answer (QZ2, 0.9.97.142; harness `quiz-click`).
-  **QZ2 questions (0.9.97.145):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
+  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`).
+  **QZ2 questions (16 Nov 2026):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
   line by line) adds the categories `language`, `body`, `world` and typed-answer entries (`typed`, `a` = accepted answers,
   the first shown at the reveal; no options, `QUIZ_TYPED_MS` 20 s). An answer is `{t:'answer', n, text}`: `parseQuizMessage`
   runs `cleanText` and caps it at `QUIZ_TYPED_MAX` (40); the server checks it with `matchTyped` (`foldAnswer`: case, accents,
@@ -1852,6 +1852,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Chat bubbles** (`ui/chat.ts`): mine on the right in the accent color (no avatar), others on the left with avatar
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
+  - **Chat kept until the room is deleted (card CH1, 0.9.97.141):** the server keeps the chat in pages
+    (`packages/shared/src/chat-store.ts` `ChatStore`): `chatp:<n>` = 50 messages each (≤ 128 KiB a value), `chatMeta` =
+    `{first, last}`; a message rewrites only the last page (written with the room's first message too, so a short chat
+    survives a restart); past `CHAT_KEEP` (1000) the oldest page goes (1000–1050 kept); deleting the room
+    (`deleteAll`) is the only other wipe; a pre-CH1 room's single `chat` key moves into page 0 on load. `welcome.chat` =
+    the newest two pages (≤ 100) + `chatMore` (the page to ask for); `{t:'chat-older', page}` → `{t:'chat-older', page,
+    messages, more?}` (optional new types, no protocol bump; `chatOlderLimit` 4 burst, 1/s; a bad page is
+    `bad_message`, a missing one empty). Pictures go much earlier on their own (IMG2 time limit, `MAX_CHAT_IMAGES`,
+    counted from the in-memory pages), their messages stay. Client (`ui/chat.ts`): "Show earlier messages" on top and
+    scrolling to the top ask for the next page, which is prepended with the reader's place kept; up to 1200 chat lines
+    stay loaded and room-activity lines have their own cap of 150 (they used to share one 120-line cap, which pushed
+    chat out in a busy room). Test Lab `chat.history` (loaded, activity lines, older page) and lab-only `chat.fill`
+    (250 numbered messages, `{t:'lab', op:'chat-fill'}`); e2e `chat-history.mjs`; harness `scripts/harness/chat-history`
+    (CI `site`).
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count
@@ -2184,13 +2198,62 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `contrast` job, `game-proportions` (6.5 min, which had made `games-more` 12.5) is the `game-windows` job, and the PR's local e2e runs three files at a time (`SWM_E2E_PARALLEL=3`, only with
   `SWM_E2E_UNPACED` on localhost; the files in `run.mjs` `SOLO` that count per address or for the whole server run alone
   after the others; each file's output prints in one piece with its time). The live e2e stays one file at a time:
-  its pacing is per address. **QA1 part 1b:** it runs as the `live-e2e` job, two shards on separate runners (separate
+  its pacing is per address. **QA1 part 1b:** it runs as the `live-e2e` job, in shards on separate runners (three since CI3; separate
   addresses) after `deploy` (which now deploys, waits for the version and checks the domain; output `deployed`):
   `SWM_E2E_SHARD=<i>/<n>`, `scripts/e2e/shard.mjs` puts each file in the lightest shard by its measured live time
   (`LIVE_SECONDS`; a new e2e file is added there, `shard.test.mjs` fails until it is), `fail-fast: false`. The workflow's
-  concurrency group runs main's runs one at a time and never cancels one, so no deploy restarts objects under a shard.
+  concurrency group runs main's runs one at a time and never cancels one once it is past `settle` (CI3), so no deploy
+  restarts objects under a shard.
   `tag` needs `deploy` and `live-e2e`; `tag-live.mjs` `wentLive` counts a commit live when its deploy and every shard
   passed (older runs had no shards).
+  **Card CI3: the release train** (16 Nov 2026; before it a PR was updated from main, re-ran its ≈ 10 min CI and waited
+  for its own ≈ 13 min deploy before the next could start: three ready PRs ≈ an hour).
+  - *Green PRs merge as they are.* A green PR whose files don't overlap main's newer changes is merged without
+    "update from main"; main's run checks the combination.
+  - *Main tests what no PR tested.* `ci-changes.mjs` prints `tree`, a hash of every code file at HEAD (docs left out:
+    a docs-only merge in between changes nothing). The `test` job of a green PR saves a tiny cache `tested-code-<tree>`
+    (`actions/cache/save`; caches are listed across branches by the API, `actions: read`). On main, `proven` is true
+    only when that exact cache exists: main's code is byte for byte what a green PR run tested, so main goes straight
+    to the deploy. Otherwise (two PRs merged without updating, main moved under a PR) the PR test jobs (`e2e`, `site`,
+    `contrast`, `games`, `games-more`, `game-windows`, `state-matrix`, `lab-sweep`, still only those `web` asks for)
+    run on main first, and `test` must pass before `deploy`. Forced case: `ci-changes.test.mjs` "two PRs, each green
+    on its own, merged together".
+  - *Merges close together, one deploy.* The first job on a push to main, `settle` (`scripts/ci-settle.mjs`, the
+    only job with `actions: write`; it always runs and its steps act only on a push, because a skipped job would skip
+    every job after it: on #464's first run all test jobs were skipped and `test` still went green, so `test` now
+    fails when code changed but `checks` did not run), waits until main's head is this run's commit and 2 min old (`SETTLE_S`). If main
+    moved on meanwhile, the run cancels itself: the newer run is pending behind it (the concurrency group keeps one)
+    and its range starts at the last successful run, so it tests and deploys this code too. API trouble or a refused
+    cancel: it goes on (never a lost deploy). Once past `settle` a run is never cancelled.
+  - *No result depends on the date.* The nightly date sweep (`schedule`, 02:17 UTC, its own concurrency group, never
+    deploys) runs every test job on main's code with the browser pages 1–60 days ahead (`SWM_TEST_DAYS=sweep`, from
+    the run number): `.github/actions/prepare` puts `NODE_OPTIONS=--require scripts/harness/forced-date.cjs` into the
+    job's later steps, and the preload moves `Date` in every page Playwright opens (time still runs; `require` and
+    `import` alike; a harness that sets its own day, e.g. `snack-special`, still wins). A failed night opens or updates
+    the issue labelled `date-sweep` with the date; the next green night closes it. Locally:
+    `SWM_TEST_DATE=2027-02-28 NODE_OPTIONS="--require $PWD/scripts/harness/forced-date.cjs" node scripts/harness/<x>/run.cjs …`.
+  - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
+  - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
+  - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
+    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
+  - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
+    extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
+    `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
+    `scripts/release-version.mjs --apply`, numbers the batch: the series in `release-series.txt` (three parts, e.g.
+    `0.9.97`; it changes only when the owner moves the third part, and the next release is then `<series>.1`) + the
+    highest tag's fourth part + 1, written into the footer (`apps/web/index.html`) and the extension
+    (`apps/extension/package.json`) of the checkout before the build, never committed, so both always show the same
+    number. The `tag` job tags it (`RELEASE_VERSION` → `tag-live.mjs`) only after every live e2e shard passed; a
+    failed run makes no tag, and the next run gives the same number again (none burnt). The tag job then publishes a
+    GitHub release `v<version>` whose notes are the `changelog/next/` files added since the previous tag
+    (`scripts/changelog.mjs notes`). Now and then a docs PR runs `node scripts/changelog.mjs fold`: one block per tag
+    not yet in `CHANGELOG.md` (newest first, the same text) and the folded files deleted. The PR check
+    `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
+    version, leaves them on different numbers, or adds a block for an untagged version. The repository's footer and
+    extension files keep the last per-PR number (the one local builds show).
+  - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
+    PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
+    from the first merge.
   **QA1 part 4 (canary rooms, `scripts/e2e/canary.mjs`):** idle room connections that say hello and send the free
   keepalive; the server never closes one by itself, so a close not ours means objects were restarted. Of the last 30
   live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once

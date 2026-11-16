@@ -74,7 +74,10 @@ async function main() {
   git('fetch', '--quiet', '--tags', 'origin', '+refs/heads/main:refs/remotes/origin/main');
   const tagged = new Set(git('tag', '--list', 'v*').split('\n').filter(Boolean).map((t) => t.slice(1)));
   const shas = git('rev-list', '--first-parent', `--max-count=${LOOKBACK}`, self).split('\n').filter(Boolean).reverse();
-  const commits = shas.map((sha) => ({ sha, version: versionAt(sha) }));
+  // Card CI3b: this run's number comes from the deploy job (CI numbers every release); older commits keep the number
+  // their files show (the per-PR releases before CI3b, for the catch-up).
+  const released = process.env.RELEASE_VERSION || null;
+  const commits = shas.map((sha) => ({ sha, version: sha === self && released ? released : versionAt(sha) }));
 
   const headers = { accept: 'application/vnd.github+json', authorization: `Bearer ${token}` };
   const getJson = async (path) => {

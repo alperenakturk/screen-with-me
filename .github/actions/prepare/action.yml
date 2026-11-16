@@ -57,3 +57,11 @@ runs:
         npm i --no-save --no-audit --no-fund axe-core@4.10.2 playwright@1.63.0
         # Not `install --with-deps`: an unreachable apt mirror must not fail the job (scripts/ci-playwright.sh).
         bash scripts/ci-playwright.sh
+
+    # Card CI3, the nightly date sweep only (SWM_TEST_DAYS set by the workflow): every later node process loads the
+    # preload that moves the browser pages' clock. Here, after the checkout, so the file exists for every step that
+    # reads NODE_OPTIONS (an action's own node too).
+    - name: Move the pages' clock (date sweep)
+      if: env.SWM_TEST_DAYS != ''
+      shell: bash
+      run: echo "NODE_OPTIONS=--require $GITHUB_WORKSPACE/scripts/harness/forced-date.cjs" >> "$GITHUB_ENV"

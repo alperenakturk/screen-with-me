@@ -960,6 +960,8 @@ const en = {
   'yt.terms': 'YouTube Terms of Service',
   skipToContent: 'Skip to the content',
   skipToVideo: 'Skip to the video',
+  chatOlder: 'Show earlier messages',
+  chatOlderLoading: 'Loading earlier messages…',
   chatEmpty: 'No messages yet. Chat here when your friends arrive\u00a0👋',
   'action.next': 'Moved on to the next video: {title}',
   'queue.add': '{name} queued {title}',
