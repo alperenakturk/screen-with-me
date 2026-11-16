@@ -13,7 +13,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     SH1 item 3 #471 (`claude/sh1-ring`, speaking ring); EC1 #465 (`claude/ec1-end-card`); SH1 Test Lab `shorts.state`
     `start` #495 (`claude/sh1-start-offset`); SH1 item 4 #489 (`claude/sh1-tiktok-small`: `vm.`/`vt.` links in a
     pasted list, harness `shorts-mixed`, which also checks a swiped TikTok starts at 0:00). SH1 is complete on main.
-  - [ ] STOP THE LINE (Planner, 18:24): no merges to main until live e2e is green again. Main runs 43917089949 and
+  - [x] STOP THE LINE lifted 16 Nov 18:33: run 43923095993 green, tagged v0.9.97.153 (cause: object restarts, B2 note
+    below). Was: no merges to main until live e2e is green again. Main runs 43917089949 and
     43921749258 deployed but failed live e2e (games: Sea seats / fleets, duel result, sea ws drops, game keepalive;
     HTTP-fallback 429; emoji rain "40 sent, 0 reached"); a lane B session investigates. Not tagged since v0.9.97.151.
   - [ ] When live is green: EC1 + SH1 Done lines (PRs above, the live version), both cards verbatim to
