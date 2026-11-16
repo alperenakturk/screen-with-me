@@ -1,6 +1,7 @@
-// The in-room Quiz (on the game stage): question, four options (2×2) or true / false, timer bar, players and
-// points; the reveal shows the right option and who picked what (small avatars), then a podium. In the lobby the
-// host picks the language, topic and length; everyone has one 50:50 joker per game.
+// The in-room Quiz (on the game stage): question, four options (2×2), true / false or a typed answer, timer bar,
+// players and points; the reveal shows the right option and who picked what (small avatars), then a podium. In the
+// lobby the host picks the language and Classic (topic, length) or Tournament (QZ2: each player picks a round's topic
+// in turn, once or twice round the table). Jokers (QZ2): 50:50, Double and Second chance, each once a game.
 
 import './lobby.css';
 import { gameHint } from './hint.ts';
@@ -14,7 +15,12 @@ import {
   QUIZ_PROTOCOL_VERSION,
   QUIZ_REVEAL_MS,
   QUIZ_TYPED_MAX,
+  QUIZ_LAPS,
+  QUIZ_PICK_MS,
+  QUIZ_ROUND_QUESTIONS,
+  tournamentOrder,
   quizAnswerMs,
+  type QuizJoker,
   type QuizClientMessage,
   type QuizServerMessage,
   type QuizTopic,
@@ -78,6 +84,25 @@ const TEXT = {
     refAll: 'Everyone got it!',
     refStreak: '{n} in a row!',
     refTricky: 'A tricky one!',
+    'mode.classic': 'Classic',
+    'mode.tournament': 'Tournament',
+    'laps': 'Picks each',
+    'rulesTour': '{rounds} rounds of 3 questions; everyone picks a topic in turn. The best score wins a round, the most rounds win the tournament (a tie goes to points). Three jokers, each once a game.',
+    'double': '×2 Double',
+    'second': '↺ Second chance',
+    'doubleTitle': 'Joker: a right answer scores double (once per game)',
+    'secondTitle': 'Joker: if your answer is wrong, try once more for half points (once per game)',
+    'doubleBy': '×2 {name} plays Double',
+    'secondBy': '↺ {name} takes a Second chance',
+    'tryAgain': 'Not quite! One more try, for half points',
+    'hint': 'Hint: {hint}',
+    'roundN': 'Round {round}/{rounds}',
+    'pickYours': 'Your pick! Choose the next round’s topic',
+    'pickWait': '{name} is choosing the topic…',
+    'roundWon': '🏆 {names} won round {n}',
+    'roundNone': 'Nobody scored in round {n}',
+    'wins': '🏆 {n} round wins',
+    'podium': '🏆{wins} · {points} pts',
   },
   tr: {
     how1: 'Hızlı cevapla',
@@ -93,9 +118,31 @@ const TEXT = {
     refAll: 'Herkes bildi!',
     refStreak: 'Üst üste {n}!',
     refTricky: 'Zorlu bir soruydu!',
+    'mode.classic': 'Klasik',
+    'mode.tournament': 'Turnuva',
+    'laps': 'Kişi başı seçim',
+    'rulesTour': '3 soruluk {rounds} tur; herkes sırayla konu seçer. Turu en çok puanı alan, turnuvayı en çok tur kazanan alır (eşitlikte puan). Üç joker, her biri oyunda bir kez.',
+    'double': '×2 Çift puan',
+    'second': '↺ İkinci şans',
+    'doubleTitle': 'Joker: doğru cevap iki kat puan getirir (oyunda bir kez)',
+    'secondTitle': 'Joker: cevabın yanlışsa bir kez daha dene, yarım puan (oyunda bir kez)',
+    'doubleBy': '×2 {name} Çift puan oynadı',
+    'secondBy': '↺ {name} İkinci şans aldı',
+    'tryAgain': 'Olmadı! Bir hakkın daha var, yarım puan',
+    'hint': 'İpucu: {hint}',
+    'roundN': 'Tur {round}/{rounds}',
+    'pickYours': 'Sıra sende! Turun konusunu seç',
+    'pickWait': '{name} konuyu seçiyor…',
+    'roundWon': '🏆 {n}. turu {names} kazandı',
+    'roundNone': '{n}. turda kimse puan alamadı',
+    'wins': '🏆 {n} tur kazandı',
+    'podium': '🏆{wins} · {points} puan',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
+/** QZ2: this chunk's own texts with {placeholders} (kept out of the room page's i18n). */
+const tq = (key: keyof (typeof TEXT)['en'], vars: Record<string, string | number> = {}): string =>
+  tx(key).replace(/\{(\w+)\}/g, (all, name: string) => (name in vars ? String(vars[name]) : all));
 
 export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
@@ -106,7 +153,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
             <span id="quiz-n" class="muted small"></span>
             <span id="quiz-cat" class="quiz-cat"></span>
             <span class="quiz-top-right">
-              <button id="quiz-joker" type="button" class="quiz-joker" hidden></button>
+              <span id="quiz-jokers" class="quiz-jokers"></span>
               <span id="quiz-timer" class="draw-timer"></span>
             </span>
           </div>
@@ -127,11 +174,26 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let offset = 0;
   /** Bu soruda benim seçtiğim (sunucu açıklamaya kadar söylemez). */
   let myPick: { n: number; pick: number } | null = null;
-  /** Options my 50:50 hid on question `n`. */
-  let fifty: { n: number; hide: number[] } | null = null;
-  const joker = $<HTMLButtonElement>('#quiz-joker');
-  joker.addEventListener('click', () => {
-    if (state?.phase === 'question') send({ t: 'joker', n: state.n });
+  /** Options my 50:50 hid on question `n` (on a typed question: the hint). */
+  let fifty: { n: number; hide: number[]; hint?: string } | null = null;
+  /** QZ2 jokers: the question I played one on (one per question) and which; my Second chance's wrong first try. */
+  let myJoker: { n: number; kind: QuizJoker } | null = null;
+  let retry: { n: number; wrong?: number } | null = null;
+  /** The jokers in the top bar: always the same three small buttons in the same place (hidden off a question, the
+   * space kept), an icon each with the full name for screen readers and as a tooltip. */
+  const jokerRow = $('#quiz-jokers');
+  const JOKER_ICON: Record<QuizJoker, string> = { fifty: '½', double: '×2', second: '↺' };
+  const jokerButtons = (['fifty', 'double', 'second'] as const).map((kind) => {
+    const b = el('button', { type: 'button', class: `quiz-joker joker-${kind}` }) as HTMLButtonElement;
+    b.addEventListener('click', () => {
+      const s = state;
+      if (!s || s.phase !== 'question' || b.disabled) return;
+      myJoker = { n: s.n, kind };
+      send({ t: 'joker', n: s.n, kind });
+      render();
+    });
+    jokerRow.append(b);
+    return { kind, b };
   });
   /** The previous state (sounds play on changes only: joining mid-game is quiet). */
   let lastKey = '';
@@ -180,6 +242,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   function answer(n: number, i: number): void {
     if (!state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
     if (fifty && fifty.n === n && fifty.hide.includes(i)) return;
+    if (retry && retry.n === n && retry.wrong === i) return;
     if (state.players.find((p) => p.id === me)?.answered) return;
     myPick = { n, pick: i };
     send({ t: 'answer', n, pick: i });
@@ -240,20 +303,59 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     lastKey = key;
   }
 
+  /** Tournament (QZ2): the round's picker chooses a topic (the others watch); the last round's winners above. */
+  let pickView: { key: string; buttons: HTMLButtonElement[] } | null = null;
+  function renderPick(s: State): void {
+    const mine = s.picker === me;
+    const picker = s.players.find((p) => p.id === s.picker);
+    const offer = s.offer ?? [];
+    const key = `${s.round}:${offer.join(',')}:${mine}`;
+    const last = (s.round ?? 1) - 1;
+    const names = (s.roundWin ?? []).map((id) => s.players.find((p) => p.id === id)?.name).filter(Boolean).join(', ');
+    // Built once per round (a state while the picker presses must not swap the button under the press).
+    if (!pickView || pickView.key !== key || !body.contains(pickView.buttons[0] ?? null)) {
+      const buttons = offer.map((cat) => {
+        const b = el('button', { type: 'button', class: 'quiz-option quiz-pick-cat' }, el('span', { class: 'quiz-text' }, t(`quiz.cat.${cat}`))) as HTMLButtonElement;
+        const choose = () => {
+          if (!b.disabled && state?.phase === 'pick' && state.picker === me) {
+            send({ t: 'pick', cat });
+            for (const x of buttons) x.disabled = true;
+            b.classList.add('picked');
+          }
+        };
+        b.addEventListener('pointerdown', (e) => e.button === 0 && choose());
+        b.addEventListener('click', choose);
+        b.disabled = !mine;
+        return b;
+      });
+      body.replaceChildren(
+        el('p', { class: 'quiz-round-result' }, last > 0 ? (names ? tq('roundWon', { names, n: last }) : tq('roundNone', { n: last })) : ''),
+        el('h3', { class: 'quiz-question' }, mine ? tq('pickYours') : tq('pickWait', { name: picker?.name ?? '…' })),
+        el('div', { class: 'quiz-options quiz-pick' }, ...buttons),
+      );
+      pickView = { key, buttons };
+      if (mine) playSound('roundMine');
+    }
+  }
+
   function render(): void {
     if (state) setGameLive(state.phase !== 'lobby' && state.phase !== 'over' && state.players.some((p) => p.id === me));
     if (!state) return;
     const s = state;
     const mine = s.players.find((p) => p.id === me);
     sounds(s, mine);
-    const used = new Set(s.players.filter((p) => p.joker).map((p) => p.id));
-    // Not on the first state (joining mid-game announces nothing).
-    if (primed) for (const p of s.players) if (used.has(p.id) && !jokers.has(p.id) && s.phase === 'question') flash(t('quiz.jokerBy', { name: p.id === me ? t('games.you') : p.name }));
+    // Every new joker is announced to the table (not on the first state: joining mid-game announces nothing).
+    const used = new Set(s.players.flatMap((p) => [...(p.jokers ?? (p.joker ? ['fifty'] : []))].map((k) => `${p.id}:${k}`)));
+    if (primed && s.phase === 'question')
+      for (const p of s.players)
+        for (const kind of p.jokers ?? (p.joker ? ['fifty' as const] : []))
+          // My own Double / Second chance shows on its pressed button; the others' are announced.
+          if (!jokers.has(`${p.id}:${kind}`) && (kind === 'fifty' || p.id !== me)) flash((kind === 'fifty' ? t('quiz.jokerBy', { name: p.id === me ? t('games.you') : p.name }) : tq(kind === 'double' ? 'doubleBy' : 'secondBy', { name: p.id === me ? t('games.you') : p.name })));
     jokers = used;
     primed = true;
+    if (s.phase === 'lobby' || s.phase === 'over' || s.phase === 'pick') retry = null;
     $('#quiz-players').replaceChildren(
-      ...[...s.players]
-        .sort((a, b) => b.score - a.score)
+      ...(s.rounds ? tournamentOrder(s.players) : [...s.players].sort((a, b) => b.score - a.score))
         .map((p) =>
           el(
             'li',
@@ -262,32 +364,57 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
             el('span', { class: 'draw-pname' }, p.id === me ? `${p.name} (${t('games.you')})` : p.name),
             el('span', { class: 'draw-badge', 'aria-hidden': 'true' }, s.phase === 'question' && p.answered ? '✅' : s.phase === 'reveal' && p.gained ? `+${p.gained}` : ''),
             p.streak >= 2 && s.phase !== 'lobby' ? el('span', { class: 'quiz-streak', title: t('quiz.streak', { n: p.streak }) }, `🔥${p.streak}`) : null,
-            p.joker && s.phase !== 'lobby' && s.phase !== 'over' ? el('span', { class: 'quiz-joker-used', title: t('quiz.joker') }, '½') : null,
+            s.phase !== 'lobby' && s.phase !== 'over' && (p.jokers?.length || p.joker)
+              ? el('span', { class: 'quiz-joker-used', title: t('quiz.joker') }, (p.jokers ?? ['fifty']).map((k) => JOKER_ICON[k]).join(' '))
+              : null,
+            s.rounds ? el('span', { class: 'quiz-wins', title: tq('wins', { n: p.wins ?? 0 }) }, `🏆${p.wins ?? 0}`) : null,
             el('b', { class: 'draw-score' }, String(p.score)),
           ),
         ),
     );
     app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
-    $('#quiz-n').textContent = s.phase === 'lobby' ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS }) : s.phase === 'over' ? '' : t('quiz.n', { n: s.n, total: s.total });
+    // A tournament counts its questions per round ("Round 2/4 · Question 1/3").
+    const inRound = s.rounds ? ((s.n - 1) % QUIZ_ROUND_QUESTIONS) + 1 : s.n;
+    $('#quiz-n').textContent =
+      s.phase === 'lobby'
+        ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS })
+        : s.phase === 'over'
+          ? ''
+          : s.rounds
+            ? `${tq('roundN', { round: s.round ?? 1, rounds: s.rounds })}${s.phase === 'pick' ? '' : ` · ${inRound}/${QUIZ_ROUND_QUESTIONS}`}`
+            : t('quiz.n', { n: s.n, total: s.total });
     // The topic, and the question's difficulty as stars (P9: the bank's `d`, easy questions first).
     const level = typeof s.qid === 'number' ? (QUIZ_BANK[s.qid]?.d ?? 2) : 0;
     $('#quiz-cat').textContent =
       s.cat && (s.phase === 'question' || s.phase === 'reveal') ? `${t(`quiz.cat.${s.cat}`)}${level ? ` · ${'★'.repeat(level)}${'☆'.repeat(3 - level)}` : ''}` : '';
-    // The joker: only while I can still answer a four-option question.
-    const asking = s.phase === 'question' && (s.options?.length ?? 0) === 4;
-    const answeredNow = (myPick && myPick.n === s.n) || !!mine?.answered;
-    joker.hidden = !asking || !mine;
-    joker.disabled = !!mine?.joker || !!answeredNow;
-    joker.textContent = `½ ${t('quiz.joker')}`;
-    joker.title = mine?.joker ? t('quiz.jokerUsed') : t('quiz.jokerTitle');
+    // QZ2 jokers: while I can still answer; each kind once a game, one per question (the server checks too). The row
+    // keeps its place off a question (hidden, not removed), so nothing below it moves.
+    const answeredNow = (myPick && myPick.n === s.n) || !!mine?.answered || (retry?.n === s.n);
+    const asking = s.phase === 'question' && !!mine;
+    jokerRow.classList.toggle('off', !asking);
+    const usedKinds = new Set<QuizJoker>(mine?.jokers ?? (mine?.joker ? ['fifty'] : []));
+    for (const { kind, b } of jokerButtons) {
+      const label = kind === 'fifty' ? `½ ${t('quiz.joker')}` : tq(kind === 'double' ? 'double' : 'second');
+      if (b.textContent !== JOKER_ICON[kind]) b.textContent = JOKER_ICON[kind];
+      b.setAttribute('aria-label', label);
+      const onThis = myJoker?.n === s.n;
+      const twoOptions = !s.typed && (s.options?.length ?? 0) < 4;
+      b.disabled = !asking || usedKinds.has(kind) || onThis || !!answeredNow || (kind === 'fifty' && twoOptions);
+      b.setAttribute('aria-pressed', String(onThis && myJoker?.kind === kind));
+      b.title = `${label}: ` + (usedKinds.has(kind) && !(onThis && myJoker?.kind === kind) ? t('quiz.jokerUsed') : (kind === 'fifty' ? t('quiz.jokerTitle') : tq(kind === 'double' ? 'doubleTitle' : 'secondTitle')));
+    }
 
-    if (s.phase === 'over') showPointsResult(result, `quiz:${gameId}`, s.players, s.host, me, endLines(), () => send({ t: 'start' }));
+    // A tournament ranks by round wins, then points: the podium shows both (the score only orders it).
+    const ranked = s.rounds ? tournamentOrder(s.players).map((p) => ({ ...p, score: (p.wins ?? 0) * 1_000_000 + p.score, label: tq('podium', { wins: p.wins ?? 0, points: p.score }) })) : s.players;
+    if (s.phase === 'over') showPointsResult(result, `quiz:${gameId}`, ranked, s.host, me, endLines(), () => send({ t: 'start' }));
     else result.hide();
+    const tour = s.mode === 'tournament';
     if (s.phase === 'lobby' || s.phase === 'over') {
       // A new game numbers its questions from 1 again: what I picked in the last one must not carry over.
       myPick = null;
       myText = null;
       fifty = null;
+      myJoker = null;
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
       const lead = s.players.find((p) => p.id === s.host);
@@ -298,8 +425,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       // box is wide and short.
       const intro =
         s.phase === 'over'
-          ? el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.over')), podium(s.players))
-          : el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, t('quiz.rules', { count: s.count })));
+          ? el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.over')), podium(ranked))
+          : el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, tour ? tq('rulesTour', { rounds: Math.max(2, online) * (s.laps ?? 1) }) : t('quiz.rules', { count: s.count })));
       const parts: HTMLElement[] = [];
       const host = s.players.find((p) => p.id === s.host);
       const topics: QuizTopic[] = ['mix', ...QUIZ_CATEGORIES];
@@ -307,8 +434,14 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         settingsPanel(
           [
             { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },
-            { label: t('quiz.topic'), value: s.topic, select: true, choices: topics.map((topic) => ({ value: topic, label: t(`quiz.cat.${topic}`) })), pick: (topic) => send({ t: 'settings', topic: topic as QuizTopic }) },
-            { label: t('quiz.count'), value: s.count, choices: QUIZ_COUNTS.map((n) => ({ value: n, label: String(n) })), pick: (count) => send({ t: 'settings', count: count as 5 | 10 | 15 }) },
+            // QZ2: the mode shares a row (the lobby keeps three rows, so it keeps its full size on a phone): Classic's
+            // length row ends in "🏆 Tournament"; a tournament's picks row ends in "Classic".
+            ...(tour
+              ? [{ label: tq('laps'), value: s.laps ?? 1, choices: [...QUIZ_LAPS.map((n) => ({ value: n as string | number, label: String(n) })), { value: 'classic', label: tq('mode.classic') }], pick: (v: string | number) => send(v === 'classic' ? { t: 'settings', mode: 'classic' } : { t: 'settings', laps: v as 1 | 2 }) }]
+              : [
+                  { label: t('quiz.topic'), value: s.topic, select: true, choices: topics.map((topic) => ({ value: topic, label: t(`quiz.cat.${topic}`) })), pick: (topic: string | number) => send({ t: 'settings', topic: topic as QuizTopic }) },
+                  { label: t('quiz.count'), value: s.count, choices: [...QUIZ_COUNTS.map((n) => ({ value: n as string | number, label: String(n) })), { value: 'tournament', label: '🏆' }], pick: (v: string | number) => send(v === 'tournament' ? { t: 'settings', mode: 'tournament' } : { t: 'settings', count: v as 5 | 10 | 15 }) },
+                ]),
           ],
           s.host === me || !host ? null : host.name,
         ),
@@ -318,6 +451,14 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       // CL2: the players are a row of faces in the card (no players column beside the lobby).
       if (s.phase === 'lobby') intro.append(lobbyPlayers(s.players, me, s.host));
       body.replaceChildren(el('div', { class: 'quiz-center lobby-card' }, intro, el('div', { class: 'quiz-setup lobby-setup' }, ...parts)));
+      // The 🏆 chip (Tournament) is an icon to keep the row narrow on a phone: its name for screen readers and a tooltip.
+      for (const chip of body.querySelectorAll<HTMLElement>('.game-chip, .game-setting-value'))
+        if (chip.textContent === '🏆') {
+          chip.setAttribute('aria-label', tq('mode.tournament'));
+          chip.title = tq('mode.tournament');
+        }
+    } else if (s.phase === 'pick') {
+      renderPick(s);
     } else {
       const reveal = s.phase === 'reveal';
       const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
@@ -333,6 +474,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         const ty = v.typed;
         const done = reveal || picked !== null;
         ty.input.disabled = done;
+        // 50:50 on a typed question: the hint in the empty field.
+        const hintText = fifty && fifty.n === s.n && fifty.hint ? tq('hint', { hint: fifty.hint }) : t('quiz.typeHere');
+        if (ty.input.placeholder !== hintText) ty.input.placeholder = hintText;
         ty.go.disabled = done;
         ty.go.textContent = picked !== null ? t('quiz.typeSent') : t('quiz.typeSend');
         if (myText && myText.n === s.n && ty.input.value !== myText.text) ty.input.value = myText.text;
@@ -351,7 +495,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         b.classList.toggle('picked', picked === i);
         b.classList.toggle('correct', reveal && i === s.correct);
         b.classList.toggle('wrong', reveal && picked === i && i !== s.correct);
-        b.disabled = reveal || picked !== null || hidden.includes(i);
+        const tried = !reveal && retry?.n === s.n && retry.wrong === i;
+        b.classList.toggle('tried', tried);
+        b.disabled = reveal || picked !== null || hidden.includes(i) || tried;
         const pickers = reveal ? s.players.filter((p) => p.pick === i) : [];
         const box = b.querySelector('.quiz-pickers')!;
         if (box.childElementCount !== pickers.length || !reveal) box.replaceChildren(...pickers.map((p) => avatarNode(p.avatar, 'quiz-picker')));
@@ -384,10 +530,10 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       return;
     }
     const left = Math.max(0, s.endsAt - (Date.now() + offset));
-    const total = s.phase === 'question' ? quizAnswerMs(s.typed) : QUIZ_REVEAL_MS;
+    const total = s.phase === 'question' ? quizAnswerMs(s.typed) : s.phase === 'pick' ? QUIZ_PICK_MS : QUIZ_REVEAL_MS;
     bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
     bar.classList.toggle('low', s.phase === 'question' && left < 5000);
-    timer.textContent = s.phase === 'question' ? `${Math.ceil(left / 1000)}` : '';
+    timer.textContent = s.phase === 'question' || s.phase === 'pick' ? `${Math.ceil(left / 1000)}` : '';
     // The last 3 seconds tick, only while I still have to answer.
     const secs = Math.ceil(left / 1000);
     const waitingForMe = s.phase === 'question' && !(myPick && myPick.n === s.n) && s.players.some((p) => p.id === me && !p.answered);
@@ -438,8 +584,17 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         offset = m.now - Date.now();
       } else if (m.t === 'pong') offset = m.now + (performance.now() - pingAt) / 2 - Date.now();
       else if (m.t === 'fifty') {
-        fifty = { n: m.n, hide: m.hide };
+        fifty = { n: m.n, hide: m.hide, ...(m.hint ? { hint: m.hint } : {}) };
         render();
+      } else if (m.t === 'again') {
+        // QZ2 Second chance: my first answer was wrong; the question opens again for me (that option stays out).
+        retry = { n: m.n, ...(m.wrong !== undefined ? { wrong: m.wrong } : {}) };
+        if (myPick?.n === m.n) myPick = null;
+        if (myText?.n === m.n) myText = null;
+        if (view?.typed && view.n === m.n) view.typed.input.value = '';
+        flash(tq('tryAgain'));
+        render();
+        if (view?.typed && view.n === m.n && hasMouse()) view.typed.input.focus({ preventScroll: true });
       } else if (m.t === 'state') {
         state = m;
         if (typeof m.qid === 'number') rememberSeen(m.qid);
@@ -479,6 +634,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       quiet.command('quiz', { en: 'Quiz', tr: 'Bilgi yarışması' }),
       { id: 'quiz.referee', title: { en: 'Quiz: Stub reacts', tr: 'Bilgi yarışması: Stub tepki versin' }, help: { en: 'Stub says one of his reveal lines in the corner of the table.', tr: 'Stub masanın köşesinde cevap anındaki sözlerinden birini söyler.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel test sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
+      // QZ2 (card hook): a one-lap tournament starts now (the host, two or more at the table: a 🤖 friend will do).
+      { id: 'quiz.tournament', title: { en: 'Quiz: start a tournament', tr: 'Bilgi yarışması: turnuva başlat' }, help: { en: 'Sets Tournament, one pick each, and starts: everyone picks a round’s topic in turn. Add a 🤖 friend first if you are alone.', tr: 'Turnuvayı seçer (kişi başı bir seçim) ve başlatır: herkes sırayla bir turun konusunu seçer. Yalnızsan önce bir 🤖 arkadaş ekle.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host can start', tr: 'sadece masanın yöneticisi başlatabilir' } : state.players.filter((p) => p.online).length < 2 ? { en: 'needs two players: add a 🤖 friend', tr: 'iki oyuncu gerekir: bir 🤖 arkadaş ekle' } : true), run: () => { send({ t: 'settings', mode: 'tournament', laps: 1 }); send({ t: 'start' }); } },
       // QZ2: the next game asks only typed-answer questions (to try the field and the forgiving match).
       { id: 'quiz.typed', title: { en: 'Quiz: next game only typed answers', tr: 'Bilgi yarışması: sonraki oyun sadece yazılı cevap' }, help: { en: 'Local lab server only: the next game this table starts asks only questions you answer by typing.', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki oyun yalnızca yazarak cevaplanan sorular sorar.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'typed' }) },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).

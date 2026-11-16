@@ -5,6 +5,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/yt-attrib/run.cjs [site] [screenshot folder]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 const fs = require('fs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
@@ -49,6 +50,7 @@ const good = (a, lang) => !!a && !!a.logo && a.logo.href === 'https://www.youtub
       await page.waitForTimeout(1500);
 
       // 1) The link box's search (on a phone it sits in the Search tab, PH1).
+      await phoneReady(page);
       if (!(await page.isVisible('#media-input'))) {
         await page.click('#ph-tab-search');
         await page.waitForTimeout(400);

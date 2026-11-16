@@ -722,7 +722,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
   not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). **`ui/phone-room.ts` is a lazy chunk (card
   BUD2):** room.ts loads it when the phone layout is on at start or first turns on (`onPhoneLayout`), so a computer
-  never downloads it; room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
+  never downloads it, and a phone starts fetching it while the name form is up (`renderRoom`), so the layout is there when the room opens. Harnesses wait for `html.ph-room` on a phone-sized page before looking (`scripts/harness/phone-ready.cjs`). room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
   (`deps.gamesButton`), since games/stage.ts takes its triggers when the room starts. The desktop DOM stays: `.stage`, `.side`,
   `.together-card`, `.tabs-card` are `display: contents`, so the column is the theater (edge to edge, `order` 1) → the
   faces strip `.together-strip` (`#voice-people` + `#strip-voice` quick 🎙 / 📷 / 🖥️ (voice.ts quick id `strip`; 🖥️ only
@@ -865,7 +865,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `navigator.onLine` is true, see the Live line):** `reloadForNewVersion` does nothing while `navigator.onLine` is false (a reload then showed the browser's
   offline page and threw the room away after a Wi-Fi blip); chunks missed offline are fetched again on `online` and the
   page reloads only if one still fails (in Chrome always: it keeps a failed module import for the page's life); harness
-  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. Voice, streams and watching fail closed when
+  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. **Never a silent reload in a room (card
+  GR1):** `staleChunk` in main.ts routes every failed chunk; in a room (`/r/<id>`) it shows `#update-note` ("Sidelit was
+  updated · ↻ Refresh", styles.css, built without any chunk) and reloads only on the tap; elsewhere it is
+  `reloadForNewVersion` as before. Harness `scripts/harness/offline-reload` (CI) checks both the gone chunk and the
+  network-back path; Test Lab `app.staleChunk` fires a `vite:preloadError`. Voice, streams and watching fail closed when
   their chunks can't load (harness `scripts/harness/lazy-gates/run.cjs` in CI blocks `voice-check` and `live-engine`;
   the IP notice chunk it used to block was removed by card SIMP1). Measure a module's share of the
   room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).
@@ -1297,7 +1301,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   ı / İ, punctuation, a leading "the" ignored, a number's minus kept; one typo (Damerau) on non-numeric answers of 5+ letters)
   and keeps it as `said`, sent only in the reveal with the right `answer` (a player's `pick` there is 0 right / 1 wrong).
   Points × `quizLevelBonus` (easy 1, medium 1.2, hard 1.5; typed × 1.3). `QUIZ_PROTOCOL_VERSION` 3. Test Lab
-  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part. Test:
+  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part.
+  **QZ2 jokers and tournament (16 Nov 2026):** jokers `QUIZ_JOKERS` (`{t:'joker', n, kind}`, no kind = 50:50), each kind
+  once a game and one per question (`used`, `jokerAt`); the texts are the chunk's own (`tq`): 50:50 (typed: `typedHint`, first letter + a dot per letter),
+  Double (×2 if right) and Second chance (`armed[key].tried`: a first wrong answer is kept aside, only that player gets
+  `{t:'again', n, wrong?}`, the second try scores half; time up = the first answer stands). Tournament (`mode`, `laps`
+  1 / 2): `pickers` = the players at the start, `rounds` = players × laps; phase `pick` (`quizOffer`: 3 categories,
+  `QUIZ_PICK_MS` 10 s, time up or the picker away = a random one), then `QUIZ_ROUND_QUESTIONS` (3) questions; question
+  numbers run on across rounds (`base()` / `qn()`, so a joker or a 50:50 on one round's question 1 never matches
+  another's); `roundWinners` (best round score, all tied, nobody at 0) add a win; the state's `round`, `rounds`,
+  `picker`, `offer`, `roundWin`, a player's `wins` / `round`; standings `tournamentOrder` (wins, then points; the podium
+  shows `label` "🏆 wins · points", `ui.ts` `podium`). Client: the three jokers are icon buttons in the top bar (full
+  name as aria-label), the pick view is built once per round. Test Lab `quiz.tournament` (the host starts a one-lap
+  tournament; the 🤖 friend picks on its turn). e2e `quiz-tournament.mjs` (3 players, no lab powers). Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their

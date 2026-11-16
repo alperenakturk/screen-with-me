@@ -5,6 +5,10 @@
 import type { LabText } from '../debug-lab.ts';
 
 export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: LabText }> = {
+  'app.staleChunk': {
+    title: { en: 'A missing chunk after an update', tr: 'Güncellemeden sonra eksik parça' },
+    help: { en: 'Acts as if a chunk failed to load: the "Sidelit was updated" note shows, the room stays. Run again to read it.', tr: 'Bir parça yüklenemedi gibi davranır: "Sidelit güncellendi" notu çıkar, oda kalır. Tekrar çalıştırınca okur.' },
+  },
   'chat.fill': {
     title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
     help: { en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.', tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.', },

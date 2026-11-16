@@ -3,7 +3,8 @@
 // beats (intro-sound.ts, variant F: 0 / 0.72 / 1.1–1.4 s): the Sidelit logo pops in with its light off, the light
 // bursts out of the triangle's tip, the eyes open in it and blink, the logo slides left while Glowbeam springs out of
 // the light, "Enjoy the show!" rises, and everything fades (2.7 s). Reduced motion: one still frame fading in and out.
-// The site uses it in the room (also inside the extension's overlay, which is our site); a click closes it at once.
+// The site uses it in the room (also inside the extension's overlay, which is our site). It takes no taps (card GR1
+// batch, Game Studio's iPad test: it covered the rail, so a tap on 🎮 in its first seconds did nothing); it goes by itself.
 
 import { playIntroSound, playIntroSoundOn } from './intro-sound.ts';
 import { createLogo, createMascot } from './logo.ts';
@@ -15,7 +16,7 @@ export const INTRO_MS = 2700;
 // spring from −70 px), scaled to the logo size `--s` = min(26vmin, 140px) as before.
 export const INTRO_CSS = `
 .swm-intro { --s: min(26vmin, 140px); position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 16px; pointer-events: auto; cursor: pointer;
+  align-items: center; justify-content: center; gap: 16px; pointer-events: none;
   background: radial-gradient(circle at center, rgb(43 30 110 / .9), rgb(8 8 14 / .95) 70%);
   animation: swm-intro-fade ${INTRO_MS}ms ease forwards;
   font-family: 'Sidelit Wordmark', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
@@ -75,7 +76,6 @@ export function createIntro(doc: Document, text: string, sound: boolean | AudioC
   if (sound === true) playIntroSound();
   else if (sound) playIntroSoundOn(sound);
   const remove = () => root.remove();
-  root.addEventListener('click', remove);
   root.addEventListener('animationend', (event) => {
     if (event.target === root) remove();
   });
