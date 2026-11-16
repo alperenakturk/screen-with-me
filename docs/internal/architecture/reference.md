@@ -190,7 +190,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     joined non-TV viewer is primed the server moves the start to `SHORT_START_MARGIN_MS` (250 ms) from now (`primed`,
     memory-only `lead`) and broadcasts it as a SYSTEM `play`. `showCountdown` draws nothing for a Short (nothing of
     ours over the YouTube player). e2e `shorts-start.mjs` measures swipe → start: both primed at once ≈ 0.3 s, one
-    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap.
+    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap. Each tab records where a Short's player started
+    moving (`measureSwitch` → `shortStart`, seconds, always on for Shorts; the ⏱ badge stays behind `?measure=1`):
+    Test Lab `shorts.state` → `start` (0 = from its very start, null = not started yet).
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait
@@ -897,7 +899,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   live-compose; `live.ts` makes it on `ensure()`: someone streams, a hover / focus / touch on Share or Watch, a press,
   a signal; until then "not streaming, not watching"), the TikTok / Vimeo / sync-test players, the sound recipes
   (`@swm/shared/sounds`, loaded on the first press; a sound whose recipes come > 300 ms late is dropped, as before),
-  the shortcuts card and the Shorts search list. First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
+  the shortcuts card and the Shorts search list. **The games window (`games/stage.ts`, budget step after BUD2: room JS
+  139.1 → 124.8 kB):** room.ts makes `games/stage-lazy.ts` `createLazyGameStage`, which loads the real stage on a
+  press of any games button (held, then pressed again once it is there), when the room lists a table, at once when the
+  Test Lab is on or this tab was at a game before a reload (`swm:table:<path>`), else on `whenIdle`; calls before that
+  are replayed in order (`membersChanged` only matters once the hall is drawn, so it is dropped). First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
   windows and the stream engine 4 s after the room starts, when the browser is idle. **Load a lazy chunk with
   `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`:** main.ts handles a failed chunk
   (`vite:preloadError`, one reload "for the new version") and Vite then resolves the import to nothing, and a `.then`
@@ -1085,7 +1091,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `{t:'game', kind}`. A room holds one game at a time (`RoomGame {kind, id, by, at}`, storage `game` + opener's
   persistent key; `welcome.game`, on change `{t:'game', game, by?}`); only the opener or the host changes/ends it
   (`{t:'game', end:true}`), others get `game_busy`. The game id is a fresh `newId()` from the room; the game itself
-  runs in the objects below. Site `games/stage.ts`: the game opens in the video's place as a "game stage"
+  runs in the objects below. Site `games/stage.ts` (a lazy chunk behind `games/stage-lazy.ts`, see Room chunk): the game opens in the video's place as a "game stage"
   (`#game-stage`, child of `.player-wrap`: an island in the shell automatically; at ≤860 px moved to body and
   fullscreen `.full`); opens immediately for the opener, others get an "Ali opened XOX · Join / Later" card
   (`#game-invite`), "▶ Videoya dön" minimizes it (connection stays open, a blinking dot on 🎮), a grey chat line.

@@ -110,7 +110,7 @@ const readPair = (key: string): { x: number; y: number } | null => {
   return null;
 };
 
-interface StageOptions {
+export interface StageOptions {
   /** The video's box (.player-wrap): the stage and invite cards go here (islands in the shell by themselves). */
   wrap: HTMLElement;
   /** 🎮 under the video, and the hub popover it opens. */
