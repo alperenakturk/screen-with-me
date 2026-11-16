@@ -127,6 +127,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the private feedback repository. On the phone the same two buttons are on their row in the People list.
 - [ ] 27d. [QZ2a, 0.9.97.142] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
   click, also when the friend answers at the same moment.
+- [ ] 27j. [QZ2b, 0.9.97.14x] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
+  body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
+  friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
