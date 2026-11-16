@@ -2306,6 +2306,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     the issue labelled `date-sweep` with the date; the next green night closes it. Locally:
     `SWM_TEST_DATE=2027-02-28 NODE_OPTIONS="--require $PWD/scripts/harness/forced-date.cjs" node scripts/harness/<x>/run.cjs …`.
   - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
+  - *Fewer runners per PR (Planner's pick, 16 Nov 2026).* The first real 3-PR batch took 38 min (first merge 13:39 →
+    live e2e end 14:18): ≈ 9 min waiting for the previous main run to finish deploying and 4–9 min waiting for free
+    runners, because five sessions' PR runs (≈ 11 jobs each) share the account's 20 concurrent jobs; the tests
+    themselves took ≈ 10. So the state matrix now runs inside `game-windows` and the Test Lab sweep inside `contrast`
+    (≈ 11 min each, timeout 25): 7 test jobs per PR instead of 9, none longer than `games-more`.
   - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
   - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
     style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for

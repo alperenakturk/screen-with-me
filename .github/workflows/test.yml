@@ -440,7 +440,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -453,26 +453,7 @@ jobs:
       - name: Game proportions
         run: SIZES=laptop,desktop,tablet node scripts/harness/game-proportions/run.cjs http://localhost:8787
 
-      - name: Server log (on failure)
-        if: failure()
-        run: tail -n 150 wrangler.log || true
-
-  # Card QA1 part 2: the state matrix. Every game in each placement × side panel open / closed × no video / a file /
-  # YouTube × 1366 / 1920 / tablet: nothing cut off, nothing over YouTube, no free window over the video unless dragged,
-  # every head button does something; a real mouse (hover, drag, resize) in a real window under xvfb.
-  state-matrix:
-    needs: changes
-    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: ./.github/actions/prepare
-        with:
-          server: 'true'
-          playwright: 'true'
-
+      # Card CI3: the state matrix runs here, after the proportions (one runner instead of two; ≈ 11 min together).
       - name: Game windows in every state
         run: |
           bash scripts/ci-test-video.sh
@@ -487,7 +468,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -501,25 +482,7 @@ jobs:
       - name: Theme contrast (WCAG AA)
         run: node scripts/harness/contrast/run.cjs http://localhost:8787
 
-      - name: Server log (on failure)
-        if: failure()
-        run: tail -n 150 wrangler.log || true
-
-  # Card LAB2: every Test Lab command run once and undone on a live-like host (lab.localhost: the owner's code unlocks
-  # it, the server's limits apply), a computer in English and a phone in Turkish. The 🎮 tab is Game Studio's.
-  lab-sweep:
-    needs: changes
-    if: needs.changes.outputs.code == 'true' && (github.event_name != 'push' || needs.changes.outputs.proven != 'true') && needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: ./.github/actions/prepare
-        with:
-          server: 'true'
-          playwright: 'true'
-
+      # Card CI3: the Test Lab sweep runs here, after the contrast check (one runner instead of two; ≈ 11 min together).
       - name: Test Lab sweep
         run: |
           DEVICES=laptop LANGS=en node scripts/harness/lab-sweep/run.cjs harness-lab-code
@@ -533,7 +496,7 @@ jobs:
   # main, no site change); red when one failed or was cancelled, or the change detection itself failed. `always()`, so
   # a failed job can never make this one "skipped" (which a required check would count as success).
   test:
-    needs: [changes, checks, e2e, site, contrast, games, games-more, game-windows, state-matrix, lab-sweep]
+    needs: [changes, checks, e2e, site, contrast, games, games-more, game-windows]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -543,9 +506,9 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           CODE: ${{ needs.changes.outputs.code }}
           CHECKS: ${{ needs.checks.result }}
-          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.game-windows.result }} ${{ needs.state-matrix.result }} ${{ needs.lab-sweep.result }}
+          RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.game-windows.result }}
         run: |
-          echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, game-windows, state-matrix, lab-sweep: $RESULTS"
+          echo "changes: $CHANGES · checks, e2e, site, contrast (+ Test Lab sweep), games, games-more, game-windows (+ state matrix): $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
           # CI3: code changed, so `checks` must have run; a skip here means a job up the chain skipped them all.
           [ "$CODE" != true ] || [ "$CHECKS" = success ] || { echo "::error::Code changed but checks ended as $CHECKS."; exit 1; }
