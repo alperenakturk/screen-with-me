@@ -166,6 +166,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     })(),
   );
   const hint = root.querySelector<HTMLElement>('#voice-hint')!;
+  const unreachableNote = root.querySelector<HTMLElement>('#voice-unreachable')!;
+  /** Card VC3 (below): when each voice link started waiting, and the people whose link with me never connected. */
+  const LINK_WAIT_MS = 10_000;
+  const linkSince = new Map<string, number>();
+  let badLinks = new Set<string>();
   const pttBox = root.querySelector<HTMLInputElement>('#voice-ptt')!;
   /** Bas-konuş: mikrofon kapalı durur, V tuşu (ya da 🎙) basılı tutulunca açılır. Tarayıcıda hatırlanır. */
   let ptt = load('opt:ptt') === '1';
@@ -399,6 +404,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     peopleBox.replaceChildren(
       ...people.slice(0, PEOPLE_SHOWN).map((m) => {
         const face = el('span', { class: `voice-face${m.voice ? ' in-voice' : ''}`, 'data-voice-id': m.id }, avatarNode(m.avatar, 'voice-avatar'));
+        // Card VC3: my voice link with this person never connected: a small ⓘ that says so.
+        if (badLinks.has(m.id)) face.append(el('span', { class: 'voice-link-bad', title: t('voice.unreachableFor', { name: m.name }), 'aria-label': t('voice.unreachableFor', { name: m.name }) }, 'i'));
         if (m.voice && !m.voice.mic) {
           const badge = el('span', { class: 'voice-muted' });
           setIcon(badge, 'mic-off');
@@ -413,6 +420,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       ...(people.length > PEOPLE_SHOWN ? [el('span', { class: 'together-more' }, `+${people.length - PEOPLE_SHOWN}`)] : []),
     );
     peopleBox.title = '';
+    unreachableNote.hidden = badLinks.size === 0;
     limitEl.hidden = !available;
     // Sınırlar hep görünür: "Seste 3/6 · 📷 1/4" (neden sınır var: üstüne gelince). Dolunca düğme soluk, basınca açıklama.
     const max = voiceMax();
@@ -1005,6 +1013,47 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   }
 
   /** Is this member another connection of mine (same name and avatar)? */
+  // ---- Card VC3: a voice link that can't connect says so (a VPN or a strict school / work network blocks the direct
+  // path, and voice "connects" but nobody hears anybody). Each second: everyone else in voice whose link with me isn't
+  // "connected" for LINK_WAIT_MS gets an ⓘ on their face, and the voice card shows a plain note. It clears by itself
+  // when the link works or they leave. Peer to peer only (the Cloudflare path and the film page's voice have no links
+  // here to watch). Test Lab `voice.blocked`. ----
+  function watchLinks(): void {
+    const now = Date.now();
+    const next = new Set<string>();
+    const me = myId();
+    if (p2p && client === p2p && client.active) {
+      const connected = new Set(p2p.peerStates().filter((p) => p.state === 'connected').map((p) => p.id));
+      for (const m of members) {
+        if (!m.voice || m.id === me || isMyOtherTab(m.id) || connected.has(m.id)) {
+          linkSince.delete(m.id);
+          continue;
+        }
+        const since = linkSince.get(m.id) ?? now;
+        linkSince.set(m.id, since);
+        if (now - since >= LINK_WAIT_MS) next.add(m.id);
+      }
+    } else linkSince.clear();
+    for (const id of linkSince.keys()) if (!members.some((m) => m.id === id && m.voice)) linkSince.delete(id);
+    if (next.size === badLinks.size && [...next].every((id) => badLinks.has(id))) return;
+    badLinks = next;
+    render();
+  }
+  setInterval(watchLinks, 1000);
+  debugHooks.register('voice-links', () => ({
+    commands: [
+      {
+        id: 'voice.blocked',
+        tab: 'status',
+        run: () => {
+          const names = members.filter((m) => badLinks.has(m.id)).map((m) => m.name);
+          const text = JSON.stringify({ note: !unreachableNote.hidden, unreachable: names, links: p2p?.peerStates().map((p) => ({ name: members.find((m) => m.id === p.id)?.name ?? p.id, state: p.state })) ?? [] });
+          return { en: text, tr: text };
+        },
+      },
+    ],
+  }));
+
   function isMyOtherTab(memberId: string): boolean {
     const me = members.find((m) => m.id === myId());
     const other = members.find((m) => m.id === memberId);

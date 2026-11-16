@@ -778,6 +778,8 @@ export const tr: Record<I18nKey, string> = {
   'voice.fullHint': 'Seste yer yok ({n}/{max}). Herkes sesini herkese ayrı yolladığı için daha kalabalıkta internet yetmiyor. Biri ayrılınca katılabilirsin.',
   'voice.lastSeat': 'son {n} yer',
   'voice.camFullHint': 'Şu an {n}/{max} kamera açık. Görüntü herkese ayrı gittiği için sınır var; biri kapatınca seninki açılabilir.',
+  'voice.unreachable': 'Sesin diğerlerine ulaşmıyor. Bir VPN ya da bu ağ engelliyor olabilir — VPN’i kapatıp yeniden dene.',
+  'voice.unreachableFor': '{name} ile ses bağlanamıyor (bir VPN ya da ağ engelliyor olabilir)',
   'voice.p2pFailed': '{name} ile ses bağlantısı kurulamadı (bazı okul/iş ağları ve mobil hatlar engelleyebilir).',
   'voice.blocked':
     'Tarayıcın doğrudan bağlantıları engelliyor, bu yüzden ses, kamera ve yayın kimseye ulaşmıyor. Brave / Vivaldi: Ayarlar → Gizlilik → "WebRTC IP handling policy" → Varsayılan (Default). uBlock Origin: "WebRTC yerel IP sızıntısını önle" kapalı olsun. Opera: VPN\'i kapat.',

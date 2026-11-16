@@ -3504,6 +3504,30 @@ html.shorts-view .footer {
   margin: 8px 0 0;
 }
 
+/* Card VC3: voice can't reach the others (a VPN or a strict network): a plain note, and an ⓘ on that person's face. */
+.voice-unreachable {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--warn) 60%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--warn) 12%, var(--surface));
+  color: var(--text);
+}
+
+.voice-link-bad {
+  position: absolute;
+  left: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--warn);
+  color: var(--bg);
+  font: italic 700 12px/1 Georgia, serif;
+}
+
 .voice-cam.on {
   border-color: var(--ok);
 }
