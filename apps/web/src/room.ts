@@ -1274,6 +1274,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       player.pause();
       return true;
     },
+    // GW2: a table's ⛶ full screen paused the video; leaving it plays the video again, as a press of ▶ would.
+    playVideo: () => {
+      const player = current?.player;
+      if (!player || !roomState?.item || !player.isPaused() || (roomSettings.hostOnly && !amHost())) return false;
+      player.play();
+      return true;
+    },
   });
   // Films that end while I'm in the room give Window Garden's seed even with the game closed (owner's pick 11 B).
   watchFilmEnds(() => soloContext().item);

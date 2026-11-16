@@ -269,3 +269,102 @@ export function registerSideLab(name: string, key: (typeof SIDE_SAVES)[number], 
     status,
   }));
 }
+
+/** What the games stage lends the lab's game-window commands (bug W1–W5, GW2, GP1). */
+export interface WindowLab {
+  kind: () => string | null | undefined;
+  place: () => string;
+  table: () => boolean;
+  reset: () => void;
+  autoPause: () => void;
+  modeShown: () => boolean;
+  setMode: (arg?: string) => unknown;
+  lastOpen: () => unknown;
+  shown: () => boolean;
+  hall: () => void;
+  moreShown: () => boolean;
+  more: () => void;
+  phoneTab: () => boolean;
+  phoneState: () => unknown;
+  /** One line for the lab's status ('' with no game shown). */
+  status: () => string;
+}
+
+/** The game window's commands and status line, registered by the games stage while the lab is on. */
+export function registerWindowLab(w: WindowLab): () => void {
+  return debugHooks.register('gameWindow', () => ({
+    commands: [
+      {
+        id: 'gameWindow.reset',
+        title: { en: 'Game window: back to its home beside the video', tr: 'Oyun penceresi: videonun yanındaki yerine' },
+        help: { en: 'The same as a double click on the free window’s head: the open game’s window forgets where I put it and goes back to the column right of the video (never over the video).', tr: 'Serbest pencerenin başlığına çift tıklamakla aynı: açık oyunun penceresi koyduğum yeri unutur, videonun sağındaki sütuna döner (videonun üstüne hiç çıkmaz).' },
+        tab: 'games',
+        available: () => (w.kind() ? true : { en: 'no game open', tr: 'açık oyun yok' }),
+        run: w.reset,
+      },
+      {
+        id: 'gameWindow.autoPause',
+        title: { en: 'Game window: pause as a table would', tr: 'Oyun penceresi: masa açılınca olduğu gibi durdur' },
+        help: { en: 'Runs what opening a table in the video’s place does: if the video plays, it pauses for everyone and a short note says why.', tr: 'Bir masa videonun yerinde açılınca olanı yapar: video oynuyorsa herkes için durur ve kısa bir not nedenini söyler.' },
+        tab: 'games',
+        available: () => (w.table() && (w.place() === 'stage' || w.place() === 'max') ? true : { en: 'no table open in the video’s place or full screen', tr: 'videonun yerinde ya da tam ekranda açık masa yok' }),
+        run: w.autoPause,
+      },
+      {
+        // GW2: the table's two modes, and what the window is doing (for the harnesses and a hand check).
+        id: 'games.mode',
+        title: { en: 'Table: ⛶ full screen or 🪟 frame', tr: 'Masa: ⛶ tam ekran ya da 🪟 çerçeve' },
+        help: {
+          en: 'With "full" or "frame" switches my open table to that mode (as its head’s button does), with nothing it flips it. Writes the mode, whether the browser’s real full screen took it (else the window fills the page), whether the video was paused for it, and where the frame stands.',
+          tr: '"full" ya da "frame" ile açık masamı o moda geçirir (başlığındaki düğme gibi), boş bırakılırsa değiştirir. Modu, tarayıcının gerçek tam ekranının olup olmadığını (yoksa pencere sayfayı doldurur), video bunun için durdu mu ve çerçevenin nerede durduğunu yazar.',
+        },
+        tab: 'games',
+        available: () => (w.table() && w.modeShown() ? true : { en: 'no table open on a computer or tablet', tr: 'bilgisayar ya da tablette açık masa yok' }),
+        run: (arg?: string) => JSON.stringify(w.setMode(arg)),
+      },
+      {
+        // GP1: the open time of the last game I opened from the hall (the card's budget: ≤ 300 ms for Classics and Snack Bar).
+        id: 'games.openTime',
+        title: { en: 'Games: how fast the last game opened', tr: 'Oyunlar: son oyun ne kadar hızlı açıldı' },
+        help: {
+          en: 'Writes which game I opened last and how many milliseconds passed from the click in the hall to its first frame.',
+          tr: 'En son açtığım oyunu ve salondaki tıklamadan ilk karesine kadar kaç milisaniye geçtiğini yazar.',
+        },
+        tab: 'games',
+        available: () => (w.lastOpen() ? true : { en: 'open a game from the hall first', tr: 'önce salondan bir oyun aç' }),
+        run: () => JSON.stringify(w.lastOpen()),
+      },
+      {
+        id: 'gameWindow.hall',
+        title: { en: 'Game window: open the hall from its 🎮', tr: 'Oyun penceresi: 🎮 ile salonu aç' },
+        help: { en: 'Presses the 🎮 in the open game window’s head: the games hall opens right under it.', tr: 'Açık oyun penceresinin başındaki 🎮’ya basar: oyun salonu hemen altında açılır.' },
+        tab: 'games',
+        available: () => (w.shown() ? true : { en: 'no game window on screen', tr: 'ekranda oyun penceresi yok' }),
+        run: w.hall,
+      },
+      {
+        id: 'gameWindow.more',
+        title: { en: 'Game window: the phone head’s ⋯ menu', tr: 'Oyun penceresi: telefon başlığının ⋯ menüsü' },
+        help: { en: 'On an upright phone with a table open: presses ⋯ in the head, which holds “Leave table” and “Close table” (each asks first where it did before).', tr: 'Dik telefonda bir masa açıkken başlıktaki ⋯’ya basar: içinde “Masadan kalk” ve “Masayı kapat” var (önceden sorduklarında yine sorarlar).' },
+        tab: 'games',
+        available: () => (w.moreShown() && w.shown() ? true : { en: 'no ⋯ in the head (an upright phone with a table only)', tr: 'başlıkta ⋯ yok (yalnız dik telefonda, masa açıkken)' }),
+        run: w.more,
+      },
+      {
+        id: 'phoneGames.state',
+        tab: 'games',
+        title: { en: 'Phone games: the tab, the game and its fit', tr: 'Telefonda oyunlar: sekme, oyun ve sığması' },
+        help: {
+          en: 'Writes the open tab, the game in the Games tab, whether it fits the panel (its scale, anything cut off) and whether the room is held upright into the log.',
+          tr: 'Açık sekmeyi, Oyunlar sekmesindeki oyunu, panele sığıp sığmadığını (ölçeği, kesilen bir şey) ve odanın dik tutulup tutulmadığını kayda yazar.',
+        },
+        available: () => w.phoneTab() || { en: 'not the phone room', tr: 'telefon odası değil' },
+        run: () => JSON.stringify(w.phoneState()),
+      },
+    ],
+    status: (): [LabText, LabText][] => {
+      const line = w.status();
+      return line ? [[{ en: 'Game window', tr: 'Oyun penceresi' }, line]] : [];
+    },
+  }));
+}
