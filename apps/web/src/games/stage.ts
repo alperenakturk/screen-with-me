@@ -27,6 +27,8 @@ import { confirmDialog } from '../ui/confirm.ts';
 import { gameLive } from './live.ts';
 import { flashHint } from '../ui/hint.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { loadChunk } from '../ui/lazy.ts';
+import type { WindowLab } from './lab-tools.ts';
 
 const ICONS: Record<RoomGameKind, IconName> = { xox: 'game-xox', four: 'game-four', draw: 'game-draw', quiz: 'game-quiz', poker: 'game-poker', classics: 'game-four', sea: 'game-sea', duel: 'game-duel' };
 export const gameIcon = (kind: RoomGameKind): SVGSVGElement => icon(ICONS[kind]);
@@ -1453,93 +1455,44 @@ export function createGameStage(opts: StageOptions) {
   addEventListener('langchange', labels);
   labels();
 
-  // Test Lab (bug W1–W5): the game window's state and its reset, offered while the lab is on.
-  debugHooks.register('gameWindow', () => ({
-    commands: [
-      {
-        id: 'gameWindow.reset',
-        title: { en: 'Game window: back to its home beside the video', tr: 'Oyun penceresi: videonun yanındaki yerine' },
-        help: { en: 'The same as a double click on the free window’s head: the open game’s window forgets where I put it and goes back to the column right of the video (never over the video).', tr: 'Serbest pencerenin başlığına çift tıklamakla aynı: açık oyunun penceresi koyduğum yeri unutur, videonun sağındaki sütuna döner (videonun üstüne hiç çıkmaz).' },
-        tab: 'games',
-        available: () => (shownKind() ? true : { en: 'no game open', tr: 'açık oyun yok' }),
-        run: resetFloat,
-      },
-      {
-        id: 'gameWindow.autoPause',
-        title: { en: 'Game window: pause as a table would', tr: 'Oyun penceresi: masa açılınca olduğu gibi durdur' },
-        help: { en: 'Runs what opening a table in the video’s place does: if the video plays, it pauses for everyone and a short note says why.', tr: 'Bir masa videonun yerinde açılınca olanı yapar: video oynuyorsa herkes için durur ve kısa bir not nedenini söyler.' },
-        tab: 'games',
-        available: () => (current && (mode === 'stage' || mode === 'max') ? true : { en: 'no table open in the video’s place or full screen', tr: 'videonun yerinde ya da tam ekranda açık masa yok' }),
-        run: autoPause,
-      },
-      {
-        // GW2: the table's two modes, and what the window is doing (for the harnesses and a hand check).
-        id: 'games.mode',
-        title: { en: 'Table: ⛶ full screen or 🪟 frame', tr: 'Masa: ⛶ tam ekran ya da 🪟 çerçeve' },
-        help: {
-          en: 'With "full" or "frame" switches my open table to that mode (as its head’s button does), with nothing it flips it. Writes the mode, whether the browser’s real full screen took it (else the window fills the page), whether the video was paused for it, and where the frame stands.',
-          tr: '"full" ya da "frame" ile açık masamı o moda geçirir (başlığındaki düğme gibi), boş bırakılırsa değiştirir. Modu, tarayıcının gerçek tam ekranının olup olmadığını (yoksa pencere sayfayı doldurur), video bunun için durdu mu ve çerçevenin nerede durduğunu yazar.',
-        },
-        tab: 'games',
-        available: () => (current && !modeButton.node.hidden ? true : { en: 'no table open on a computer or tablet', tr: 'bilgisayar ya da tablette açık masa yok' }),
-        run: (arg?: string) => {
-          if (arg === 'full' || arg === 'frame') setTableMode(arg);
-          else if (!arg) setTableMode(tableMode() === 'full' ? 'frame' : 'full');
-          const box = stage.getBoundingClientRect();
-          return JSON.stringify({ mode: tableMode(), place: mode, realFullscreen: realFull(), pausedForFull, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() });
-        },
-      },
-      {
-        // GP1: the open time of the last game I opened from the hall (the card's budget: ≤ 300 ms for Classics and Snack Bar).
-        id: 'games.openTime',
-        title: { en: 'Games: how fast the last game opened', tr: 'Oyunlar: son oyun ne kadar hızlı açıldı' },
-        help: {
-          en: 'Writes which game I opened last and how many milliseconds passed from the click in the hall to its first frame.',
-          tr: 'En son açtığım oyunu ve salondaki tıklamadan ilk karesine kadar kaç milisaniye geçtiğini yazar.',
-        },
-        tab: 'games',
-        available: () => (lastOpen ? true : { en: 'open a game from the hall first', tr: 'önce salondan bir oyun aç' }),
-        run: () => JSON.stringify(lastOpen),
-      },
-      {
-        id: 'gameWindow.hall',
-        title: { en: 'Game window: open the hall from its 🎮', tr: 'Oyun penceresi: 🎮 ile salonu aç' },
-        help: { en: 'Presses the 🎮 in the open game window’s head: the games hall opens right under it.', tr: 'Açık oyun penceresinin başındaki 🎮’ya basar: oyun salonu hemen altında açılır.' },
-        tab: 'games',
-        available: () => (!stage.hidden ? true : { en: 'no game window on screen', tr: 'ekranda oyun penceresi yok' }),
-        run: () => hubButton.node.click(),
-      },
-      {
-        id: 'gameWindow.more',
-        title: { en: 'Game window: the phone head’s ⋯ menu', tr: 'Oyun penceresi: telefon başlığının ⋯ menüsü' },
-        help: { en: 'On an upright phone with a table open: presses ⋯ in the head, which holds “Leave table” and “Close table” (each asks first where it did before).', tr: 'Dik telefonda bir masa açıkken başlıktaki ⋯’ya basar: içinde “Masadan kalk” ve “Masayı kapat” var (önceden sorduklarında yine sorarlar).' },
-        tab: 'games',
-        available: () => (!moreButton.node.hidden && !stage.hidden ? true : { en: 'no ⋯ in the head (an upright phone with a table only)', tr: 'başlıkta ⋯ yok (yalnız dik telefonda, masa açıkken)' }),
-        run: () => moreButton.node.click(),
-      },
-      {
-        id: 'phoneGames.state',
-        tab: 'games',
-        title: { en: 'Phone games: the tab, the game and its fit', tr: 'Telefonda oyunlar: sekme, oyun ve sığması' },
-        help: {
-          en: 'Writes the open tab, the game in the Games tab, whether it fits the panel (its scale, anything cut off) and whether the room is held upright into the log.',
-          tr: 'Açık sekmeyi, Oyunlar sekmesindeki oyunu, panele sığıp sığmadığını (ölçeği, kesilen bir şey) ve odanın dik tutulup tutulmadığını kayda yazar.',
-        },
-        available: () => phoneTab() || { en: 'not the phone room', tr: 'telefon odası değil' },
-        run: () => JSON.stringify(phoneGamesState()),
-      },
-    ],
+  // Test Lab (bug W1–W5, GW2, GP1): the game window's commands live in the lab's own chunk (lab-tools.ts), so the room
+  // page doesn't download their texts (scripts/size-budget.mjs). With the lab off nothing loads.
+  const windowLab: WindowLab = {
+    kind: shownKind,
+    place: () => mode,
+    table: () => !!current,
+    reset: resetFloat,
+    autoPause,
+    modeShown: () => !modeButton.node.hidden,
+    setMode: (arg) => {
+      if (arg === 'full' || arg === 'frame') setTableMode(arg);
+      else if (!arg) setTableMode(tableMode() === 'full' ? 'frame' : 'full');
+      const box = stage.getBoundingClientRect();
+      return { mode: tableMode(), place: mode, realFullscreen: realFull(), pausedForFull, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
+    },
+    lastOpen: () => lastOpen,
+    shown: () => !stage.hidden,
+    hall: () => hubButton.node.click(),
+    moreShown: () => !moreButton.node.hidden,
+    more: () => moreButton.node.click(),
+    phoneTab,
+    phoneState: phoneGamesState,
     status: () => {
       const kind = shownKind();
-      if (!kind) return [];
+      if (!kind) return '';
       const where = stage.hidden ? 'minimized' : mode;
       const home = mode === 'float' && !spot ? ' · home' : '';
       const hall = !menu.hidden && menu.parentElement === headMenuWrap ? ` · hall ${headMenuWrap.dataset.side ?? ''}` : '';
       const labelled = stage.classList.contains('head-labels') ? ' · labels' : '';
       const paused = pausedAt ? ` · paused the video ${Math.round((Date.now() - pausedAt) / 1000)} s ago` : '';
-      return [[{ en: 'Game window', tr: 'Oyun penceresi' }, `${kind} · ${where}${home}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`]];
+      return `${kind} · ${where}${home}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`;
     },
-  }));
+  };
+  const loadWindowLab = () => void loadChunk(() => import('./lab-tools.ts')).then((m) => m?.registerWindowLab(windowLab));
+  // The lab already on: ready at once (the harnesses run these right after a game opens). Switched on later: the first
+  // look at the lab loads the chunk, which registers the real commands in place of this empty entry.
+  if (labIsOn()) loadWindowLab();
+  else debugHooks.register('gameWindow', () => (loadWindowLab(), { commands: [] }));
 
   return {
     /**
