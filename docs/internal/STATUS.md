@@ -8,8 +8,12 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
-  phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
+- [ ] B2, card CI3 (claude/ci3-release-train): [x] tested-code mark + main tests untested combinations; [x] settle
+  (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
+  merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
+  merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
+- [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
+  (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -100,6 +104,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   typing swaps 🎙 📷 for ➤; 😀 sends a reaction and "🖼 Send an image"; Search adds and plays a video; the Me tab;
   sideways ⛶ / 💬 / 🎙 with a message count; the welcome sound starts with the picture; the line "Sidelit is made for
   computers…" under "Enter room".
+- [ ] 27i. [CH1, 0.9.97.141] In a room, chat a while with a friend (or use 🐞 Test Lab → "Chat: add 250 numbered messages" on a
+  test server), leave and come back later: the earlier messages are still there; scroll up and older ones load.
 - [ ] 27f. [SRC1, 0.9.97.136] In a room (computer, then the phone's 🔍 Search tab): press ⠿ → Vimeo, type a few
   words + Enter: before the VIMEO_TOKEN secret the tile and the search say "Not available yet" (the real search is
   27g). ⠿ → Search the web: a new tab opens with your words; come back, the box asks for the link.
@@ -120,6 +126,16 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
   back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in
   the private feedback repository. On the phone the same two buttons are on their row in the People list.
+- [ ] 27h. [GMP-a, 0.9.97.138] With a friend at Sea Battle and your phone as a third person: open 🎮 on the phone and
+  Join the table: you watch, and you see both fleets as they are shot; the friend never sees yours. Same in the Five
+  Frames Duel: the phone shows both boards with their letters. Five Frames in English and Turkish: new everyday words
+  are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
+- [ ] 27j. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
+  it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
+  watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.
+- [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
+  YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
+  YouTube"; clicking the logo opens youtube.com in a new tab.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

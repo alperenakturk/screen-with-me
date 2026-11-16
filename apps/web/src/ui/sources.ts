@@ -3,6 +3,7 @@ import { t, type I18nKey } from '../i18n.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { flashHint } from './hint.ts';
 import { loadChunk } from './lazy.ts';
+import type { TikTokDoor } from './sources-pop.ts';
 
 /**
  * Card SRC1: the ⠿ Sources picker beside the link box (computer room and the phone's 🔍 Search tab). Three tiles pick
@@ -22,19 +23,6 @@ const SOURCES: readonly Source[] = ['youtube', 'vimeo', 'web'];
 const KEY = 'searchSource';
 /** One general search engine (the owner's pick: Google; no site filters). */
 const WEB_SEARCH = 'https://www.google.com/search';
-const TIKTOK = 'https://www.tiktok.com/';
-/** How long "📋 Paste and play" waits after coming back from TikTok. */
-const PASTE_MS = 120_000;
-
-/** TikTok's own page: its search for the words, or its home page with none. */
-export function tiktokUrl(words: string): string {
-  const query = words.trim();
-  if (!query) return TIKTOK;
-  const url = new URL('search', TIKTOK);
-  url.searchParams.set('q', query);
-  return url.toString();
-}
-
 export function webSearchUrl(words: string): string {
   const url = new URL(WEB_SEARCH);
   url.searchParams.set('q', words.trim());
@@ -63,11 +51,8 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   let last: { source: Source | 'tiktok'; words: string; result: string } | null = null;
   /** Set when "Search the web" opened a tab: the next time the room is shown again, the paste hint. */
   let awayForWeb = false;
-  /** Set when the ♪ TikTok tile opened TikTok: coming back shows "📋 Paste and play". */
-  let awayForTikTok = false;
-  let pasteTimer = 0;
-  const paste = el('button', { type: 'button', class: 'btn primary sources-paste', id: 'sources-paste', hidden: '' }, `📋 ${t('sources.paste')}`);
-  form.after(paste);
+  /** Card SR2: the ♪ TikTok door and its "📋 Paste and play", from the picker's lazy chunk (null until it loads). */
+  let door: TikTokDoor | null = null;
 
   const pop = el('div', { class: 'sources-pop', id: 'sources-pop', role: 'radiogroup', hidden: '' });
   form.append(pop);
@@ -112,65 +97,16 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
         tile.addEventListener('click', () => choose(value));
         return tile;
       }),
-      tiktokTile(),
+      ...(door ? [door.tile()] : []),
     );
   }
 
-  /** ♪ TikTok: not a source (no search API), a door to TikTok itself. */
-  function tiktokTile(): HTMLButtonElement {
-    const tile = el(
-      'button',
-      { type: 'button', class: 'sources-tile sources-tiktok', 'data-source': 'tiktok', title: t('sources.tiktokHint') },
-      el('span', { class: 'sources-icon', 'aria-hidden': 'true' }, '♪'),
-      el('span', { class: 'sources-name' }, t('sources.tiktok')),
-      el('span', { class: 'sources-note muted small' }, t('sources.tiktokNote')),
-    );
-    tile.addEventListener('click', () => tiktok(input.value));
-    return tile;
-  }
-
-  function tiktok(words: string): void {
-    // A link already in the box is not a search: TikTok's home page.
-    const query = /^\s*https?:/i.test(words) ? '' : words;
-    const opened = window.open(tiktokUrl(query), '_blank', 'noopener');
-    note('tiktok', query.trim(), opened === null ? 'opened (no handle)' : 'opened');
-    close();
-    if (query.trim()) input.value = '';
-    awayForTikTok = true;
-    flashHint(button, t('sources.tiktokHint'), 4500);
-  }
-
-  function showPaste(on: boolean): void {
-    paste.hidden = !on;
-    clearTimeout(pasteTimer);
-    if (on) pasteTimer = window.setTimeout(() => showPaste(false), PASTE_MS);
-  }
-  paste.addEventListener('click', async () => {
-    let text = '';
-    try {
-      text = (await navigator.clipboard.readText()).trim();
-    } catch {
-      /* no clipboard access (refused, or an old browser): the box takes a normal paste */
-    }
-    if (!text) {
-      showPaste(false);
-      input.focus();
-      flashHint(input, t('sources.pasteManual'), 4500);
-      return;
-    }
-    showPaste(false);
-    input.value = text;
-    note('tiktok', '', 'pasted');
-    // The room's own path for links: one link plays now; several, the first plays and the rest are queued.
-    form.requestSubmit(form.querySelector<HTMLButtonElement>('button[value=load]'));
-  });
-  // Typing or submitting something else means the person moved on.
-  form.addEventListener('submit', () => showPaste(false));
-
-  let styled = false;
   async function open(): Promise<void> {
-    // The tiles' styles come with a small chunk on the first open (the room page's CSS budget).
-    if (!styled) styled = !!(await loadChunk(() => import('./sources-pop.ts')));
+    // The tiles' styles and the TikTok door come with a small chunk on the first open (the room page's budget).
+    if (!door) {
+      const chunk = await loadChunk(() => import('./sources-pop.ts'));
+      door = chunk ? chunk.tiktokDoor({ form, input, button, note, close }) : null;
+    }
     draw();
     pop.hidden = false;
     button.setAttribute('aria-expanded', 'true');
@@ -222,13 +158,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     awayForWeb = true;
   }
   const back = () => {
-    if (document.hidden) return;
-    if (awayForTikTok) {
-      awayForTikTok = false;
-      showPaste(true);
-      paste.focus();
-      return;
-    }
+    if (document.hidden || door?.back()) return;
     if (!awayForWeb) return;
     awayForWeb = false;
     input.focus();
@@ -245,7 +175,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   // A language change re-applies the box's default placeholder: put this source's back.
   addEventListener('langchange', () => {
     label();
-    paste.textContent = `📋 ${t('sources.paste')}`;
+    door?.relabel();
     if (!pop.hidden) draw();
   });
 
@@ -259,7 +189,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
           en: 'Writes the ⠿ source (YouTube, Vimeo or the web), whether Vimeo search is on at the server and the last search into the log.',
           tr: '⠿ kaynağını (YouTube, Vimeo ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.',
         },
-        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last, pasteShown: !paste.hidden }),
+        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last, pasteShown: door?.pasteShown() ?? false }),
       },
     ],
   }));

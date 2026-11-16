@@ -4187,18 +4187,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   border-color: var(--border);
 }
 
-/* Büyüt: videonun tamamını kaplar */
-.live-window.big {
-  inset: 0;
-  width: auto;
-  aspect-ratio: auto;
-  border-radius: 0;
-}
-
-.live-window.big {
-  cursor: default;
-}
-
 .live-window.dragging {
   cursor: grabbing;
 }
@@ -4207,28 +4195,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
 .live-window.free {
   position: fixed;
   z-index: 820;
-}
-
-.live-resize {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 20px;
-  height: 20px;
-  cursor: nwse-resize;
-  opacity: 0;
-  transition: opacity 0.15s;
-  background:
-    linear-gradient(135deg, transparent 55%, rgb(255 255 255 / 0.8) 55% 62%, transparent 62% 72%,
-      rgb(255 255 255 / 0.8) 72% 79%, transparent 79%);
-}
-
-.live-window:hover .live-resize {
-  opacity: 1;
-}
-
-.live-window.big .live-resize {
-  display: none;
 }
 
 .live-window video {
@@ -7135,12 +7101,6 @@ html:not(.phone) .live-card.active .live-quality select {
   color: var(--on-accent);
 }
 
-/* Kartta: kutuların altında "⧉ Serbest bırak" */
-.cam-pop {
-  margin-top: 6px;
-  font-size: 12px;
-}
-
 .voice-cams.floating {
   position: fixed;
   z-index: 800;
@@ -7164,11 +7124,6 @@ html:not(.phone) .live-card.active .live-quality select {
 .voice-cams.dragging {
   cursor: grabbing;
   opacity: 0.92;
-}
-
-.voice-cams.floating .cam-pop,
-.voice-cams.in-fs .cam-dock-btn {
-  display: none;
 }
 
 .voice-cams.floating .cam-bar {
@@ -7809,7 +7764,6 @@ button.together-person:focus-visible .together-name {
   padding: 0;
 }
 
-.voice-cams.free.in-fs .cam-dock-btn,
 .voice-cams:not(.free) :is(.cam-lineup, .cam-reset) {
   display: none;
 }
@@ -10705,14 +10659,25 @@ html.in-room .room-title-dot {
   min-height: 28px;
 }
 
-/* Card Y1: "Results from YouTube · YouTube Terms of Service" under every list of YouTube API results. */
+/* Card Y1: "Results from YouTube · YouTube Terms of Service" under every list of YouTube API results. Card YTQ1
+   (Design): a flex row, so beside the logo the text wraps in its own column, never under it (the logo's clear space);
+   flex items keep their min-content width, so the logo is never squeezed. */
 .yt-attrib {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 6px 0 0;
   color: var(--muted);
 }
-
 .yt-attrib a {
   color: var(--accent-hover);
+}
+
+/* YouTube's own logo file, unchanged (its clear space is inside the PNG): white wordmark on dark themes, Almost Black
+   on Matinee (card YTQ1). */
+[data-theme=matinee] .yt-logo-w,
+:root:not([data-theme=matinee]) .yt-logo-a {
+  display: none;
 }
 
 /* The camera count in "In voice 1/6 · [camera] 1/4" uses our line icon (0.9.96.23). */

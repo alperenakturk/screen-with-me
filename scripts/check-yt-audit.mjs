@@ -35,7 +35,7 @@ check(links(terms.html, 'https://www.youtube.com/t/terms'), 'terms: links the Yo
 check(/agree to/.test(terms.html), 'terms: says using Sidelit with YouTube means agreeing to YouTube\'s terms (III.A.1)');
 check(links(terms.html, 'https://policies.google.com/privacy'), 'terms: links the Google Privacy Policy');
 
-const logo = await fetch(`${origin}/brand/youtube-icon.svg`, { signal: AbortSignal.timeout(15_000) }).catch(() => null);
+const logo = await fetch(`${origin}/brand/yt_logo_fullcolor_white_digital.png`, { signal: AbortSignal.timeout(15_000) }).catch(() => null);
 check(logo?.status === 200, 'the YouTube logo file answers (branding beside the result lists)');
 
 console.log(fails ? `\n✗ ${fails} check(s) failed` : `\n✓ ${origin}: privacy, terms and the YouTube logo are ready for the audit`);

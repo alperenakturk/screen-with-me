@@ -4,7 +4,7 @@ import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { loadChunk } from './lazy.ts';
 import { resultRow } from './result-row.ts';
-import { debugHooks } from '../debug-lab.ts';
+import { ytLogo } from './yt-logo.ts';
 
 export type AddMode = 'enqueue' | 'load';
 
@@ -73,15 +73,19 @@ export function createSearch(
     head.append(x);
     return head;
   }
-  /** Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. */
+  /**
+   * Card Y1 (YouTube Developer Policies III.F.2): the results say where they come from and link YouTube's Terms. YTQ1
+   * (owner, 15 Nov 2026; YouTube Branding Guidelines): the YouTube logo beside them, linking to YouTube.
+   */
   function attribution(): HTMLElement {
     const terms = el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms'));
-    return el('p', { class: 'yt-attrib small' }, `${t('yt.from')} · `, terms);
+    return el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, `${t('yt.from')} · `, terms));
   }
   let lastQuery = '';
   /** The list's styles come with a small chunk on the first search (it still works without them). */
   let styled: Promise<unknown> | null = null;
-  const styles = () => (styled ??= loadChunk(() => import('./search-list.ts')));
+  const styles = () =>
+    (styled ??= loadChunk(() => import('./search-list.ts')).then((chunk) => chunk?.watchResults(panel, () => lastQuery)));
 
   function row(result: SearchResult): HTMLElement {
     const meta = [result.short ? t('searchShort') : '', result.channel, result.live ? t('searchLive') : result.duration ? formatDuration(result.duration) : ''].filter(Boolean).join(' · ');
@@ -208,35 +212,6 @@ export function createSearch(
   document.addEventListener('pointerdown', (event) => {
     if (!panel.hidden && !form.contains(event.target as Node)) close();
   });
-
-  // Card SR2: what the open results list offers, row by row (a row plays; its "＋ Queue" queues).
-  debugHooks.register('search', () => ({
-    commands: [
-      {
-        id: 'search.results',
-        tab: 'status',
-        title: { en: 'Search results: each row and its buttons', tr: 'Arama sonuçları: her satır ve düğmeleri' },
-        help: {
-          en: 'Writes the open results list into the log: each row’s title, that a tap plays it, its “＋ Queue” button and their sizes.',
-          tr: 'Açık sonuç listesini kayda yazar: her satırın başlığı, dokununca açıldığı, “＋ Sıraya” düğmesi ve boyutları.',
-        },
-        run: () => {
-          const size = (node: Element | null) => {
-            const r = node?.getBoundingClientRect();
-            return r ? `${Math.round(r.width)}×${Math.round(r.height)}` : null;
-          };
-          const rows = [...panel.querySelectorAll('.search-row')].map((row) => ({
-            title: row.querySelector('.search-title')?.textContent ?? '',
-            play: row.querySelector('.search-main')?.getAttribute('title') ?? null,
-            playSize: size(row.querySelector('.search-main')),
-            queue: row.querySelector('.search-queue')?.textContent ?? null,
-            queueSize: size(row.querySelector('.search-queue')),
-          }));
-          return JSON.stringify({ open: !panel.hidden, query: lastQuery, rows });
-        },
-      },
-    ],
-  }));
 
   return { search, vimeo, close };
 }

@@ -281,8 +281,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   opened in the Shorts view; the cache key is `yt-search2`) (each has a friendly note; links
   always still work). The thumbnail is built from the id (`i.ytimg.com`, already in the CSP); the page also caches
   full answers in memory. A row adds to the queue (plays at once in an empty room), "▶ Şimdi aç" loads it. Privacy
-  policy has a "YouTube search" section (YouTube API Services, YouTube Terms, Google privacy policy). A quota increase
-  needs Google's API compliance audit (owner, before 1.0). Test: `scripts/e2e/search.mjs` (live: real results or
+  policy has a "YouTube search" section (YouTube API Services, YouTube Terms, Google privacy policy). Every YouTube result
+  list (search, the Shorts view's ＋ Add search, the ♾ Discover window) ends with `.yt-attrib`: **YouTube's own full logo**
+  (YTQ1, 0.9.97.140; YouTube Branding Guidelines: the logo beside the API results, linking to YouTube; `ui/yt-logo.ts`
+  `ytLogo()` / `ytLogoHtml()`, `a.yt-logo` → youtube.com, never over the player). The files are YouTube's PNGs byte for
+  byte (`public/brand/yt_logo_fullcolor_{white,almostblack}_digital.png`, originals and rules in
+  `docs/internal/youtube-audit/brand/`), only scaled by the browser: `YT_LOGO_HEIGHT` 40 px with the clear space inside
+  the file, so the drawing is 20 px tall (the brand page asks 100 px; it can't fit the 260 px Shorts windows or a phone,
+  Planner's call, written in the audit's self-check row 8). White wordmark on the dark themes, Almost Black on Matinee
+  (`room.css` hides `.yt-logo-w` / `.yt-logo-a` by `[data-theme]`). Then "Results from YouTube ·
+  YouTube Terms of Service" (Y1). A quota increase needs Google's API compliance audit (card YTQ1; the pack is
+  `docs/internal/youtube-audit/`). Test: `scripts/e2e/search.mjs` (live: real results or
   `quota`).
 - **TikTok (0.9.91.19, PDF item 2, `players/tiktok.ts`):** `{kind:'tiktok', id, user?}` (optional new kind, no version
   bump: `cleanMedia` validates `TIKTOK_ID` / `TIKTOK_USER`). Links: `tiktok.com/@user/video/<id>`, `/v/<id>`,
@@ -338,7 +347,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
-  - **♪ TikTok (card SR2, 0.9.97.144):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
+  - **♪ TikTok (card SR2):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
     stays): TikTok has no search API. It opens `tiktokUrl(words)` (`https://www.tiktok.com/search?q=<words>`, the home
     page with no words or a link in the box) with `window.open(..., '_blank', 'noopener')`; on a phone the TikTok app
     takes the link when installed. Coming back (`visibilitychange` / `focus`) shows `#sources-paste` "📋 Paste and play"
@@ -351,7 +360,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
   `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile, SR2's row tap / ＋ Queue,
   TikTok tab and Paste and play).
-- **Results rows (card SR2, 0.9.97.144):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
+- **Results rows (card SR2):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
   `ui/vimeo-results.ts`, podcast episodes `ui/podcasts.ts`) builds its rows with `ui/result-row.ts` `resultRow`: the
   row's `.search-main` button plays now (`'load'`, the list closes and the box empties; on a phone the Search tab goes
   back to the Room tab, `phone-room.ts`), and `.search-queue` "＋ Queue" / "＋ Sıraya" queues (`'enqueue'`; `room.ts`
@@ -1172,7 +1181,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   **🚢 Sea Battle (Game Studio, owner's pick C, `docs/internal/design/games/sea-battle.md`):** room kind `sea`, its own
   object `Sea` (`apps/server/src/sea.ts`, binding `FLEETS`, migration `v12`, `/api/sea/:id/ws`) on the Poker pattern:
   both fleets live only there and every connection gets its own view (`view`: my ships, the other sea's shots and sunk
-  ships; both fleets once the game is over); watchers never see a ship. Rules, protocol and the bot in
+  ships; both fleets once the game is over). GMP: a watcher (a connection that said hello and has no seat) gets both
+  fleets live; a seated player never does (`seaShipsVisible(viewer, side, watcher, over)` in the shared rules, unit
+  tested; e2e `sea.mjs` checks no player message carries the other fleet). A watcher's phone looks at the sea being
+  shot at. Lab `seaBattle.state` (phase, seat, turn, players, watchers, `seasWithShips`). Rules, protocol and the bot in
   `packages/shared/src/games/sea.ts`: `SEA_RULES` holds the owner's rule picks in one place (sea size, fleet, shoot
   again after a hit, may ships touch), `checkFleet`, `randomFleet`, `shotResult`, `sunkShips`, `knownEmpty` (water around
   a sunk ship when ships may not touch); Glowbeam `botShot` (easy: random, then next to a hit; medium: counts how the
@@ -1205,12 +1217,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   A guess after the game was decided gets `error over` (two winning guesses at once: the first processed wins).
   `sit` only between games (a free or away seat). The page `games/duel.ts` + `duel.css` (lazy chunk, own `TEXT`,
   reuses `five-frames.css`; `.ff.duel`, `data-table` = the table id): my tickets left, the other's marks right (watchers:
-  both); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
+  both, GMP: with their letters live, `duelWordsVisible` in the shared rules; players get letters only at the end; on a
+  phone a watcher sees both boards whole); lab `duel.state` (phase, seat, players, watchers, `boardsWithLetters`); on a phone their marks are a strip (one column per guess); the alphabetical tray while playing; the keyboard
   types only while the board has the focus. GPRO: while the table waits, a lobby card (`.duel-lobby`: title, rules,
   faces, EN / TR chips; Glowbeam's line and Ready move into it) like the other tables' lobbies. Lab commands `duel.answer`, `duel.win`, `duel.match`, `duel.silent` (`lab` op `answer`,
   local lab server only). Tests: unit `duel.test.ts`, e2e `duel.mjs` (no message carries the word or the other's
   letters before the end, reconnect, a simultaneous finish, rematch = practice, a draw), `games-sweep` `duel` /
-  `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; in CI).
+  `duelPlay` (Sam joins as a socket), `games-pair` `duel` (reload, network drop; GMP: Robin watches Sea Battle and the Duel on a 360×640 phone; in CI).
   NG1 (0.9.97.103): own cover (`art/covers/duel.svg`); two lobby choices, message `settings` (`bestOf` 1 | 3, `hard`),
   only between matches, resets Ready (mid-match `error in_progress`). Best of three (`matchOver`, `matchWinner`;
   saved `matchWins`, `matchGames`): game 1 is the day's word, the next ones practice words; the bar shows "Game n of 3 ·
@@ -1325,10 +1338,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "🌱 2 growing · 📖 3/8". Harness `scripts/harness/garden/run.cjs` (17 checks).
   **🎟️ Five Frames (0.9.95.5, card "Daily word game", board A "ticket row", name owner's pick):** `games/five-frames.ts`
   + `five-frames.css` (lazy chunk, own `TEXT`), rules `@swm/shared/games/five-frames`, word lists as their own chunks
-  per language (`packages/shared/src/games/words/en.ts` 8636 guesses from ENABLE, public domain, 977 answers; `tr.ts` 4793 guesses from
-  the Zemberek-NLP lexicon, Apache 2.0, â/î/û as a/i/u, 1606 answers): `WORDS` = all guesses glued together (five
-  letters each), `ANSWERS` = base-36 positions in it (not plain text), our own picks of common words (no suffixes, no
-  grim words). Credits + the Apache licence text: `apps/web/public/third-party-notices.txt` ("About the word lists" in
+  per language, generated by `scripts/words/build-words.py` (GMP: `en.ts` 11,509 guesses from ENABLE + SCOWL, 2,052
+  answers; `tr.ts` 15,057 guesses from the Zemberek-NLP lexicon, Apache 2.0, lemmas plus the five-letter forms we make
+  from them, 2,235 answers; how, sources and the eye review: `docs/internal/research/word-game.md` "Shipped lists"):
+  `WORDS` = all guesses glued together (five letters each), `ANSWERS` = base-36 positions in it (not plain text), our
+  own picks of common words (no suffixes, no grim words). `words/blocked.ts` (LDNOOBW five-letter words + our excludes)
+  is read only by `words.test.ts` (≥ 10,000 guesses, ≥ 2,000 answers, Turkish lower case, no blocked answer). Credits,
+  the SCOWL notice and the Apache licence text: `apps/web/public/third-party-notices.txt` ("About the word lists" in
   the game). Seven ticket rows (stub, tear line, five cells: gold ✓ / gold outline • / faded), alphabetical tray (10 a
   row, Turkish 11), ⌫ + gold Enter; EN / TR switch (`fiveFrames:lang`, each its own day and stats); the result line,
   "📋 Copy result" (`🍿 Five Frames #12 · 4/7`), "a new word in …". The physical keyboard types only while the board
@@ -1697,13 +1713,27 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the screen's frames drive it and a background tab doesn't freeze it; hidden where unsupported); quality changes go
   to the real screen track; the browser's "Stop sharing" ends the composed track too. `LiveKind` 'camera' stays in the
   protocol for old clients. Test: `voice/live.mjs` (19 checks).
-  **0.9.91.15 free stream window (owner: "free like the cameras", `ui/live-float.ts`):** (LAYOUT1: the in-video default is the top right, `y: 0.04`, clear of the player's own bar; at least 150 px wide on a phone, `PHONE_MIN_WIDTH`, 200 elsewhere) `#live-window` sits in the
-  video (default) or floats on the page (⧉ / ⤓, `opt:livePlace`; not under 700 px); drag anywhere, corner grip resizes
-  (16:9 kept), double click resets; places as shares of the container in `liveSpot:video` / `liveSpot:free` /
-  `liveSpot:fs`; in fullscreen (real or `.fake-fs`) it always lives inside the video; ⤢ covers the video (a free window
-  comes back into it). A free window is `data-island` (shown over the hole on the film page). 🙈 hides my own preview
-  (`opt:liveSelfHidden`; viewers still get it), "👁 Yayınımı göster" in the stream card brings it back. Test:
-  `voice/live.mjs` (30 checks: drag, pop out, resize, remembered after a reload, inside fullscreen, hide my own).
+  **ST1 stream viewer (0.9.97.139, owner: "one button: fullscreen or a window I can put anywhere; simple"; `ui/live-float.ts`):**
+  a viewer has **one** control in the window's bar, `#live-mode`: "⛶ Fullscreen" ⇄ "🪟 Window" (`live.fullscreen` /
+  `live.window`, titles `live.fullscreenHint` / `live.windowHint`; under 280 px wide it shows the icon only). The old ⧉ / ⤓
+  (in the video ⇄ on the page, `opt:livePlace`) and ⤢ ("bigger / smaller") are gone. On a computer the window always
+  floats on the page (`.free`, `data-island`): drag anywhere, the corner grip resizes (16:9 kept), double click resets;
+  place and width are shares of the screen in `liveSpot:free`, so they survive a reload. "⛶ Fullscreen" is the browser's
+  fullscreen for `#live-window` alone (a `.filled` cover-the-screen fallback where the Fullscreen API is missing; Escape
+  leaves it); "🪟 Window" goes back to the same place and size. In the room's fullscreen (real or `.fake-fs`) the window
+  lives inside the video (`liveSpot:fs`); under 700 px (a phone) it stays inside the video (`liveSpot:video`, at least
+  150 px, `PHONE_MIN_WIDTH`), the phone room's own sideways behaviour unchanged. With a YouTube player (`.yt-rail` on the
+  theater, not a phone) the free window never covers it: `clearOfPlayer` moves it beside the player on the nearest side
+  where it fits, else shrinks it (16:9, ≥ 200 px) to the roomiest side, on drag, resize and every placement. In the
+  room's fullscreen on a YouTube player the window hides (`.yt-away`; RMF: nothing of ours over the player) and
+  `#dock-stream` "📺" (`live.backToStream`, made by `live-float.ts` in the rail's first group) leaves fullscreen and shows
+  it again; other players keep the window inside their fullscreen. The grip and
+  fullscreen rules live in `ui/live-float.css`; with no saved place the window first opens over the video's top right (`firstFree`), never over the side panel (loaded with the lazy `live-engine` chunk; room.css stays in its budget).
+  🙈 hides my own preview (`opt:liveSelfHidden`; viewers still get it), "👁 Yayınımı göster" in the stream card brings it
+  back. Test Lab `stream.view` (🎬 tab): the viewer's mode, box, on screen, over a YouTube player (never). Test:
+  `voice/live.mjs` (`SWM_W` / `SWM_H`; run at 1366, 1920 and 1180 × 820): one toggle, a free window, drag, corner resize,
+  ⛶ → fullscreen → 🪟 back to the same place, remembered after a reload, inside the room's fullscreen, beside a YouTube
+  player, hide my own.
   **Card R1 (0.9.97.8, owner's test round 1: "a game throws people out of the room / the stream, opens only on the
   second press"; root cause: every deploy restarts the room's object and closes every room connection, the owner tested
   while ~10 versions went live):** like voice since 0.9.91.16, a welcome with my old member id keeps the stream
@@ -1830,6 +1860,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Chat bubbles** (`ui/chat.ts`): mine on the right in the accent color (no avatar), others on the left with avatar
     + name; consecutive messages from the same person within 3 min merge (`.cont`); room actions centered between thin
     lines; send arrow (`#chat-send`) inside the box.
+  - **Chat kept until the room is deleted (card CH1, 0.9.97.141):** the server keeps the chat in pages
+    (`packages/shared/src/chat-store.ts` `ChatStore`): `chatp:<n>` = 50 messages each (≤ 128 KiB a value), `chatMeta` =
+    `{first, last}`; a message rewrites only the last page (written with the room's first message too, so a short chat
+    survives a restart); past `CHAT_KEEP` (1000) the oldest page goes (1000–1050 kept); deleting the room
+    (`deleteAll`) is the only other wipe; a pre-CH1 room's single `chat` key moves into page 0 on load. `welcome.chat` =
+    the newest two pages (≤ 100) + `chatMore` (the page to ask for); `{t:'chat-older', page}` → `{t:'chat-older', page,
+    messages, more?}` (optional new types, no protocol bump; `chatOlderLimit` 4 burst, 1/s; a bad page is
+    `bad_message`, a missing one empty). Pictures go much earlier on their own (IMG2 time limit, `MAX_CHAT_IMAGES`,
+    counted from the in-memory pages), their messages stay. Client (`ui/chat.ts`): "Show earlier messages" on top and
+    scrolling to the top ask for the next page, which is prepended with the reader's place kept; up to 1200 chat lines
+    stay loaded and room-activity lines have their own cap of 150 (they used to share one 120-line cap, which pushed
+    chat out in a busy room). Test Lab `chat.history` (loaded, activity lines, older page) and lab-only `chat.fill`
+    (250 numbered messages, `{t:'lab', op:'chat-fill'}`); e2e `chat-history.mjs`; harness `scripts/harness/chat-history`
+    (CI `site`).
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count
@@ -2162,13 +2206,62 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `contrast` job, `game-proportions` (6.5 min, which had made `games-more` 12.5) is the `game-windows` job, and the PR's local e2e runs three files at a time (`SWM_E2E_PARALLEL=3`, only with
   `SWM_E2E_UNPACED` on localhost; the files in `run.mjs` `SOLO` that count per address or for the whole server run alone
   after the others; each file's output prints in one piece with its time). The live e2e stays one file at a time:
-  its pacing is per address. **QA1 part 1b:** it runs as the `live-e2e` job, two shards on separate runners (separate
+  its pacing is per address. **QA1 part 1b:** it runs as the `live-e2e` job, in shards on separate runners (three since CI3; separate
   addresses) after `deploy` (which now deploys, waits for the version and checks the domain; output `deployed`):
   `SWM_E2E_SHARD=<i>/<n>`, `scripts/e2e/shard.mjs` puts each file in the lightest shard by its measured live time
   (`LIVE_SECONDS`; a new e2e file is added there, `shard.test.mjs` fails until it is), `fail-fast: false`. The workflow's
-  concurrency group runs main's runs one at a time and never cancels one, so no deploy restarts objects under a shard.
+  concurrency group runs main's runs one at a time and never cancels one once it is past `settle` (CI3), so no deploy
+  restarts objects under a shard.
   `tag` needs `deploy` and `live-e2e`; `tag-live.mjs` `wentLive` counts a commit live when its deploy and every shard
   passed (older runs had no shards).
+  **Card CI3: the release train** (16 Nov 2026; before it a PR was updated from main, re-ran its ≈ 10 min CI and waited
+  for its own ≈ 13 min deploy before the next could start: three ready PRs ≈ an hour).
+  - *Green PRs merge as they are.* A green PR whose files don't overlap main's newer changes is merged without
+    "update from main"; main's run checks the combination.
+  - *Main tests what no PR tested.* `ci-changes.mjs` prints `tree`, a hash of every code file at HEAD (docs left out:
+    a docs-only merge in between changes nothing). The `test` job of a green PR saves a tiny cache `tested-code-<tree>`
+    (`actions/cache/save`; caches are listed across branches by the API, `actions: read`). On main, `proven` is true
+    only when that exact cache exists: main's code is byte for byte what a green PR run tested, so main goes straight
+    to the deploy. Otherwise (two PRs merged without updating, main moved under a PR) the PR test jobs (`e2e`, `site`,
+    `contrast`, `games`, `games-more`, `game-windows`, `state-matrix`, `lab-sweep`, still only those `web` asks for)
+    run on main first, and `test` must pass before `deploy`. Forced case: `ci-changes.test.mjs` "two PRs, each green
+    on its own, merged together".
+  - *Merges close together, one deploy.* The first job on a push to main, `settle` (`scripts/ci-settle.mjs`, the
+    only job with `actions: write`; it always runs and its steps act only on a push, because a skipped job would skip
+    every job after it: on #464's first run all test jobs were skipped and `test` still went green, so `test` now
+    fails when code changed but `checks` did not run), waits until main's head is this run's commit and 2 min old (`SETTLE_S`). If main
+    moved on meanwhile, the run cancels itself: the newer run is pending behind it (the concurrency group keeps one)
+    and its range starts at the last successful run, so it tests and deploys this code too. API trouble or a refused
+    cancel: it goes on (never a lost deploy). Once past `settle` a run is never cancelled.
+  - *No result depends on the date.* The nightly date sweep (`schedule`, 02:17 UTC, its own concurrency group, never
+    deploys) runs every test job on main's code with the browser pages 1–60 days ahead (`SWM_TEST_DAYS=sweep`, from
+    the run number): `.github/actions/prepare` puts `NODE_OPTIONS=--require scripts/harness/forced-date.cjs` into the
+    job's later steps, and the preload moves `Date` in every page Playwright opens (time still runs; `require` and
+    `import` alike; a harness that sets its own day, e.g. `snack-special`, still wins). A failed night opens or updates
+    the issue labelled `date-sweep` with the date; the next green night closes it. Locally:
+    `SWM_TEST_DATE=2027-02-28 NODE_OPTIONS="--require $PWD/scripts/harness/forced-date.cjs" node scripts/harness/<x>/run.cjs …`.
+  - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
+  - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
+  - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
+    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
+  - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
+    extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
+    `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
+    `scripts/release-version.mjs --apply`, numbers the batch: the series in `release-series.txt` (three parts, e.g.
+    `0.9.97`; it changes only when the owner moves the third part, and the next release is then `<series>.1`) + the
+    highest tag's fourth part + 1, written into the footer (`apps/web/index.html`) and the extension
+    (`apps/extension/package.json`) of the checkout before the build, never committed, so both always show the same
+    number. The `tag` job tags it (`RELEASE_VERSION` → `tag-live.mjs`) only after every live e2e shard passed; a
+    failed run makes no tag, and the next run gives the same number again (none burnt). The tag job then publishes a
+    GitHub release `v<version>` whose notes are the `changelog/next/` files added since the previous tag
+    (`scripts/changelog.mjs notes`). Now and then a docs PR runs `node scripts/changelog.mjs fold`: one block per tag
+    not yet in `CHANGELOG.md` (newest first, the same text) and the folded files deleted. The PR check
+    `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
+    version, leaves them on different numbers, or adds a block for an untagged version. The repository's footer and
+    extension files keep the last per-PR number (the one local builds show).
+  - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
+    PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
+    from the first merge.
   **QA1 part 4 (canary rooms, `scripts/e2e/canary.mjs`):** idle room connections that say hello and send the free
   keepalive; the server never closes one by itself, so a close not ours means objects were restarted. Of the last 30
   live runs (10 Nov 2026) the drops came 2.5–5 min after the deploy (after `wait-live.mjs`'s 2 min settle) and once

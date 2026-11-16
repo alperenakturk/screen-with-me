@@ -7,9 +7,8 @@ owner decide whether they become Ready. Roles, who edits what and how the owner 
 on now: `ROADMAP.md` "Focus: now / next / frozen". The owner's tick view is the Planner's board Artifact (`CLAUDE.md` §2).
 
 **A finished card leaves this file in the same PR that writes its `Done:` line**: it moves verbatim to
-`docs/internal/archive/cards-done.md` (DOCS2, 11 Nov 2026; that file also holds the old header, the owner's test rounds
-1 and 2, the run order to the test round and every card finished before then). CI (`scripts/check-docs.mjs`) proves no
-card heading or backticked identifier of the board is lost in a move.
+`docs/internal/archive/cards-done.md` (DOCS2, 11 Nov 2026). CI (`scripts/check-docs.mjs`) proves no card heading or
+backticked identifier is lost in a move.
 
 Card format:
 
@@ -28,6 +27,7 @@ Card format:
 | A | 🔨 Developer: room / site | the site, the room page and the room server, their tests and reference sections | `STATUS.md` task queue "Lane A" |
 | B (+ B2) | 🔨 Developer: players, Shorts, extension, ops | players, Shorts, the extension, CI and the shared test tooling | QA1 below |
 | W | 🔨 Developer: game windows (opened by the Planner when needed) | `apps/web/src/games/stage.ts`, game-window head / drag / fit, `catalog.ts` sizes, the game-window rules in `room.css` | idle (0.9.97.121 live) |
+| Games 2 | 🎮 Game Studio 2 (opened 15 Nov 2026) | the Quiz and Window Garden files only (QZ2, WG2) | its PRs |
 | Games | 🎮 Game Studio | the games' code, art, sounds, tutorials, server objects, `docs/internal/design/games/` | `STATUS.md` task queue "Game Studio" |
 | — | 🛡️ Security · 🔎 Research · 🎨 Design | their own docs; cards go to Proposed | — |
 
@@ -35,7 +35,7 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 ## In progress
 
-(none written on the board; the lanes' handoffs are in `STATUS.md` "Task queue")
+(see `STATUS.md` "Task queue")
 
 ## Ready
 
@@ -141,37 +141,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   the owner's hand test.
 - Owner's pick: his three points (Planner chat, 15 Nov 2026).
 
-### GMP. Bigger table games: Five Frames Duel and Sea Battle for 2–6, spectators see the game, many more words (owner, 15 Nov 2026; Game Studio)
-- Why: the owner wants these two games for groups. He also wants spectators to see what happens ("it's fine if they
-  see, they are friends"), and the word game needs far more words.
-- What:
-  1. **Spectators see the game:** in Sea Battle and the Five Frames Duel a watcher sees every board live. That means
-     the Duel players' letters, and in Sea Battle all ships and shots. Players still never see each other's hidden
-     information (a player sees only their own ships, and in the Duel only the others' colour marks). The server sends
-     watcher views only to watchers.
-  2. **The Five Frames Duel for 2–6 players:** same rules, more players racing on the same word. The finish order
-     ranks them, and the result card shows 1st to 6th. Lobby, head and phone Games-tab layouts fit 6.
-  3. **Sea Battle for 2–6 players:** each player has a sea. On your turn you **choose which player to attack**, then
-     fire; turns go round. A player whose ships are all sunk is out but keeps watching. The last one with ships wins.
-     It is played for fun: no rule forces fairness.
-  4. **Many more words, English and Turkish:**
-     - The answer lists and the accepted-guess lists for both languages grow from open-licensed sources (licence
-       checked: MIT / Apache / BSD / CC0 / CC-BY with attribution in `apps/web/public/third-party-notices.txt`).
-     - Answers are common, clean words: no slurs, no adult words, no proper nouns. Guesses may be broader.
-     - Turkish handles İ/ı correctly.
-     - Size targets are the studio's to propose, e.g. 2,000+ answers and 10,000+ guesses per language.
-     - The lists ship as lazy chunks so the room bundle doesn't grow.
-- Done when:
-  - Every hidden-information rule above is enforced by the server, with unit tests.
-  - Both games run with 2, 3 and 6 players in e2e.
-  - The phone Games tab fits 6 players at 360×640.
-  - The word lists pass a licence note and a profanity filter check.
-  - Test Lab hooks: `seaBattle.state`, `duel.state` (players, turn, target, watchers).
-- Tests: server unit tests (turns, targets, elimination, watcher views), e2e with fake players, games-sweep at phone
-  and laptop, and the owner's hand test with friends.
-- Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
-  studio says which and why before using them.
-
 ### SH2. Feeds: ♾ Shorts and ▶ Videos, reachable from the room, steerable, no repeats (owner, 15 Nov 2026; B2, after SH1)
 - Why: the infinite Shorts feed only lives inside the Shorts view, its window is confusing, and a new feed brings back
   Shorts the room has already watched.
@@ -213,22 +182,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: room server unit tests for the memory and its caps, e2e feed → steer → no repeat, the shorts harnesses, and
   the owner's hand test.
 - Owner's pick: his message (Planner chat, 15 Nov 2026); the memory length is the Planner's call.
-
-### ST1. Watching a screen share: one button, fullscreen or a free window (owner, 15 Nov 2026; B2)
-- Why: the stream viewer has too many confusing controls (fill the screen, frame, shrink, grow).
-- What:
-  - The stream viewer gets **one** control: "⛶ Fullscreen" ⇄ "🪟 Window".
-  - In window mode the stream is a free window that can be dragged anywhere and resized from its corner, keeping its
-    shape and its place after a reload, the same way the camera window does.
-  - Everything else goes from the viewer: fill, frame, ±.
-  - The phone keeps its own sideways behaviour.
-- Done when:
-  - A viewer on a computer has exactly one toggle.
-  - Fullscreen and window both work, and the window drags and resizes smoothly.
-  - Nothing goes over the YouTube player.
-  - Test Lab hook `stream.view`.
-- Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
-- Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
 
 ### VC1. Voice: a deafen button, and the YouTube volume slider (owner, 15 Nov 2026; lane A, after SH1)
 - Why: the owner wants a Discord-like "deafen" in voice, and on YouTube he can't drag the volume, because one click
@@ -309,67 +262,51 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the CI itself (a dry run on a test branch), the measurement in the PR.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 
+### UI2. Rail ⋯ menu: one compact speed control; "Keep the controls open" starts off (owner, 15 Nov 2026; lane A, after EC1)
+- Why: 12 speed buttons tire the eye; the owner found "Keep the controls open" ticked.
+- What:
+  - **Speed:** one row "⏩ Speed · 1×" instead of the grid. Tapping it opens a small picker: 0.5 / 1 / 1.25 / 1.5 / 2
+    plus − / + (or a slider) for a custom speed from 0.25× to 3× in 0.05 steps. YouTube only plays its own rates, so
+    there the custom value snaps to the nearest one. Same control in the phone ＋ sheet; the menu gets shorter.
+  - **Keep the controls open:** `opt:railPin` must start off for everyone. Check that nothing (a migration, Test Lab,
+    a default) turns it on by itself; if nothing does, the owner's browser saved it once (tell the Planner).
+- Done when: speed row + picker work on YouTube, a file and the extension, synced; a fresh browser has the pin off;
+  Test Lab hook `rail.speed`.
+- Tests: sync-engine scenario for a custom rate, room harness for the menu height, phone ＋ sheet harness.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026).
+
+### TH3. Home: a Neon that looks neon, four neutral people, other ideas for the screens (owner, 15 Nov 2026; Design → lane A)
+- Why: the Neon home is "not neon at all"; the people under the devices are tied to one culture; he wants other
+  ideas for the device screens.
+- What:
+  - **Neon home:** glow on the wordmark, buttons and device frames on a dark base, so it reads as neon, but calm:
+    contrast ≥ 4.5:1, no flashing, soft glow. Other themes unchanged.
+  - **The people (every theme):** 4 avatars, 2 women and 2 men, neutral (nothing tied to one nation, culture or
+    religion); the line becomes "4 watching · 2 in voice" (both languages).
+  - **The screens:** Design proposes 2–3 alternatives to today's sunset (a short preview each) and sends them to the
+    Planner as text; the owner picks in the Planner chat; lane A builds the pick. Today's screens stay until then.
+- Done when: Neon home and the 4 people are live in every theme; the screen pick is built or the owner kept today's;
+  shots reviewed (QA1); contrast check green.
+- Tests: `scripts/shots.cjs` home at 4 sizes, every theme; the contrast job.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026); the screens: pending his pick.
+
+### SH3. Shorts view on a computer: the chat in a panel you can open and close (owner's friend, 15 Nov 2026; lane A, after SH1)
+- Why: in the Shorts view on a computer, 💬 opens only a box to send a message; you can't read the chat. A friend of
+  the owner asked to see it, with a panel that opens and closes.
+- What: 💬 in the Shorts view (computer) toggles a chat panel beside the upright video, in the empty space on the
+  right: the room's chat list (newest at the bottom), the message box and 😀, ✕ to close. It never covers the video
+  (nothing over the YouTube player); the open / closed choice is remembered per room (`shortsChat:<room>`); unread
+  count on 💬 while closed. The phone keeps its 💬 sheet (PH1).
+- Done when: open / close, send, read, unread count at 1366 and 1920 and on a sideways tablet; Test Lab hook
+  `shorts.chat`.
+- Tests: Shorts view harness (panel open, no overlap with the player), shots (QA1).
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+
+Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
+
 ## Proposed
 
-### Security: Worker and Durable Object hygiene (R4-6, R4-7, R4-8; lane A)
-- Severity: low
-- Why: small gaps against Cloudflare's best practices: the usage book loses updates under concurrent requests, some abuse
-  buckets live only in memory, failed feedback sends burn the daily cap, `/api/youtube/usage` is unlimited, the poker
-  deck uses `Math.random`, the probe WebSocket never closes, one floating promise, a heavy room constructor, API answers
-  without `nosniff` / `no-store`, observability without traces.
-- Done when: `usage.ts` reads the body before `get`/`put`; feedback checks the token before the gate and has fetch
-  timeouts; `/api/youtube/usage` has a limit; the server shuffles with crypto randomness; the probe socket closes after
-  10 s; `fallback.ts:271` goes through `finish()`; the room loads small keys in one `get([...])` and images at join time;
-  a JSON helper sets `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`; `observability.traces.enabled`.
-- Tests: unit (usage book under two interleaved adds, shuffle source); e2e existing suites; a header check in e2e for
-  one `/api/*` answer.
-- Owner's pick: none needed.
-
-### Security: custom-domain hardening checklist (R3-3)
-- Severity: medium (do it together with the domain purchase)
-- Why: on `workers.dev` there is no WAF, rate-limiting rule, bot protection or HSTS setting; when the domain comes,
-  the old address and preview URLs must not stay open beside it.
-- Done when: `wrangler.jsonc` has the custom domain, `"workers_dev": false`, `"preview_urls": false`;
-  `allowedOrigin`, the extension's `SITE_URL` and the CSP name the new origin; production `localhost` origins are
-  gone; `_headers` sends HSTS; the owner has turned on Always Use HTTPS, minimum TLS 1.2, DNSSEC and one rate-limiting
-  rule on `/api/*` (Bot Fight Mode only after a test that WebSockets, the fallback and the extension still connect).
-- Tests: live e2e against the new domain; the old `workers.dev` address no longer answers (or redirects); embed
-  harness with the extension built for the new origin.
-- Owner's pick: needed (the domain itself, and the zone settings in the dashboard).
-
-### Security: TV link hardening before the TV leaves the lab (M8)
-- Severity: medium (only while `?tvlab=1` hides the TV)
-- Why: a TV token is the whole person including host rights, a QR shown by someone else can phish it, and pairing
-  codes can be guessed (limit keyed on a browser id the client chooses).
-- Done when: a `tv:true` connection may only send ping / tv / listen-only voice / react; the phone confirms before
-  pairing; `tv-link` is limited per IP hash and per room (plus a Worker rate limit); codes are 8 digits.
-- Tests: e2e `tv.mjs` (TV connection's `kick` / `make-host` / `settings` refused; brute-force attempts limited),
-  harness `tv/run.cjs`.
-- Owner's pick: none needed (part of the TV version after 1.0).
-
-### More players without the extension: which services and how (Research first; owner's idea, 2 Nov 2026)
-- Why: Watch2Gether's search box has a source picker (YouTube, Vimeo, Dailymotion, SoundCloud-like audio, podcasts,
-  web radio…); embeds play on our site for everyone without the extension.
-- Done when: Research lists candidate services with: official embed / player API, can we play / pause / seek / read the
-  time (sync), search API and its cost, terms (overlays, commercial use, audits), CSP hosts, and a ranked shortlist;
-  the owner picks which to build and when (not before 0.9.95).
-- Tests: none (research); each built service later gets its harness like `tiktok/run.cjs`.
-- Research (2 Nov 2026, `research/more-players.md`), ranked: 1 Vimeo (player.js, full control, rate only on PRO
-  videos → 1×), 2 podcasts (iTunes Search → RSS → audio file in today's `html5` kind), 3 SoundCloud (Widget API, links
-  only, 1×), 4 Dailymotion (needs a Player ID from the owner's free account), 5 Twitch (after the domain move:
-  `parent=`), 6 web radio (CSP `media-src https:` needs a security look). Not recommended: Spotify, Apple Music,
-  Streamable, Kick, Mixcloud, Bilibili.
-- Owner's pick: needed (which, and when: not before 0.9.95); Planner's proposal: Vimeo + podcasts first.
-
-### G1–G5. Growth after 1.0 (owner agreed 3 Nov 2026; ROADMAP §7 "Growth plan")
-- G1 Store listing for search words + reviews from the first 20 users (with the store submission).
-- G2 Search pages (EN first): Shorts together, W2G without ads, free Teleparty alternative, TikTok with friends.
-- G3 A weekly 15–30 s clip (TikTok / Reels / Shorts); tools: `hyperframes` / `video-use` / `earshot` on the owner's
-  computer (his catalogue).
-- G4 Communities + a Product Hunt day; copy polished with `humanizer`.
-- G5 Every room a referral: shareable recap image, one-click "Add to Chrome" on the film card (store link once listed).
-- Done when / tests: each becomes its own Ready card when 1.0 is near; the Planner details them then.
-- Owner's pick: agreed (3 Nov 2026).
+Security and Research suggestions: `docs/internal/cards-proposed.md`.
 
 ## Done
 
