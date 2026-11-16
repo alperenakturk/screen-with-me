@@ -462,8 +462,9 @@ export async function youtubePlaylist(request: Request, url: URL, env: Env, ipKe
       { part: 'contentDetails', playlistId: list, maxResults: '50', fields: 'nextPageToken,items/contentDetails/videoId', ...(page ? { pageToken: page } : {}) },
       key,
     );
-    // A private, deleted or unknown list is a 404 from YouTube: no items, not an error.
-    if (!items.ok) return 'status' in items && items.status === 404 ? { items: [] } : items;
+    // A private, deleted or unknown list is a 4xx from YouTube (404 playlistNotFound, 403 playlistItemsNotAccessible,
+    // 400 for an id it can't read): no items, not an error. A used-up quota stays `quota`.
+    if (!items.ok) return !items.quota && 'status' in items && items.status !== undefined && items.status >= 400 && items.status < 500 ? { items: [] } : items;
     const body = items.body as { nextPageToken?: unknown; items?: { contentDetails?: { videoId?: unknown } }[] } | null;
     const ids = [...new Set((body?.items ?? []).map((item) => item.contentDetails?.videoId).filter(isVideoId))];
     const next = cleanPageToken(body?.nextPageToken);
