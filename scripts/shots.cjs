@@ -73,6 +73,21 @@ const SCREENS = {
   // Cinema mode (card 14) is the room's only way to hide the side panel. Computers only: a phone's room is one column
   // and a touch-only tablet doesn't offer it (it needs a mouse for its edges).
   'room-cinema': { what: 'Room playing a video in cinema mode (#side-toggle: the side panel hides, the video fills the page)', room: true, video: true, sizes: ['laptop', 'desktop'], after: (p) => p.evaluate(() => document.querySelector('#side-toggle')?.click()) },
+  // Card UI2: the rail's ⋯ with its one "⏩ Speed" row opened into the speed picker (computers: the rail opens at the
+  // video's right edge).
+  'rail-speed': {
+    what: 'The rail\'s ⋯ menu beside a playing video, its "⏩ Speed · 1×" row opened into the speed picker (ready speeds, − value +)',
+    room: true,
+    video: true,
+    sizes: ['laptop', 'desktop', 'tablet-land'],
+    after: async (p) => {
+      const w = await p.evaluate(() => { const r = document.querySelector('.player-wrap').getBoundingClientRect(); return { r: r.right, t: r.top, h: r.height }; });
+      await p.mouse.move(w.r - 220, w.t + w.h / 2);
+      await p.mouse.move(w.r - 20, w.t + w.h / 2, { steps: 5 });
+      await p.click('#dock-more');
+      await p.click('#dock-speed-row');
+    },
+  },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
       `settings-${sec}`,
