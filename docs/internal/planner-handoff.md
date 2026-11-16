@@ -21,6 +21,13 @@ TAG_TOKEN, every secret in KeePass (CLAUDE.md §5 KeePass fields rule); Dailymot
 **only videos go fullscreen** (CLAUDE.md §7, GW3: when he says "tam ekran" for a game he means the video's place; warn
 him if a request breaks it); no DRM tricks like screen-sharing paid services (already a rule).
 
+**Owner away until ~19–20 Nov** (handoff 4 addendum): build only cards that need nothing from him; at most 2 building
+sessions (5-hour usage limit). On his return: ask the source picker pick, FD1 and RC1 design picks (Design session
+prepares options), and answer his question "what does the recap show and how often": today it is in the Profile menu,
+shows on request only (never by itself), covers the current session (a new session starts after 4 h without activity),
+picks up to 8 random fact cards (duration first; videos, speed, top talker, reactor, sad / laugh, top emoji, pins,
+pauser, seeker, crowd of 3+; summary + PNG last) and can be saved (5 or 20 per room, 90 days).
+
 **Waiting on the owner (board "Kararların" tab):** Dailymotion Player ID, VIMEO_TOKEN, the source picker pick: design
 `docs/internal/design/source-picker.md` (#516), options A grid (recommended) / B shelves / C bigger ⠿ menu; ask him
 again with clickable choices, then write the lane A card replacing SRC1's popover (Test Lab `sources.picker`).
