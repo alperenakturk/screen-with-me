@@ -11,7 +11,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (handoff 16 Nov, 15:10; a fresh lane A session continues from here):
   - [x] Merged today: SR2 #460, BUD2 #481 (phone room lazy chunk), GR1 #476 (refresh note + phone-ready fix for BUD2's
     race), UI2 #469. Cards archived to `archive/cards-done.md`.
-  - [x] EC1 #465 and SH1 item 3 #471 (speaking ring) merged 16 Nov after Game Studio's #491; deploy + live e2e check
+  - [x] EC1 #465 and SH1 item 3 #471 (`claude/sh1-ring`, speaking ring) merged 16 Nov after Game Studio's #491; deploy + live e2e check
     with the next main run, then both cards' Done lines and the archive move (DOCS2).
   - [x] SH1 item 2, #486: ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on `ready`,
     `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
