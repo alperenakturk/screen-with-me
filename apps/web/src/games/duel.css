@@ -144,12 +144,63 @@ html.phone #game-stage .duel[data-phase='wait'] .duel-bar { display: none; }
   #game-stage .duel-lobby .game-chips { gap: 4px; }
   #game-stage .duel-lobby .game-chip { padding-inline: 10px; }
 }
-/* QA3 review 2: the setting labels in the other tables' weight; the two faces always on one row. */
+/* QA3 review 2: the setting labels in the other tables' weight; two faces always on one row (GMP b: three to six wrap
+   into rows, a free chair last). */
 #game-stage .duel-lobby .duel-lobby-label { font-weight: 600; }
-#game-stage .duel-lobby .duel-lobby-faces { flex-wrap: nowrap; }
+#game-stage .duel-lobby .duel-lobby-faces:not(:has(> li:nth-child(3))) { flex-wrap: nowrap; }
 #game-stage .duel-lobby .duel-face { min-width: 0; }
 #game-stage .duel-lobby .duel-face > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* GMP: a watching phone has room to spare, so the score ("Alex 0 – 0 Sam") gets a line of its own and is never cut. */
 html.phone .duel.watching .duel-bar { flex-wrap: wrap; row-gap: 2px; }
 html.phone .duel.watching .duel-score { flex-basis: 100%; }
+
+/* GMP b (owner: the Duel for 2–6): with three or more players the others' boards shrink into a grid beside mine. A
+   player sees their marks only (small squares, no letters), so three columns fit beside the board; a watcher has no
+   board or tray of their own and sees every board whole, letters and all, in three columns. */
+.duel-side:not([data-count='0']):not([data-count='1']) { display: grid; grid-template-columns: repeat(3, auto); gap: 6px; align-content: start; }
+.duel-side[data-count='2'] { grid-template-columns: repeat(2, auto); }
+.duel:not(.watching) .duel-side:not([data-count='0']):not([data-count='1']) .duel-mini { width: 80px; padding: 5px; gap: 4px; box-sizing: border-box; }
+.duel:not(.watching) .duel-side:not([data-count='0']):not([data-count='1']) .duel-mini-grid { gap: 2px; }
+.duel:not(.watching) .duel-side:not([data-count='0']):not([data-count='1']) .duel-mini-row { grid-template-columns: repeat(5, 11px); gap: 2px; }
+.duel:not(.watching) .duel-side:not([data-count='0']):not([data-count='1']) .duel-mark { height: 11px; border-radius: 2px; font-size: 0; }
+.duel:not(.watching) .duel-side:not([data-count='0']):not([data-count='1']) .duel-mark.near { outline-width: 1.5px; outline-style: solid; outline-offset: -1.5px; }
+.duel:not(.watching) .duel-side:not([data-count='0']):not([data-count='1']) .duel-avatar { display: none; }
+.duel-side:not([data-count='0']):not([data-count='1']) .duel-who { font-size: 13px; }
+.duel.watching .duel-side:not([data-count='0']):not([data-count='1']) .duel-mini { width: 124px; padding: 6px; gap: 4px; box-sizing: border-box; }
+.duel.watching .duel-side:not([data-count='0']):not([data-count='1']) .duel-mini-grid { gap: 3px; }
+.duel.watching .duel-side:not([data-count='0']):not([data-count='1']) .duel-mini-row { grid-template-columns: repeat(5, 20px); gap: 3px; }
+.duel.watching .duel-side:not([data-count='0']):not([data-count='1']) .duel-mark { height: 20px; }
+/* A phone (the Games tab, 360 × 640 the smallest): with three or more the others are chips under my board (name, tries
+   or ✓, no grid), two a row, and my board's rows share what height is left, so board, chips and letters fit. */
+html.phone .duel.many:not(.watching) .duel-main { min-height: 0; }
+html.phone .duel.many:not(.watching) .duel-board { flex: 1 1 0; min-height: 0; }
+html.phone .duel.many:not(.watching) .ff-row { flex: 1 1 0; min-height: 0; height: auto; }
+html.phone .duel.many:not(.watching) .ff-cells { height: 100%; padding-block: 2px; }
+html.phone .duel.many:not(.watching) .ff-cell { font-size: 16px; }
+html.phone .duel.many:not(.watching) .duel-side { grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 4px; }
+/* The race needs the height: the bar (scores, the day's number, the language shown) goes while it is on, Stub's line
+   keeps to one line. */
+html.phone .duel.many:not(.watching)[data-phase='play'] .duel-bar { display: none; }
+html.phone .duel.many:not(.watching)[data-phase='play'] .duel-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
+html.phone .duel.many:not(.watching) .duel-side .duel-mini { width: auto; min-width: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 4px; padding: 2px 6px; }
+html.phone .duel.many:not(.watching) .duel-side .duel-mini-grid { display: none; }
+html.phone .duel.many:not(.watching) .duel-side .duel-mini-head { flex-direction: row; justify-content: space-between; align-items: center; gap: 6px; width: 100%; min-width: 0; }
+/* A watcher on a phone: three boards a row, letters and all (18 px squares), the name and tries on one line. */
+html.phone .duel.watching.many .duel-side { grid-template-columns: repeat(3, auto); justify-content: center; gap: 4px; }
+html.phone .duel.watching.many .duel-side .duel-mini { width: auto; padding: 4px; gap: 3px; }
+html.phone .duel.watching.many .duel-side .duel-mini-head { flex-direction: row; justify-content: space-between; align-items: center; gap: 4px; max-width: 102px; }
+html.phone .duel.watching.many .duel-side .duel-avatar { display: none; }
+html.phone .duel.watching.many .duel-side .duel-mini-row { grid-template-columns: repeat(5, 18px); grid-auto-rows: 18px; gap: 2px; }
+html.phone .duel.watching.many .duel-side .duel-mark { height: 18px; font-size: 13px; }
+html.phone .duel.watching.many .duel-side .duel-mini-grid { gap: 2px; }
+
+/* GMP b: the places at the end, 1st to 6th, in the result card. */
+.duel-places { display: flex; flex-direction: column; gap: 3px; margin: 2px auto 0; padding: 0; list-style: none; width: min(100%, 300px); }
+.duel-places li { display: grid; grid-template-columns: 36px 24px minmax(0, 1fr) auto; align-items: center; gap: 6px; font-size: 14px; }
+.duel-places li.me { font-weight: 800; }
+.duel-places li.unsolved { color: var(--muted); }
+.duel-place { text-align: right; font-variant-numeric: tabular-nums; }
+.duel-place-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.duel-place-tries { font-size: 13px; color: var(--muted); }
+.duel-places .duel-avatar { width: 24px; height: 24px; }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boardDone, boardSolved, duelGuess, duelOutcome, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
+import { boardDone, boardSolved, duelGuess, duelOutcome, duelRanks, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
 import { MAX_TRIES } from './five-frames.ts';
 
 const ANSWER = 'crane';
@@ -45,6 +45,34 @@ describe('Five Frames Duel judging', () => {
     const boards: DuelBoard[] = [{ guesses: [...wrong] }, { guesses: ['slate'] }];
     duelGuess(boards[1]!, 'crane', ANSWER, 'en', allowed);
     expect(duelOutcome(boards, ANSWER, 1)).toBe(1);
+  });
+
+  it('GMP b: with three or more the race goes on until every board is done; places follow the finishing order', () => {
+    const boards: (DuelBoard | null)[] = [{ guesses: ['slate'] }, null, { guesses: [] }, { guesses: [] }];
+    const solved: number[] = [];
+    duelGuess(boards[3]!, 'crane', ANSWER, 'en', allowed);
+    solved.push(3);
+    // Seat 3 solved first, but seats 0 and 2 still play.
+    expect(duelOutcome(boards, ANSWER, 3, solved)).toBeNull();
+    duelGuess(boards[0]!, 'crane', ANSWER, 'en', allowed);
+    solved.push(0);
+    expect(duelOutcome(boards, ANSWER, 0, solved)).toBeNull();
+    for (const w of wrong) duelGuess(boards[2]!, w, ANSWER, 'en', allowed);
+    expect(duelOutcome(boards, ANSWER, 2, solved)).toBe(3);
+    expect(duelRanks(boards, ANSWER, solved)).toEqual([2, 0, 3, 1]);
+  });
+
+  it('GMP b: six players, nobody solves: a draw, everyone shares the first place', () => {
+    const boards: DuelBoard[] = Array.from({ length: 6 }, () => ({ guesses: [...wrong] }));
+    expect(duelOutcome(boards, ANSWER, 5, [])).toBe('draw');
+    expect(duelRanks(boards, ANSWER, [])).toEqual([1, 1, 1, 1, 1, 1]);
+  });
+
+  it('GMP b: two players keep the old rule even with an empty seat around', () => {
+    const boards: (DuelBoard | null)[] = [null, { guesses: ['slate'] }, { guesses: [] }];
+    duelGuess(boards[2]!, 'crane', ANSWER, 'en', allowed);
+    expect(duelOutcome(boards, ANSWER, 2, [2])).toBe(2);
+    expect(duelRanks(boards, ANSWER, [2])).toEqual([0, 2, 1]);
   });
 
   it('a practice word is never the day’s word', () => {
@@ -102,6 +130,10 @@ describe('Five Frames Duel: hard mode and best of three (NG1)', () => {
     expect(matchOver(3, [1, 1], 3)).toBe(true);
     expect(matchWinner([2, 1])).toBe(0);
     expect(matchWinner([1, 1])).toBeNull();
+    // GMP b: any number of seats; a tie at the top is no winner.
+    expect(matchWinner([0, 1, 2, 0, 1, 0])).toBe(2);
+    expect(matchWinner([2, 0, 2])).toBeNull();
+    expect(matchWinner([0, 0, 0])).toBeNull();
   });
 
   it('copies the settings message', () => {

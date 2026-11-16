@@ -1279,6 +1279,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   a tap in another quarter moves the zoom; "Whole sea" (`.sea-whole`, 44 px, always shown while zoomed) goes back; a
   shot or a lost aim ends the zoom. Lab command `sea.zoom` (shows the zoom on any screen, next quarter each run); the
   sea harness checks zoom, Whole sea, quarter change and fire on a phone.
+  GMP b (2–6 players): `SEA_MAX_SEATS = 6`; the first two people sit by themselves, a watcher presses "Take the seat"
+  (`sit`) to add a seat before the battle (a new seat un-readies everyone; the battle starts when ≥ 2 sit and all are
+  ready; Stub only at a table of two, else `error too_many`). A `shot` carries `target` (the seat attacked; with two it
+  may be left out); not my own sea, not a sunk fleet, else `error bad_target`. A fleet that sinks goes on `out` (in
+  order) and keeps watching; a miss passes the turn to `nextAlive`; when one fleet is left afloat the shooter wins and
+  `ranks` (`seaRanks`: the winner 1, the last one sunk 2, …) goes into the view; `last.target` names the sea shot at.
+  The page: with three or more a row of sea chips in the bar (`.sea-targets`: face, ships left, ✕ when sunk, the
+  shooter outlined) picks the sea in the big box (a player's target; a watcher's or a sunk player's default is the sea
+  last shot at, the small box shows the shooter's); in a narrow window the chips are 44 px rounds with a badge and
+  replace the two tabs (my own chip shows my sea); the score chip hides and the result card lists the places
+  (`.sea-places`). Lab `seaBattle.state` adds `target`, `out`, `ranks`, `lastTarget`. Tests: unit `sea.test.ts`
+  (`nextAlive`, `seaRanks`, target parsing), e2e `sea-many.mjs` (3 and 6 players: targets required, own sea refused,
+  hidden fleets, a sunk fleet never gets the turn, places; a seventh can't sit; the driver reads ship cells from a
+  watcher so the live run stays short), `games-sweep` `seaSix` (five players join from the script).
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
@@ -1307,6 +1321,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the result card say "Hard mode". View fields `bestOf`, `hard`, `match`. Lab command `duel.match` (best of three, hard
   on). Tests: `duel.test.ts` (hard mode EN + TR, match end), `duel.mjs` second table (settings, refusal mid-match, hard
   refusal names letter and place, a full match with a solver that keeps to the marks, a new match at 0–0).
+  GMP b (2–6 players): `DUEL_MAX_SEATS = 6`; extra people sit with `sit` between games (a new seat un-readies
+  everyone; the race starts when ≥ 2 sit and all are ready). Two players keep the old rule; with three or more
+  (`duelOutcome(boards, answer, by, solved)`) the race goes on until every board is done, the first to solve wins
+  ('draw' when nobody did); `solved` keeps the finish order and `duelRanks` the places (non-solvers share the place
+  after the last solver), sent as `ranks` once over; `matchWinner` = the one seat with the most wins. The page: the
+  others' boards as a grid of minis (80 px for a player, 124 px for a watcher), a phone player's chips in 3 columns
+  with the tray hidden in play, lobby faces wrap from three, the result card lists the places (`.duel-places`). Lab
+  `duel.state` adds `seats` and `ranks`. Tests: `duel.test.ts` (a 3-player race and places, six with no solver, an empty
+  seat), e2e `duel-many.mjs` (3 players: no letter or answer leak, the race goes on after the first solve, places; 6:
+  a seventh gets `full`, six used-up boards = a draw), `games-sweep` `duelSix`.
   **Draw & Guess (0.9.72):** separate object `Draw` (`apps/server/src/draw.ts`, binding `DRAWS`, migration `v3`,
   `/api/draw/:id/ws`), protocol and pure rules in `packages/shared/src/games/draw.ts` (guess matching: lower case +
   Turkish letters optional, 1 letter off = "close"; hint letters at 40/60/80% of the round; 50–150 points, the drawer

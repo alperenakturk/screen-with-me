@@ -48,6 +48,10 @@ const GAMES = {
   // ⚔️ Five Frames Duel: waiting alone, then racing with Sam (a socket from this script) on the board and the tray.
   duel: { table: 'duel' },
   duelPlay: { table: 'duel', race: true },
+  // GMP b: the Duel with six players (me and five from this script), the others' boards in a grid / chips.
+  duelSix: { table: 'duel', race: true, extra: 4 },
+  // GMP b: Sea Battle with six players (me and five from this script); I aim at the sea chips.
+  seaSix: { table: 'sea', crew: 5 },
   // PH2: the running tables (the lab's fake friend sits, I press Start; Draw & Guess: I pick a word and draw).
   quizPlay: { table: 'quiz', start: true },
   drawPlay: { table: 'draw', start: true, pick: true },
@@ -385,6 +389,39 @@ async function windowPasses(page, label, g, phone) {
           await wait(1500);
         }
         let sam = null;
+        const extraSockets = [];
+        if (g.crew) {
+          // GMP b: five players join from this script, sit (the server deals each a fleet) and say ready; I press Ready.
+          const id = await page
+            .waitForFunction(() => document.querySelector('#game-stage .sea')?.dataset.table || false, null, { timeout: 10000, polling: 100 })
+            .then((h) => h.jsonValue(), () => null);
+          check(!!id, `${label}: the Sea Battle table has its id`, id);
+          for (let i = 0; i < g.crew; i++) {
+            const mate = new WebSocket(`${SITE.replace(/^http/, 'ws')}/api/sea/${id}/ws`);
+            extraSockets.push(mate);
+            mate.addEventListener('open', () => {
+              mate.send(JSON.stringify({ t: 'hello', v: 1, name: ['Sam', 'Kim', 'Lee', 'Max', 'Alexandra'][i], cid: String.fromCharCode(112 + i).repeat(32) }));
+              mate.send(JSON.stringify({ t: 'sit' }));
+            });
+            mate.addEventListener('message', (e) => {
+              const m = JSON.parse(e.data);
+              // Someone sitting down clears every "ready": say it again.
+              if (m.t === 'state' && m.phase === 'place' && m.seat >= 0 && !m.players[m.seat]?.ready) mate.send(JSON.stringify({ t: 'ready', on: true }));
+            });
+          }
+          const playing = await page
+            .waitForFunction(() => {
+              const sea = document.querySelector('#game-stage .sea');
+              if (sea?.dataset.phase === 'play' && sea.dataset.count === '6') return true;
+              if (sea?.dataset.count === '6') document.querySelector('#game-stage .sea-ready-btn.btn:not(.ghost)')?.click();
+              return false;
+            }, null, { timeout: 20000, polling: 400 })
+            .then(() => true, () => false);
+          check(playing, `${label}: the battle of six starts`);
+          const chips = await page.evaluate(() => document.querySelectorAll('#game-stage .sea-target:not(.me)').length);
+          check(chips === 5, `${label}: five sea chips to aim at`, String(chips));
+          await wait(800);
+        }
         if (g.race) {
           // Sam joins the table from this script (a plain socket), says ready, guesses once; I press Ready.
           // CI3: wait for the table's id (read too early it was undefined now and then, and Sam joined no table).
@@ -405,7 +442,28 @@ async function windowPasses(page, label, g, phone) {
               guessed = true;
               sam.send(JSON.stringify({ t: 'guess', word: 'slate' }));
             }
+            // GMP b: someone sitting down clears every "ready"; say it again.
+            if (m.t === 'state' && m.phase === 'wait' && m.seat >= 0 && !m.players[m.seat]?.ready) sam.send(JSON.stringify({ t: 'ready', on: true }));
           });
+          // GMP b: more players sit with "sit" and say ready (each guesses once when the race is on).
+          for (let i = 0; i < (g.extra ?? 0); i++) {
+            const other = new WebSocket(`${SITE.replace(/^http/, 'ws')}/api/duel/${id}/ws`);
+            extraSockets.push(other);
+            other.addEventListener('open', () => {
+              other.send(JSON.stringify({ t: 'hello', v: 1, name: ['Kim', 'Lee', 'Max', 'Alexandra'][i], cid: String.fromCharCode(116 + i).repeat(32) }));
+              other.send(JSON.stringify({ t: 'sit' }));
+              other.send(JSON.stringify({ t: 'ready', on: true }));
+            });
+            let went = false;
+            other.addEventListener('message', (e) => {
+              const m = JSON.parse(e.data);
+              if (m.t === 'state' && m.phase === 'play' && !went) {
+                went = true;
+                other.send(JSON.stringify({ t: 'guess', word: 'pious' }));
+              }
+              if (m.t === 'state' && m.phase === 'wait' && m.seat >= 0 && !m.players[m.seat]?.ready) other.send(JSON.stringify({ t: 'ready', on: true }));
+            });
+          }
           const racing = await page
             .waitForFunction(() => {
               if (document.querySelector('#game-stage .duel')?.dataset.phase === 'play') return true;
@@ -442,6 +500,7 @@ async function windowPasses(page, label, g, phone) {
         check(!m.board, `${label}: the board is a fair size`, m.board);
         check(!m.hero, `${label}: the board / lobby card is the hero (nothing beside it)`, m.hero);
         sam?.close();
+        for (const s of extraSockets) s.close();
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
         // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
