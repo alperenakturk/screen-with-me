@@ -31,14 +31,18 @@ export function quizLevelBonus(level: 1 | 2 | 3 | undefined, typed: boolean | un
   return ({ 1: 1, 2: 1.2, 3: 1.5 } as const)[level ?? 2] * (typed ? 1.3 : 1);
 }
 
-/** Folds a typed answer for comparing: case, accents, Turkish ı / İ, punctuation, spaces and a leading "the". */
+/** Folds a typed answer for comparing: case, accents, Turkish ı / İ, punctuation (not a number's minus), spaces and a
+ * leading "the". */
 export function foldAnswer(text: string): string {
   return text
     .replace(/[İIı]/g, 'i')
     .toLowerCase()
+    // A minus sign before a number stays ("-40" is not "40"), as "minus" / "eksi" typed out.
+    .replace(/(^|\s)(?:minus|eksi)\s*(?=\d)/g, '$1~')
+    .replace(/[-−–](?=\d)/g, '~')
     .normalize('NFKD')
     .replace(/\p{M}/gu, '')
-    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .replace(/[^\p{L}\p{N}~]+/gu, ' ')
     .trim()
     .replace(/^the /, '')
     .replace(/ /g, '');

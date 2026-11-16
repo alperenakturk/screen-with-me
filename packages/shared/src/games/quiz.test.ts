@@ -104,6 +104,11 @@ describe('Quiz', () => {
     expect(matchTyped('Mors', ['Mars'])).toBe(false);
     expect(matchTyped('207', ['206'])).toBe(false);
     expect(matchTyped('206', ['206'])).toBe(true);
+    expect(matchTyped('40', ['-40'])).toBe(false);
+    expect(matchTyped('−40', ['-40'])).toBe(true);
+    expect(matchTyped('minus 40', ['-40'])).toBe(true);
+    expect(matchTyped('eksi 40', ['-40'])).toBe(true);
+    expect(matchTyped('X-ray', ['X-ray'])).toBe(true);
     expect(matchTyped('ten', ['10', 'ten'])).toBe(true);
     expect(matchTyped('', ['10'])).toBe(false);
     expect(matchTyped('!!!', ['10'])).toBe(false);
