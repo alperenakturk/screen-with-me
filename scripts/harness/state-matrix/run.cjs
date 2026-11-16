@@ -302,9 +302,10 @@ async function runHead(browser, kinds, size) {
       const homeBox = (await settled()).box;
       const head = await page.evaluate(() => {
         const s = document.getElementById('game-stage').getBoundingClientRect();
-        const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
+        // Grabbed by the game's name (the head's left end can hold a button: "?" How to play on a wrapped head).
+        const h = document.querySelector('#game-stage .game-stage-title').getBoundingClientRect();
         const g = document.querySelector('#game-stage .game-resize')?.getBoundingClientRect();
-        return { s: [s.left, s.top, s.width, s.height], hx: h.left + 30, hy: h.top + h.height / 2, gx: g ? g.left + g.width / 2 : null, gy: g ? g.top + g.height / 2 : null };
+        return { s: [s.left, s.top, s.width, s.height], hx: h.left + Math.min(30, h.width / 2), hy: h.top + h.height / 2, gx: g ? g.left + g.width / 2 : null, gy: g ? g.top + g.height / 2 : null };
       });
       // Hover: a head button lights up under the mouse (read away from it first, then over it after its transition).
       await page.mouse.move(2, 2);
