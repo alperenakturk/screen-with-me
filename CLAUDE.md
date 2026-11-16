@@ -191,6 +191,8 @@ Each line names its section in `docs/internal/architecture/reference.md` ("ref: 
   Shell, Resilience to ads, Streaming.
 - **Nothing of ours over the YouTube player** (YouTube's Required Minimum Functionality), except a game frame the user
   puts there himself, by dragging or by choosing 🪟 (owner, 15 Nov 2026, card GW2). ref: Shorts view, One remote; archive 0.9.97.74 (`overYoutube`).
+- **Only videos go fullscreen** (owner, 17 Nov 2026, GW3): a game's "big" mode is the video's place, chat and voice
+  stay usable; in the Shorts view games are free frames only. When the owner says "tam ekran" for a game, he means this.
 - **DRM is never bypassed.** ref: §10 Known limits.
 - **Lazy chunks:** load with `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`; a
   chunk that gates privacy (the IP notice) fails closed. ref: Room chunk.
@@ -255,8 +257,7 @@ node scripts/avatars.mjs     # drawn avatars (apps/web/public/avatars + apps/ext
 Store form texts: `docs/internal/web-store.md`. Screenshots are taken from `store/src/shots.html` (the script opens it
 from a local server); the room part is `store/src/room.html`, fixed content using the site's real `styles.css` +
 `room.ts` markup. If the room page or popup changes, update that copy too.
-Windows/PowerShell notes: write the commit message to a file and use `git commit -F` (quotes break). Write files as
-UTF-8 without BOM. If `gh` is not on PATH: `C:\Program Files\GitHub CLI\gh.exe`.
+Windows/PowerShell: commit with `git commit -F <file>`; UTF-8 without BOM; `gh` at `C:\Program Files\GitHub CLI\gh.exe`.
 
 ## 9. Release checklist
 Milestone gates to 1.0 (what must be fully done before the third version part moves, and "live e2e green on the
