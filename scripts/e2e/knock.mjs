@@ -83,13 +83,13 @@ const back = await host.wait((m) => m.t === 'knocks' && m.list.some((k) => k.nam
 ok(!!back && (await kim.wait((m) => m.t === 'knock-wait' && m.hostHere, 'kim told host is here')).hostHere, 'The host sees the waiting newcomer when they come back');
 
 // 7) A full door: at most 2 knocks from one address at once (when the Worker knows the address).
+// Waits for the answers instead of fixed sleeps: on a slow live run (16 Nov 2026) 800 ms was not enough.
 const lee = client('Lee', 'knockLee000001');
-await sleep(800);
+const leeWaits = !!(await lee.wait((m) => m.t === 'knock-wait', 'lee waits'));
 const ray = client('Ray', 'knockRay000001');
-await sleep(800);
-const busy = ray.inbox.find((m) => m.t === 'error' && m.code === 'knock_busy');
-const leeWaits = lee.inbox.some((m) => m.t === 'knock-wait');
-ok(leeWaits && (busy || ray.inbox.some((m) => m.t === 'knock-wait')), `A third knock from one address ${busy ? 'is refused (knock_busy)' : 'waits (no address known on this server)'}`);
+const rayAnswer = await ray.wait((m) => (m.t === 'error' && m.code === 'knock_busy') || m.t === 'knock-wait', 'ray answered');
+const busy = rayAnswer.t === 'error';
+ok(leeWaits && !!rayAnswer, `A third knock from one address ${busy ? 'is refused (knock_busy)' : 'waits (no address known on this server)'}`);
 
 for (const c of [host, kim, lee, ray, eve, eveAgain]) c.ws.close();
 

@@ -34,6 +34,9 @@ async function swipe(id, delays) {
   const sentAt = Date.now();
   alex.send({ t: 'load', media: { kind: 'youtube', id, short: true } });
   const first = await sam.wait((m) => m.t === 'state' && m.state.item?.media.id === id, 'short ' + id);
+  // One round trip (swipe → state back), measured here: on live it was 0.1–0.6 s and pushed "fast" past 0.7 s
+  // (16 Nov 2026), so the upper bounds below allow it; the lower bounds stay as they are (latency only adds).
+  const rtt = Date.now() - sentAt;
   await alex.wait((m) => m.t === 'state' && m.state.item?.media.id === id, 'short (alex) ' + id);
   const itemId = first.state.item.id;
   ok(first.state.position === 0 && first.state.updatedAt - Date.now() > 1000, `${id}: the Short holds at 0:00 in its lead-in`);
@@ -44,17 +47,17 @@ async function swipe(id, delays) {
   const early = await sam.wait((m) => m.t === 'state' && m.action === 'play' && m.state.item?.id === itemId, 'early start').catch(() => null);
   if (early) start = early.state.updatedAt;
   ok((early?.state ?? first.state).position === 0, `${id}: it starts from 0:00`);
-  return start - sentAt;
+  return { ms: start - sentAt, rtt };
 }
 
-const fast = await swipe('dQw4w9WgXcQ', [0, 0]);
-ok(fast < 700, `Fast: both primed at once → it starts ${fast} ms after the swipe (under 0.7 s)`);
+const { ms: fast, rtt: fastRtt } = await swipe('dQw4w9WgXcQ', [0, 0]);
+ok(fast < 700 + fastRtt, `Fast: both primed at once → it starts ${fast} ms after the swipe (under 0.7 s + one round trip, ${fastRtt} ms)`);
 await sleep(300);
-const slow = await swipe('M7lc1UVf-VE', [0, 800]);
-ok(slow >= 900 && slow < 1400, `Slow: one viewer primed after 800 ms → it starts ${slow} ms after the swipe`);
+const { ms: slow, rtt: slowRtt } = await swipe('M7lc1UVf-VE', [0, 800]);
+ok(slow >= 900 && slow < 1400 + slowRtt, `Slow: one viewer primed after 800 ms → it starts ${slow} ms after the swipe (round trip ${slowRtt} ms)`);
 await sleep(300);
-const never = await swipe('jNQXAC9IVRw', [0, null]);
-ok(never >= 1300 && never <= 1700, `Never primed: the 1.5 s cap starts it ${never} ms after the swipe`);
+const { ms: never, rtt: neverRtt } = await swipe('jNQXAC9IVRw', [0, null]);
+ok(never >= 1300 && never <= 1700 + neverRtt, `Never primed: the 1.5 s cap starts it ${never} ms after the swipe (round trip ${neverRtt} ms)`);
 
 for (const c of [alex, sam]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

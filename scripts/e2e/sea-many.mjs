@@ -91,7 +91,7 @@ async function play(people, pick, watcher) {
   const s = alex.state;
   ok(s.seas.length === 3 && s.players.length === 3, 'three seas, three players');
   ok(people.every((p, i) => p.state.seas.every((sea, j) => (i === j ? !!sea.ships : !sea.ships))), 'each player gets only their own ships');
-  ok(watcher.state.seas.every((sea) => !!sea.ships), 'the watcher sees every ship');
+  ok(await until(() => watcher.state.phase === 'play' && watcher.state.seas.every((sea) => !!sea.ships)), 'the watcher sees every ship');
   const turn = s.turn;
   const shooter = people[turn];
   shooter.send({ t: 'shot', cell: 0 });
@@ -105,7 +105,8 @@ async function play(people, pick, watcher) {
   ok(end.phase === 'over' && (end.winner === 0 || end.winner === 1), `the last fleet afloat wins (${NAMES[end.winner]})`);
   ok(end.players[2].out && end.ranks[2] === 3, `Robin, sunk first, is third: ${JSON.stringify(end.ranks)}`);
   ok(end.ranks[end.winner] === 1 && end.ranks[1 - end.winner] === 2, 'the winner first, the last one sunk second');
-  ok(people.every((p) => p.state.seas.every((sea) => !!sea.ships)), 'at the end everyone sees every fleet');
+  // Waited for: play() returns when Alex sees the end; the others' last state can come a moment later (a slow live run).
+  ok(await until(() => people.every((p) => p.state.seas.every((sea) => !!sea.ships))), 'at the end everyone sees every fleet');
   ok(robin.state.seat === 2, 'Robin keeps his seat and watches the end');
   for (const p of [...people, watcher]) p.ws.close();
 }
