@@ -112,11 +112,11 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
             <span id="quiz-n" class="muted small"></span>
             <span id="quiz-cat" class="quiz-cat"></span>
             <span class="quiz-top-right">
+              <span id="quiz-jokers" class="quiz-jokers"></span>
               <span id="quiz-timer" class="draw-timer"></span>
             </span>
           </div>
           <div class="draw-bar" aria-hidden="true"><i id="quiz-time"></i></div>
-          <div id="quiz-jokers" class="quiz-jokers"></div>
           <div id="quiz-body" class="quiz-body" aria-live="polite"></div>
         </section>
         <aside class="card draw-side">
@@ -138,7 +138,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   /** QZ2 jokers: the question I played one on (one per question) and which; my Second chance's wrong first try. */
   let myJoker: { n: number; kind: QuizJoker } | null = null;
   let retry: { n: number; wrong?: number } | null = null;
-  /** The joker row: always the same three buttons in the same place (it only hides its content off a question). */
+  /** The jokers in the top bar: always the same three small buttons in the same place (hidden off a question, the
+   * space kept), an icon each with the full name for screen readers and as a tooltip. */
   const jokerRow = $('#quiz-jokers');
   const JOKER_ICON: Record<QuizJoker, string> = { fifty: '½', double: '×2', second: '↺' };
   const jokerButtons = (['fifty', 'double', 'second'] as const).map((kind) => {
@@ -353,16 +354,17 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     const usedKinds = new Set<QuizJoker>(mine?.jokers ?? (mine?.joker ? ['fifty'] : []));
     for (const { kind, b } of jokerButtons) {
       const label = kind === 'fifty' ? `½ ${t('quiz.joker')}` : t(kind === 'double' ? 'quiz.double' : 'quiz.second');
-      if (b.textContent !== label) b.textContent = label;
+      if (b.textContent !== JOKER_ICON[kind]) b.textContent = JOKER_ICON[kind];
+      b.setAttribute('aria-label', label);
       const onThis = myJoker?.n === s.n;
       const twoOptions = !s.typed && (s.options?.length ?? 0) < 4;
       b.disabled = !asking || usedKinds.has(kind) || onThis || !!answeredNow || (kind === 'fifty' && twoOptions);
       b.setAttribute('aria-pressed', String(onThis && myJoker?.kind === kind));
-      b.title = usedKinds.has(kind) && !(onThis && myJoker?.kind === kind) ? t('quiz.jokerUsed') : t(kind === 'fifty' ? 'quiz.jokerTitle' : kind === 'double' ? 'quiz.doubleTitle' : 'quiz.secondTitle');
+      b.title = `${label}: ` + (usedKinds.has(kind) && !(onThis && myJoker?.kind === kind) ? t('quiz.jokerUsed') : t(kind === 'fifty' ? 'quiz.jokerTitle' : kind === 'double' ? 'quiz.doubleTitle' : 'quiz.secondTitle'));
     }
 
     // A tournament ranks by round wins, then points: the podium shows both (the score only orders it).
-    const ranked = s.rounds ? tournamentOrder(s.players).map((p) => ({ ...p, score: (p.wins ?? 0) * 1_000_000 + p.score, label: `🏆${p.wins ?? 0} · ${p.score}` })) : s.players;
+    const ranked = s.rounds ? tournamentOrder(s.players).map((p) => ({ ...p, score: (p.wins ?? 0) * 1_000_000 + p.score, label: t('quiz.podium', { wins: p.wins ?? 0, points: p.score }) })) : s.players;
     if (s.phase === 'over') showPointsResult(result, `quiz:${gameId}`, ranked, s.host, me, endLines(), () => send({ t: 'start' }));
     else result.hide();
     const tour = s.mode === 'tournament';

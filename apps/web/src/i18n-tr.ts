@@ -416,6 +416,7 @@ export const tr: Record<I18nKey, string> = {
   'quiz.roundWon': '🏆 {n}. turu {names} kazandı',
   'quiz.roundNone': '{n}. turda kimse puan alamadı',
   'quiz.wins': '🏆 {n} tur kazandı',
+  'quiz.podium': '🏆{wins} · {points} puan',
   'quiz.typeSent': '✓ Gönderildi',
   'quiz.typedAnswer': 'Cevap: {answer}',
   'games.waiting': 'Rakip bekleniyor: odadan biri katılsın',

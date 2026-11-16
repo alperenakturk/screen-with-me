@@ -135,6 +135,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27j. [QZ2b, 0.9.97.14x] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
   body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
   friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
+- [ ] 27k. [QZ2c, 0.9.97.14x] Quiz with a friend: pick Tournament, 1 pick each; each of you picks a round's topic in
+  turn. Try ×2 (Double) and ↺ (Second chance: answer wrong first, then try again). The winner has the most round wins.
 
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)

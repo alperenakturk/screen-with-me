@@ -414,6 +414,7 @@ const en = {
   'quiz.roundWon': '🏆 {names} won round {n}',
   'quiz.roundNone': 'Nobody scored in round {n}',
   'quiz.wins': '🏆 {n} round wins',
+  'quiz.podium': '🏆{wins} · {points} pts',
   'quiz.typeSent': '✓ Sent',
   'quiz.typedAnswer': 'Answer: {answer}',
   'games.waiting': 'Waiting for an opponent: someone in the room needs to join',
