@@ -408,6 +408,8 @@ const en = {
   'games.score': 'Score',
   'games.reconnecting': 'Connection lost, reconnecting…',
   'games.version': 'The site was updated. Reload the page.',
+  'app.updated': 'Sidelit was updated',
+  'app.refresh': 'Refresh',
   'games.full': 'This game is full.',
   'games.cell': 'Row {r}, column {c}',
   'games.cellEmpty': 'empty',

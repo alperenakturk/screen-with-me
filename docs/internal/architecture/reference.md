@@ -836,7 +836,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `navigator.onLine` is true, see the Live line):** `reloadForNewVersion` does nothing while `navigator.onLine` is false (a reload then showed the browser's
   offline page and threw the room away after a Wi-Fi blip); chunks missed offline are fetched again on `online` and the
   page reloads only if one still fails (in Chrome always: it keeps a failed module import for the page's life); harness
-  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. Voice, streams and watching fail closed when
+  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. **Never a silent reload in a room (card
+  GR1):** `staleChunk` in main.ts routes every failed chunk; in a room (`/r/<id>`) it shows `#update-note` ("Sidelit was
+  updated · ↻ Refresh", styles.css, built without any chunk) and reloads only on the tap; elsewhere it is
+  `reloadForNewVersion` as before. Harness `scripts/harness/offline-reload` (CI) checks both the gone chunk and the
+  network-back path; Test Lab `app.staleChunk` fires a `vite:preloadError`. Voice, streams and watching fail closed when
   their chunks can't load (harness `scripts/harness/lazy-gates/run.cjs` in CI blocks `voice-check` and `live-engine`;
   the IP notice chunk it used to block was removed by card SIMP1). Measure a module's share of the
   room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).
