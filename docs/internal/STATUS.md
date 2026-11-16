@@ -8,17 +8,34 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (session 16 Nov, evening; continues from the first unchecked item):
-  - [x] SH1 + EC1 live (v0.9.97.153): Done lines, both cards in `archive/cards-done.md`, hand tests 27q–27t below.
-  - [ ] SH3 #499 (`claude/sh3-shorts-chat`): 💬 opens the room's chat as a panel beside the Shorts view on a
-    computer; harness `shorts-chat` in CI. Green → merge → deploy + live e2e → Done line, card to the archive.
-  - [ ] VC1 + VC3 (deafen 🎧, YouTube volume drag; the "voice isn't reaching the others" note), then MSG1.
+- [ ] Lane A (handoff 16 Nov, 20:10; the session reached its context limit; a fresh lane A session continues here):
+  - [x] SH1 + EC1 live (v0.9.97.153): Done lines, both cards in `archive/cards-done.md`, hand tests 27q–27t.
+  - [x] Merged 16 Nov: SH3 #499 (`claude/sh3-shorts-chat`, Shorts chat panel, harness `shorts-chat`); VC1 #501
+    (`claude/vc1-deafen`: 🎧 deafen with optional `deaf` on the voice message, YouTube volume drag via
+    `focusBackFrom`; harnesses `deafen`, `yt-focus`). Both deployed, but neither tagged: live e2e red.
+  - [ ] Live e2e red on main runs 43938199779 (SH3) and 43941157478 (VC1): `fallback.mjs` (signal timeout, then
+    ECONNRESET), `shorts-start.mjs` (start 804 / 1468 ms after the swipe, limit 700 ms), `knock.mjs` ("a third knock
+    from one address waits", then a 1006 on the retry), `chat-history.mjs` (1006, passed on retry), `wait.mjs`,
+    `quiz.mjs` (1006, passed on retry). Canary rooms dropped 1006 many times in both runs (19:30–19:37, 19:47–19:49):
+    the same object-restart pattern as earlier on 16 Nov. Neither PR touches those files; VC1's only server change
+    is the `deaf` flag in `setVoice` / `memberOf`. Re-run live e2e (or wait for a quiet main) before blaming code;
+    if `shorts-start` / `knock` stay red with no canary drops, they are real and belong to SH1 / knock.
+  - [ ] VC3 #502 (`claude/vc3-voice-blocked`, merged with main, CI green): NOT merged, held until live e2e is green.
+    Then merge, check deploy + live e2e, and write the Done lines: SH3 (#499), VC1 (#501), VC3 (#502), each card
+    verbatim to `archive/cards-done.md` with the live version.
+  - [ ] Owner hand tests to add with those Done lines: (1) [SH3] computer, Shorts view: 💬 opens the chat beside
+    the video, a friend's messages show there and count on 💬 while it is closed; (2) [VC1] in voice press 🎧: you
+    hear nobody, your mic goes off, your friend sees a crossed 🎧 on your face; 🎙 brings everything back;
+    (3) [VC1] on a YouTube video drag YouTube's own volume slider: it follows the mouse (the cloud can't test real
+    YouTube); (4) [VC3] with a VPN on, join voice: after ~10 s "Your voice isn't reaching the others" and an ⓘ.
+  - [ ] MSG1 (delete a chat message for everyone; host deletes others'): not started; branch it from main.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
     state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
-  - Note: `scripts/harness/phone/run.cjs` (not in CI) already fails on main (the strip's tools, the games tab, the
-    sideways column's buttons): stale since the phone layout changes; worth a fix pass.
+  - Notes: `scripts/harness/phone/run.cjs` (not in CI) already fails on main (strip tools, games tab, sideways
+    column): stale. `feed` harness failed once on #499's CI (friend's `#feed-row-pause` not visible), passed on the
+    re-run and 4 local runs.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
