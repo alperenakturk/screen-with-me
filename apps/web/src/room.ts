@@ -87,7 +87,7 @@ import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
 import { createSettingsDialog, type SettingsSection } from './ui/settings-dialog.ts';
 import { rememberGift, watchFilmEnds } from './games/film-end.ts';
-import { createGameStage } from './games/stage.ts';
+import { createLazyGameStage } from './games/stage-lazy.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
 import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
@@ -1267,7 +1267,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       gift: (to: string, plant: string) => send({ t: 'gift', to, plant }) !== false,
     };
   }
-  const games = createGameStage({
+  const games = createLazyGameStage({
     wrap: $('.player-wrap'),
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
