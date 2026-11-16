@@ -1968,7 +1968,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Under the video** (`ui/reactions.ts` `.tray-bar`): "😀 Tepki ▴" tray (Ready-made / Mine, 8 slots, ‹ 1/3 ›,
     🖼️ Add; pressing inside doesn't close it, outside/Esc closes) + the three most recent emojis next to it
     (`localStorage` `recentReactions`); on the right labelled buttons 🎮 Game · 📌 Pin · 🔄 Sync · ⏩ 1× (opens
-    `#speed-pop`: −, rate list, +) · ⇥ · ⛶; icons only at ≤1180 px. Fullscreen and Shorts bars stay flat (8 slots +
+    `#speed-pop`: the speed picker, below) · ⇥ · ⛶; icons only at ≤1180 px. Fullscreen and Shorts bars stay flat (8 slots +
     ▲▼). In the shell, popups opening over the hole (`[data-island]`: tray, speed, game menu) are islands; they have no
     opening animation (measurements shifted).
   - **Top bar** (`html.in-room`): "Bağlı" text, ⟳, 🎨 and TR/EN hidden in the room; the connection is the dot of the
@@ -2080,8 +2080,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   on a computer (not the film page, phones or the Shorts view) the toolbar under the video is hidden whenever the
   dock is shown in the window (`.dock-window`); the dock is the only remote: 💬 (only in fullscreen or with the side
   panel hidden), 😀, 📌, 🎮 `#dock-game` (an `extraButtons` of the games stage, its hall opens left of the rail), 🎙 / 📷,
-  🖥️ only while someone streams, ⋯ `#dock-more` (`#dock-more-pop`: speed chips, sync, next, side panel, "keep the
-  controls open"), ⛶. `#dock-speed` / `#dock-skip` are hidden there. YouTube (`.theater.yt-rail`, set when the player is
+  🖥️ only while someone streams, ⋯ `#dock-more` (`#dock-more-pop`: one "⏩ Speed · 1×" row `#dock-speed-row` that
+  opens the speed picker in place, sync, next, side panel, "keep the controls open"), ⛶. `#dock-speed` / `#dock-skip` are hidden there. YouTube (`.theater.yt-rail`, set when the player is
   YouTube): the rail is a 58 px column beside the video, never on it: `.player` / `.fs-catcher` end at its edge while
   it shows (a mouse move, hovering it, an open window of it, a paused video, always on touch screens) and fill the
   width when it rests (`.dock-idle`), in the window and in fullscreen. **0.9.93 (owner: "not on every move; open when
@@ -2441,5 +2441,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   message carries `resumed`. A video skipped with "Next" counts from the start. Turning saving off deletes `history`.
   Every room: a room that stayed empty for more than 1 min while playing opens paused where the last person left
   (`freezeIfLongEmpty`). Listed under "Kaydedilen odaların" on the home page.
+- **Speed picker (card UI2):** one picker everywhere (`room.ts` `speedPicker`): in the rail's ⋯ (behind the
+  "⏩ Speed · 1×" row; open, `#dock-more-pop.picking` hides the menu's other rows so it fits a short video, and it
+  closes again with the menu), the rail's own ⏩ pop `#dock-speed-pop` and the toolbar's
+  `#speed-pop`. It holds the ready speeds `PRESET_RATES` (0.5 / 1 / 1.25 / 1.5 / 2, `[data-rate]`, `.on` +
+  `aria-pressed` for the room's speed) and − value + (`[data-step]`). `fitRate` / `stepRateFor`
+  (`packages/shared/src/protocol.ts`) keep a custom speed between 0.25× and `CUSTOM_MAX_RATE` 3× in 0.05 steps; on
+  YouTube they snap to / step through `YOUTUBE_RATES` (its player plays nothing else), TikTok and Vimeo stay 1×. `room.ts`
+  `requestRate` fits every request; `showRates` paints all pickers and the ⋯ row; one delegated click handles − / +
+  and the ready speeds outside the rail (the rail's own handler closes its pop). The engine plays and shares a custom
+  rate once (scenario in `sync-engine.test.ts`). Phones: targets ≥ 44 px; the speed is in the sideways / fullscreen
+  rail only (the toolbar is hidden in the phone room). "Keep the controls open" (`opt:railPin`) is off unless someone
+  turns it on: nothing sets it by itself. Test Lab `rail.speed` (speed, ready / ± values for this media, picker open,
+  ⋯ height, `opt:railPin`). Harness `scripts/harness/rail-speed` (CI games-more).
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
