@@ -47,6 +47,11 @@ export function shortsOnly(items: SearchResult[]): SearchResult[] {
   return items.filter((item) => !item.live && item.duration !== null && item.duration <= SHORT_MAX_SECONDS);
 }
 
+/** Card SH2: the ▶ video feed's picks: not live, not a Short, longer than a Short can be. */
+export function videosOnly(items: SearchResult[]): SearchResult[] {
+  return items.filter((item) => !item.live && !item.short && item.duration !== null && item.duration > SHORT_MAX_SECONDS);
+}
+
 /** Same words → same cache entry: trimmed, inner spaces collapsed, lower case. Null when nothing is left. */
 export function normalizeQuery(raw: string): string | null {
   const text = raw.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().toLocaleLowerCase('tr');

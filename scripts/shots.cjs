@@ -49,6 +49,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const searchTab = async (p) => {
   if (!(await p.isVisible('#media-input'))) await p.click('#ph-tab-search');
 };
+/** Card SH2: start a ▶ "Popular now · Music" feed from the Queue (the chart answer is SEARCH_ITEMS' long videos). */
+const startFeed = async (p) => {
+  await p.route('**/api/youtube/**', (route) => route.fulfill({ json: { items: SEARCH_ITEMS.filter((i) => !i.short) } }));
+  if (await p.isVisible('#ph-tab-search')) await p.click('#ph-tab-search');
+  else await p.click('.tab[data-tab="queue"]');
+  await p.click('#feed-open-videos');
+  await p.click('#feed-pools .feed-pool[data-pool="music"]');
+  await p.waitForSelector('#feed-row-steer');
+  await wait(1500);
+};
 const SEARCH_ITEMS = [
   { id: 'aqz-KE-bpKQ', title: 'A night walk through the old harbour, filmed in one take', channel: 'Harbour Films', duration: 1832, live: false },
   { id: 'dQw4w9WgXcQ', title: 'Night walk sounds', channel: 'Calm Channel', duration: 3605, live: false },
@@ -111,6 +121,24 @@ const SCREENS = {
       await p.press('#media-input', 'Enter');
       await p.waitForSelector('#search-results .search-row');
       await p.click('#search-results .search-row:nth-child(2) .search-queue');
+    },
+  },
+  // Card SH2: the room's feed in the Queue and its window (YouTube's answers are the fixed list above).
+  'feed-queue': {
+    what: 'The Queue ("Up next") with a ▶ video feed running: its row with ⏸, 🧭 Steer and ✕ above the queued videos',
+    room: true,
+    after: async (p) => {
+      await startFeed(p);
+      await p.keyboard.press('Escape');
+    },
+  },
+  'feed-window': {
+    what: 'The ▶ / ♾ feed window over the room while a feed runs: Pause / Stop, four ways to steer (each with its line), then the starters',
+    room: true,
+    after: async (p) => {
+      await startFeed(p);
+      await p.click('#feed-row-steer');
+      await p.waitForSelector('#feed-steer-country');
     },
   },
   'tiktok-back': {

@@ -109,16 +109,32 @@ async function unnamed(page) {
   // The fleet is random: a ship next to another one (or the edge) may have no room to turn, and the page then says
   // so and leaves it. Like a player, pick another ship and try again (CI hit that once).
   let turned = false;
-  for (let tries = 0; tries < 8 && !turned; tries++) {
+  // A loaded runner may still be echoing the move: wait until the fleet stops changing before turning.
+  let lastSig = '';
+  await until(async () => {
+    const sig = (await cellsWith(alex.page, 'mine', 'ship')).join(',') + '|' + (await cellsWith(alex.page, 'mine', 'picked')).join(',');
+    const same = sig === lastSig;
+    lastSig = sig;
+    return same;
+  }, 3000);
+  const tried = new Set();
+  for (let tries = 0; tries < 10 && !turned; tries++) {
     const beforeTurn = (await cellsWith(alex.page, 'mine', 'picked')).join(',');
+    tried.add(beforeTurn);
     await click(alex.page, '#game-stage .sea-turn');
-    turned = !!(await until(async () => (await cellsWith(alex.page, 'mine', 'picked')).join(',') !== beforeTurn, 1500));
+    turned = !!(await until(async () => (await cellsWith(alex.page, 'mine', 'picked')).join(',') !== beforeTurn, 3000));
     if (turned) break;
+    // Pick a ship not tried yet (a tap on a ship cell picks the whole ship), and wait until it shows as picked.
     const ships = await cellsWith(alex.page, 'mine', 'ship');
     const pickedNow = await cellsWith(alex.page, 'mine', 'picked');
-    const other = ships.filter((c) => !pickedNow.includes(c))[(tries * 5) % Math.max(1, ships.length - pickedNow.length)];
-    if (other !== undefined) await alex.page.click(`#game-stage .sea-mine .sea-cell[data-cell="${other}"]`);
-    await wait(150);
+    for (const c of ships.filter((x) => !pickedNow.includes(x))) {
+      await alex.page.click(`#game-stage .sea-mine .sea-cell[data-cell="${c}"]`);
+      const now = await until(async () => {
+        const p = (await cellsWith(alex.page, 'mine', 'picked')).join(',');
+        return p && p !== pickedNow.join(',') ? p : null;
+      }, 3000);
+      if (now && !tried.has(now)) break;
+    }
   }
   check(turned, 'Turn turns a picked ship (another one when the first has no room)');
   // KEYREP: a held R (one press, then key-repeats) turns the ship once and sends one `place`; the repeats used to send
@@ -196,9 +212,13 @@ async function unnamed(page) {
     status: document.querySelector('#game-stage .sea-status')?.textContent ?? '',
     fire: document.querySelector('#game-stage .sea-fire')?.textContent ?? '',
   }));
+  // CI (16 Nov 2026): the zoom is a 0.25 s transition; read after a fixed 400 ms on a busy runner it was still on its
+  // way (scale under 1.9). Wait for the zoomed state itself.
+  const zoomedOk = (z) => z.zoomed && z.q === '0' && z.scale > 1.9 && z.whole;
+  await until(async () => zoomedOk(await zoom()), 4000);
   const z1 = await zoom();
   check(aimed.cells.length === 1 && aimed.cells[0] === other && /aiming at [A-J]\d+/i.test(aimed.status) && /fire at [A-J]\d+/i.test(aimed.fire), "phone: Sam's first tap only aims (crosshair, the cell's name, a Fire button)", aimed);
-  check(z1.zoomed && z1.q === '0' && z1.scale > 1.9 && z1.whole, 'phone: the first tap zooms into that quarter (cells twice as big), "Whole sea" shows (44 px)', z1);
+  check(z1.zoomed && z1.q === '0' && z1.scale > 1.9 && z1.whole, 'phone: the first tap zooms into that quarter (cells twice as big), "Whole sea" shows (44 px)', JSON.stringify(z1));
   // B2's find (0.9.97.118): "Whole sea" never sits over the zoomed grid (it covered H10 in the bottom-right quarter).
   const clear = await sam.page.evaluate(() => {
     const f = document.querySelector('#game-stage .sea-theirs .sea-zoom').getBoundingClientRect();
@@ -208,11 +228,14 @@ async function unnamed(page) {
   check(clear, 'phone: "Whole sea" sits outside the zoomed grid, so every cell can be shot');
   check(!(await cellsWith(alex.page, 'mine', 'miss')).includes(other), 'phone: nothing is fired by an aim');
   await sam.page.click('#game-stage .sea-whole');
-  await wait(400);
+  await until(async () => !(await zoom()).zoomed, 4000);
   const z2 = await zoom();
   check(!z2.zoomed && !z2.whole && (await sam.page.evaluate(() => !document.querySelector('#game-stage .sea-theirs .sea-cell.aimed'))), '"Whole sea" goes back to the whole sea (no aim)', z2);
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);
-  await wait(400);
+  await until(async () => {
+    const z = await zoom();
+    return z.zoomed && z.q === '3';
+  }, 4000);
   const z3 = await zoom();
   check(z3.zoomed && z3.q === '3', 'phone: a tap in another corner zooms into that quarter', z3);
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);
