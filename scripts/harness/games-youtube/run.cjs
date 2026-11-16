@@ -1,7 +1,7 @@
-// Card YTG (the YouTube audit, gap 2): on a computer nothing of ours may sit in front of the YouTube player, games
-// included. While the room plays a YouTube video a game's window keeps to the space beside the player (under it when
-// the window is too small), "in the video's place" is not offered, a drag can't bring it over the player, going
-// fullscreen tucks the game away and bringing a game up in fullscreen leaves fullscreen. The YouTube player only has
+// Card YTG (the YouTube audit, gap 2) + GW2: on a computer nothing of ours is put in front of the YouTube player. A table
+// opens in ⛶ full screen (the player off the screen) or in its 🪟 frame, whose home keeps beside the player; only a frame
+// the user drags there himself sits over it (owner, 15 Nov 2026). Going fullscreen tucks the game away and bringing a
+// game up in fullscreen leaves fullscreen. The YouTube player only has
 // to be created (the room's item is YouTube); it need not play.
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
 //   NODE_PATH=$(npm root -g) node scripts/harness/games-youtube/run.cjs [site]
@@ -31,7 +31,7 @@ const where = (page) =>
     const g = s.getBoundingClientRect();
     const overlap = g.left < t.right - 1 && t.left < g.right - 1 && g.top < t.bottom - 1 && t.top < g.bottom - 1;
     const onScreen = g.left >= -1 && g.top >= -1 && g.right <= innerWidth + 1 && g.bottom <= innerHeight + 1;
-    return { shown: true, overlap, onScreen, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)), game: [g.left, g.top, g.width, g.height].map(Math.round), player: [t.left, t.top, t.width, t.height].map(Math.round), switchGone: document.querySelector('#game-stage .game-place')?.hidden ?? null };
+    return { shown: true, overlap, onScreen, mode: ['float', 'stage', 'below', 'full', 'max'].find((m) => s.classList.contains(m)), game: [g.left, g.top, g.width, g.height].map(Math.round), player: [t.left, t.top, t.width, t.height].map(Math.round), switchGone: document.querySelector('#game-stage .game-place')?.hidden ?? null };
   });
 
 (async () => {
@@ -52,33 +52,45 @@ const where = (page) =>
     await page.press('#media-input', 'Enter');
     const yt = await until(() => page.evaluate(() => document.getElementById('theater')?.classList.contains('yt-rail')), 15000);
     check(!!yt, `${label}: the room plays a YouTube video`);
+    // GW2 (owner, 15 Nov 2026; Planner's pick A): a table opens in ⛶ full screen the first time (the whole screen: the
+    // YouTube player is not on the screen at all), and in the mode used last after that. In the 🪟 frame its home keeps
+    // clear of the player; a frame I drag onto the player stays there (CLAUDE.md §7: only a frame the user drags there).
+    await page.evaluate(() => window.__swmLab.run('games.open.classics'));
+    await until(async () => (await where(page)).shown);
+    await wait(700);
+    const full = await where(page);
+    check(full.shown && full.mode === 'max' && full.game[0] <= 0 && full.game[1] <= 0 && full.game[2] >= viewport.width - 1 && full.game[3] >= viewport.height - 1, `${label} classics: a table opens in ⛶, filling the screen`, full);
+    await page.evaluate(() => document.querySelector('#game-stage .game-mode')?.click());
+    await until(async () => (await where(page)).mode === 'float');
+    await wait(700);
     for (const kind of ['classics', 'sea']) {
-      await page.evaluate((k) => window.__swmLab.run(`games.open.${k}`), kind);
-      const w = await until(async () => {
-        const x = await where(page);
-        return x.shown ? x : null;
-      });
-      await wait(600);
-      const now = await where(page);
-      check(now.shown && !now.overlap && now.onScreen, `${label} ${kind}: the game window opens clear of the YouTube player, whole on screen`, now ?? w);
-      // Bug W2: only the free window is possible over YouTube, so the placement switch is gone (it used to show disabled).
-      if (now.mode === 'float') check(now.switchGone === true, `${label} ${kind}: "in the video's place" is not offered`, now);
-      // Pressing "in the video's place" anyway does nothing; a drag of the head onto the player can't bring it there.
-      await page.evaluate(() => document.querySelector('#game-stage .place-stage')?.click());
-      if (now.mode === 'float') {
-        const head = await page.evaluate(() => {
-          const r = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
-          const t = document.getElementById('theater').getBoundingClientRect();
-          return { x: r.left + 40, y: r.top + r.height / 2, tx: t.left + t.width / 2, ty: t.top + t.height / 2 };
-        });
-        await page.mouse.move(head.x, head.y);
-        await page.mouse.down();
-        await page.mouse.move(head.tx, head.ty, { steps: 8 });
-        await page.mouse.up();
-        await wait(300);
+      if (kind === 'sea') {
+        await page.evaluate(() => window.__swmLab.run('games.open.sea'));
+        await until(async () => (await where(page)).shown);
+        await wait(700);
       }
-      const after = await where(page);
-      check(after.shown && !after.overlap && after.onScreen, `${label} ${kind}: after "in the video's place" and a drag onto the player it still keeps clear`, after);
+      const now = await where(page);
+      // No room beside the player for the frame (a small screen): it sits under the player instead (YTG), never over it.
+      check(now.shown && (now.mode === 'float' || now.mode === 'below') && !now.overlap && now.onScreen, `${label} ${kind}: the 🪟 frame (the mode used last) opens clear of the YouTube player, whole on screen`, now);
+      if (now.mode !== 'float') continue;
+      const head = await page.evaluate(() => {
+        // Grabbed by the game's name (a narrow head wraps its buttons under it).
+        const r = document.querySelector('#game-stage .game-stage-title').getBoundingClientRect();
+        const t = document.getElementById('theater').getBoundingClientRect();
+        return { x: r.left + Math.min(40, r.width / 2), y: r.top + r.height / 2, tx: t.left + t.width / 2, ty: t.top + t.height / 2 };
+      });
+      await page.mouse.move(head.x, head.y);
+      await page.mouse.down();
+      await page.mouse.move(head.tx, head.ty, { steps: 8 });
+      await page.mouse.up();
+      await wait(400);
+      const dragged = await where(page);
+      check(dragged.shown && dragged.overlap && dragged.onScreen, `${label} ${kind}: a frame I drag onto the player stays there`, dragged);
+      // A double click on the head: back to its home, clear of the player again.
+      await page.mouse.dblclick(head.x - (head.x - dragged.game[0]) + Math.min(40, dragged.game[2] / 4), dragged.game[1] + (head.y - now.game[1]));
+      await wait(400);
+      const home = await where(page);
+      check(home.shown && !home.overlap, `${label} ${kind}: a double click brings it home, clear of the player`, home);
     }
     if (label === '1366×768') {
       // Going fullscreen with the game open tucks it away (a dot on 🎮); bringing it up in fullscreen leaves fullscreen.
@@ -90,15 +102,18 @@ const where = (page) =>
       check(!!left, `${label}: bringing the game up in fullscreen leaves fullscreen`);
       const back = await where(page);
       check(back.shown && !back.overlap, `${label}: … and the window is clear of the player again`, back);
-      // W1 (owner): no game has its own full screen any more (no ⛶ in any head).
-      check(!(await page.$('#game-stage .game-full')), `${label}: no ⛶ in the game's head`);
-      // A video that isn't YouTube (the sync test): the video's place is possible again (offered by the switch; once card
-      // .113 turns STAGE_READY on, the table plays there).
+      // GW2: the table's head has the ⛶ / 🪟 switch; with a video that isn't YouTube ⛶ works the same.
+      check(await page.evaluate(() => !document.querySelector('#game-stage .game-mode')?.hidden), `${label}: the table's head has ⛶ / 🪟`);
       await page.evaluate(() => window.__swmLab.run('games.open.classics'));
       await page.fill('#media-input', `${SITE}/sample.mp4`);
       await page.evaluate(() => document.querySelector('#media-form button[value="load"]')?.click());
-      const free = await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail') && (document.getElementById('game-stage').dataset.place === 'stage' || document.querySelector('#game-stage .game-place')?.hidden === false)));
-      check(!!free, `${label}: with a video that isn't YouTube the video's place is possible again (offered, or the table plays there)`);
+      await until(() => page.evaluate(() => !document.getElementById('theater').classList.contains('yt-rail')));
+      await page.evaluate(() => window.__swmLab.run('games.mode', 'full'));
+      const fileFull = await until(async () => {
+        const x = await where(page);
+        return x.mode === 'max' ? x : null;
+      });
+      check(!!fileFull, `${label}: with a video that isn't YouTube ⛶ works too`);
     }
     check(!errors.length, `${label}: no page errors`, errors.slice(0, 2));
     await ctx.close();
