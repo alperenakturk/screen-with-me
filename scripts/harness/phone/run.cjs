@@ -6,6 +6,7 @@
 // `FILM_VIDEO=… node scripts/harness/embed/film-server.mjs`, which serves it on :5300):
 //   NODE_PATH=$(npm root -g) node scripts/harness/phone/run.cjs [http://localhost:5173] [http://localhost:5300/video.webm]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 const SITE = process.argv[2] || 'http://localhost:5173';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
 let fails = 0;
@@ -36,6 +37,7 @@ async function enter(page, room) {
 
 /** Puts links / words in the room's link box: on a phone through the Search tab. */
 async function addMedia(page, text, mode) {
+  await phoneReady(page);
   if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
   await page.fill('#media-input', text);
   if (mode) await page.click(`#media-form button[value=${mode}]`);

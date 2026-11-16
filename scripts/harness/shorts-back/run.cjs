@@ -4,6 +4,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/shorts-back/run.cjs [http://localhost:8787] [out-dir]
 const { viaYouTube } = require('../via-youtube.cjs');
+const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
@@ -38,6 +39,7 @@ const check = (ok, label, extra = '') => {
     await page.fill('#name', 'Alex');
     await page.click('#name-form button.primary');
     await page.waitForSelector('.room');
+    await phoneReady(page);
     if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
     await page.fill('#media-input', SHORT);
     await page.click('#media-form button[value=load]');

@@ -5,6 +5,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LAB_SERVER:1 --var LAB_CODE:harness-lab-code)
 //   NODE_PATH=$(npm root -g) node scripts/harness/chat-history/run.cjs [http://localhost:8787] [out-dir]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const OUT = process.argv[3] || require('os').tmpdir();
@@ -90,6 +91,7 @@ const history = async (page) => JSON.parse(await lab(page, 'chat.history'));
     // Room activity ("Alex added …" for each of 30 pasted links) never pushes chat out (it used to share one 120-line cap).
     const before = h.loaded;
     const links = Array.from({ length: 30 }, (_, i) => `https://youtu.be/${('abcdefghij' + i).slice(-11).padStart(11, 'x')}`).join(' ');
+    await phoneReady(page);
     if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search').catch(() => {});
     await page.fill('#media-input', links);
     await page.click('#media-form button[value=enqueue]').catch(async () => page.press('#media-input', 'Enter'));

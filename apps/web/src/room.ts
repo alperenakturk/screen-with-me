@@ -146,6 +146,9 @@ export function renderRoom(app: HTMLElement, roomId: string, waited = false): vo
     });
     return;
   }
+  // Card BUD2: a phone starts fetching its phone-room chunk while the name form is up, so the phone layout is there
+  // when the room opens (startPhoneRoom below then finds the module already loaded).
+  if (!isShell && isPhoneLayout()) void loadChunk(() => import('./ui/phone-room.ts'));
   if (tvLab() && !tvModules) {
     void loadTv().then(() => renderRoom(app, roomId, waited));
     return;

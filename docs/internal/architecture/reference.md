@@ -715,7 +715,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
   not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). **`ui/phone-room.ts` is a lazy chunk (card
   BUD2):** room.ts loads it when the phone layout is on at start or first turns on (`onPhoneLayout`), so a computer
-  never downloads it; room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
+  never downloads it, and a phone starts fetching it while the name form is up (`renderRoom`), so the layout is there when the room opens. Harnesses wait for `html.ph-room` on a phone-sized page before looking (`scripts/harness/phone-ready.cjs`). room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
   (`deps.gamesButton`), since games/stage.ts takes its triggers when the room starts. The desktop DOM stays: `.stage`, `.side`,
   `.together-card`, `.tabs-card` are `display: contents`, so the column is the theater (edge to edge, `order` 1) → the
   faces strip `.together-strip` (`#voice-people` + `#strip-voice` quick 🎙 / 📷 / 🖥️ (voice.ts quick id `strip`; 🖥️ only
