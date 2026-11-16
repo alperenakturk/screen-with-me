@@ -223,7 +223,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   by itself (`ses-goruntu.md`), a budget brake is mandatory, and the same card could hide IP addresses in voice,
   camera and streams (ROADMAP Phase 2).
 - **Chrome Web Store submission:** with 1.0. **Trademark filing, donations, legal entity:** `ROADMAP.md` §4.
-- **Film page intro sound** (play it on the film page or not; Planner recommends not): decided right before the store
+- **Film page intro** (play the room intro on the film page or not; Planner recommends not): decided right before the store
   submission, not now (owner, 17 Nov 2026).
 - **After 1.0:** a Firefox extension (L), a TURN relay (Phase 2). Not planned: a Safari extension, Opera's own store.
 
