@@ -397,6 +397,7 @@ export const tr: Record<I18nKey, string> = {
   'quiz.typeLabel': 'Cevabın',
   'quiz.typeHere': 'Cevabını yaz…',
   'quiz.typeSend': 'Gönder',
+  'quiz.typeSent': '✓ Gönderildi',
   'quiz.typedAnswer': 'Cevap: {answer}',
   'games.waiting': 'Rakip bekleniyor: odadan biri katılsın',
   'games.seatEmpty': 'Bekleniyor…',

@@ -395,6 +395,7 @@ const en = {
   'quiz.typeLabel': 'Your answer',
   'quiz.typeHere': 'Type your answer…',
   'quiz.typeSend': 'Send',
+  'quiz.typeSent': '✓ Sent',
   'quiz.typedAnswer': 'Answer: {answer}',
   'games.waiting': 'Waiting for an opponent: someone in the room needs to join',
   'games.seatEmpty': 'Waiting…',

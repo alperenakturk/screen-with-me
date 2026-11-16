@@ -145,7 +145,6 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   interface Typed {
     input: HTMLInputElement;
     go: HTMLButtonElement;
-    answer: HTMLElement;
     said: HTMLElement;
   }
   /** What I typed for question `n` (shown back in the field until the reveal). */
@@ -168,14 +167,14 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       e.preventDefault();
       answerTyped(n, input.value);
     });
-    const answer = el('p', { class: 'quiz-type-answer', 'aria-live': 'polite' });
     const said = el('ul', { class: 'quiz-said' });
     const note = el('p', { class: 'quiz-note' });
-    body.replaceChildren(el('h3', { class: 'quiz-question' }, question), form, answer, said, note);
+    // The note sits right under the field, so "locked in" and the reveal's verdict appear in the same place.
+    body.replaceChildren(el('h3', { class: 'quiz-question' }, question), form, note, said);
     shownN = n;
     // A keyboard is there: the field is ready to type into (a phone's keyboard opens on a tap).
     if (hasMouse()) queueMicrotask(() => input.focus({ preventScroll: true }));
-    return { n, texts: [], list: form, buttons: [], note, fresh: false, typed: { input, go, answer, said } };
+    return { n, texts: [], list: form, buttons: [], note, fresh: false, typed: { input, go, said } };
   }
   /** My answer to option `i` of question `n`: once, on the first press (pointer, key or screen reader). */
   function answer(n: number, i: number): void {
@@ -331,8 +330,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         const done = reveal || picked !== null;
         ty.input.disabled = done;
         ty.go.disabled = done;
+        ty.go.textContent = picked !== null ? t('quiz.typeSent') : t('quiz.typeSend');
         if (myText && myText.n === s.n && ty.input.value !== myText.text) ty.input.value = myText.text;
-        ty.answer.textContent = reveal ? t('quiz.typedAnswer', { answer: s.answer ?? '' }) : '';
         ty.said.replaceChildren(
           ...(reveal
             ? s.players
@@ -364,7 +363,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         : picked !== null
           ? t('quiz.waiting')
           : '';
-      v.note.textContent = note;
+      // A typed question's reveal names the right answer on the verdict's line (QZ2).
+      v.note.textContent = v.typed && reveal ? `${note} · ${t('quiz.typedAnswer', { answer: s.answer ?? '' })}` : note;
       v.note.classList.toggle('good', reveal && !!mine?.gained);
     }
     tick();
