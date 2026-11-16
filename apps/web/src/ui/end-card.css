@@ -55,8 +55,14 @@
   margin-top: 4px;
 }
 
-/* On a phone the two buttons share the width, thumb-sized. */
+/* On a phone the two buttons share the width equally, thumb-sized (a long word may wrap). */
+html.phone .end-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 html.phone .end-buttons > .btn {
-  flex: 1 1 0;
+  min-width: 0;
   min-height: 44px;
+  white-space: normal;
 }

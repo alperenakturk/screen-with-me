@@ -39,7 +39,7 @@ const styles = () => (styled ??= loadChunk(() => import('./end-card-css.ts')));
 function openDialog(title: string, url: string | null, startNext: () => void): void {
   closeNextCard();
 
-  const next = el('button', { type: 'button', class: 'btn primary end-next' }, `▶ ${t('startNext')}`);
+  const next = el('button', { type: 'button', class: 'btn primary end-next' }, t('startNext'));
   const close = el('button', { type: 'button', class: 'btn end-close' }, t('close'));
   const heading = el('p', { class: 'end-kicker muted small', id: 'end-dialog-title' }, t('videoEnded'));
   const name = el('span', { class: 'end-title' }, title);

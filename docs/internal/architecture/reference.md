@@ -2225,3 +2225,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`freezeIfLongEmpty`). Listed under "Kaydedilen odaların" on the home page.
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
+- **"Video ended" card (card EC1):** `ui/end-card.ts` `showNextCard` (from the engine's `onEnded` and the film page's
+  `next`, only when autoNext is off and the queue has more). Outside the Shorts view it is a centered page dialog: a
+  shared `.dialog-backdrop.end-backdrop` on `body` (`fs-layer.ts` lifts it into fullscreen; on the film page it closes
+  the hole like every dialog) with `.end-dialog` ("Video ended" small, the title as plain text clamped to 2 lines, the
+  link only as a 24 px ↗ `.end-link`, Close + ▶ Play next side by side; on a phone a 1fr 1fr grid of 44 px buttons).
+  Focus starts on Play next; Esc, a click outside, Close or Play next close it, and it closes itself after 60 s or when
+  the item changes (`closeNextCard` in `applyState`). Its styles are `ui/end-card.css`, loaded with the tiny
+  `ui/end-card-css.ts` chunk before it first opens (room CSS budget). It never appears before a video ended and is a
+  page dialog, never a layer on the YouTube player (RMF). In the Shorts view the old small `.end-card` stays in the
+  notes corner (`placeNotices`, card BH12). Test Lab `endcard.show` (Video tab: opens a sample, run again to read what
+  is open). Harness `scripts/harness/end-card` (CI games-more, with the :5300 webm).
