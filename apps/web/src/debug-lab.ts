@@ -101,10 +101,11 @@ export function labPeer(id: string, state: string, ice: string): LabText {
 export interface LabCommand {
   /** Unique, dotted: "snackBar.coins", "friends.add". The command box matches it and the title (both languages). */
   id: string;
-  /** Short title that says what happens: "Snack Bar: +10K coins". */
-  title: LabText;
-  /** One line of help shown under the title: what you will see. */
-  help: LabText;
+  /** Short title that says what happens: "Snack Bar: +10K coins". Commands in the room's own chunk leave it out and
+   * put it in ui/lab-texts.ts (the room's JS budget); the lab fills it in by id. */
+  title?: LabText;
+  /** One line of help shown under the title: what you will see (or in ui/lab-texts.ts, as `title`). */
+  help?: LabText;
   tab: LabTab;
   /** Where it works, shown as a tag: "in a room", "test server only"… */
   where?: LabText;

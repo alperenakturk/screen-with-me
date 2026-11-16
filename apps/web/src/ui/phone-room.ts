@@ -817,8 +817,6 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     commands: [{
       id: 'phoneRoom.state',
       tab: 'screen',
-      title: { en: 'Phone room: what shows now', tr: 'Telefon odası: şu an ne görünüyor' },
-      help: { en: 'Writes the open tab, the input row and the visible buttons into the log.', tr: 'Açık sekmeyi, yazma satırını ve görünen düğmeleri kayda yazar.' },
       available: () => html.classList.contains('ph-room') || { en: 'not the phone room', tr: 'telefon odası değil' },
       run: () => JSON.stringify(phoneState()),
     }],

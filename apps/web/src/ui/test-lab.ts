@@ -23,6 +23,7 @@ import {
   type LabTab,
   type LabText,
 } from '../debug-lab.ts';
+import { LAB_TEXTS } from './lab-texts.ts';
 import { createFriends } from './lab-friends.ts';
 import { createVideoLab } from './lab-video.ts';
 import { createScenarios } from './lab-scenarios.ts';
@@ -245,7 +246,8 @@ function allCommands(): LabCommand[] {
     for (const command of h.commands ?? []) {
       if (!command || typeof command.id !== 'string' || ids.has(command.id)) continue;
       ids.add(command.id);
-      list.push(command);
+      const text = LAB_TEXTS[command.id];
+      list.push({ ...command, title: command.title ?? text?.title ?? command.id, help: command.help ?? text?.help ?? '', where: command.where ?? text?.where });
     }
   }
   return list;

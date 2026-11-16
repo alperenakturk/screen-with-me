@@ -1464,7 +1464,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   line: what you will see), tab: 'status' | 'friends' | 'video' | 'games' | 'scenarios' | 'screen' | 'log', where?,
   available?: () => true | reason, run(arg?), undo? }`. **Texts (card LABTR):** title / help / where / reasons / status
   rows / results are `LabText` = a string or `{ en, tr }` written inline (`title: { en: 'Drop my connection for 6 s',
-  tr: 'Bağlantımı 6 sn kopar' }`); a thrown `labFail({ en, tr })` shows in the page's language; the lab chunk picks the
+  tr: 'Bağlantımı 6 sn kopar' }`). **A command registered by a module in the room's own chunk leaves `title` / `help` /
+  `where` out and puts them in `ui/lab-texts.ts` under its id (card BUD1, the room's JS budget):** that file is part
+  of the lab's lazy chunk and `test-lab.ts` `allCommands` fills them in, so nobody without the lab downloads them,
+  while `run` / `available` / `undo` stay with the feature and every hook is registered before the lab opens; a thrown `labFail({ en, tr })` shows in the page's language; the lab chunk picks the
   side (`ui/lab-text.ts` `say`, `both` for the search). Plain words that say what happens, no jargon in Turkish
   (WebSocket, HTTP, peer, ICE… are said in words); `check-texts.mjs` fails a lab command without a pair. Every lab
   harness takes `LAB_LANG=tr`; every run goes through `runCommand` (a throw / rejection = a red log line, never a broken
