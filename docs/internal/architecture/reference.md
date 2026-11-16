@@ -1317,7 +1317,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Saves every 5 s, on a seed / bloom, on close and `pagehide`; one tab at a time (`windowGarden:tab`). Sounds
   `gardenPlant` / `gardenWater` / `gardenSeed` / `gardenBloom` / `gardenPick` / `gardenNew`. Gallery progress
   "🌱 2 growing · 📖 3/8". Harness `scripts/harness/garden/run.cjs` (17 checks).
-  **WG2 (0.9.97.14x):** nothing moves while playing: the pot's card keeps one height (the name on one line, two lines
+  **WG2 (16 Nov 2026):** nothing moves while playing: the pot's card keeps one height (the name on one line, two lines
   kept for the text, the buttons beside it, or always under it in a game box ≤ 380 px), so the sill above (`flex: 1`)
   no longer jumps when the text changes; numbers are tabular. The 🎨 page adds a window view (`GARDEN_VIEWS`: `lights`
   = the scene's own lights, `sea` / `hills` / `city` = silhouettes in `.wg-view` clipped to the glass, tinted by
