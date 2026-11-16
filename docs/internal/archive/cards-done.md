@@ -2466,7 +2466,7 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: room server unit tests for the memory and its caps, e2e feed → steer → no repeat, the shorts harnesses, and
   the owner's hand test.
 - Owner's pick: his message (Planner chat, 15 Nov 2026); the memory length is the Planner's call.
-- Done: #488 (3b7275e, v0.9.97.151, live e2e green): the feed lives on the room object and shows as a Queue row for
+- Done: #488 (`claude/sh2-feeds`, 3b7275e, v0.9.97.151, live e2e green): the feed lives on the room object and shows as a Queue row for
   everyone (Pause / Resume, 🧭 Steer, ✕; "♾ Shorts feed" / "▶ Video feed" when none); ▶ video feed (popular now via
   `chart=mostPopular` 1 unit, channel newest / random / most viewed, like a video, topic); one window with four steers;
   the room remembers played YouTube ids (2000 / 30 days, wiped with the room; privacy page EN + TR); Test Lab
