@@ -453,10 +453,10 @@ html.in-home:is(:not([data-theme]), [data-theme='gece']) {
 
 @keyframes hm-drift {
   from {
-    transform: translate(-16px, 3px);
+    transform: translateX(-16px);
   }
   to {
-    transform: translate(16px, -3px);
+    transform: translateX(16px);
   }
 }
 
@@ -613,6 +613,12 @@ html.phone .hm-main {
 
 .hm-faces text {
   fill: var(--hm-soft);
+  /* TH3: the longer "4 watching" line can reach a scene theme's picture (Night Express's tower); a halo in the page's
+     colour keeps it readable there and is invisible on the plain themes. */
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
 }
 
 .hm-scene .hm-prog {

@@ -190,7 +190,7 @@ function scene(): string {
         <circle cx="86" cy="38" r="15" fill="#fff3d6" opacity=".88"/>
         <path d="M0 74 Q40 54 82 70 T160 64 V100 H0Z" fill="#4b2f8f"/>
         <path d="M0 84 Q56 70 106 86 T160 80 V100 H0Z" fill="#2c1c63"/>
-        <g transform="translate(80 27)"><g class="hm-move"><g transform="scale(.9)">
+        <g transform="translate(80 36)"><g class="hm-move"><g transform="scale(.9)">
           <path d="M0 -14 C9 -14 13 -7 13 0 C13 7 5 11 3 15 H-3 C-5 11 -13 7 -13 0 C-13 -7 -9 -14 0 -14Z" fill="#ff6b5a"/>
           <path d="M0 -14 C4 -14 5 -7 5 0 C5 7 2 11 1.5 15 H-1.5 C-2 11 -5 7 -5 0 C-5 -7 -4 -14 0 -14Z" fill="#ffd27a"/>
           <path d="M-3 15 L-2.5 19 M3 15 L2.5 19" stroke="#3b2050" stroke-width=".8"/>

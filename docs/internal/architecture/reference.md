@@ -1872,8 +1872,21 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   pill, the owner's slogan with its second line in gold, one line, "Create room" (`#start-form`, gold) + "Join with a
   code" (`#join-toggle` → `#join`), the save box (`#start-save` → `#create-name`, `create:<room>`), the continue line
   `#continue` (`lastRoom`, "↺ Continue: name · N inside · Open")) and the art (`.hm-art`, inline SVG: the mascot
-  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and three random themed avatar faces (a phone hides the art's words); `aria-hidden`; the bar
-  runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
+  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and four faces (card TH3, 0.9.97.143: `artFaces()` picks woman / man / woman / man from the
+  neutral pools `ART_WOMEN` = detective, rocker, astronaut and `ART_MEN` = driver, chef, explorer, spy on every load,
+  the first two with the green voice ring; never the culture-tied or costume avatars; text "4 watching · 2 in voice"
+  at x 148) (a phone hides the art's words); `aria-hidden`; the bar runs 6 s, the beam breathes, and the screens'
+  picture `#hm-pic` (the sunset) carries a hot-air balloon (`.hm-move`, `hm-drift`: 6 s, ease-in-out, alternate,
+  ±16 units so the phone's narrow crop shows it; the same spot on all three screens since all three are `<use>` copies
+  on one clock); nothing moves with reduced motion. **Freezing the art (TH3):** `html.hm-frozen` stops the bars at
+  half and the beam; the balloon is inside the `<use>` copies, where a selector on `<html>` doesn't reach, so it stops
+  through the inherited custom property `--hm-drift: none`. Test Lab `home.art` (`registerArtLab` in `home.ts`): the
+  next theme on this page only + the frozen art, Undo puts both back; `scripts/shots.cjs`'s `home` screen sets
+  `hm-frozen`. **Neon home (TH3, Design's `docs/internal/design/home-neon-people.md`):** the last block of `home.css`,
+  every rule under `html.in-home[data-theme='neon']`: tube letters (core `--neon-core` `#ffd3dc` + a coral
+  `text-shadow` halo) on the wordmark and the slogan's second line, an outlined pill, glowing buttons (focus ring 2 px
+  core colour, offset 3 px), coral / amber (tablet) `drop-shadow` frames on the devices (each device group's first
+  `<rect>` is its frame), a coral light cone, faint feature-card edges; static), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
   scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
