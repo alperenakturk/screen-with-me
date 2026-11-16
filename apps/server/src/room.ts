@@ -51,6 +51,7 @@ import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { labOnRequest, labRemembered } from './lab.ts';
 import { PLANT_IDS } from '@swm/shared/games/garden';
 import { RateLimiter } from './rate-limit.ts';
+import { ChatStore } from '@swm/shared/chat-store';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
 import { recordUsage } from './usage.ts';
@@ -102,8 +103,6 @@ interface HistoryEntry {
   pins: Array<Pin & { owner: string }>;
   at: number;
 }
-/** Sonradan gelenlerin görebileceği son sohbet mesajı sayısı. */
-const CHAT_HISTORY = 50;
 /**
  * Yönetici bundan uzun süre odada yoksa yöneticilik kalıcı olarak odadaki en eski
  * kişiye geçer (geri gelse de geri almaz). Sayfa yenilemek bu süreden kısa sürer.
@@ -254,7 +253,11 @@ export class Room extends DurableObject<Env> {
    * anahtarı (kendi pinini silebilsin); istemcilere hiç gönderilmez.
    */
   private pins: { itemId: string | null; list: Array<Pin & { owner: string }> } = { itemId: null, list: [] };
-  private chat: ChatMessage[] = [];
+  /**
+   * Card CH1: the chat, kept in pages until the room is deleted (at least CHAT_KEEP messages; `@swm/shared/chat-store`).
+   * Only its newest two pages are in memory (`chatStore.recent`); older pages are read when someone scrolls up.
+   */
+  private readonly chatStore = new ChatStore(this.ctx.storage);
   /**
    * Odanın özel emojileri (kimlik → data: adresi), eklenme sırasıyla. Her biri depoda ayrı
    * anahtarda (`sticker:<id>`; tek değer en fazla 128 KB), sıra `stickers` listesinde.
@@ -335,6 +338,8 @@ export class Room extends DurableObject<Env> {
   private readonly stickerLimit = new RateLimiter(4, 0.05);
   // Sohbet: art arda 8 mesaj, sonra saniyede 1 (daha sıkısı arkadaşlar arasında yazışırken takılıyordu).
   private readonly chatLimit = new RateLimiter(8, 1);
+  /** CH1: older chat pages one person may ask for (a page a second, a short burst for a quick scroll). */
+  private readonly chatOlderLimit = new RateLimiter(4, 1);
   /** Sesli sohbetin bağlantı işleri (her yeni dinlenen kişi için birkaç istek). */
   private readonly rtcLimit = new RateLimiter(30, 3);
   /** Eşler arası seste bağlantı mesajları (her eş için teklif/cevap + birkaç ağ adayı). */
@@ -370,7 +375,7 @@ export class Room extends DurableObject<Env> {
     ctx.blockConcurrencyWhile(async () => {
       const saved = await ctx.storage.get<RoomData>('room');
       if (saved && Array.isArray(saved.queue)) this.room = saved;
-      this.chat = (await ctx.storage.get<ChatMessage[]>('chat')) ?? [];
+      await this.chatStore.load();
       this.voters = (await ctx.storage.get<Record<string, string[]>>('voters')) ?? {};
       const stickerIds = (await ctx.storage.get<string[]>('stickers')) ?? [];
       this.stickerOwners = (await ctx.storage.get<Record<string, string>>('stickerOwners')) ?? {};
@@ -654,6 +659,13 @@ export class Room extends DurableObject<Env> {
           await this.scheduleAlarm();
           return;
         }
+        if (message.op === 'chat-fill') {
+          // CH1: 250 numbered messages at once (lab only), to check that a long chat stays and pages back in.
+          const base = this.chatStore.count;
+          for (let i = 1; i <= 250; i++) await this.chatStore.add({ id: newId(), text: `Lab message ${base + i}`, by: me, at: Date.now() });
+          this.broadcast({ t: 'chat', message: { id: newId(), text: `Lab: ${base + 250} messages kept`, by: me, at: Date.now() } });
+          return;
+        }
         if (!this.room.state.item) return;
         this.tipJar = { fill: 0, boost: this.room.state.item.id };
         this.broadcast({ t: 'tipjar', fill: 0, size: TIP_JAR_SIZE, boost: this.tipJar.boost, by: me });
@@ -798,6 +810,15 @@ export class Room extends DurableObject<Env> {
         this.recaps = [...this.recaps.filter((r) => now - r.to < RECAP_MAX_AGE_MS && r.from !== recap.from), recap].slice(-keep);
         await this.ctx.storage.put('recaps', this.recaps);
         this.broadcast({ t: 'recaps', recaps: this.recaps });
+        return;
+      }
+      case 'chat-older': {
+        if (!this.chatOlderLimit.allow(me.id)) {
+          this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+          return;
+        }
+        const older = await this.chatStore.older(message.page);
+        this.sendTo(ws, { t: 'chat-older', page: message.page, messages: older.messages, ...(older.more === undefined ? {} : { more: older.more }) });
         return;
       }
       case 'recaps':
@@ -985,7 +1006,7 @@ export class Room extends DurableObject<Env> {
     if (this.openSockets().length === 0 && this.emptySince !== null && now - this.emptySince >= this.emptyTtl()) {
       await this.ctx.storage.deleteAll();
       this.room = initialRoom(now);
-      this.chat = [];
+      this.chatStore.reset();
       this.stickers.clear();
       this.stickerOwners = {};
       this.stickerDay = { day: 0, count: 0 };
@@ -1275,7 +1296,7 @@ export class Room extends DurableObject<Env> {
 
   /** When the oldest kept chat image runs out (null: none). */
   private chatImageDue(): number | null {
-    const ats = this.chat.filter((m) => m.image && this.chatImages.has(m.image)).map((m) => m.at);
+    const ats = this.chatStore.recent.filter((m) => m.image && this.chatImages.has(m.image)).map((m) => m.at);
     return ats.length ? Math.min(...ats) + this.chatImageTtl() : null;
   }
 
@@ -1285,7 +1306,7 @@ export class Room extends DurableObject<Env> {
    */
   private async pruneChatImages(now = Date.now()): Promise<void> {
     const ttl = this.chatImageTtl();
-    const used = new Set(this.chat.flatMap((m) => (m.image && now - m.at < ttl ? [m.image] : [])));
+    const used = new Set(this.chatStore.recent.flatMap((m) => (m.image && now - m.at < ttl ? [m.image] : [])));
     const drop = [...this.chatImages.keys()].filter((id) => !used.has(id));
     const kept = [...this.chatImages.keys()].filter((id) => used.has(id));
     drop.push(...kept.slice(0, Math.max(0, kept.length - MAX_CHAT_IMAGES)));
@@ -1487,7 +1508,10 @@ export class Room extends DurableObject<Env> {
       queue: this.room.queue,
       members,
       hostId,
-      chat: this.chat,
+      ...((): { chat: ChatMessage[]; chatMore?: number } => {
+        const { messages, more } = this.chatStore.welcome();
+        return more === undefined ? { chat: messages } : { chat: messages, chatMore: more };
+      })(),
       settings: this.settings,
       waiting: this.waits.waiting,
       pins: this.currentPins(),
@@ -2213,8 +2237,7 @@ export class Room extends DurableObject<Env> {
   }
 
   private async addChat(message: ChatMessage): Promise<void> {
-    this.chat = [...this.chat, message].slice(-CHAT_HISTORY);
-    await this.ctx.storage.put('chat', this.chat);
+    await this.chatStore.add(message);
     this.broadcast({ t: 'chat', message });
     if (message.image || this.chatImages.size) await this.pruneChatImages();
   }
@@ -2222,7 +2245,7 @@ export class Room extends DurableObject<Env> {
   private async onLeave(leaving: WebSocket): Promise<void> {
     const attachment = leaving.deserializeAttachment() as Attachment | null;
     if (attachment) {
-      for (const limiter of [this.commandLimit, this.chatLimit, this.rtcLimit, this.signalLimit, this.tvLimit]) limiter.forget(attachment.id);
+      for (const limiter of [this.commandLimit, this.chatLimit, this.chatOlderLimit, this.rtcLimit, this.signalLimit, this.tvLimit]) limiter.forget(attachment.id);
       // Kişi başı tutulanlar: aynı tarayıcının başka bağlantısı kalmadıysa unutulur.
       const key = keyOf(attachment);
       if (!this.joined(leaving).some((other) => keyOf(other) === key)) {
@@ -2328,7 +2351,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'recap' | 'recap-save' | 'recaps' | 'chat-older' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
