@@ -34,6 +34,12 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
+  - [x] Live e2e red 16 Nov (runs 43917089949, 43921749258; no tag after v0.9.97.151): not the code. Both runs show
+    1006 drops on the test's own game object *and* on unrelated canary rooms at the same moments (an object restart on
+    Cloudflare's side; the HTTP-fallback quota and room counters were reset with it, hence "13 opened, 0 refused").
+    Run 43923095993 (105eadc, the same server code as 1caaf0e) went green on the first attempt with no drop in any
+    shard: tagged v0.9.97.153. Merges may resume. If it comes back, compare the canary drop times with the deploy's
+    "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
