@@ -393,13 +393,13 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         settingsPanel(
           [
             { label: t('games.lang'), value: s.lang, choices: langChoices, pick: (lang) => send({ t: 'settings', lang: lang as 'tr' | 'en' }) },
-            { label: t('quiz.mode'), value: s.mode ?? 'classic', choices: [{ value: 'classic', label: t('quiz.mode.classic') }, { value: 'tournament', label: t('quiz.mode.tournament') }], pick: (mode) => send({ t: 'settings', mode: mode as 'classic' | 'tournament' }) },
-            // Classic: a topic and a length; Tournament: each player picks a round's topic once or twice.
+            // QZ2: the mode shares a row (the lobby keeps three rows, so it keeps its full size on a phone): Classic's
+            // length row ends in "🏆 Tournament"; a tournament's picks row ends in "Classic".
             ...(tour
-              ? [{ label: t('quiz.laps'), value: s.laps ?? 1, choices: QUIZ_LAPS.map((n) => ({ value: n, label: String(n) })), pick: (laps: string | number) => send({ t: 'settings', laps: laps as 1 | 2 }) }]
+              ? [{ label: t('quiz.laps'), value: s.laps ?? 1, choices: [...QUIZ_LAPS.map((n) => ({ value: n as string | number, label: String(n) })), { value: 'classic', label: t('quiz.mode.classic') }], pick: (v: string | number) => send(v === 'classic' ? { t: 'settings', mode: 'classic' } : { t: 'settings', laps: v as 1 | 2 }) }]
               : [
                   { label: t('quiz.topic'), value: s.topic, select: true, choices: topics.map((topic) => ({ value: topic, label: t(`quiz.cat.${topic}`) })), pick: (topic: string | number) => send({ t: 'settings', topic: topic as QuizTopic }) },
-                  { label: t('quiz.count'), value: s.count, choices: QUIZ_COUNTS.map((n) => ({ value: n, label: String(n) })), pick: (count: string | number) => send({ t: 'settings', count: count as 5 | 10 | 15 }) },
+                  { label: t('quiz.count'), value: s.count, choices: [...QUIZ_COUNTS.map((n) => ({ value: n as string | number, label: String(n) })), { value: 'tournament', label: '🏆' }], pick: (v: string | number) => send(v === 'tournament' ? { t: 'settings', mode: 'tournament' } : { t: 'settings', count: v as 5 | 10 | 15 }) },
                 ]),
           ],
           s.host === me || !host ? null : host.name,
@@ -410,6 +410,12 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       // CL2: the players are a row of faces in the card (no players column beside the lobby).
       if (s.phase === 'lobby') intro.append(lobbyPlayers(s.players, me, s.host));
       body.replaceChildren(el('div', { class: 'quiz-center lobby-card' }, intro, el('div', { class: 'quiz-setup lobby-setup' }, ...parts)));
+      // The 🏆 chip (Tournament) is an icon to keep the row narrow on a phone: its name for screen readers and a tooltip.
+      for (const chip of body.querySelectorAll<HTMLElement>('.game-chip, .game-setting-value'))
+        if (chip.textContent === '🏆') {
+          chip.setAttribute('aria-label', t('quiz.mode.tournament'));
+          chip.title = t('quiz.mode.tournament');
+        }
     } else if (s.phase === 'pick') {
       renderPick(s);
     } else {
