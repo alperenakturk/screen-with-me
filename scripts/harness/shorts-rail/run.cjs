@@ -88,12 +88,13 @@ const box = (page, sel) =>
     check(typing === 'shorts-input' && chat.x >= video.r && chat.r <= width, `${name}: Enter opens the message box beside the rail`, { typing, chat });
     await page.keyboard.press('Escape');
     await page.click('#shorts-feed');
+    await page.waitForSelector('#feed-window');
     await page.waitForTimeout(300);
-    const feed = await box(page, '#shorts-feed-form');
+    const feed = await box(page, '#feed-window');
     check(feed.r <= width && feed.b <= height && feed.y >= 0, `${name}: the ♾ window stays on screen`, feed);
     // 0.9.93.1: the rail's square-button rule used to squeeze the windows' own buttons into 48 px squares.
-    const start = await box(page, '#shorts-feed-form .feed-topic-row .btn');
-    check(start.w > 60 && start.r <= feed.r, `${name}: "Start the feed" keeps its size inside the window`, { start, feed });
+    const start = await box(page, '#feed-start');
+    check(start.w > 52 && start.r <= feed.r, `${name}: "Start" keeps its size inside the window (not a 48 px square)`, { start, feed });
     await page.keyboard.press('Escape');
     await page.mouse.click(5, height / 2);
     // ＋ Add with search results (faked) stays on screen and its button is a normal button.

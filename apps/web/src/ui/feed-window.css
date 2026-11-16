@@ -1,0 +1,174 @@
+/* Card SH2: the ♾ / ▶ feed window (lazy, with feed-window.ts). One card that fits the screen: the running feed on top,
+   four steering rows, then the starters. A phone gets a full-width sheet with 44 px targets. */
+.feed-window {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.feed-window p,
+.feed-window h4 {
+  margin: 0;
+}
+
+.feed-head-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feed-tabs {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+}
+
+.feed-tab {
+  flex: 1;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feed-tab[aria-checked='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
+}
+
+.feed-now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.feed-now span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-sub {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.feed-row-line {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-row-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.feed-act {
+  text-align: left;
+}
+
+.feed-words {
+  display: flex;
+  flex: 1;
+  min-width: 160px;
+  gap: 6px;
+}
+
+.feed-words input {
+  flex: 1;
+  min-width: 0;
+}
+
+.feed-pools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.feed-pool {
+  flex: 1 1 auto;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.feed-pool:hover,
+.feed-tab:hover {
+  border-color: var(--accent);
+}
+
+.feed-region {
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.feed-start-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.feed-start-form .feed-topic-row {
+  display: flex;
+  gap: 6px;
+}
+
+.feed-start-form input {
+  flex: 1;
+  min-width: 0;
+}
+
+html.phone .feed-backdrop {
+  place-items: end stretch;
+  padding: 0;
+}
+
+html.phone .feed-window {
+  width: 100%;
+  max-height: 92dvh;
+  border-radius: 18px 18px 0 0;
+  gap: 12px;
+}
+
+html.phone .feed-window :is(.btn, .feed-pool, .feed-tab, select, input) {
+  min-height: 44px;
+}
+
+html.phone .feed-pools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}

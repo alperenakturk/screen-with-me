@@ -1,4 +1,5 @@
 import type { Recap } from './recap.ts';
+import { cleanFeedIn, type FeedIn, type FeedInfo } from './feed.ts';
 
 // Sunucu ile istemciler (site ve ileride eklenti) arasındaki mesaj formatı.
 // Bu dosya hem tarayıcıda hem Cloudflare sunucusunda çalışır, bu yüzden
@@ -214,6 +215,8 @@ export interface QueueItem {
   by: string;
   /** Sıradakiler için 👍 sayısı (sıra buna göre dizilir; yoksa 0). */
   votes?: number;
+  /** Card SH2: the room's feed added it (a new or steered feed takes these out again). */
+  feed?: true;
 }
 
 /**
@@ -474,6 +477,10 @@ export type ClientMessage =
   | { t: 'home' }
   /** Snack Bar served a customer while the film plays: a coin for the room's shared tip jar (side games 2, pick 5). */
   | { t: 'tip' }
+  /** Card SH2: start, steer, pause or resume the room's feed (`null` stops it). The server keeps one feed per room. */
+  | { t: 'feed'; feed: FeedIn | null }
+  /** Card SH2: the ids this room has played (the feed's tab asks once, then skips them). */
+  | { t: 'feed-played' }
   /** Test Lab (DL3b): only a local lab server (`SWM_LAB_SERVER`) acts on it; elsewhere `bad_message`. */
   /** `age-images` (QUOTA1a / IMG2): the room's chat images run out now, as if their time had passed. */
   | { t: 'lab'; op: 'tipjar' | 'age-images' | 'chat-fill' }
@@ -502,8 +509,8 @@ export type ClientMessage =
   | { t: 'at'; table: string | null }
   /** Hemen aç (şu an oynayanın yerine). `title` sadece sayfalar için kullanılır (sekmenin başlığı). */
   | { t: 'load'; media: Media; title?: string }
-  /** Sıraya ekle. Oda boşsa hemen açılır. */
-  | { t: 'enqueue'; media: Media; title?: string }
+  /** Sıraya ekle. Oda boşsa hemen açılır. `feed`: the room's feed adds it (card SH2). */
+  | { t: 'enqueue'; media: Media; title?: string; feed?: true }
   | { t: 'dequeue'; id: string }
   | { t: 'move'; id: string; to: number }
   /** Sıradaki bir öğeyi hemen oynat. */
@@ -608,6 +615,8 @@ export type ServerMessage =
       game?: RoomGame;
       /** The room's game tables, oldest first. */
       tables?: RoomGame[];
+      /** Card SH2: the room's running feed (absent: none). */
+      feed?: FeedInfo;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
@@ -660,7 +669,11 @@ export type ServerMessage =
   | { t: 'recap'; recap: Recap; by: Member }
   | { t: 'recaps'; recaps: Recap[] }
   /** Card CH1: an older page of the chat (oldest first); `more`: the page before it, if any. */
-  | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number };
+  | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number }
+  /** Card SH2: the room's feed changed (null: it stopped). */
+  | { t: 'feed'; feed: FeedInfo | null }
+  /** Card SH2: the ids the room has played (only to the one who asked), oldest first. */
+  | { t: 'feed-played'; ids: string[] };
 
 /** Verilen sunucu saatinde videonun kaçıncı saniyede olması gerektiği. */
 export function expectedPosition(state: PlaybackState, serverNow: number): number {
@@ -1055,6 +1068,13 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'at':
       if (m.table === null) return { t: 'at', table: null };
       return typeof m.table === 'string' && TABLE_ID.test(m.table) ? { t: 'at', table: m.table } : null;
+    case 'feed': {
+      if (m.feed === null) return { t: 'feed', feed: null };
+      const feed = cleanFeedIn(m.feed, cleanText);
+      return feed ? { t: 'feed', feed } : null;
+    }
+    case 'feed-played':
+      return { t: 'feed-played' };
     case 'lab':
       return m.op === 'tipjar' || m.op === 'age-images' || m.op === 'chat-fill' ? { t: 'lab', op: m.op } : null;
     case 'ping':
@@ -1065,7 +1085,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       if (!media) return null;
       // A film page's tab title, or a podcast episode's "show · episode" (an audio file with cover art, card P2).
       const title = media.kind === 'page' || (media.kind === 'html5' && media.poster) ? cleanTitle(m.title) : null;
-      return title ? { t: m.t, media, title } : { t: m.t, media };
+      const base = title ? { t: m.t, media, title } : { t: m.t, media };
+      return m.t === 'enqueue' && m.feed === true ? { ...base, t: 'enqueue', feed: true } : base;
     }
     case 'dequeue':
     case 'jump':

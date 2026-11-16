@@ -12,7 +12,7 @@ import { labCheck } from './lab-check.ts';
 import { labServer } from './lab.ts';
 import { tiktokResolve } from './tiktok.ts';
 import { podcasts } from './podcasts.ts';
-import { youtubeChannel, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
+import { youtubeChannel, youtubeChart, youtubeLike, youtubePool, youtubeSearch } from './youtube.ts';
 import { youtubeUsage } from './usage.ts';
 import { vimeoSearch, vimeoStatus } from './vimeo.ts';
 import { ipKey } from './ip-key.ts';
@@ -239,9 +239,9 @@ async function route(request: Request, env: Env): Promise<Response> {
 
     // YouTube search from the room's link box (the API key never leaves the Worker). Pages of other sites may not
     // use it as their free search: a browser sends their `Origin`.
-    if (url.pathname === '/api/youtube/search' || url.pathname === '/api/youtube/pool' || url.pathname === '/api/youtube/like' || url.pathname === '/api/youtube/channel') {
+    if (url.pathname === '/api/youtube/search' || url.pathname === '/api/youtube/pool' || url.pathname === '/api/youtube/like' || url.pathname === '/api/youtube/channel' || url.pathname === '/api/youtube/chart') {
       if (!allowedOrigin(request, url)) return new Response('Forbidden origin', { status: 403 });
-      const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : url.pathname.endsWith('/channel') ? youtubeChannel : youtubeSearch;
+      const handler = url.pathname.endsWith('/pool') ? youtubePool : url.pathname.endsWith('/like') ? youtubeLike : url.pathname.endsWith('/channel') ? youtubeChannel : url.pathname.endsWith('/chart') ? youtubeChart : youtubeSearch;
       return handler(request, url, env, () => ipKey(request, env));
     }
     // Card SRC1: Vimeo search from the ⠿ Sources picker (the VIMEO_TOKEN secret never leaves the Worker).
