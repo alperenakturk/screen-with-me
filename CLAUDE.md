@@ -120,10 +120,10 @@ Rules for all:
   legal commitments, the product name, slogans.
 - Move in safe steps; test every change, ship it, commit it.
 - **Secrets go into the owner's KeePass (owner, 7 Nov 2026):** the owner keeps every password, token and secret in
-  KeePass, in a folder per project (`Sidelit`). Whenever a step asks him to create or save a secret, give him a ready
-  KeePass entry name at that moment (pattern `Where – What for`, e.g. `GitHub – LAB_CODE (test panel code)`), the URL and
-  a short note, and say which characters the generator should use (letters + digits only when it goes into an address).
-  Don't list future entries in advance. Never ask him to paste a secret into the chat.
+  KeePass, in a folder per project (`Sidelit`). Whenever a step asks him to create or save a secret, give him every
+  KeePass field at that moment, one per line (owner, 17 Nov): Title (`Where – What for`, e.g.
+  `GitHub – LAB_CODE (test panel code)`), User name, Password (where to copy it from), URL, Notes (what for, where
+  stored, expiry), and the generator's characters (letters + digits only when it goes into an address). Don't list future entries in advance. Never ask him to paste a secret into the chat.
 - **Tell the Planner at once when anything runs out (owner, 4 Nov 2026):** tokens, usage limits, Actions minutes or
   billing, API quotas, disk, anything: every session sends the Planner a `send_message` the moment it sees it.
 - **Skills and tools:** the owner's catalogue is `alperenakturk/my-awesome-list` (private, `add_repo`). When a task
