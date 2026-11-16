@@ -128,3 +128,18 @@ test('CI3b: CI numbers the release before the build, the tag job tags that numbe
   assert.match(all.changes.block, /node scripts\/check-version-edits\.mjs "\$BASE"/);
   assert.match(all.changes.block, /if: github\.event_name == 'pull_request'\n\s+env:\n\s+BASE: origin\/\$\{\{ github\.base_ref \}\}/);
 });
+
+test('CI3c: the deploy may list the released records, the tag job records every live number and always keeps the notes', () => {
+  const perms = all.deploy.block.match(/^ {4}permissions:\n((?: {6}.+\n)+)/m)?.[1] ?? '';
+  assert.deepEqual(perms.trim().split('\n').map((l) => l.trim()).sort(), ['actions: read', 'contents: read']);
+  assert.match(all.deploy.block, /GITHUB_TOKEN: \$\{\{ github\.token \}\}\n\s+run: node scripts\/release-version\.mjs --apply/);
+  assert.match(all.tag.block, /actions\/cache\/save@[0-9a-f]{40}[\s\S]*key: released-\$\{\{ needs\.deploy\.outputs\.version \}\}/);
+  assert.match(all.tag.block, /GITHUB_STEP_SUMMARY/);
+  assert.match(all.tag.block, /--target "\$GITHUB_SHA"/);
+});
+
+test('GR1: the deploy keeps the earlier builds\' files, after the build and before the upload', () => {
+  const d = all.deploy.block;
+  const keep = d.indexOf('node scripts/keep-assets.mjs');
+  assert.ok(keep > d.indexOf('npm run build') && keep < d.indexOf('npm run deploy -w @swm/server'));
+});

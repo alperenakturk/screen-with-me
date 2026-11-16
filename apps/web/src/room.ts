@@ -888,8 +888,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'pwa.state',
         tab: 'status',
-        title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
-        help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
         run: async () => {
           const manifest = (await fetch('/manifest.webmanifest').then((r) => r.json()).catch(() => null)) as { share_target?: { action?: string } } | null;
           return JSON.stringify({
@@ -968,21 +966,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'chat.history',
         tab: 'status',
-        title: { en: 'Chat: how much is loaded and whether older pages are offered', tr: 'Sohbet: ne kadarı yüklü ve eski sayfalar sunuluyor mu' },
-        help: {
-          en: 'Writes how many chat messages and room-activity lines this tab holds and the older page the room offers (null: everything is here) into the log.',
-          tr: 'Bu sekmede kaç sohbet mesajı ve oda hareketi satırı olduğunu ve odanın sunduğu eski sayfayı (null: hepsi burada) kayda yazar.',
-        },
         run: () => JSON.stringify(chat.history()),
       },
       {
         id: 'chat.fill',
         tab: 'friends',
-        title: { en: 'Chat: add 250 numbered messages (lab server)', tr: 'Sohbet: 250 numaralı mesaj ekle (test sunucusu)' },
-        help: {
-          en: 'The room keeps 250 "Lab message N" lines at once (only on a local lab server), to check that a long chat stays after a reload and pages back in on scroll-up.',
-          tr: 'Oda bir seferde 250 "Lab message N" satırı saklar (yalnızca yerel test sunucusunda); uzun bir sohbetin yenilemeden sonra kaldığını ve yukarı kaydırınca geri geldiğini denemek için.',
-        },
         run: () => {
           send({ t: 'lab', op: 'chat-fill' });
           return 'sent';
@@ -2747,11 +2735,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       {
         id: 'shorts.state',
         tab: 'status',
-        title: { en: 'Shorts: which view, and the way back', tr: 'Shorts: hangi görünüm ve geri dönüş yolu' },
-        help: {
-          en: 'Writes the view (Shorts, room or none) and whether "📱 Shorts view" is offered into the log.',
-          tr: 'Görünümü (Shorts, oda ya da yok) ve "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını kayda yazar.',
-        },
         run: () =>
           JSON.stringify({
             view: shortsOn ? 'shorts' : isShortItem(roomState?.item) ? 'room' : 'none',

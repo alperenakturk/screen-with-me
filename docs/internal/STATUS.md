@@ -12,6 +12,9 @@ One handoff per lane or role; each session updates only its own lines and delete
   (merges close together, one deploy); [x] nightly date sweep; [x] live e2e in 3 shards; [x] state-matrix hover flake; [x] PR #464; [ ] #464
   merged; [ ] CI3b (claude/ci3b-release-numbers): CI numbers each release, changelog/next/, version-edit check → PR →
   merged → tell the Planner; [ ] first real batch measured (≤ 25 min).
+- [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
+  order; no version bumps (CI3), notes in changelog/next/.
+- [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
 - [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
   (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
 
@@ -136,7 +139,15 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27i. [YTQ1, 0.9.97.140] Search a few words in the room, then open the Shorts view's ＋ and ♾: under each list the
   YouTube logo (red icon + "YouTube" word: white on dark themes, near-black on Matinee) sits before "Results from
   YouTube"; clicking the logo opens youtube.com in a new tab.
+- [ ] 27m. [QZ2a] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
+  click, also when the friend answers at the same moment.
+- [ ] 27n. [QZ2b] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
+  body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
+  friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 
+- [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
+  ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
+  screens in step (and stands still with "reduce motion" on).
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
 - [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
