@@ -128,18 +128,18 @@ const playing = (page) =>
       check(got, `${label} ${i + 1}/${EXPECT.length}: ${want.kind} ${want.id} plays, in paste order`, got ? JSON.stringify(await playing(page)) : `${JSON.stringify(await playing(page))} · connection: ${frames.join(' ')}`);
       // The ♾ window: its TikTok note only while a TikTok plays.
       if (label === 'computer' && (i === 0 || i === 1)) {
+        // The ♾ window (card SH2, `ui/feed-window.ts`, a lazy chunk) and its Shorts tab.
         await page.click('#shorts-feed');
+        await page.waitForSelector('#feed-window', { timeout: 8000 }).catch(() => {});
         const note = await page.evaluate(() => {
-          const n = document.getElementById('shorts-feed-tiktok');
+          const n = document.getElementById('feed-tiktok');
           const r = n?.getBoundingClientRect();
-          const form = document.getElementById('shorts-feed-form');
-          const like = document.getElementById('shorts-like')?.getBoundingClientRect();
-          return { shown: !!n && !n.hidden && !!r && r.height > 0, text: n?.textContent ?? '', like: !!like && like.height > 0, fits: !!form && form.scrollHeight <= form.clientHeight + 1 };
+          return { shown: !!n && !!r && r.height > 0, text: n?.textContent ?? '' };
         });
-        check(note.fits && (want.kind === 'tiktok' ? note.shown && !note.like && /no public feed/.test(note.text) : !note.shown && note.like), `${label}: the ♾ window's TikTok note ${want.kind === 'tiktok' ? 'shows on a TikTok' : 'is hidden on a YouTube Short'}`, JSON.stringify(note));
+        check(want.kind === 'tiktok' ? note.shown && /no public feed/.test(note.text) : !note.shown, `${label}: the ♾ window's TikTok note ${want.kind === 'tiktok' ? 'shows on a TikTok' : 'is hidden on a YouTube Short'}`, JSON.stringify(note));
         if (want.kind === 'tiktok') await page.screenshot({ path: `${OUT}/shorts-mixed-feed-note.png` });
         await page.keyboard.press('Escape');
-        await page.mouse.click(5, 5);
+        await page.waitForSelector('#feed-window', { state: 'detached', timeout: 3000 }).catch(() => {});
       }
       if (i === EXPECT.length - 1) break;
       const inShorts = await page.evaluate(() => document.documentElement.classList.contains('shorts-view'));

@@ -90,12 +90,13 @@ const good = (a, lang) => !!a && !!a.logo && a.logo.href === 'https://www.youtub
       await page.keyboard.press('Escape');
       await page.waitForTimeout(200);
 
-      // 3 + 4) The ♾ window: 🎲 Discover and ✨ More like this share it.
+      // 3 + 4) The ♾ window (card SH2: a lazy dialog): 🎲 Discover and the words / link box share it.
       await page.evaluate(() => (document.querySelector('#shorts-feed') ?? null)?.click());
-      await page.waitForTimeout(500);
-      const a3 = await attribution(page, '#shorts-feed-form');
-      const both = await page.evaluate(() => ({ like: !!document.querySelector('#shorts-feed-form #shorts-like'), pools: !!document.querySelector('#shorts-feed-form #shorts-pools') }));
-      check(good(a3, lang) && both.like && both.pools, `${where}: the ♾ window (Discover + More like this) says "from YouTube" + Terms link`, { a3, both });
+      await page.waitForSelector('#feed-window');
+      await page.waitForTimeout(300);
+      const a3 = await attribution(page, '#feed-window');
+      const both = await page.evaluate(() => ({ like: !!document.querySelector('#feed-window #feed-topic'), pools: !!document.querySelector('#feed-window #feed-pools') }));
+      check(good(a3, lang) && both.like && both.pools, `${where}: the ♾ window (Discover + the words / link box) says "from YouTube" + Terms link`, { a3, both });
       await page.screenshot({ path: `${OUT}/${label}-${lang}-feed.png` });
       await ctx.close();
     }

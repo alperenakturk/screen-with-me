@@ -18,38 +18,40 @@ One handoff per lane or role; each session updates only its own lines and delete
     `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
     the pause before a swiped Short feels.
   - [ ] After #471: add the start offset to Test Lab `shorts.state` (SH1's "Done when").
-  - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness): built on
-    `claude/sh1-tiktok-small` (harness `shorts-mixed` green locally); PR, CI, merge.
+  - [ ] SH1 item 4, #489 (`claude/sh1-tiktok-small`): `vm.`/`vt.` links in a pasted list (Worker lookup, paste order),
+    mixed-queue harness `shorts-mixed`; the ♾ TikTok note came with B2's #488. CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
-    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). Showing the rate and setting `roomState` happen in
-    the same call, so the room's rate itself seems to go back to 1.5 after a quick 1.5 → 1.55. Suspect: a late
-    `ratechange` or a `rate` sent from stale state in `sync-engine.ts`. Find it and add a `sync-engine.test.ts` scenario.
-- [ ] B2 (handoff 16 Nov, 14:50; everything below is on main, no unmerged B2 branch):
-  - [x] CI3 built and live (#464, #472, #473, #480, #482): tested-code mark, settle, CI numbering
-    (`release-series.txt`, `changelog/next/`, `check-version-edits.mjs`), nightly date sweep, 3 live shards, PR
-    jobs folded (7 per PR). Measured: 1 PR whose code a PR tested ≈ 13 min (merge → live e2e end); 2-PR untested
-    combination 22 min (#473 + #474); 3-PR batch on a busy office 38 min (#480 + 17f4101 + cabe433, before #482:
-    ≈ 9 min waiting for the previous deploy + 4–9 min runner queue). [ ] Measure the next multi-PR batch after #482
-    (main's runs since 14:40 UTC: first merge → live e2e end, test jobs' start delay after `changes`), write the quiet
-    vs busy numbers into CI3's Done line and move the card verbatim to `archive/cards-done.md` (DOCS2).
-  - [x] GR1 server part (#477): deploys keep earlier builds' assets 7 days (live: kept 41 → 85 → 131 files). Client
-    note ("Sidelit was updated · ↻ Refresh") is lane A's.
-  - [ ] SH2 (feeds ♾ Shorts / ▶ Videos), after lane A's SH1: not started. Card in CARDS.md; start from
-    `apps/web/src/ui/` Shorts / Discover code and `apps/server/src/youtube.ts` (1-unit calls first, `search.list` cached
-    per room in the Worker), played ids on the room object (one-time room wipes; saved room 2,000 ids / 30 days), Test
-    Lab hook `feed.state`.
+    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
+    room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
+    state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
+- [ ] B2 (session 16 Nov, 15:40):
+  - [x] CI3 closed (measured batch after #482 in its Done line; card in `archive/cards-done.md`).
+  - [ ] SH2 feeds: PR #488 (`claude/sh2-feeds`): shared feed on the room object, ▶ video feed, Queue row, steer window,
+    played-id memory, Test Lab `feed.state`, harness `feed`. Merge-tree clean against lane A's `claude/sh1-ring` and
+    `claude/sh1-start`. Then: merge when green, deploy + live e2e check, Done line, card to archive.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - [ ] state-matrix hover check still flaky after its 2 s poll: "1366 garden: a head button lights up under the
-    mouse" failed on main run 43886203220 (#466, quiz-only; GS2's report). Find why the hover style doesn't change
-    (pointer not over the button? a toast over it?) rather than waiting longer; `scripts/harness/state-matrix/run.cjs`.
+  - Game Studio owns the state-matrix hover flake ("1366 garden: a head button lights up under the mouse", main run
+    43886203220).
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
 - [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
-- [ ] Game Studio: [ ] GW2 #470 merged + deploy check; [x] GP1 on claude/gp1-fast-open (open times, first taps, Five
-  Frames compact, phone note, readable YouTube frame start); [ ] GP1 PR, merged, deploy check; then GMP (b) (2–6 players), GT1 (tutorials).
+- [ ] Game Studio (handoff 16 Nov 2026, the old session stopped; a fresh one continues from here):
+  [x] GW2 + GP1 #470 live (v0.9.97.145).
+  [ ] #491 `claude/drag-capture`: state-matrix drag/hover flake (root cause: CI's headful windows share one X pointer;
+  `stage.ts` drag survives `lostpointercapture`; harness `withMouse` + hover retry + capture-drop check) and the
+  game-proportions "text 0 px" flake (`quiz:howSeen` / `sea:howSeen` not set, How to play covered the first table;
+  now set + waits for text). Merge when green, then tell the Planner (lane A's EC1 #465 and #471 wait on it).
+  [ ] #483 `claude/gmp-b-players` (card GMP b, already moved to the archive with "Done: #483"): all built and tested
+  locally (Duel 2–6, Sea Battle 2–6 server + page + chips, e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`,
+  docs, changelog note, hand test 27p, first-look review done); main merged in at 4d0d467. Left: CI green → merge →
+  main's deploy, live e2e and tag → report. Nothing half-done.
+  [ ] Open flakes to look at (seen once on lane A's #489, not reproduced here): games job "Turn turns a picked ship" and
+  "phone: a tap in another corner zooms into that quarter" (Sea Battle harness); game-windows `laptop/sea/float` text
+  0 px is likely the same How-to-play cause #491 fixes.
+  Then: lazy-load `games/stage.ts` (budget step; room JS 138.4/145 kB after BUD2), then card GT1 (tutorials).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.

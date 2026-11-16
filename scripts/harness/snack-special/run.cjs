@@ -46,23 +46,32 @@ async function snackAt(browser, day) {
   await page.fill('#name', 'Alex');
   await page.click('#name-form button.primary');
   await page.waitForSelector('.room');
-  await page.evaluate((v) => {
-    const i = document.querySelector('#media-input');
-    i.value = v;
-    i.form.requestSubmit();
-  }, VIDEO);
+  // CI (16 Nov 2026): a link sent before the room's live connection was open got lost on a slow runner (no item after
+  // 20 s). Wait for the connection, and send the link again once if no item shows.
+  await page.waitForSelector('.room-title-dot[data-status="open"]', { state: 'attached', timeout: 20000 }).catch(() => {});
+  const send = () =>
+    page.evaluate((v) => {
+      const i = document.querySelector('#media-input');
+      i.value = v;
+      i.form.requestSubmit();
+    }, VIDEO);
+  await send();
   // CI3: the state itself, with room for a slow runner (8 s timed out now and then; adding the item waits on the server).
-  await page.waitForFunction(() => document.querySelector('.room.has-item'), null, { timeout: 20000, polling: 100 });
-  await page.waitForTimeout(1200);
+  const added = () => page.waitForFunction(() => document.querySelector('.room.has-item'), null, { timeout: 10000, polling: 100 });
+  await added().catch(async () => {
+    await send();
+    await added();
+  });
+  await page.waitForSelector('#dock-game', { timeout: 8000 });
   await page.evaluate(() => document.querySelector('#dock-game')?.click());
-  await page.waitForSelector('#game-menu:not([hidden])');
-  await page.waitForTimeout(300);
+  await page.waitForSelector('#game-menu:not([hidden]) [data-tab="side"]');
   await page.evaluate(() => document.querySelector('#game-menu [data-tab="side"]')?.click());
-  await page.waitForTimeout(300);
+  await page.waitForSelector('#game-menu:not([hidden]) [data-solo="snack"]', { state: 'visible' });
   await page.evaluate(() => document.querySelector('#game-menu [data-solo="snack"]')?.click());
   await page.waitForSelector('#game-stage:not([hidden]) .sb-row', { timeout: 8000 });
-  await page.waitForTimeout(1500);
-  const g = await page.evaluate(() => {
+  // Measure once the window has settled: the same numbers four times in a row, 150 ms apart (its fit and rows change
+  // while it opens).
+  const measure = () => page.evaluate(() => {
     const s = document.querySelector('#game-stage');
     const fit = Number(getComputedStyle(s).getPropertyValue('--fit')) || 1;
     const texts = [...s.querySelectorAll('.game-stage-body *')].filter((e) => !e.closest('[aria-hidden="true"], svg') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().width > 0);
@@ -75,6 +84,13 @@ async function snackAt(browser, day) {
       tag: s.querySelector('.sb-row.special .sb-tag')?.textContent ?? '',
     };
   });
+  let g = await measure();
+  for (let t = 0, same = 0; t < 40 && same < 3; t++) {
+    await page.waitForTimeout(150);
+    const next = await measure();
+    same = JSON.stringify(next) === JSON.stringify(g) && Object.keys(next.rows).length ? same + 1 : 0;
+    g = next;
+  }
   await ctx.close();
   return g;
 }

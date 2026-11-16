@@ -200,28 +200,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner's pick: his message with a screenshot (Planner chat, 15 Nov 2026).
 - Progress (lane A, 16 Nov 2026): built in #465 (branch `claude/ec1-end-card`, main merged, texts in `ui/lab-texts.ts`); red only on the state-matrix games-window drag / hover flake (Game Studio fixing); merge once that is green.
 
-### CI3. Release train: several finished PRs go live together, without the one-by-one wait (owner, 15 Nov 2026; B2, after #452)
-- Why: the owner asked why every release waits on so many tests when most of them find nothing. The tests stay (on
-  15 Nov they caught a Snack Bar text that fell under 11 px, which main's push run had let through). What costs is
-  the queue: each PR is updated from main, runs the full PR CI again (~8.5 min), merges, then waits for its own
-  deploy + live e2e (~11 min) before the next one may start, so three ready PRs take about an hour.
-- What:
-  - **One release for a batch:** PRs that are green merge as soon as they are green (no "update from main and re-run"
-    when the files don't overlap); main's run deploys and runs the live e2e once for whatever has landed. The
-    version and `CHANGELOG.md` block cover the batch (one fourth-part number per batch; the Planner assigns it).
-  - **Main's push run checks what the PRs skipped:** the job that failed on 15 Nov (games-more) never runs on main, so
-    a regression from a combination of two PRs or a date-dependent test reached main unseen. Run the jobs the merged
-    PRs touched once on main before deploying (or a short nightly full run), so main never goes red silently.
-  - **No date- or time-dependent results:** a test that depends on today's date (Snack Bar daily special, seasonal
-    themes, schedules) forces every variant instead (lane A's per-special harness from #447 is the model).
-  - **Keep:** every gate in CLAUDE.md §7 "CI" and §9 (live e2e green before the tag, the canary gate, no
-    `paths-ignore`). Docs-only PRs keep skipping the heavy jobs.
-- Done when: three ready code PRs go live in ≤ 25 min from the first merge (measured on a real batch); main's run
-  catches a regression that only the combination of two PRs causes (a forced test case); no test result depends on the
-  date (a forced-date run in CI); `docs/internal/architecture/reference.md` "CI" updated.
-- Tests: the CI itself (a dry run on a test branch), the measurement in the PR.
-- Owner's pick: his message (Planner chat, 15 Nov 2026).
-
 ### SH3. Shorts view on a computer: the chat in a panel you can open and close (owner's friend, 15 Nov 2026; lane A, after SH1)
 - Why: in the Shorts view on a computer, 💬 opens only a box to send a message; you can't read the chat. A friend of
   the owner asked to see it, with a panel that opens and closes.

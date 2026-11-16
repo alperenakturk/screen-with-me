@@ -167,7 +167,7 @@ async function placeIn(page, mode) {
     const s = SIZES[size];
     const ctx = await browser.newContext({ viewport: { width: s.width, height: s.height }, hasTouch: !!s.touch, isMobile: false });
     await ctx.addInitScript(() => {
-      for (const [k, v] of Object.entries({ name: 'Robin', avatar: 'wizard', lang: 'en', 'opt:autoInvite': '0', tipsSeen: '1', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1', 'duel:howSeen': '1' })) localStorage.setItem(k, v);
+      for (const [k, v] of Object.entries({ name: 'Robin', avatar: 'wizard', lang: 'en', 'opt:autoInvite': '0', tipsSeen: '1', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1', 'duel:howSeen': '1', 'quiz:howSeen': '1', 'sea:howSeen': '1', 'draw:howSeen': '1', 'poker:howSeen': '1' })) localStorage.setItem(k, v);
     });
     const page = await ctx.newPage();
     page.on('pageerror', (e) => problems.push(`${size} PAGEERROR ${e.message}`));
@@ -210,6 +210,15 @@ async function placeIn(page, mode) {
           rows.push({ label, note: 'placement not offered' });
           continue;
         }
+        // CI (16 Nov 2026, "quiz/float: text 0 px"): a table's "How to play" opened by itself over the first table of the
+        // run (its `howSeen` key was not set above) and the measure skips it, so no text was found. The keys are set now;
+        // and the measure waits for the game's own text to be on the screen (not a fixed time).
+        await page
+          .waitForFunction(() => {
+            const fit = document.querySelector('#game-stage .game-fit');
+            return !!fit && [...fit.querySelectorAll('*')].some((e) => !e.closest('[hidden], .htp, .toast') && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && e.getBoundingClientRect().height > 1 && getComputedStyle(e).visibility !== 'hidden');
+          }, null, { timeout: 5000, polling: 100 })
+          .catch(() => {});
         const m = await measure(page);
         if (!m) {
           check(false, `${label}: measured`);

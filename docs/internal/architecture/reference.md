@@ -184,10 +184,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `COUNTDOWN_MS` (3 s) ahead; not for Shorts / TikTok / film pages / the sync test (`countdownMedia`), a resumed saved
     video, or with `settings.countdown === false` (Room rules, host); once per item (`counted`, storage). The page shows
     the seconds over the video (`showCountdown`, `.countdown`). A user's play during the hold starts the room at once.
+    A Short (`isShortMedia`: YouTube Short or TikTok) gets no countdown but a silent lead-in instead (card SH1 (2)):
+    the server holds it at 0:00 for at most `SHORT_LEAD_MS` (1.5 s, alone too). Each viewer's engine, when it
+    attaches a player during the lead-in (loaded, holding at 0:00), sends `{t:'ready', primed: itemId}`; once every
+    joined non-TV viewer is primed the server moves the start to `SHORT_START_MARGIN_MS` (250 ms) from now (`primed`,
+    memory-only `lead`) and broadcasts it as a SYSTEM `play`. `showCountdown` draws nothing for a Short (nothing of
+    ours over the YouTube player). e2e `shorts-start.mjs` measures swipe → start: both primed at once ≈ 0.3 s, one
+    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap.
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait
   again within 30 s; a manual play/pause/seek cancels the wait; the host can turn it off (`settings.waitForAll`).
+  Card SH1 (2): a wait that starts in a video's first `WAIT_REWIND_S` (3 s) pauses at 0:00 (`waitPausePosition`), so
+  a slow viewer never makes everyone lose the start.
   System actions arrive with `by.id === SYSTEM_MEMBER_ID`.
 - **Protocol (`protocol.ts`):** the server validates everything from clients and copies it into a new object. On a
   backward-incompatible change bump `PROTOCOL_VERSION` (old clients get a "refresh the page" error; extension users
@@ -268,6 +277,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`sessionStorage` `feed:<room>`); stops on quota / off, when the topic runs dry or after 3 empty pages, and when only
   the host may change the queue. Each page ≈ 1 % of the day's quota. Since 0.9.92.6 ♾ always opens its window; a running
   feed shows on top (`#shorts-feed-now`, "On now: …" + Stop) and stops only from there (it used to stop on the press).
+- **Room feeds: ♾ Shorts and ▶ videos, steerable from the Queue (card SH2, 16 Nov 2026):** the feed lives on the room
+  object (`packages/shared/src/feed.ts`: `FeedIn` / `FeedInfo {kind: shorts|videos, label, source, paused, by,
+  steers}`; storage key `feed`), so everyone sees it. Client `{t:'feed', feed}` starts / steers / pauses (`null` stops;
+  a locked queue locks it, `not_host`); the server broadcasts `{t:'feed'}` and sends it in `welcome.feed`. Same source +
+  label = pause / resume (the runner stays, unless they left); same kind, other source = a steer (`steers + 1`, the one
+  who steered runs it); another kind = a new feed. Sources (`FeedSource`): `topic {q, region?}` (search.list, 100
+  units, cached per words + region; ▶ uses `long=1`: no Shorts), `pool {pool, region}` (♾ Discover pool; ▶
+  `/api/youtube/chart`: videos.list `chart=mostPopular` by country and category, 1 unit, cached per hour), `like {id}`
+  (`/like`, ▶ adds `videos=1`), `channel {c, order?}` and `chanOf {id, order?}` (`/channel?c=` or `?of=<video>`, the
+  channel looked up with 1 more unit; ▶ `videos=1`; `order=popular` sorts a page by views with `statistics`, `random`
+  is shuffled in the tab). **The runner** (`ui/shorts-feed.ts`, the tab whose member id is `by`) asks `{t:'feed-played'}`
+  once (the room's played ids, oldest first), then fills the queue below 3 Shorts / 2 videos with up to 8 / 3 new ids,
+  `enqueue` with `feed: true` (`QueueItem.feed`); a start or steer first dequeues the queued `feed` items, so the next
+  videos follow it at once. A runner who left: the first remaining person (by member id) who may add takes it over.
+  **Memory:** every YouTube item that starts playing is remembered (`feedMemory`, `[id, at][]`, `rememberPlayed`):
+  ids only, at most `FEED_MEMORY_MAX` 2000 for `FEED_MEMORY_DAYS` 30, wiped with the room (`deleteAll` + reset in the
+  alarm). **UI:** the Queue's `#feed-row` (`ui/feed-row.ts`): no feed → "♾ Shorts feed" / "▶ Video feed"; running →
+  label, ⏸ / ▶, 🧭 Steer, ✕. The window (`ui/feed-window.ts` + `.css`, a lazy chunk with its own `TEXT`; also from the
+  Shorts bar's ♾): tabs ♾ / ▶, the running feed with Pause / Stop, four steers with a line each (📺 continue from this
+  channel = `chanOf`, 🌍 same topic other country, ✨ more like this one = `like`, 🔤 change the topic), then the
+  starters (Discover / Popular-now chips + country, one box for words / a video link / a channel with ▶'s order).
+  Test Lab `feed.state` (active feed, mine, steers, remembered). Tests: `feed.test.ts`, `e2e/shorts.mjs` (feed part),
+  `e2e/search.mjs` (chart / `of=` inputs), harness `feed` (CI `site`, computer + phone, a friend pauses and stops).
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `POST /api/youtube/search?hl` with the words as a form body `q` (since 0.9.96.20, security M6: never in the logged address; `wordsRequest`, `readWords`; podcasts search the same) (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, repo secret; the deploy job uploads it with
@@ -309,8 +341,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     they come back in `items` as strings, in paste order, at most `TIKTOK_SHORT_MAX` (8, the Worker allows 10
     lookups a minute; more are `skipped`); `media` keeps only the links that need no lookup. `room.ts` `addMany`
     walks `items` in order, looks each share link up (`lookupTikTok`, one at a time), sends 300 ms apart and shows one
-    `tiktokResolveFailed` note for any that fail. While a TikTok plays, the ♾ window shows `#shorts-feed-tiktok`
-    (`feed.tiktok`: no public feed, paste or share links); there is no TikTok search or feed. Harness
+    `tiktokResolveFailed` note for any that fail. While a TikTok plays, the ♾ window's Shorts tab shows `#feed-tiktok`
+    (card SH2's `ui/feed-window.ts`: no public feed, add or share links); there is no TikTok search or feed. Harness
     `scripts/harness/shorts-mixed/run.cjs` (CI job `site`): a pasted YouTube / TikTok share link / TikTok / YouTube
     list swipes through in that order on a computer (↓) and a phone (▼), the share-link lookup stubbed.
 - **Vimeo (card P1, `players/vimeo.ts`):** `{kind:'vimeo', id, hash?}` (optional new kind, no version bump: `cleanMedia`
@@ -2424,6 +2456,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Its findings so far: YouTube + cinema
   put the head below the screen (W, .114) and the room's intro took the first click on a game (W, .116). In CI as the
   `state-matrix` job (its own: `game-windows` + it would pass 10 min).
+  Shared pointer (16 Nov 2026, the "lights up" / "dragging moves" failures now and then): the three headful windows
+  share one X pointer, so a window opening, closing or going ⛶ elsewhere sends a page a buttonless pointer move at the
+  real cursor and can take its pointer capture. The harness opens and closes windows and drives the real mouse in turn
+  (`withMouse`, the front window), and tries a hover a window-system event took away up to three times. The drag
+  (`stage.ts`) no longer ends on `lostpointercapture`: it takes the capture back on the next move with the button held,
+  ignores buttonless moves and ends on `pointerup` / `pointercancel` or the next press; the matrix drops the head's
+  capture after the drag's first step to prove it.
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose

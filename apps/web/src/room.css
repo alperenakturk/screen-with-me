@@ -2353,6 +2353,40 @@ html:not(.shell) .shell-only {
   margin: 0 0 8px;
 }
 
+/* Card SH2: the room's feed at the top of the Queue (or the two buttons that start one). */
+.feed-qrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.feed-qrow:not(.on) > .btn {
+  flex: 1;
+}
+
+.feed-qrow.on {
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
+}
+
+.feed-qrow-text {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+html.phone .feed-qrow :is(.btn, .icon-btn) {
+  min-height: 44px;
+  min-width: 44px;
+}
+
 .end-name a {
   color: inherit;
   text-decoration: underline dotted;
@@ -8131,90 +8165,6 @@ html.shorts-view .voice-cams {
   margin: 0;
 }
 
-/* 0.9.91.17: "✨ Bunun gibi" and the "🎲 Keşfet" chips at the top of the ♾ popup (the topic box stays below). */
-#shorts-feed-form {
-  width: 300px;
-}
-
-.feed-like {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.feed-like:hover,
-.feed-pool:hover {
-  border-color: var(--accent);
-}
-
-.feed-pools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* Card 10: Discover's country (🌍 my country / 🌐 world / one of about ten). */
-.feed-region {
-  display: block;
-  margin-top: 6px;
-  max-width: 100%;
-  padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-}
-
-/* 0.9.92.6: the running feed on top of its window, with a stop button; the topic box and its button side by side. */
-.feed-now {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.feed-now[hidden] {
-  display: none;
-}
-
-/* Card SH1 item 4: TikTok has no feed; the ♾ window says so while one plays. */
-.feed-tiktok {
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-}
-
-.feed-tiktok[hidden],
-.feed-like[hidden] {
-  display: none;
-}
-
-.feed-now span {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .feed-topic-row {
   display: flex;
   gap: 6px;
@@ -8223,19 +8173,6 @@ html.shorts-view .voice-cams {
 .feed-topic-row input {
   flex: 1;
   min-width: 0;
-}
-
-.feed-pool {
-  flex: 1 1 auto;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: 99px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 12.5px;
-  white-space: nowrap;
-  cursor: pointer;
 }
 
 .search-feed {
@@ -12331,9 +12268,8 @@ html.sideways.phone .theater:is(:fullscreen, .fake-fs) .ph-fs-side:not([hidden])
   flex: 0 0 auto;
 }
 
-/* The ♾ Shorts feed window on a phone (0.9.92.6, owner: "make it fit a phone"): a titled sheet, the running feed
-   with its stop button on top, "✨ More like this", the Discover chips as an even grid, the topic box with its
-   button on one line. */
+/* The ＋ Add window on a phone (0.9.92.6): a titled sheet; its box and button on one line (the ♾ feed window is
+   card SH2's lazy feed-window.css now). */
 html.phone .feed-head {
   display: flex;
   align-items: center;
@@ -12347,28 +12283,6 @@ html.phone .shorts-add-pop .desk-label {
   display: none;
 }
 
-html.phone #shorts-feed-form:not([hidden]) {
-  gap: 12px;
-}
-
-html.phone #shorts-feed-form .feed-pools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-html.phone #shorts-feed-form .feed-pool {
-  min-height: 44px;
-  border-radius: 12px;
-  font-size: 14px;
-}
-
-html.phone #shorts-feed-form .feed-like {
-  padding: 10px 12px;
-  border-radius: 14px;
-}
-
-html.phone #shorts-feed-form .feed-topic-row .btn,
 html.phone #shorts-add-form .feed-topic-row .btn {
   min-height: 44px;
   padding: 0 14px;

@@ -2474,3 +2474,33 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: sync-engine scenario for a custom rate, room harness for the menu height, phone ＋ sheet harness.
 - Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026).
 - Done: #469 (bc77a73): one compact "⏩ Speed" row in the rail ⋯ menu, "Keep the controls open" off by default; Test Lab `rail.speed`.
+
+### CI3. Release train: several finished PRs go live together, without the one-by-one wait (owner, 15 Nov 2026; B2, after #452)
+- Why: the owner asked why every release waits on so many tests when most of them find nothing. The tests stay (on
+  15 Nov they caught a Snack Bar text that fell under 11 px, which main's push run had let through). What costs is
+  the queue: each PR is updated from main, runs the full PR CI again (~8.5 min), merges, then waits for its own
+  deploy + live e2e (~11 min) before the next one may start, so three ready PRs take about an hour.
+- What:
+  - **One release for a batch:** PRs that are green merge as soon as they are green (no "update from main and re-run"
+    when the files don't overlap); main's run deploys and runs the live e2e once for whatever has landed. The
+    version and `CHANGELOG.md` block cover the batch (one fourth-part number per batch; the Planner assigns it).
+  - **Main's push run checks what the PRs skipped:** the job that failed on 15 Nov (games-more) never runs on main, so
+    a regression from a combination of two PRs or a date-dependent test reached main unseen. Run the jobs the merged
+    PRs touched once on main before deploying (or a short nightly full run), so main never goes red silently.
+  - **No date- or time-dependent results:** a test that depends on today's date (Snack Bar daily special, seasonal
+    themes, schedules) forces every variant instead (lane A's per-special harness from #447 is the model).
+  - **Keep:** every gate in CLAUDE.md §7 "CI" and §9 (live e2e green before the tag, the canary gate, no
+    `paths-ignore`). Docs-only PRs keep skipping the heavy jobs.
+- Done when: three ready code PRs go live in ≤ 25 min from the first merge (measured on a real batch); main's run
+  catches a regression that only the combination of two PRs causes (a forced test case); no test result depends on the
+  date (a forced-date run in CI); `docs/internal/architecture/reference.md` "CI" updated.
+- Tests: the CI itself (a dry run on a test branch), the measurement in the PR.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: #464, #472, #473, #480, #482 (tested-code mark, 2-min settle, CI numbering via `release-series.txt` +
+  `changelog/next/` + `check-version-edits.mjs`, nightly forced-date sweep, 3 live shards, 7 PR jobs). Measured on
+  main: 1 PR whose code a PR tested ≈ 13 min (merge → live e2e end); 2-PR untested combination 22 min (#473 + #474);
+  busy 3-PR batch before #482: 38 min. After #482, busy batch #485 + #484 + #467 + #469 (2 code, 2 docs; run
+  43891275318, v0.9.97.149): first merge 14:53 → live e2e end 15:34 = 41 min, of which 18 min waiting for the
+  previous main run (#482's deploy + live e2e) to finish; the batch's own run (settle → live e2e end) 23 min; test jobs
+  started 2 s after `changes` (runners free; on a busy office before #482: 4–9 min). Quiet path ≤ 25 min holds; a busy
+  office adds the previous run's remaining time.

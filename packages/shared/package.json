@@ -6,6 +6,7 @@
   "exports": {
     "./protocol": "./src/protocol.ts",
     "./room-logic": "./src/room-logic.ts",
+    "./feed": "./src/feed.ts",
     "./room-id": "./src/room-id.ts",
     "./themes": "./src/themes.ts",
     "./waiting": "./src/waiting.ts",
