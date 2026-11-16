@@ -102,7 +102,8 @@ ok(await until(() => alex.state.players[0].marks.length === 2 && alex.state.play
 ok(JSON.stringify(alex.state.players[1].marks) === JSON.stringify(samWords.map((w) => score(w, answer))), "Alex gets Sam's marks, right ones");
 ok(!alex.state.players[1].words && !sam.state.players[0].words, "nobody gets the other player's words");
 ok(alex.state.players[0].words?.join() === alexWords.join(), 'each gets their own words');
-ok(robin.state.players[0].words?.join() === alexWords.join() && robin.state.players[1].words?.join() === samWords.join(), 'the watcher sees both boards\' letters live (GMP)');
+// Waited for: the watcher's last state can come a moment after Alex's (a slow live run, 16 Nov 2026).
+ok(await until(() => robin.state.players[0].words?.join() === alexWords.join() && robin.state.players[1].words?.join() === samWords.join()), 'the watcher sees both boards\' letters live (GMP)');
 alex.inbox.length = 0;
 alex.send({ t: 'guess', word: alexWords[0] });
 ok(await until(() => alex.inbox.some((m) => m.code === 'repeat')), 'the same word twice is refused');
