@@ -190,7 +190,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     joined non-TV viewer is primed the server moves the start to `SHORT_START_MARGIN_MS` (250 ms) from now (`primed`,
     memory-only `lead`) and broadcasts it as a SYSTEM `play`. `showCountdown` draws nothing for a Short (nothing of
     ours over the YouTube player). e2e `shorts-start.mjs` measures swipe → start: both primed at once ≈ 0.3 s, one
-    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap.
+    primed after 0.8 s ≈ 1.1 s, one never primed = the 1.5 s cap. Each tab records where a Short's player started
+    moving (`measureSwitch` → `shortStart`, seconds, always on for Shorts; the ⏱ badge stays behind `?measure=1`):
+    Test Lab `shorts.state` → `start` (0 = from its very start, null = not started yet).
 - **Everyone ready (`waiting.ts` + engine):** while the room plays, a client whose video has not advanced for 1.5 s
   sends `{t:'ready', ready:false}`; the server (`WaitTracker`) pauses the room as `SYSTEM` and broadcasts the
   `waiting` list. It resumes when everyone is ready or after at most 12 s; the same person cannot make the room wait

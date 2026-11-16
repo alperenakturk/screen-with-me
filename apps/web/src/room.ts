@@ -1998,13 +1998,22 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     }
   })();
   const measured: number[] = [];
+  /** Card SH1 (2): the playing Short and where its player started moving (seconds), for Test Lab `shorts.state`. */
+  let shortStart: { item: string; offset: number | null } | null = null;
   function measureSwitch(state: PlaybackState, player: PlayerAdapter, token: number): void {
-    if (!measureOn || !state.item || state.paused) return;
+    const item = state.item;
+    // Card SH1 (2): a Short always records where it started moving (Test Lab `shorts.state` → `start`); the ⏱ badge
+    // stays behind `?measure=1`.
+    const short = isShortItem(item);
+    if ((!measureOn && !short) || !item || state.paused) return;
+    if (short) shortStart = { item: item.id, offset: null };
     const from = player.getTime();
     const started = Date.now();
     const look = () => {
       if (token !== mediaToken) return;
       if (!player.isPaused() && player.getTime() > from + 0.05) {
+        if (short && shortStart?.item === item.id) shortStart.offset = Math.round(from * 100) / 100;
+        if (!measureOn) return;
         const lag = Math.max(0, Math.round(clock.now() - state.updatedAt));
         measured.push(lag);
         if (measured.length > 5) measured.shift();
@@ -2741,6 +2750,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             wayBack: !$('#shorts-enter').hidden,
             speakers: [...voice.speakers()].map((id) => members.find((m) => m.id === id)?.name ?? id),
             rings: document.querySelectorAll('.seat-av[data-speak]').length,
+            // Card SH1 (2): where this Short started moving in this tab, in seconds (0 = from its very start; null =
+            // not started yet).
+            start: shortStart && shortStart.item === roomState?.item?.id ? shortStart.offset : null,
           }),
       },
     ],
