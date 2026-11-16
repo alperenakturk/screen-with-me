@@ -1666,3 +1666,27 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - Design canvases (claude.ai artifacts, old account — may not be accessible any more): room alternatives
   https://claude.ai/artifact/Beiq1ueBUUHjUkRbL5LTHL, room UI options https://claude.ai/artifact/3v3MennhEPMFedeW9bNDQQ.
 
+## Lane A handoff of 16 Nov 2026, 18:30 (replaced by the next lane A session)
+- [ ] Lane A (handoff 16 Nov, 18:30; the session hit its context limit; a fresh lane A session continues from here):
+  - [x] Merged 16 Nov: SR2 #460, BUD2 #481, GR1 #476, UI2 #469 (cards archived); SH1 item 2 #486 (live v0.9.97.150);
+    SH1 item 3 #471 (`claude/sh1-ring`, speaking ring); EC1 #465 (`claude/ec1-end-card`); SH1 Test Lab `shorts.state`
+    `start` #495 (`claude/sh1-start-offset`); SH1 item 4 #489 (`claude/sh1-tiktok-small`: `vm.`/`vt.` links in a
+    pasted list, harness `shorts-mixed`, which also checks a swiped TikTok starts at 0:00). SH1 is complete on main.
+  - [x] STOP THE LINE lifted 16 Nov 18:33: run 43923095993 green, tagged v0.9.97.153 (cause: object restarts, B2 note
+    below). Was: no merges to main until live e2e is green again. Main runs 43917089949 and
+    43921749258 deployed but failed live e2e (games: Sea seats / fleets, duel result, sea ws drops, game keepalive;
+    HTTP-fallback 429; emoji rain "40 sent, 0 reached"); a lane B session investigates. Not tagged since v0.9.97.151.
+  - [ ] When live is green: EC1 + SH1 Done lines (PRs above, the live version), both cards verbatim to
+    `archive/cards-done.md` (DOCS2), and these owner hand tests: (1) swipe Shorts with a friend, how long the pause
+    before each Short feels; (2) speak in voice in the Shorts view: your face and your friend's get a green ring;
+    (3) with auto-next off, a video that ends shows a centered "Video ended" dialog (▶ Play next / Close); (4) paste
+    several TikTok app links (vm.tiktok.com) together with YouTube Shorts: they queue in paste order.
+  - [ ] SH3 (Shorts chat panel on a computer): not started; branch it from main. Today the rail's 💬 opens only a message
+    box (`.shorts-chat-wrap`, `setShortsChat` in `room.ts`); `.room.shorts > .side` is `display: none`. Idea: reuse the
+    side panel's chat (`createChatPanel`, `#chat-list`, `#chat-badge`) as a column right of the rail when 💬 is on,
+    without covering `#seats-r` or the player; `shortsChat:<room>` memory; Test Lab `shorts.chat`; QA1 at 1366 / 1920 /
+    tablet-land. Then VC1 + VC3 → MSG1.
+  - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
+    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
+    room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
+    state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.

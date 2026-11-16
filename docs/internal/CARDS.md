@@ -67,39 +67,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
 - Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
 
-### SH1. Shorts view fixes: the way back on a phone, the first seconds, who is talking (owner, 15 Nov 2026; lane A)
-- Why: three things the owner found in the Shorts view.
-- What:
-  0. **Urgent, the computer too (owner, 15 Nov 2026 evening):** the owner finds no "📱 Shorts view" button on a
-     computer either after "↩ Room view". Today `#shorts-enter` sits in the toolbar under the video and shows only while
-     a Short plays. Find why he can't see it (hidden layout, toolbar folded, SIMP1) and make the way back obvious on
-     every device. Ship this first, alone if needed.
-  1. **The way back on a phone:** after "↩ Room view" a phone has no way back into the Shorts view. `.shorts-enter` is
-     hidden in `html.ph-room`, and `shortsOff:<room>` stays in session storage. While a Short plays, give the phone a
-     clear "📱 Shorts view" entry in the Room tab (the strip under the video), and keep the computer's button.
-  2. **The first 2–3 seconds:** when the next Short starts by itself, the owner misses its first 2–3 seconds. Find out
-     why (preload, `command()` seek, the start being swallowed, the late-join offset) and fix it, so every viewer sees a
-     Short from 0:00 together. Add a `sync-engine.test.ts` scenario if the sync engine is involved.
-  3. **Who is talking:** in the Shorts bar's faces (and the phone strip's faces), a person who is speaking in voice
-     gets a visible ring around their round avatar (a green glow and a slight grow), driven by the existing voice
-     level.
-     - It respects reduced motion (ring only, no grow).
-     - It shows for yourself too, so you know your mic is going out.
-  4. **TikTok, small (Research `research/tiktok-shorts.md` §6):**
-     - Accept short `vm.`/`vt.tiktok.com` links when pasting many links; the Worker resolves them one by one.
-     - When a TikTok plays, the ♾ window says that TikTok has no public feed and points to pasting or sharing links.
-     - A harness swipes through a queue that mixes YouTube Shorts and TikToks.
-     - No TikTok search or feed: TikTok offers none legally.
-- Done when:
-  - On a phone you can leave and re-enter the Shorts view any number of times.
-  - An auto-advanced Short starts at 0:00 for everyone (a harness measures `currentTime` at start).
-  - A speaking avatar lights up in the Shorts bar on a computer and a phone.
-  - Test Lab hook `shorts.state` reports the view, the start offset and the speakers.
-- Tests: the shorts-rail / shorts-door harnesses, a phone harness for the way back, a unit scenario for the start, and
-  the owner's hand test.
-- Owner's pick: his three points (Planner chat, 15 Nov 2026).
-- Progress (lane A, 16 Nov 2026): items 0/1 live (#447, 0.9.97.137); item 3 (speaking ring) in #471, waiting for Game Studio's state-matrix hover fix; item 2 (start together, ready-based lead-in) in #486; item 4 (TikTok small) on `claude/sh1-tiktok-small`; the `shorts.state` start offset not started.
-
 ### VC1. Voice: a deafen button, and the YouTube volume slider (owner, 15 Nov 2026; lane A, after SH1)
 - Why: the owner wants a Discord-like "deafen" in voice, and on YouTube he can't drag the volume, because one click
   jumps it.
@@ -138,25 +105,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: room server unit tests (permissions, history removal, rate limit), e2e with three clients (sender, host,
   other), phone long-press harness, the owner's hand test.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
-
-### EC1. "Video ended" card in the middle of the screen, not in the chat (owner, 15 Nov 2026; lane A, small, after SR2)
-- Why: with YouTube the "Video ended / ▶ Start next / Close" card sits in the chat panel (5B, 0.9.92.9), where it reads
-  like a chat message and is easy to miss. The owner wants it in the middle of the screen, in a normal clean design.
-- What:
-  - `ui/end-card.ts` `showNextCard`: the card opens as a **centered dialog** over the room view (the same dialog kind as
-    Settings: `role="dialog"`, a light dim behind it, focus on "▶ Start next", Esc / Close / a click outside closes it,
-    the 60 s auto-close stays). Same place for YouTube, video files, fullscreen and the extension overlay; take
-    `.end-card` out of `NOTICES` / `placeNotices` in `room.ts`.
-  - Design: "Video ended" small and muted, the video's title in plain text (at most 2 lines, then …; the link only as
-    a small ↗ next to it, no dotted underline), the two buttons side by side and full width on a phone (≥ 44 px).
-    Fits at 1366, 1920, tablet and phone without scrolling; Design gives it one look before merge.
-  - YouTube RMF: the card only appears after the video has ended, is a page dialog (not a layer attached to the
-    player), and never covers the player while it plays. The Shorts view keeps its own place (BH12).
-- Done when: the card shows centered on computer and phone, YouTube and a video file, normal and fullscreen; Close,
-  Esc, outside click and Start next work; Test Lab hook `endcard.show`; shots reviewed (QA1).
-- Tests: the room harness that covers the end card, `scripts/shots.cjs` for the end card at the 4 sizes.
-- Owner's pick: his message with a screenshot (Planner chat, 15 Nov 2026).
-- Progress (lane A, 16 Nov 2026): built in #465 (branch `claude/ec1-end-card`, main merged, texts in `ui/lab-texts.ts`); red only on the state-matrix games-window drag / hover flake (Game Studio fixing); merge once that is green.
 
 ### SH3. Shorts view on a computer: the chat in a panel you can open and close (owner's friend, 15 Nov 2026; lane A, after SH1)
 - Why: in the Shorts view on a computer, 💬 opens only a box to send a message; you can't read the chat. A friend of
