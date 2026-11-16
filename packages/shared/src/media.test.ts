@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage, sharedLink } from './media.ts';
+import { isTikTokHop, isTikTokShortLink, parseMediaInput, parseMediaList, parseTikTok, parseVimeo, sameMedia, samePage, sharedLink, TIKTOK_SHORT_MAX } from './media.ts';
 import { cleanMedia, countdownMedia, isValidMedia, maxRateFor } from './protocol.ts';
 
 describe('samePage', () => {
@@ -117,6 +117,17 @@ describe('TikTok links (0.9.91.18)', () => {
     expect(sameMedia({ kind: 'tiktok', id: '7000000000000000001' }, { kind: 'youtube', id: 'dQw4w9WgXcQ' })).toBe(false);
     const list = parseMediaList('https://www.tiktok.com/@a/video/7000000000000000001 https://youtu.be/dQw4w9WgXcQ');
     expect(list.media.map((m) => m.kind)).toEqual(['tiktok', 'youtube']);
+  });
+  it('keeps TikTok short share links in a list, in order, for the server to follow', () => {
+    const list = parseMediaList('https://vm.tiktok.com/ZMabc123/ https://youtu.be/dQw4w9WgXcQ vt.tiktok.com/ZSxyz789 https://vm.tiktok.com/ZMabc123/');
+    expect(list.items).toEqual(['https://vm.tiktok.com/ZMabc123/', { kind: 'youtube', id: 'dQw4w9WgXcQ' }, 'vt.tiktok.com/ZSxyz789']);
+    expect(list.media).toEqual([{ kind: 'youtube', id: 'dQw4w9WgXcQ' }]);
+    expect(parseMediaList('https://vm.tiktok.com/ZMabc123/ https://vm.tiktok.com/ZMabc456/').items).toHaveLength(2);
+    const many = Array.from({ length: 12 }, (_, i) => `https://vm.tiktok.com/ZMabc${String(i).padStart(3, '0')}/`);
+    const capped = parseMediaList(many.join(' '));
+    expect(capped.items).toHaveLength(TIKTOK_SHORT_MAX);
+    expect(capped.skipped).toBe(12 - TIKTOK_SHORT_MAX);
+    expect(parseMediaList('https://vm.tiktok.com/ZMabc123/').items).toEqual([]);
   });
   it('validates TikTok media and its speed', () => {
     expect(isValidMedia({ kind: 'tiktok', id: '123' })).toBe(false);

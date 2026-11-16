@@ -122,32 +122,52 @@ export function parseMediaInput(input: string): Media | null {
 
 /** At most this many links from one paste go to the queue. */
 export const MEDIA_LIST_MAX = 30;
+/** At most this many TikTok short share links from one paste (each is one server lookup). */
+export const TIKTOK_SHORT_MAX = 8;
 
 /**
  * Many links pasted at once (0.9.90.7, Shorts step 2: "paste many links"): a list of YouTube / video file links,
  * separated by spaces, new lines or commas. Only tokens that really look like links count (a search such as
  * "funny cats" stays a search; an 11-letter word is never taken for a video id here). Film pages are left out (each
  * one moves everyone's tab, they are added one by one). Duplicates are dropped. Fewer than two links: `[]`.
+ * TikTok app share links (`vm.` / `vt.tiktok.com`, card SH1 item 4) only the server can follow: they come back in
+ * `items` as the link itself, in paste order, at most `TIKTOK_SHORT_MAX` (the Worker's lookup limit is 10 a minute).
+ * `media` holds the links that need no lookup; `items` is everything in order.
  */
-export function parseMediaList(input: string): { media: Media[]; skipped: number } {
-  const tokens = input.split(/[\s,]+/).filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/|(www\.)?tiktok\.com\/|(www\.)?vimeo\.com\/)/i.test(token));
-  if (tokens.length < 2) return { media: [], skipped: 0 };
+export function parseMediaList(input: string): { media: Media[]; skipped: number; items: (Media | string)[] } {
+  const tokens = input
+    .split(/[\s,]+/)
+    .filter((token) => /^(https?:\/\/|www\.|youtu\.be\/|(m\.)?youtube\.com\/|(www\.|vm\.|vt\.)?tiktok\.com\/|(www\.)?vimeo\.com\/)/i.test(token));
+  if (tokens.length < 2) return { media: [], skipped: 0, items: [] };
   const media: Media[] = [];
+  const items: (Media | string)[] = [];
   let skipped = 0;
+  let shortLinks = 0;
   for (const token of tokens) {
+    if (isTikTokShortLink(token)) {
+      if (items.includes(token)) continue;
+      if (shortLinks >= TIKTOK_SHORT_MAX || items.length >= MEDIA_LIST_MAX) {
+        skipped++;
+        continue;
+      }
+      shortLinks++;
+      items.push(token);
+      continue;
+    }
     const item = parseMediaInput(token);
     if (!item || item.kind === 'page') {
       skipped++;
       continue;
     }
     if (media.some((m) => sameMedia(m, item))) continue;
-    if (media.length >= MEDIA_LIST_MAX) {
+    if (items.length >= MEDIA_LIST_MAX) {
       skipped++;
       continue;
     }
     media.push(item);
+    items.push(item);
   }
-  return media.length >= 2 ? { media, skipped } : { media: [], skipped: 0 };
+  return items.length >= 2 ? { media, skipped, items } : { media: [], skipped: 0, items: [] };
 }
 
 export function sameMedia(a: Media | null, b: Media | null): boolean {

@@ -874,6 +874,7 @@ export const tr: Record<I18nKey, string> = {
   'feed.regionWorld': 'Dünya',
   'feed.stopHint': '"{topic}" akışı açık · değiştirmek ya da durdurmak için bas',
   'feed.now': '♾ Şu an açık: {topic}',
+  'feed.tiktok': "TikTok'un herkese açık bir akışı yok. TikTok linklerini videonun yanındaki + ile ekle (birkaç tane birden olur) ya da TikTok uygulamasından buraya paylaş.",
   'feed.stop': 'Durdur',
   'feed.started': '♾ "{topic}" akışı başladı',
   'feed.end': '"{topic}" için yeni Shorts kalmadı, akış durdu',

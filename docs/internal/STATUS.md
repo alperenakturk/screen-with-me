@@ -17,7 +17,8 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] SH1 item 2, #486 (`claude/sh1-start`): ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on
     `ready`, `waitPausePosition`), e2e `shorts-start.mjs`. Get CI green, merge. After #471: add the start offset to
     Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
-  - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
+  - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness): built on
+    `claude/sh1-tiktok-small` (harness `shorts-mixed` green locally); PR, CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
 - [ ] B2 (handoff 16 Nov, 14:50; everything below is on main, no unmerged B2 branch):
   - [x] CI3 built and live (#464, #472, #473, #480, #482): tested-code mark, settle, CI numbering

@@ -8193,6 +8193,20 @@ html.shorts-view .voice-cams {
   display: none;
 }
 
+/* Card SH1 item 4: TikTok has no feed; the ♾ window says so while one plays. */
+.feed-tiktok {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.feed-tiktok[hidden],
+.feed-like[hidden] {
+  display: none;
+}
+
 .feed-now span {
   flex: 1;
   min-width: 0;

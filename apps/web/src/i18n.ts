@@ -872,6 +872,7 @@ const en = {
   'feed.regionWorld': 'World',
   'feed.stopHint': 'The "{topic}" feed is on · press to change or stop it',
   'feed.now': '♾ On now: {topic}',
+  'feed.tiktok': 'TikTok has no public feed. Add TikTok links with + beside the video (several at once is fine) or share them here from the TikTok app.',
   'feed.stop': 'Stop',
   'feed.started': '♾ The "{topic}" feed started',
   'feed.end': 'No more new Shorts for "{topic}", the feed stopped',

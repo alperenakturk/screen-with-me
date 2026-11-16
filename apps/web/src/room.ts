@@ -552,6 +552,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
               <div class="feed-head phone-only"><b data-i18n="feed.short"></b><button id="shorts-feed-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
               <div id="shorts-feed-now" class="feed-now" hidden><span id="shorts-feed-now-text"></span><button id="shorts-feed-stop" type="button" class="btn small-btn" data-i18n="feed.stop"></button></div>
+              <p id="shorts-feed-tiktok" class="small feed-tiktok" role="note" data-i18n="feed.tiktok" hidden></p>
               <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
               <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span> <select id="shorts-region" class="feed-region" data-i18n-title="feed.region"></select></p>
               <div id="shorts-pools" class="feed-pools" role="group"></div>
@@ -2600,6 +2601,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     // it without a word; now it always opens the window, the feed stops only from there).
     $('#shorts-feed-now').hidden = topic === null;
     $('#shorts-feed-now-text').textContent = topic ? t('feed.now', { topic }) : '';
+    // Card SH1 item 4: TikTok has no public feed or search; a TikTok playing says so and points to links, and "✨ More
+    // like this" (YouTube only) steps aside so the window still fits a phone.
+    const tiktok = roomState?.item?.media.kind === 'tiktok';
+    $('#shorts-feed-tiktok').hidden = !tiktok;
+    $('#shorts-like').hidden = tiktok;
   }
   feedButton.addEventListener('click', () => {
     feedForm.hidden = !feedForm.hidden;
@@ -2725,8 +2731,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       return;
     }
     const list = parseMediaList(shortsAddInput.value);
-    const one = list.media.length === 1 ? list.media[0]! : parseMediaInput(shortsAddInput.value);
-    if (list.media.length < 2 && one === null) {
+    const one = parseMediaInput(shortsAddInput.value);
+    if (list.items.length < 2 && one === null) {
       // Words: a search of YouTube Shorts only (0.9.91.12); the box stays open to add from the list. "Play now" opens
       // the first Short found and closes the box.
       if (!shortsAddInput.value.trim()) return;
@@ -2742,9 +2748,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     shortsSearch.clear();
     shortsAddInput.value = '';
     setShortsAdd(false);
-    if (list.media.length >= 2) addMany(list.media, list.skipped, mode);
+    if (list.items.length >= 2) addMany(list.items, list.skipped, mode, shortsAdd);
     else addMedia(one!, mode);
-    queued(list.media.length >= 2 ? t('queuedMany', { n: list.media.length, skipped: list.skipped }) : t('queuedNote'));
+    queued(list.items.length >= 2 ? t('queuedMany', { n: list.items.length, skipped: list.skipped }) : t('queuedNote'));
   });
   addEventListener('langchange', renderFeed);
   renderFeed();
@@ -3457,9 +3463,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const mode = (event.submitter as HTMLButtonElement | null)?.value === 'load' ? 'load' : 'enqueue';
     // Many links at once (0.9.90.7): all of them go to the queue (with "Şimdi aç" the first one opens now).
     const list = parseMediaList(mediaInput.value);
-    if (list.media.length >= 2) {
+    if (list.items.length >= 2) {
       search.close();
-      addMany(list.media, list.skipped, mode);
+      addMany(list.items, list.skipped, mode);
       return;
     }
     // TikTok app share links (vm.tiktok.com/…): the server follows them to the video first (0.9.91.18).
@@ -3491,7 +3497,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
    * away from the room. Not on the film page (no link box there).
    */
   function takeLink(text: string): boolean {
-    if (isShell || (!parseMediaInput(text) && parseMediaList(text).media.length < 2 && !isTikTokShortLink(text))) return false;
+    if (isShell || (!parseMediaInput(text) && parseMediaList(text).items.length < 2 && !isTikTokShortLink(text))) return false;
     mediaInput.value = text.trim();
     mediaForm.requestSubmit(mediaForm.querySelector<HTMLButtonElement>('button[value=enqueue]'));
     return true;
@@ -3581,28 +3587,50 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (!tv && !removedHere) saveLastRoom(roomId, roomSettings.saved && roomSettings.name ? roomSettings.name : null);
   }
 
-  /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null with a note if not. */
-  async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {
+  /** A TikTok short share link → the video, through the server (`/api/tiktok/resolve`); null if not. */
+  async function lookupTikTok(link: string): Promise<Media | null> {
     try {
       const response = await fetch(`/api/tiktok/resolve?u=${encodeURIComponent(link.trim())}`);
       const body = (response.ok ? await response.json() : null) as { media?: unknown } | null;
       if (body && isValidMedia(body.media)) return body.media;
     } catch {
-      // network: the note below
+      // network: null
     }
-    flashHint(anchor, t('tiktokResolveFailed'), 5000);
     return null;
   }
+  /** `lookupTikTok` with a note on the anchor when the link can't be followed. */
+  async function resolveTikTok(link: string, anchor: HTMLElement): Promise<Media | null> {
+    const media = await lookupTikTok(link);
+    if (!media) flashHint(anchor, t('tiktokResolveFailed'), 5000);
+    return media;
+  }
 
-  /** Sends the links one by one, a little apart (the server allows about 4 commands a second). */
-  function addMany(list: Media[], skipped: number, mode: 'load' | 'enqueue'): void {
+  /**
+   * Sends the links one by one, a little apart (the server allows about 4 commands a second), in paste order. A TikTok
+   * short share link (card SH1 item 4) is looked up through the server first; one that fails is left out with a note.
+   */
+  function addMany(list: (Media | string)[], skipped: number, mode: 'load' | 'enqueue', anchor: HTMLElement = mediaInput): void {
     mediaInput.value = '';
     setAdding(false);
-    list.forEach((media, i) => setTimeout(() => send({ t: i === 0 && mode === 'load' ? 'load' : 'enqueue', media }), i * 300));
     const done = $('#media-done');
     done.textContent = t(skipped ? 'queuedManySkipped' : 'queuedMany', { n: list.length, skipped });
     done.hidden = false;
     setTimeout(() => (done.hidden = true), 4000);
+    void (async () => {
+      let sent = 0;
+      let failed = 0;
+      for (const entry of list) {
+        const media = typeof entry === 'string' ? await lookupTikTok(entry) : entry;
+        if (!media) {
+          failed++;
+          continue;
+        }
+        if (sent > 0) await new Promise((resolve) => setTimeout(resolve, 300));
+        send({ t: sent === 0 && mode === 'load' ? 'load' : 'enqueue', media });
+        sent++;
+      }
+      if (failed) flashHint(anchor, t('tiktokResolveFailed'), 5000);
+    })();
   }
 
   /** `fromList`: "＋ Queue" on a results list (card SR2): the box keeps its words and the list stays open. */

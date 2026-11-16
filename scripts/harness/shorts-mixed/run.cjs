@@ -1,0 +1,145 @@
+// Card SH1 item 4 (TikTok, small): a queue that mixes YouTube Shorts and TikToks, pasted at once, swipes through in
+// paste order on a computer (EN) and a phone (TR). A TikTok app share link (vm.tiktok.com) is looked up by the server
+// (stubbed here: the cloud can't reach tiktok.com) and keeps its place in the list; TikTok's player is a fake page
+// that speaks its postMessage protocol (as in scripts/harness/tiktok). While a TikTok plays, the ♾ window says TikTok
+// has no feed and points to links; on a YouTube Short that note is gone. Needs YouTube (the Shorts play for real).
+//   npm run build && (cd apps/server && npx wrangler dev --port 8787)
+//   NODE_PATH=$(npm root -g) node scripts/harness/shorts-mixed/run.cjs [http://localhost:8787] [out-dir]
+const { viaYouTube } = require('../via-youtube.cjs');
+const { phoneReady } = require('../phone-ready.cjs');
+const { chromium, devices } = require('playwright');
+
+const SITE = process.argv[2] || 'http://localhost:8787';
+const OUT = process.argv[3] || require('os').tmpdir();
+const TT_FULL = '7000000000000000001';
+const TT_SHORT = '7000000000000000002';
+const SHORT_LINK = 'https://vm.tiktok.com/ZMabc123/';
+// Paste order: YouTube, TikTok (short share link), TikTok (full link), YouTube.
+const PASTE = [
+  'https://www.youtube.com/shorts/aqz-KE-bpKQ',
+  SHORT_LINK,
+  `https://www.tiktok.com/@someone/video/${TT_FULL}`,
+  'https://www.youtube.com/shorts/jNQXAC9IVRw',
+].join('\n');
+const EXPECT = [
+  { kind: 'youtube', id: 'aqz-KE-bpKQ' },
+  { kind: 'tiktok', id: TT_SHORT },
+  { kind: 'tiktok', id: TT_FULL },
+  { kind: 'youtube', id: 'jNQXAC9IVRw' },
+];
+let fails = 0;
+const check = (ok, label, extra = '') => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${extra ? ` → ${extra}` : ''}`);
+  if (!ok) fails++;
+};
+
+const FAKE = `<!doctype html><html><body style="margin:0;background:#111;color:#fff;font:14px sans-serif">fake TikTok
+<script>
+  let t = 0, playing = false, last = performance.now();
+  const send = (type, value) => parent.postMessage({ 'x-tiktok-player': true, type, value }, '*');
+  addEventListener('message', (e) => {
+    const d = e.data || {};
+    if (!d['x-tiktok-player']) return;
+    if (d.type === 'play') { playing = true; last = performance.now(); send('onStateChange', 1); }
+    if (d.type === 'pause') { playing = false; send('onStateChange', 2); }
+    if (d.type === 'seekTo') { t = Number(d.value) || 0; last = performance.now(); }
+  });
+  setInterval(() => {
+    const now = performance.now();
+    if (playing) t += (now - last) / 1000;
+    last = now;
+    send('onCurrentTime', { currentTime: t, duration: 60 });
+  }, 250);
+  setTimeout(() => send('onPlayerReady'), 100);
+</script></body></html>`;
+
+/** What the player shows now: `{kind, id}` from the frame's address. */
+const playing = (page) =>
+  page.evaluate(() => {
+    const src = document.querySelector('#player iframe')?.src ?? '';
+    const tt = src.match(/tiktok\.com\/player\/v1\/(\d+)/);
+    if (tt) return { kind: 'tiktok', id: tt[1] };
+    const yt = src.match(/\/embed\/([\w-]{11})/);
+    return yt ? { kind: 'youtube', id: yt[1] } : null;
+  });
+
+(async () => {
+  const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
+  for (const [label, options, lang] of [
+    ['computer', { viewport: { width: 1366, height: 768 } }, 'en'],
+    ['phone', { ...devices['Pixel 7'] }, 'tr'],
+  ]) {
+    const ctx = await browser.newContext(options);
+    await viaYouTube(ctx);
+    await ctx.route('https://www.tiktok.com/player/v1/**', (r) => r.fulfill({ contentType: 'text/html', body: FAKE }));
+    let lookups = 0;
+    await ctx.route('**/api/tiktok/resolve?**', (r) => {
+      lookups++;
+      const asked = new URL(r.request().url()).searchParams.get('u');
+      const body = asked === SHORT_LINK ? { media: { kind: 'tiktok', id: TT_SHORT } } : { error: 'failed' };
+      return r.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
+    });
+    await ctx.addInitScript((l) => {
+      try {
+        localStorage.setItem('tipsSeen', '1');
+        localStorage.setItem('lang', l);
+        localStorage.setItem('opt:autoInvite', '0');
+      } catch {}
+    }, lang);
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/r/sm${Math.random().toString(36).slice(2, 8)}?debug=1`);
+    await page.fill('#name', 'Alex');
+    await page.click('#name-form button.primary');
+    await page.waitForSelector('.room');
+    await phoneReady(page);
+    if (!(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
+    await page.fill('#media-input', PASTE);
+    await page.click('#media-form button[value=load]');
+    const opened = await page.waitForFunction(() => document.documentElement.classList.contains('shorts-view'), null, { timeout: 15000 }).then(() => true).catch(() => false);
+    check(opened, `${label}: the pasted list opens the Shorts view`);
+    check(lookups === 1, `${label}: the short share link was looked up once`, String(lookups));
+
+    for (let i = 0; i < EXPECT.length; i++) {
+      const want = EXPECT[i];
+      const got = await page
+        .waitForFunction((w) => {
+          const src = document.querySelector('#player iframe')?.src ?? '';
+          return w.kind === 'tiktok' ? src.includes(`/player/v1/${w.id}`) : src.includes(`/embed/${w.id}`);
+        }, want, { timeout: 15000 })
+        .then(() => true)
+        .catch(() => false);
+      check(got, `${label} ${i + 1}/${EXPECT.length}: ${want.kind} ${want.id} plays, in paste order`, JSON.stringify(await playing(page)));
+      // The ♾ window: its TikTok note only while a TikTok plays.
+      if (label === 'computer' && (i === 0 || i === 1)) {
+        await page.click('#shorts-feed');
+        const note = await page.evaluate(() => {
+          const n = document.getElementById('shorts-feed-tiktok');
+          const r = n?.getBoundingClientRect();
+          const form = document.getElementById('shorts-feed-form');
+          const like = document.getElementById('shorts-like')?.getBoundingClientRect();
+          return { shown: !!n && !n.hidden && !!r && r.height > 0, text: n?.textContent ?? '', like: !!like && like.height > 0, fits: !!form && form.scrollHeight <= form.clientHeight + 1 };
+        });
+        check(note.fits && (want.kind === 'tiktok' ? note.shown && !note.like && /no public feed/.test(note.text) : !note.shown && note.like), `${label}: the ♾ window's TikTok note ${want.kind === 'tiktok' ? 'shows on a TikTok' : 'is hidden on a YouTube Short'}`, JSON.stringify(note));
+        if (want.kind === 'tiktok') await page.screenshot({ path: `${OUT}/shorts-mixed-feed-note.png` });
+        await page.keyboard.press('Escape');
+        await page.mouse.click(5, 5);
+      }
+      if (i === EXPECT.length - 1) break;
+      const inShorts = await page.evaluate(() => document.documentElement.classList.contains('shorts-view'));
+      check(inShorts, `${label} ${i + 1}: still in the Shorts view`);
+      // Swipe on: the computer's ↓ key, the phone's ▼ in its Shorts bar.
+      if (label === 'computer') {
+        await page.locator('body').focus().catch(() => {});
+        await page.keyboard.press('ArrowDown');
+      } else await page.click('#ph-shorts-next');
+    }
+    await page.screenshot({ path: `${OUT}/shorts-mixed-${label}.png` });
+    await ctx.close();
+  }
+  await browser.close();
+  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ mixed Shorts queue passed');
+  process.exit(fails ? 1 : 0);
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
