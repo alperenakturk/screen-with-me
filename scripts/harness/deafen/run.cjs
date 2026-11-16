@@ -83,7 +83,8 @@ const micOn = (page) => page.evaluate(() => !document.getElementById('voice-mic'
   await sam.page.click('#voice-leave');
   await sleep(800);
   await joinVoice(sam.page);
-  await sleep(2500);
+  await until(async () => (await lab(alex.page)).voices > 0, 15000);
+  await sleep(500);
   state = await lab(alex.page);
   check(state.voicesMuted, 'a voice that comes back while deafened is silent', state);
 
@@ -100,13 +101,14 @@ const micOn = (page) => page.evaluate(() => !document.getElementById('voice-mic'
   await alex.page.reload();
   await alex.page.waitForSelector('.room');
   const back = await until(() => alex.page.evaluate(() => !document.getElementById('voice-on').hidden), 15000);
-  await sleep(2000);
+  // Wait for Sam's voice to arrive again (an empty list would read as "all silent").
+  await until(async () => (await lab(alex.page)).voices > 0, 15000);
   state = await lab(alex.page);
   check(!!back && state.deaf && !state.mic && state.voicesMuted, 'a reload keeps me deafened with the mic off', state);
   const seenAgain = await until(async () => (await lab(sam.page)).deafened.includes('Alex'), 8000);
   check(!!seenAgain, 'Sam still sees Alex deafened after his reload');
   state = await lab(alex.page, 'off');
-  check(!state.deaf && !state.voicesMuted, 'Test Lab "off" undeafens', state);
+  check(!state.deaf && state.voices > 0 && !state.voicesMuted, 'Test Lab "off" undeafens', state);
   check(alex.errors.length === 0 && sam.errors.length === 0, 'no page errors', [...alex.errors, ...sam.errors]);
   await browser.close();
   console.log(failed ? `\n${failed} FAILED` : '\nall ok');

@@ -294,7 +294,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
           const want = arg?.trim();
           if (want === 'on' || want === 'off') setDeaf(want === 'on');
           const others = members.filter((m) => m.voice?.deaf && m.id !== myId()).map((m) => m.name);
-          const text = JSON.stringify({ deaf, inVoice: client.active, mic: client.active && client.micEnabled, voicesMuted: [...audios.values()].every((a) => a.muted), deafened: others });
+          const text = JSON.stringify({ deaf, inVoice: client.active, mic: client.active && client.micEnabled, voices: audios.size, voicesMuted: audios.size > 0 && [...audios.values()].every((a) => a.muted), deafened: others });
           return { en: text, tr: text };
         },
       },
