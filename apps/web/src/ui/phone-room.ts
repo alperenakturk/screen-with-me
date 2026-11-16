@@ -28,6 +28,9 @@ export interface PhoneRoomDeps {
   settings: { sections: () => HTMLElement[]; setInPage: (on: boolean) => void };
   /** The Me tab's head: my avatar and name (a tap opens the profile). */
   meHead: () => HTMLElement;
+  /** The hidden 🎮 the games hall opens beside on the Games tab. Made by room.ts (card BUD2: this module loads only
+   * once the phone layout turns on, but games/stage.ts takes its triggers when the room starts). */
+  gamesButton: HTMLButtonElement;
 }
 
 /** The settings categories the Me tab holds (the phone essentials). */
@@ -238,7 +241,7 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   let tab: Tab = 'room';
   let lent: Borrowed[] = [];
   /** Hidden trigger the games hall opens beside (games/stage.ts moves its hall next to the 🎮 pressed). */
-  const gamesButton = el('button', { type: 'button', id: 'ph-games-open', class: 'ph-games-open', tabindex: '-1', 'aria-hidden': 'true' }) as HTMLButtonElement;
+  const { gamesButton } = deps;
   const gamesWrap = el('div', { class: 'game-menu-wrap ph-games-wrap' }, gamesButton);
   panels.get('games')?.append(gamesWrap);
   const meBody = el('div', { class: 'ph-me' });

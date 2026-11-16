@@ -36,7 +36,7 @@ import {
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
 import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
-import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onTabletUpright } from './device.ts';
+import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
 import { formatTime, itemTitle, mediaUrl, rememberTitle } from './media-info.ts';
@@ -94,7 +94,7 @@ import { clearTvLink, tvLab, tvLink } from './tv-lab.ts';
 import { debugHooks, debugTap, setDebugRoom, type RoomLab } from './debug-lab.ts';
 import { icon } from './ui/icons.ts';
 import type { createTvRemote } from './ui/tv-remote.ts';
-import { createPhoneRoom } from './ui/phone-room.ts';
+import type { createPhoneRoom } from './ui/phone-room.ts';
 import { loadChunk } from './ui/lazy.ts';
 import { createWakeLock } from './ui/wake-lock.ts';
 import { createBlocks } from './ui/blocks.ts';
@@ -1183,21 +1183,37 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (yes) send({ t: 'make-host', id: member.id });
   }
   const live = createLive(app, send, () => myId, isShell, () => amHost());
-  // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels.
-  const phoneRoom: ReturnType<typeof createPhoneRoom> | null = isShell ? null : createPhoneRoom({
-    root: app,
-    openSettings: (section) => settingsDialog.open(section),
-    myId: () => myId,
-    settings: { sections: settingsDialog.sections, setInPage: settingsDialog.setInPage },
-    // PH1: the Me tab's head is my picture and name; a tap opens the profile menu (name, picture, theme).
-    meHead: () => {
-      const head = el('button', { type: 'button', class: 'ph-me-head' }, avatarNode(myAvatar, 'ph-me-avatar'), el('b', {}, myName));
-      head.addEventListener('click', () => document.querySelector<HTMLButtonElement>('.profile-btn')?.click());
-      return head;
-    },
-  });
-  if (phoneRoom) settingsDialog.setRedirect((section) => phoneRoom.openMe(section));
-  phoneRoom?.setCams(seatCams);
+  // The phone layout (0.9.92.3): the same room as an app screen; sheets borrow the room's own panels. Card BUD2: its
+  // module is a lazy chunk, loaded when the phone layout first turns on (a computer never downloads it); the hidden 🎮
+  // of its Games tab is made here, since games/stage.ts takes its triggers when the room starts.
+  let phoneRoom: ReturnType<typeof createPhoneRoom> | null = null;
+  const phoneGamesButton = el('button', { type: 'button', id: 'ph-games-open', class: 'ph-games-open', tabindex: '-1', 'aria-hidden': 'true' }) as HTMLButtonElement;
+  let phoneLoading = false;
+  const startPhoneRoom = () => {
+    if (isShell || phoneLoading) return;
+    phoneLoading = true;
+    void loadChunk(() => import('./ui/phone-room.ts')).then((chunk) => {
+      if (!chunk) return void (phoneLoading = false);
+      const room = chunk.createPhoneRoom({
+        root: app,
+        openSettings: (section) => settingsDialog.open(section),
+        myId: () => myId,
+        settings: { sections: settingsDialog.sections, setInPage: settingsDialog.setInPage },
+        // PH1: the Me tab's head is my picture and name; a tap opens the profile menu (name, picture, theme).
+        meHead: () => {
+          const head = el('button', { type: 'button', class: 'ph-me-head' }, avatarNode(myAvatar, 'ph-me-avatar'), el('b', {}, myName));
+          head.addEventListener('click', () => document.querySelector<HTMLButtonElement>('.profile-btn')?.click());
+          return head;
+        },
+        gamesButton: phoneGamesButton,
+      });
+      phoneRoom = room;
+      settingsDialog.setRedirect((section) => room.openMe(section));
+      room.setCams(seatCams);
+    });
+  };
+  if (isPhoneLayout()) startPhoneRoom();
+  else onPhoneLayout((phone) => phone && startPhoneRoom());
   // Odanın içindeki oyunlar: 🎮 → oyun seç → oyun videonun yerinde açılır (ayrı oyun odası yok).
   // "⋯ More → Games" on a computer (card 6): the games hall opens next to the 🎮 pressed, so an invisible one waits
   // under ⋯ More (the toolbar's 🎮 is hidden on a computer and the rail is not out in a fresh room).
@@ -1259,7 +1275,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
     // The Shorts bar's 🎮 (0.9.91.13): there a game opens as a free window.
-    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton, ...(phoneRoom ? [phoneRoom.gamesButton] : [])],
+    extraButtons: [$<HTMLButtonElement>('#shorts-game'), $<HTMLButtonElement>('#dock-game'), moreGameButton, ...(isShell ? [] : [phoneGamesButton])],
     send,
     me: () => ({ id: myId, name: myName, avatar: myAvatar }),
     amHost,
