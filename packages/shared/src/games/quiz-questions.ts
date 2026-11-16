@@ -4,20 +4,32 @@
 // shuffles them every game; when `enOptions` is left out the Turkish options are used as they are, e.g. numbers or
 // names). `q(tr, null, …)` / `q(null, en, …)` are questions that only make sense in one language (Turkish regions,
 // English spelling). `tf(tr, en, answer)` are true / false statements (two options, never shuffled).
-// Ids are positions in `QUIZ_BANK` (this first bank, then `QUIZ_BANK_2`): only ever append, never insert in the middle
+// Ids are positions in `QUIZ_BANK` (this first bank, then `QUIZ_BANK_2`, then `QUIZ_BANK_3`): only ever append, never insert in the middle
 // (browsers remember seen ids).
 
-export const QUIZ_CATEGORIES = ['general', 'geography', 'science', 'space', 'nature', 'history', 'sports', 'food', 'arts', 'math', 'tech'] as const;
+// QZ2 (15 Nov 2026): `language`, `body` and `world` are new; the third bank (`quiz-questions-3.ts`) adds typed-answer
+// questions (`typed`: the player types the answer, `a` lists the accepted ones, the first is shown at the reveal).
+export const QUIZ_CATEGORIES = ['general', 'geography', 'science', 'space', 'nature', 'history', 'sports', 'food', 'arts', 'math', 'tech', 'language', 'body', 'world'] as const;
 import { QUIZ_BANK_2 } from './quiz-questions-2.ts';
+import { QUIZ_BANK_3 } from './quiz-questions-3.ts';
 
 export type QuizCategory = (typeof QUIZ_CATEGORIES)[number];
 
 export type QuizOptions = readonly [correct: string, wrong1: string, wrong2: string, wrong3: string];
 
+/** A question in one language: options (`o`, the right one first), or for a typed question the accepted answers (`a`). */
+export interface QuizText {
+  q: string;
+  o?: QuizOptions | readonly [string, string];
+  a?: readonly string[];
+}
+
 export interface QuizEntry {
   c: QuizCategory;
-  tr?: { q: string; o: QuizOptions | readonly [string, string] };
-  en?: { q: string; o: QuizOptions | readonly [string, string] };
+  tr?: QuizText;
+  en?: QuizText;
+  /** The player types the answer (QZ2): `a` holds the accepted answers, matched by `matchTyped`. */
+  typed?: true;
   /** True / false statement: options are fixed (true first) and the correct index comes from `answer`. */
   tf?: boolean;
   /** Difficulty: 1 easy, 2 medium, 3 hard (older entries have none: medium). */
@@ -489,4 +501,4 @@ const QUIZ_BANK_1: readonly QuizEntry[] = [
   tf.tech('Bilgisayarlar içeride ikili sayı sistemini kullanır.', 'Computers use binary numbers internally.', true),
 ];
 
-export const QUIZ_BANK: readonly QuizEntry[] = [...QUIZ_BANK_1, ...QUIZ_BANK_2];
+export const QUIZ_BANK: readonly QuizEntry[] = [...QUIZ_BANK_1, ...QUIZ_BANK_2, ...QUIZ_BANK_3];

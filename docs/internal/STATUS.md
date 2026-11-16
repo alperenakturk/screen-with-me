@@ -145,7 +145,13 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   YouTube"; clicking the logo opens youtube.com in a new tab.
 - [ ] 27m. [QZ2a] Quiz with a friend on a phone and a computer: every answer counts on the first tap or
   click, also when the friend answers at the same moment.
+- [ ] 27n. [QZ2b] Quiz with a friend, Turkish and English: the new topics (Languages and words, The human
+  body, World and cultures); a typed question: type with a small typo or without Turkish letters, it still counts; the
+  friend's answer shows only at the reveal. Tell the Planner any question that looks wrong.
 
+- [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
+  ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
+  screens in step (and stands still with "reduce motion" on).
 
 **D. Before the 1.0 store submission** (Claude reminds the owner right before it)
 - [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the

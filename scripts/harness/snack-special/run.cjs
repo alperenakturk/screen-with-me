@@ -51,7 +51,8 @@ async function snackAt(browser, day) {
     i.value = v;
     i.form.requestSubmit();
   }, VIDEO);
-  await page.waitForFunction(() => document.querySelector('.room.has-item'), null, { timeout: 8000 });
+  // CI3: the state itself, with room for a slow runner (8 s timed out now and then; adding the item waits on the server).
+  await page.waitForFunction(() => document.querySelector('.room.has-item'), null, { timeout: 20000, polling: 100 });
   await page.waitForTimeout(1200);
   await page.evaluate(() => document.querySelector('#dock-game')?.click());
   await page.waitForSelector('#game-menu:not([hidden])');

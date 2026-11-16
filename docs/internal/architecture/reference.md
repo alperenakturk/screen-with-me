@@ -1242,7 +1242,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`: a question's nodes are built once (`buildQuestion`) and later states only
   patch them; an option answers on `pointerdown` (keys and screen readers come as a click; `answer` counts once), so a
-  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`). Test:
+  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`).
+  **QZ2 questions (16 Nov 2026):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
+  line by line) adds the categories `language`, `body`, `world` and typed-answer entries (`typed`, `a` = accepted answers,
+  the first shown at the reveal; no options, `QUIZ_TYPED_MS` 20 s). An answer is `{t:'answer', n, text}`: `parseQuizMessage`
+  runs `cleanText` and caps it at `QUIZ_TYPED_MAX` (40); the server checks it with `matchTyped` (`foldAnswer`: case, accents,
+  ı / İ, punctuation, a leading "the" ignored, a number's minus kept; one typo (Damerau) on non-numeric answers of 5+ letters)
+  and keeps it as `said`, sent only in the reveal with the right `answer` (a player's `pick` there is 0 right / 1 wrong).
+  Points × `quizLevelBonus` (easy 1, medium 1.2, hard 1.5; typed × 1.3). `QUIZ_PROTOCOL_VERSION` 3. Test Lab
+  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part. Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their
@@ -1925,8 +1933,21 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   pill, the owner's slogan with its second line in gold, one line, "Create room" (`#start-form`, gold) + "Join with a
   code" (`#join-toggle` → `#join`), the save box (`#start-save` → `#create-name`, `create:<room>`), the continue line
   `#continue` (`lastRoom`, "↺ Continue: name · N inside · Open")) and the art (`.hm-art`, inline SVG: the mascot
-  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and three random themed avatar faces (a phone hides the art's words); `aria-hidden`; the bar
-  runs 6 s, the beam breathes, nothing moves with reduced motion), the three feature cards (`.hm-feat`) at its foot.
+  (Stub since card NP3, in the shown theme's costume since card 15d, `placeMascot`; `createMascot({ mood: 'happy', torch: true })` until it loads) shines on a laptop, a tablet and a phone showing the same moment (card 15c) with a sync pill, an opaque chat bubble and four faces (card TH3: `artFaces()` picks woman / man / woman / man from the
+  neutral pools `ART_WOMEN` = detective, rocker, astronaut and `ART_MEN` = driver, chef, explorer, spy on every load,
+  the first two with the green voice ring; never the culture-tied or costume avatars; text "4 watching · 2 in voice"
+  at x 148) (a phone hides the art's words); `aria-hidden`; the bar runs 6 s, the beam breathes, and the screens'
+  picture `#hm-pic` (the sunset) carries a hot-air balloon (`.hm-move`, `hm-drift`: 6 s, ease-in-out, alternate,
+  ±16 units so the phone's narrow crop shows it; the same spot on all three screens since all three are `<use>` copies
+  on one clock); nothing moves with reduced motion. **Freezing the art (TH3):** `html.hm-frozen` stops the bars at
+  half and the beam; the balloon is inside the `<use>` copies, where a selector on `<html>` doesn't reach, so it stops
+  through the inherited custom property `--hm-drift: none`. Test Lab `home.art` (`registerArtLab` in `home.ts`): the
+  next theme on this page only + the frozen art, Undo puts both back; `scripts/shots.cjs`'s `home` screen sets
+  `hm-frozen`. **Neon home (TH3, Design's `docs/internal/design/home-neon-people.md`):** the last block of `home.css`,
+  every rule under `html.in-home[data-theme='neon']`: tube letters (core `--neon-core` `#ffd3dc` + a coral
+  `text-shadow` halo) on the wordmark and the slogan's second line, an outlined pill, glowing buttons (focus ring 2 px
+  core colour, offset 3 px), coral / amber (tablet) `drop-shadow` frames on the devices (each device group's first
+  `<rect>` is its frame), a coral light cone, faint feature-card edges; static), the three feature cards (`.hm-feat`) at its foot.
   Then `#how`: three steps, the extension card, saved rooms (`#recent`), a Help line. No video link box (3A) and no theme strip; 🎨 in the top bar (back since card 15d). Computer / sideways tablet: two columns (slogan 64 px); upright tablet: one centred
   column with the art on top (72 px); phone (`html.phone`): art on top, full-width buttons, compact tiles (40 px). A
   scene theme gets a quiet zone behind the text column (THEME1: `.hm-text::before`, a blurred block of `--hero-scrim`;
@@ -2240,7 +2261,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
   - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
   - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
-    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
+    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner). The same rule for
+    `snack-special` (waits up to 20 s for `.room.has-item` instead of 8) and the games sweep's Duel race (waits for the
+    table's `data-table` id before Sam's socket joins, and up to 20 s for the race; read too early, the id was
+    undefined and Sam joined no table).
   - *CI numbers every release (card CI3b, Planner's pick, 16 Nov 2026).* A PR carries no version: no footer bump, no
     extension bump, no `### <version>` block in `CHANGELOG.md`. Its user-facing lines go into
     `changelog/next/<branch>.md` (plain English bullets; `changelog/next/README.md`). The `deploy` job's first step,
@@ -2260,6 +2284,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `scripts/check-version-edits.mjs` (in `changes`, PRs only) fails a PR that changes the footer or the extension
     version, leaves them on different numbers, or adds a block for an untagged version. The repository's footer and
     extension files keep the last per-PR number (the one local builds show).
+  - *Open tabs survive a deploy (card GR1, 16 Nov 2026).* Every file in `assets/` is named by its content's hash,
+    and a deploy used to replace the whole set. A tab opened before it that then lazily loaded a chunk (opening a
+    game, pressing Play) asked for a file that was gone, got `index.html` back (the assets' single-page fallback, `200
+    text/html`), the module import failed ("Expected a JavaScript module … MIME type text/html") and `main.ts`
+    (`vite:preloadError` → `reloadForNewVersion`) reloaded the page, out of the room. More deploys (CI3) made it more
+    frequent. Reproduced locally: a room open, the game hall's chunk removed as a deploy does, 🎮 → one reload. Fix,
+    server side: the deploy job runs `scripts/keep-assets.mjs <live origin>` after the build. It reads the live site's
+    `assets-kept.json` (`build`: that build's files; `kept`: older files still served → when they were replaced), or
+    on the first deploy follows the links from the live pages and chunks; copies every live file the new build lacks
+    and every kept file younger than 7 days (`KEEP_DAYS`) from the live site into `dist/assets` (a 200 that is not the
+    HTML fallback), and writes the new `assets-kept.json`. Never fails the deploy (a file it can't fetch is a warning
+    and that tab reloads as before). The client part (no silent reload; a "Sidelit was updated · ↻ Refresh" note) is
+    lane A's.
   - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
     PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
     from the first merge.

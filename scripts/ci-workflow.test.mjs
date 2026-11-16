@@ -137,3 +137,9 @@ test('CI3c: the deploy may list the released records, the tag job records every 
   assert.match(all.tag.block, /GITHUB_STEP_SUMMARY/);
   assert.match(all.tag.block, /--target "\$GITHUB_SHA"/);
 });
+
+test('GR1: the deploy keeps the earlier builds\' files, after the build and before the upload', () => {
+  const d = all.deploy.block;
+  const keep = d.indexOf('node scripts/keep-assets.mjs');
+  assert.ok(keep > d.indexOf('npm run build') && keep < d.indexOf('npm run deploy -w @swm/server'));
+});
