@@ -2206,6 +2206,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     the issue labelled `date-sweep` with the date; the next green night closes it. Locally:
     `SWM_TEST_DATE=2027-02-28 NODE_OPTIONS="--require $PWD/scripts/harness/forced-date.cjs" node scripts/harness/<x>/run.cjs …`.
   - *Live e2e in three shards* (7.4 min for the longer of two → ≈ 5).
+  - *No version of its own:* CI3 is infrastructure; it shipped without a footer bump or a CHANGELOG block (Planner).
+  - *A flake made deterministic:* the state matrix's "a head button lights up under the mouse" waits for the hover
+    style itself (up to 2 s, polled) instead of a fixed 450 ms (it failed now and then on a slow runner).
   - Expected: one PR whose code a PR run tested: settle 2 + checks 1 + deploy 4.5 + live e2e ≈ 5 → ≈ 13 min. Three
     PRs merged within 2 min: one run, the PR test jobs on the combination (≈ 10.5, `games` the longest) → ≈ 23 min
     from the first merge.
