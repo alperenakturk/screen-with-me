@@ -360,7 +360,7 @@ export const tr: Record<I18nKey, string> = {
   'draw.correct': '✅ {name} bildi! +{points}',
   'draw.close': '🔥 "{text}" çok yakın!',
   'games.quiz.title': 'Bilgi yarışması',
-  'games.quiz.text': '1800’e yakın soru, 14 konu, kolaydan zora, bazıları yazmalı. 2–8 kişi; ilk ve hızlı bilen daha çok puan alır, herkesin bir 50:50 jokeri var, gördüğün sorular kolay kolay tekrar gelmez.',
+  'games.quiz.text': '1800’e yakın soru, 14 konu, kolaydan zora, bazıları yazmalı. 2–8 kişi; ilk ve hızlı bilen daha çok puan alır, üç joker (50:50, Çift puan, İkinci şans) ve turnuva modu var, gördüğün sorular kolay kolay tekrar gelmez.',
   'quiz.n': 'Soru {n}/{total}',
   'quiz.rules': '{count} soru, her biri 15 saniye. Hızlı bilen çok puan alır; ilk doğru +50, ikinci +25, üçüncü +10 ek puan alır. Seriler, zor ve yazılı sorular ek puan getirir. Jokerler: 50:50, Çift puan ve İkinci şans, her biri oyunda bir kez.',
   'quiz.topic': 'Konu',
