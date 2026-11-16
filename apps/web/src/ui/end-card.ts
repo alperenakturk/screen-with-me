@@ -26,55 +26,22 @@ export function closeNextCard(): void {
 export function showNextCard(container: HTMLElement, title: string, url: string | null, startNext: () => void): void {
   closeNextCard();
   if (document.documentElement.classList.contains('shorts-view')) return shortsCard(container, title, url, startNext);
-  // The dialog's styles come with a tiny chunk (the room page's CSS budget): it opens once they are in (also when they
-  // failed to load: it still works). A newer card or the next video in between cancels it (`opening`).
+  // The dialog and its styles come with a small chunk (the room page's JS and CSS budget): it opens once that is in.
+  // A newer card or the next video in between cancels it (`opening`).
   const mine = ++opening;
-  void styles().then(() => mine === opening && openDialog(title, url, startNext));
+  void styles().then((chunk) => {
+    if (mine !== opening || !chunk) return;
+    closeNextCard();
+    const close = chunk.openDialog(title, url, startNext, () => {
+      if (shown?.close === close) shown = null;
+    });
+    shown = { kind: 'dialog', title, close };
+  });
 }
 
 let opening = 0;
-let styled: Promise<unknown> | null = null;
+let styled: Promise<typeof import('./end-card-css.ts') | null> | null = null;
 const styles = () => (styled ??= loadChunk(() => import('./end-card-css.ts')));
-
-function openDialog(title: string, url: string | null, startNext: () => void): void {
-  closeNextCard();
-
-  const next = el('button', { type: 'button', class: 'btn primary end-next' }, t('startNext'));
-  const close = el('button', { type: 'button', class: 'btn end-close' }, t('close'));
-  const heading = el('p', { class: 'end-kicker muted small', id: 'end-dialog-title' }, t('videoEnded'));
-  const name = el('span', { class: 'end-title' }, title);
-  const link = url ? el('a', { class: 'end-link', href: url, target: '_blank', rel: 'noopener noreferrer', title: t('endOpenLink'), 'aria-label': t('endOpenLink') }, '↗') : null;
-  const dialog = el(
-    'div',
-    { class: 'end-dialog card', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'end-dialog-title' },
-    heading,
-    el('p', { class: 'end-title-row' }, name, ...(link ? [link] : [])),
-    el('div', { class: 'end-buttons' }, close, next),
-  );
-  const backdrop = el('div', { class: 'dialog-backdrop end-backdrop' }, dialog);
-  const timer = setTimeout(() => done(), AUTO_CLOSE_MS);
-  const onKey = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') done();
-  };
-  function done(): void {
-    clearTimeout(timer);
-    document.removeEventListener('keydown', onKey);
-    backdrop.remove();
-    if (shown?.close === done) shown = null;
-  }
-  close.addEventListener('click', done);
-  next.addEventListener('click', () => {
-    done();
-    startNext();
-  });
-  backdrop.addEventListener('click', (event) => {
-    if (event.target === backdrop) done();
-  });
-  document.addEventListener('keydown', onKey);
-  document.body.append(backdrop);
-  shown = { kind: 'dialog', title, close: done };
-  next.focus();
-}
 
 /** The Shorts view's small card, as before EC1: it waits in the notes corner beside the upright video. */
 function shortsCard(container: HTMLElement, title: string, url: string | null, startNext: () => void): void {
