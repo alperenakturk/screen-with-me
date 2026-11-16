@@ -358,6 +358,8 @@ jobs:
           node scripts/harness/pwa/run.cjs http://localhost:8787 http://localhost:5300/video.webm
           # GS QA1 finding 3: chat messages over the video keep clear of an open game window.
           node scripts/harness/toast-game/run.cjs http://localhost:8787 http://localhost:5300/video.webm
+          # Card UI2: the rail's ⋯ has one speed row and a picker (ready speeds, − / +), and the speed reaches everyone.
+          node scripts/harness/rail-speed/run.cjs http://localhost:8787 http://localhost:5300/video.webm
 
       - name: Snack Bar and motion
         run: |

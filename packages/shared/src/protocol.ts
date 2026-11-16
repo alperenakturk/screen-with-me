@@ -1107,3 +1107,33 @@ export function parseClientMessage(raw: string): ClientMessage | null {
 export function stepRate(rate: number, direction: 1 | -1): number {
   return Math.min(MAX_RATE, Math.max(MIN_RATE, Math.round((rate + direction * 0.05) * 100) / 100));
 }
+
+/** Card UI2: the speed picker's ready speeds, and the top of its custom range (0.25×–3× in 0.05 steps). */
+export const PRESET_RATES: readonly number[] = [0.5, 1, 1.25, 1.5, 2];
+export const CUSTOM_MAX_RATE = 3;
+/** The only speeds YouTube's player plays (it rounds anything else itself, so we pick for it). */
+export const YOUTUBE_RATES: readonly number[] = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+/** The fastest the picker offers for this media: 3× at most, less where the player can't (YouTube 2×, TikTok 1×). */
+function pickerMax(media: Media | null | undefined): number {
+  return Math.min(CUSTOM_MAX_RATE, maxRateFor(media));
+}
+
+/** A wanted speed made playable here: in range, on 0.05 steps; on YouTube the nearest of its own speeds. */
+export function fitRate(media: Media | null | undefined, wanted: number): number {
+  const top = pickerMax(media);
+  const clamped = Math.min(top, Math.max(MIN_RATE, Number.isFinite(wanted) ? wanted : 1));
+  if (media?.kind === 'youtube') {
+    return YOUTUBE_RATES.reduce((best, r) => (Math.abs(r - clamped) < Math.abs(best - clamped) ? r : best), 1);
+  }
+  return Math.round(clamped * 20) / 20;
+}
+
+/** One − / + press from `current`: 0.05 on a file, YouTube's next own speed on YouTube; it stops at the ends. */
+export function stepRateFor(media: Media | null | undefined, current: number, direction: 1 | -1): number {
+  if (media?.kind === 'youtube') {
+    const next = direction > 0 ? YOUTUBE_RATES.find((r) => r > current + 1e-6) : [...YOUTUBE_RATES].reverse().find((r) => r < current - 1e-6);
+    return fitRate(media, next ?? current);
+  }
+  return fitRate(media, Math.round((current + direction * 0.05) * 100) / 100);
+}

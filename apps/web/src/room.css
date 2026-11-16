@@ -10066,6 +10066,48 @@ html.shell .dock-more-item[data-press='#side-toggle'] {
   flex: 1 0 auto;
 }
 
+/* Card UI2: one speed picker (ready speeds, then − value +) in the rail's ⋯ and speed pops and the speed sheet. */
+.dock-speeds.speed-picker:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+}
+
+.speed-presets {
+  flex-wrap: nowrap;
+}
+
+.speed-presets .dock-speed-opt {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.speed-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.speed-value,
+.dock-speed-now {
+  min-width: 52px;
+  text-align: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dock-speed-now {
+  margin-left: auto;
+  min-width: 0;
+  opacity: 0.75;
+}
+
+html.phone .speed-picker button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .dock-more-item {
   display: flex;
   align-items: center;
