@@ -53,8 +53,6 @@ export function createBlocks(roomId: string): Blocks {
       {
         id: 'safety.state',
         tab: 'status',
-        title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
-        help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
         run: () => JSON.stringify({ blocked: blocks.names(), lastReport }),
       },
     ],

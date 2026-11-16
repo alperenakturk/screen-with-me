@@ -69,7 +69,7 @@ console.log(lab ? 'local lab server: the lab messages must work' : 'not a lab se
 
 // 2. Quiz: the question ends now.
 {
-  const hello = (name) => ({ t: 'hello', v: 2, name, cid: `lab${name}${tag}`, lang: 'en' });
+  const hello = (name) => ({ t: 'hello', v: 3, name, cid: `lab${name}${tag}`, lang: 'en' });
   const alex = client(`/api/quiz/labq${tag}/ws`, hello('Alex'));
   await alex.wait((m) => m.t === 'state', 'quiz alex');
   const sam = client(`/api/quiz/labq${tag}/ws`, hello('Sam'));

@@ -72,7 +72,8 @@ async function person(ctx, room, extra = {}) {
 const openSnack = (page) =>
   page.evaluate(async () => {
     document.getElementById('game-btn').click();
-    await new Promise((r) => setTimeout(r, 150));
+    // GP1 (a flake on CI): the hall's card, not a fixed 150 ms.
+    for (let i = 0; i < 50 && !document.querySelector('#game-menu [data-solo="snack"]'); i++) await new Promise((r) => setTimeout(r, 100));
     document.querySelector('#game-menu [data-solo="snack"]')?.click();
     for (let i = 0; i < 50 && !document.querySelector('#game-stage .sb'); i++) await new Promise((r) => setTimeout(r, 100));
     return !!document.querySelector('#game-stage .sb');
@@ -137,7 +138,8 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   await mode(page, 1);
 
   // The Upgrades panel: a recipe (popcorn ≥ 5) and the staff.
-  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
+  await page.waitForSelector('#game-stage .sb-upgrades-open', { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open')?.click());
   await wait(300);
   const panel = await page.evaluate(() => ({
     recipes: [...document.querySelectorAll('#game-stage .sb-up[data-recipe]')].map((r) => r.dataset.recipe),
@@ -151,16 +153,20 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   const upClose = await page.evaluate(() => { const p = document.querySelector('#game-stage .sb-panel'); const c = p.querySelector('.sb-panel-close').getBoundingClientRect(); const r = p.getBoundingClientRect(); return c.top >= r.top - 1 && c.bottom <= r.bottom + 1; });
   check(upFit.length === 0 && upClose, 'the Upgrades panel fits (its list may scroll inside it, ✕ in sight)', upFit.join('; '));
   await page.screenshot({ path: __dirname + '/sb3-upgrades.png' });
-  await page.evaluate(() => document.querySelector('#game-stage .sb-up[data-recipe="popcorn:1"] .sb-up-buy').click());
+  await page.waitForSelector('#game-stage .sb-up[data-recipe="popcorn:1"] .sb-up-buy', { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('#game-stage .sb-up[data-recipe="popcorn:1"] .sb-up-buy')?.click());
   await wait(300);
   check((await saved(page)).recipes.includes('popcorn:1'), 'a recipe is bought from the panel');
   // Hire the usher (coins from the Test Lab).
-  await page.evaluate(() => document.querySelector('.sb-panel-close').click());
+  await page.waitForSelector('.sb-panel-close', { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('.sb-panel-close')?.click());
   await lab(page, 'snackBar.coins', 20_000);
   await wait(300);
-  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
+  await page.waitForSelector('#game-stage .sb-upgrades-open', { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open')?.click());
   await wait(300);
-  await page.evaluate(() => document.querySelector('#game-stage .sb-up[data-staff="usher"] .sb-up-buy').click());
+  await page.waitForSelector('#game-stage .sb-up[data-staff="usher"] .sb-up-buy', { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('#game-stage .sb-up[data-staff="usher"] .sb-up-buy')?.click());
   await wait(300);
   check((await saved(page)).staff.includes('usher'), 'the usher is hired');
   await page.evaluate(() => document.querySelector('.sb-panel-close')?.click());
@@ -199,7 +205,8 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   check((await fits(page)).length === 0, 'eight stands fit without scrollbars (laptop)', (await fits(page)).join('; '));
   // 0.9.97.115 (owner: "Upgrades runs off the bottom, the staff list is cut"): with every stand open the list may scroll
   // inside the panel, its ✕ stays in sight and the last staff member can be reached.
-  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open').click());
+  await page.waitForSelector('#game-stage .sb-upgrades-open', { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => document.querySelector('#game-stage .sb-upgrades-open')?.click());
   await wait(400);
   const longList = await page.evaluate(async () => {
     const panel = document.querySelector('#game-stage .sb-panel');

@@ -156,11 +156,6 @@ export function createLive(
     commands: [
       {
         id: 'stream.view',
-        title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },
-        help: {
-          en: 'Writes the stream viewer\'s mode (window or fullscreen), its box, whether it is on the screen and whether it covers a YouTube player (it never should) into the log.',
-          tr: 'İzlediğim yayının hâlini (pencere ya da tam ekran), kutusunu, ekranda olup olmadığını ve bir YouTube oynatıcısını örtüp örtmediğini (hiç örtmemeli) kayda yazar.',
-        },
         tab: 'video',
         run: () => JSON.stringify(float?.view() ?? { mode: 'hidden' }),
       },

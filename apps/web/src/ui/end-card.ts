@@ -74,11 +74,6 @@ debugHooks.register('endCard', () => ({
     {
       id: 'endcard.show',
       tab: 'video',
-      title: { en: 'Show the "Video ended" card', tr: '"Video bitti" kartını göster' },
-      help: {
-        en: 'Opens the card people see when a video ends and the next one does not start by itself (a sample title; "Start next" only closes it). Run it again to read what is showing.',
-        tr: 'Bir video bitince ve sıradaki kendiliğinden başlamayınca görünen kartı açar (örnek başlık; "Sıradakini başlat" yalnızca kapatır). Yeniden çalıştırınca açık olanı yazar.',
-      },
       run: () => {
         if (shown) return JSON.stringify({ open: shown.kind, title: shown.title, focus: document.activeElement?.className ?? null });
         const wrap = document.querySelector<HTMLElement>('.player-wrap') ?? document.body;

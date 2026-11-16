@@ -66,7 +66,12 @@ const search = (page, words) => page.evaluate(async (w) => {
   i.form.requestSubmit(i.form.querySelector('.media-search') ?? undefined);
   for (let n = 0; n < 40 && !document.querySelector('#search-results .search-podcasts'); n++) await new Promise((r) => setTimeout(r, 100));
   document.querySelector('#search-results .search-podcasts')?.click();
-  for (let n = 0; n < 40 && !document.querySelector('#search-results .podcast-shows, #search-results .search-note:not(.muted)'); n++) await new Promise((r) => setTimeout(r, 100));
+  // The podcast list (or its own note), not the YouTube list's note that may already be there.
+  const ready = () => {
+    const panel = document.getElementById('search-results');
+    return !!panel.querySelector('.podcast-shows') || (/Podcasts for|için podcastler/.test(panel.textContent) && !!panel.querySelector('.search-note:not(.muted)'));
+  };
+  for (let n = 0; n < 60 && !ready(); n++) await new Promise((r) => setTimeout(r, 100));
   return document.getElementById('search-results').textContent;
 }, words);
 
@@ -90,7 +95,7 @@ const search = (page, words) => page.evaluate(async (w) => {
   check(!!backed, '‹ Shows goes back to the list');
   await alex.evaluate(() => document.querySelector('#search-results [data-show="123"]').click());
   await until(() => alex.evaluate(() => !!document.querySelector('#search-results .podcast-episodes')), 4000);
-  await alex.evaluate(() => document.querySelector('#search-results .podcast-episodes .search-now').click());
+  await alex.evaluate(() => document.querySelector('#search-results .podcast-episodes .search-main').click());
 
   const both = await until(async () => {
     const a = await alex.evaluate(() => { const v = document.querySelector('#player video'); return v && v.currentTime > 0.5 ? v.poster : null; });

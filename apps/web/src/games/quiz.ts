@@ -8,12 +8,13 @@ import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   QUIZ_SEEN_KEEP,
   encodeSeen,
-  QUIZ_ANSWER_MS,
   QUIZ_CATEGORIES,
   QUIZ_COUNTS,
   QUIZ_MAX_PLAYERS,
   QUIZ_PROTOCOL_VERSION,
   QUIZ_REVEAL_MS,
+  QUIZ_TYPED_MAX,
+  quizAnswerMs,
   type QuizClientMessage,
   type QuizServerMessage,
   type QuizTopic,
@@ -37,6 +38,7 @@ import { tableHowTo } from './how-to-play.ts';
 import { resultCard, resultStub, showPointsResult } from './result.ts';
 import { langChoices, lobbyPlayers, podium, settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
+import { hasMouse } from '../device.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 type State = Extract<QuizServerMessage, { t: 'state' }>;
@@ -137,6 +139,77 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let shownN = 0;
   let lastTick = 0;
   const body = $('#quiz-body');
+  /** The question on screen (QZ2: kept between states so a press always lands on the button it started on). */
+  let view: { n: number; q: string; texts: string[]; list: HTMLElement; buttons: HTMLButtonElement[]; note: HTMLElement; fresh: boolean; typed?: Typed } | null = null;
+  /** A typed-answer question's box (QZ2): the field, its button, and the reveal's right answer and players' answers. */
+  interface Typed {
+    input: HTMLInputElement;
+    go: HTMLButtonElement;
+    said: HTMLElement;
+  }
+  /** What I typed for question `n` (shown back in the field until the reveal). */
+  let myText: { n: number; text: string } | null = null;
+  function answerTyped(n: number, text: string): void {
+    const clean = text.trim().slice(0, QUIZ_TYPED_MAX);
+    if (!clean || !state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
+    if (state.players.find((p) => p.id === me)?.answered) return;
+    myPick = { n, pick: -1 };
+    myText = { n, text: clean };
+    send({ t: 'answer', n, text: clean });
+    playSound('locked');
+    render();
+  }
+  function buildTyped(n: number, question: string): NonNullable<typeof view> {
+    const input = el('input', { type: 'text', class: 'quiz-type-input', maxlength: String(QUIZ_TYPED_MAX), autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', enterkeyhint: 'send', 'aria-label': t('quiz.typeLabel'), placeholder: t('quiz.typeHere') }) as HTMLInputElement;
+    const go = el('button', { type: 'submit', class: 'btn primary quiz-type-go' }, t('quiz.typeSend')) as HTMLButtonElement;
+    const form = el('form', { class: 'quiz-type' }, input, go);
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      answerTyped(n, input.value);
+    });
+    const said = el('ul', { class: 'quiz-said' });
+    const note = el('p', { class: 'quiz-note' });
+    // The note sits right under the field, so "locked in" and the reveal's verdict appear in the same place.
+    body.replaceChildren(el('h3', { class: 'quiz-question' }, question), form, note, said);
+    shownN = n;
+    // A keyboard is there: the field is ready to type into (a phone's keyboard opens on a tap).
+    if (hasMouse()) queueMicrotask(() => input.focus({ preventScroll: true }));
+    return { n, q: question, texts: [], list: form, buttons: [], note, fresh: false, typed: { input, go, said } };
+  }
+  /** My answer to option `i` of question `n`: once, on the first press (pointer, key or screen reader). */
+  function answer(n: number, i: number): void {
+    if (!state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
+    if (fifty && fifty.n === n && fifty.hide.includes(i)) return;
+    if (state.players.find((p) => p.id === me)?.answered) return;
+    myPick = { n, pick: i };
+    send({ t: 'answer', n, pick: i });
+    playSound('locked');
+    render();
+  }
+  function buildQuestion(n: number, question: string, texts: string[]): NonNullable<typeof view> {
+    const buttons = texts.map((text, i) => {
+      const b = el(
+        'button',
+        { type: 'button', class: `quiz-option opt-${i}` },
+        el('span', { class: 'quiz-letter', 'aria-hidden': 'true' }, LETTERS[i]!),
+        el('span', { class: 'quiz-text' }, text),
+        el('span', { class: 'quiz-pickers' }),
+      );
+      // The press counts at once (a touch or mouse press, not its release); keys and screen readers come as a click.
+      b.addEventListener('pointerdown', (e) => {
+        if (e.button === 0 && !b.disabled) answer(n, i);
+      });
+      b.addEventListener('click', () => answer(n, i));
+      return b;
+    });
+    const list = el('div', { class: `quiz-options${texts.length === 2 ? ' two' : ''}` }, ...buttons);
+    const note = el('p', { class: 'quiz-note' });
+    body.replaceChildren(el('h3', { class: 'quiz-question' }, question), list, note);
+    // The slide-in plays once, on the question's first render.
+    const built = { n, q: question, texts: [...texts], list, buttons, note, fresh: shownN !== n };
+    shownN = n;
+    return built;
+  }
   /** Who had used their joker at the last state (a new one is announced to everyone). */
   let jokers = new Set<string>();
   let primed = false;
@@ -211,6 +284,10 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'over') showPointsResult(result, `quiz:${gameId}`, s.players, s.host, me, endLines(), () => send({ t: 'start' }));
     else result.hide();
     if (s.phase === 'lobby' || s.phase === 'over') {
+      // A new game numbers its questions from 1 again: what I picked in the last one must not carry over.
+      myPick = null;
+      myText = null;
+      fifty = null;
       const online = s.players.filter((p) => p.online).length;
       const go = el('button', { type: 'button', class: 'btn primary' }, t(s.phase === 'over' ? 'quiz.again' : 'draw.start'));
       const lead = s.players.find((p) => p.id === s.host);
@@ -245,29 +322,39 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       const reveal = s.phase === 'reveal';
       const picked = myPick && myPick.n === s.n ? myPick.pick : (mine?.pick ?? null);
       const hidden = fifty && fifty.n === s.n ? fifty.hide : [];
-      queueMicrotask(() => (shownN = s.n));
-      const options = (s.options ?? []).map((text, i) => {
-        const pickers = reveal ? s.players.filter((p) => p.pick === i) : [];
-        const cls = ['quiz-option', `opt-${i}`];
-        if (hidden.includes(i)) cls.push('gone');
-        if (picked === i) cls.push('picked');
-        if (reveal && i === s.correct) cls.push('correct');
-        if (reveal && picked === i && i !== s.correct) cls.push('wrong');
-        const b = el(
-          'button',
-          { type: 'button', class: cls.join(' ') },
-          el('span', { class: 'quiz-letter', 'aria-hidden': 'true' }, LETTERS[i]!),
-          el('span', { class: 'quiz-text' }, text),
-          el('span', { class: 'quiz-pickers' }, ...pickers.map((p) => avatarNode(p.avatar, 'quiz-picker'))),
+      // QZ2: the question's nodes are built once and then patched. Rebuilding them on every state (another player
+      // answers, a joker) swapped the button under a press, so the click never came and a second one was needed.
+      const texts = s.options ?? [];
+      if (!view || view.n !== s.n || view.q !== (s.question ?? '') || !!view.typed !== !!s.typed || view.texts.join('\n') !== texts.join('\n') || !body.contains(view.list))
+        view = s.typed ? buildTyped(s.n, s.question ?? '') : buildQuestion(s.n, s.question ?? '', texts);
+      const v = view;
+      if (v.typed) {
+        // QZ2: the typed answer. Others' answers are never sent before the reveal; then each shows with ✅ / ❌.
+        const ty = v.typed;
+        const done = reveal || picked !== null;
+        ty.input.disabled = done;
+        ty.go.disabled = done;
+        ty.go.textContent = picked !== null ? t('quiz.typeSent') : t('quiz.typeSend');
+        if (myText && myText.n === s.n && ty.input.value !== myText.text) ty.input.value = myText.text;
+        ty.said.replaceChildren(
+          ...(reveal
+            ? s.players
+                .filter((p) => p.said)
+                .map((p) => el('li', { class: `quiz-said-one${p.pick === 0 ? ' right' : ''}` }, avatarNode(p.avatar, 'quiz-picker'), el('span', { class: 'quiz-said-text' }, p.said!), el('span', { 'aria-hidden': 'true' }, p.pick === 0 ? '✅' : '❌')))
+            : []),
         );
+      }
+      if (!reveal) v.list.classList.toggle('fresh', v.fresh);
+      else v.list.classList.remove('fresh');
+      v.buttons.forEach((b, i) => {
+        b.classList.toggle('gone', hidden.includes(i));
+        b.classList.toggle('picked', picked === i);
+        b.classList.toggle('correct', reveal && i === s.correct);
+        b.classList.toggle('wrong', reveal && picked === i && i !== s.correct);
         b.disabled = reveal || picked !== null || hidden.includes(i);
-        b.addEventListener('click', () => {
-          myPick = { n: s.n, pick: i };
-          send({ t: 'answer', n: s.n, pick: i });
-          playSound('locked');
-          render();
-        });
-        return b;
+        const pickers = reveal ? s.players.filter((p) => p.pick === i) : [];
+        const box = b.querySelector('.quiz-pickers')!;
+        if (box.childElementCount !== pickers.length || !reveal) box.replaceChildren(...pickers.map((p) => avatarNode(p.avatar, 'quiz-picker')));
       });
       const note = reveal
         ? mine?.gained
@@ -280,7 +367,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         : picked !== null
           ? t('quiz.waiting')
           : '';
-      body.replaceChildren(el('h3', { class: 'quiz-question' }, s.question ?? ''), el('div', { class: `quiz-options${options.length === 2 ? ' two' : ''}${!reveal && shownN !== s.n ? ' fresh' : ''}` }, ...options), el('p', { class: `quiz-note${reveal && mine?.gained ? ' good' : ''}` }, note));
+      // A typed question's reveal names the right answer on the verdict's line (QZ2).
+      v.note.textContent = v.typed && reveal ? `${note} · ${t('quiz.typedAnswer', { answer: s.answer ?? '' })}` : note;
+      v.note.classList.toggle('good', reveal && !!mine?.gained);
     }
     tick();
   }
@@ -295,7 +384,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       return;
     }
     const left = Math.max(0, s.endsAt - (Date.now() + offset));
-    const total = s.phase === 'question' ? QUIZ_ANSWER_MS : QUIZ_REVEAL_MS;
+    const total = s.phase === 'question' ? quizAnswerMs(s.typed) : QUIZ_REVEAL_MS;
     bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
     bar.classList.toggle('low', s.phase === 'question' && left < 5000);
     timer.textContent = s.phase === 'question' ? `${Math.ceil(left / 1000)}` : '';
@@ -390,6 +479,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       quiet.command('quiz', { en: 'Quiz', tr: 'Bilgi yarışması' }),
       { id: 'quiz.referee', title: { en: 'Quiz: Stub reacts', tr: 'Bilgi yarışması: Stub tepki versin' }, help: { en: 'Stub says one of his reveal lines in the corner of the table.', tr: 'Stub masanın köşesinde cevap anındaki sözlerinden birini söyler.' }, tab: 'games', where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel test sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
+      // QZ2: the next game asks only typed-answer questions (to try the field and the forgiving match).
+      { id: 'quiz.typed', title: { en: 'Quiz: next game only typed answers', tr: 'Bilgi yarışması: sonraki oyun sadece yazılı cevap' }, help: { en: 'Local lab server only: the next game this table starts asks only questions you answer by typing.', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki oyun yalnızca yazarak cevaplanan sorular sorar.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'typed' }) },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).
       { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel test sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
     ],

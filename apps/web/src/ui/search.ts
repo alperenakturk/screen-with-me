@@ -3,14 +3,15 @@ import type { Media } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { loadChunk } from './lazy.ts';
+import { resultRow } from './result-row.ts';
 import { ytLogo } from './yt-logo.ts';
 
 export type AddMode = 'enqueue' | 'load';
 
 /**
  * YouTube search under the room's link box: words instead of a link + Enter → a list of videos (only on Enter, never
- * while typing: every search costs 1 % of the day's free quota). Pressing a row adds it to the queue (it plays at
- * once when nothing is playing), "▶ Şimdi aç" opens it now. Answers are kept for this page so the same words never
+ * while typing: every search costs 1 % of the day's free quota). Pressing a row plays it now; its "＋ Queue" button
+ * adds it to the queue (card SR2, `result-row.ts`). Answers are kept for this page so the same words never
  * reach the server twice.
  */
 export function createSearch(
@@ -59,8 +60,10 @@ export function createSearch(
         void import('./podcasts.ts').then(({ showPodcasts }) => {
           if (mine !== current) return;
           showPodcasts(panel, query, x, (media, title, mode) => {
-            close();
-            input.value = '';
+            if (mode === 'load') {
+              close();
+              input.value = '';
+            }
             podcast(media, title, mode);
           });
         });
@@ -79,24 +82,20 @@ export function createSearch(
     return el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, `${t('yt.from')} · `, terms));
   }
   let lastQuery = '';
+  /** The list's styles come with a small chunk on the first search (it still works without them). */
+  let styled: Promise<unknown> | null = null;
+  const styles = () =>
+    (styled ??= loadChunk(() => import('./search-list.ts')).then((chunk) => chunk?.watchResults(panel, () => lastQuery)));
 
   function row(result: SearchResult): HTMLElement {
     const meta = [result.short ? t('searchShort') : '', result.channel, result.live ? t('searchLive') : result.duration ? formatDuration(result.duration) : ''].filter(Boolean).join(' · ');
     const thumb = el('img', { class: 'search-thumb', src: `https://i.ytimg.com/vi/${result.id}/mqdefault.jpg`, alt: '', loading: 'lazy' });
     // No broken-image icon when the picture can't load: the empty grey box stays.
     thumb.addEventListener('error', () => (thumb.style.visibility = 'hidden'), { once: true });
-    const main = el(
-      'button',
-      { type: 'button', class: 'search-main', title: t('addToQueue') },
-      thumb,
-      el('span', { class: 'search-text' }, el('span', { class: 'search-title' }, result.title), el('span', { class: 'muted small search-meta' }, meta)),
-    );
-    main.addEventListener('click', () => choose(result, 'enqueue'));
-    const now = el('button', { type: 'button', class: 'btn small-btn search-now', title: t('playNow') }, `▶ ${t('playNow')}`);
-    now.addEventListener('click', () => choose(result, 'load'));
-    return el('li', { class: 'search-row' }, main, now);
+    return resultRow(thumb, result.title, meta, () => choose(result, 'load'), () => pick(result.id, result.title, 'enqueue', result.short === true));
   }
 
+  /** Playing closes the list and empties the box; "＋ Queue" keeps both (several can be queued in a row). */
   function choose(result: SearchResult, mode: AddMode): void {
     close();
     input.value = '';
@@ -120,6 +119,8 @@ export function createSearch(
     const key = `${lang()}|${query}`;
     lastQuery = raw.trim();
     const mine = ++current;
+    await styles();
+    if (mine !== current) return;
     const known = answers.get(key);
     if (known) return show(raw.trim(), known);
     panel.replaceChildren(header(t('searchFor', { q: raw.trim() })), el('p', { class: 'search-note muted' }, t('searching')));
@@ -145,6 +146,8 @@ export function createSearch(
     if (query === null || !podcast) return;
     lastQuery = raw.trim();
     const mine = ++current;
+    await styles();
+    if (mine !== current) return;
     const x = el('button', { type: 'button', class: 'icon-btn search-close', title: t('searchClose'), 'aria-label': t('searchClose') }, '✕');
     x.addEventListener('click', () => {
       close();
@@ -165,8 +168,10 @@ export function createSearch(
       raw.trim(),
       x,
       (media, title, mode) => {
-        close();
-        input.value = '';
+        if (mode === 'load') {
+          close();
+          input.value = '';
+        }
         podcast(media, title, mode);
       },
       () => mine !== current,
