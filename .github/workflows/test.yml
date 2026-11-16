@@ -28,7 +28,29 @@ jobs:
   # shared code, the harnesses or the workflows (the browser harnesses run only then). On main the range starts at the
   # last successful run on main, not at this push: the concurrency group keeps one pending run, so a newer push cancels
   # an older pending one, and a docs-only push after a cancelled code push must still test and deploy that code.
+  # Card CI3 (release train): on main, wait until main has been quiet for 2 minutes, so PRs merged close together go
+  # live in one deploy; a run that a newer merge overtakes cancels itself and the newer run takes its code along
+  # (scripts/ci-settle.mjs). The only job with `actions: write` (to cancel its own run); PRs skip it.
+  settle:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts
+      - name: Wait for a quiet main
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/ci-settle.mjs
+
   changes:
+    needs: settle
+    # Runs after `settle` on main, and without it (skipped) on a PR or a manual run.
+    if: ${{ !cancelled() && needs.settle.result != 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -45,7 +67,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:

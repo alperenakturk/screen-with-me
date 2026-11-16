@@ -93,3 +93,14 @@ test('CI3: on main the PR test jobs are skipped only for code a green PR run tes
   assert.match(save, /key: tested-code-\$\{\{ needs\.changes\.outputs\.tree \}\}/);
   assert.match(save, /if: github\.event_name == 'pull_request' && needs\.changes\.outputs\.code == 'true'/, 'only a PR marks its code');
 });
+
+test('CI3: main waits for a quiet main first; only that job may cancel a run, and PRs never wait', () => {
+  assert.equal(cond('settle'), "github.event_name == 'push'");
+  assert.match(all.settle.block, /node scripts\/ci-settle\.mjs/);
+  assert.match(all.changes.needs, /\bsettle\b/);
+  assert.match(cond('changes'), /!cancelled\(\)/, 'a skipped settle (PR) must not skip the change detection');
+  assert.match(cond('changes'), /needs\.settle\.result != 'failure'/);
+  for (const [name, job] of Object.entries(all)) {
+    if (name !== 'settle') assert.doesNotMatch(job.block, /actions: write/, `${name} must not cancel or start runs`);
+  }
+});
