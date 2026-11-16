@@ -1,0 +1,2 @@
+- Paste a list that mixes YouTube Shorts and TikTok share links (vm.tiktok.com / vt.tiktok.com): every link joins the queue in the order you pasted it.
+- While a TikTok plays, the ♾ Shorts feed window says TikTok has no public feed and how to add TikToks instead.

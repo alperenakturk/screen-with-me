@@ -319,6 +319,10 @@ jobs:
       # beside Next), and it works again and again. Needs YouTube.
       - name: Shorts view way back
         run: node scripts/harness/shorts-back/run.cjs http://localhost:8787
+      # Card SH1 (4): a pasted list mixing YouTube Shorts, a TikTok share link and a TikTok swipes through in paste order
+      # (computer and phone); the ♾ window says TikTok has no feed. TikTok's player and the link lookup are stubbed.
+      - name: Mixed Shorts and TikTok queue
+        run: node scripts/harness/shorts-mixed/run.cjs http://localhost:8787
 
       - name: Speaking ring in the Shorts view
         run: node scripts/harness/speak-ring/run.cjs http://localhost:8787

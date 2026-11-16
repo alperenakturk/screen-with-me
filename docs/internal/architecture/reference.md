@@ -346,6 +346,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   https://www.tiktok.com`. Privacy policy "TikTok videos". The cloud can't reach tiktok.com: harness
   `scripts/harness/tiktok/run.cjs` replaces the player with a fake page speaking the same protocol (8 checks); the
   real player is the owner's check.
+  - **Many links with TikToks (card SH1 item 4):** `parseMediaList` also takes `vm.` / `vt.tiktok.com` share links;
+    they come back in `items` as strings, in paste order, at most `TIKTOK_SHORT_MAX` (8, the Worker allows 10
+    lookups a minute; more are `skipped`); `media` keeps only the links that need no lookup. `room.ts` `addMany`
+    walks `items` in order, looks each share link up (`lookupTikTok`, one at a time), sends 300 ms apart and shows one
+    `tiktokResolveFailed` note for any that fail. While a TikTok plays, the ♾ window's Shorts tab shows `#feed-tiktok`
+    (card SH2's `ui/feed-window.ts`: no public feed, add or share links); there is no TikTok search or feed. Harness
+    `scripts/harness/shorts-mixed/run.cjs` (CI job `site`): a pasted YouTube / TikTok share link / TikTok / YouTube
+    list swipes through in that order on a computer (↓) and a phone (▼), the share-link lookup stubbed; each TikTok's
+    `shorts.state` `start` must read 0 (card SH1 (2)).
 - **Vimeo (card P1, `players/vimeo.ts`):** `{kind:'vimeo', id, hash?}` (optional new kind, no version bump: `cleanMedia`
   validates `VIMEO_ID` / `VIMEO_HASH`). Links (`parseVimeo`): `vimeo.com/<id>`, `/<id>/<hash>` (unlisted),
   `/channels/<c>/<id>`, `/groups/<g>/videos/<id>`, `/showcase|album/<n>/video/<id>`, `player.vimeo.com/video/<id>?h=`;

@@ -11,14 +11,20 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (handoff 16 Nov, 15:10; a fresh lane A session continues from here):
   - [x] Merged today: SR2 #460, BUD2 #481 (phone room lazy chunk), GR1 #476 (refresh note + phone-ready fix for BUD2's
     race), UI2 #469. Cards archived to `archive/cards-done.md`.
-  - [ ] EC1 #465 (`claude/ec1-end-card`): green except the state-matrix games-window drag / hover flake (Game Studio's
-    fix, top priority). When state-matrix is green on main: merge main into it, re-run, merge.
-  - [ ] SH1 item 3, #471 (`claude/sh1-ring`): same blocker as EC1; then merge.
-  - [ ] SH1 item 2, #486 (`claude/sh1-start`): ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on
-    `ready`, `waitPausePosition`), e2e `shorts-start.mjs`. Get CI green, merge. After #471: add the start offset to
-    Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
-  - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
+  - [x] EC1 #465 and SH1 item 3 #471 (`claude/sh1-ring`, speaking ring) merged 16 Nov after Game Studio's #491; deploy + live e2e check
+    with the next main run, then both cards' Done lines and the archive move (DOCS2).
+  - [x] SH1 item 2, #486: ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on `ready`,
+    `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
+    the pause before a swiped Short feels.
+  - [x] Start offset in Test Lab `shorts.state` (`start`, SH1's "Done when"): #495 (`claude/sh1-start-offset`) merged;
+    `shorts-mixed` (#489) checks a swiped TikTok starts at 0:00.
+  - [ ] SH1 item 4, #489 (`claude/sh1-tiktok-small`): `vm.`/`vt.` links in a pasted list (Worker lookup, paste order),
+    mixed-queue harness `shorts-mixed`; the ♾ TikTok note came with B2's #488. CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
+  - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
+    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
+    room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
+    state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the

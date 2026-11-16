@@ -98,7 +98,7 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the shorts-rail / shorts-door harnesses, a phone harness for the way back, a unit scenario for the start, and
   the owner's hand test.
 - Owner's pick: his three points (Planner chat, 15 Nov 2026).
-- Progress (lane A, 16 Nov 2026): items 0/1 live (#447, 0.9.97.137); item 3 (speaking ring) in #471, waiting for Game Studio's state-matrix hover fix; item 2 (start together, ready-based lead-in) in #486; item 4 (TikTok small) and the `shorts.state` start offset not started.
+- Progress (lane A, 16 Nov 2026): items 0/1 live (#447, 0.9.97.137); item 3 (speaking ring) in #471, waiting for Game Studio's state-matrix hover fix; item 2 (start together, ready-based lead-in) in #486; item 4 (TikTok small) on `claude/sh1-tiktok-small`; the `shorts.state` start offset not started.
 
 ### VC1. Voice: a deafen button, and the YouTube volume slider (owner, 15 Nov 2026; lane A, after SH1)
 - Why: the owner wants a Discord-like "deafen" in voice, and on YouTube he can't drag the volume, because one click
