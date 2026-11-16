@@ -422,6 +422,8 @@ jobs:
           node scripts/harness/motion/run.cjs http://localhost:8787
           # BUG6: a word game (Five Frames, the Duel) takes the keyboard as it opens; the chat keeps its own keys.
           node scripts/harness/word-focus/run.cjs http://localhost:8787
+          # WG2: Window Garden keeps still while you play (no button moves); views, pot colours, compost.
+          node scripts/harness/garden-steady/run.cjs http://localhost:8787
 
       # Card LAB2: every 🎮 Test Lab command runs (a computer in English, a phone in Turkish), the 🤖 friend at a table.
       - name: "Test Lab games: every command, the table friend"

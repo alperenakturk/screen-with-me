@@ -2348,6 +2348,16 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
 - Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
 - Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.
+### WG2. Window Garden: steady buttons, a few simple new things (owner, 15 Nov 2026; Game Studio 2, after QZ2)
+- Why: when texts change, buttons jump; the owner wants the garden nicer to play.
+- What: no layout shift (fixed widths, reserved lines, tabular numbers); simple additions: backgrounds to pick, small
+  customisations (pots, colours), one or two light mechanics.
+- Done when: no button moves while playing (a layout-shift check); the additions live; Test Lab hook `garden.decor`.
+- Tests: the window-garden harness with a layout-shift measure; shots.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: #467 (Game Studio 2): the pot's card keeps one height (nothing moves; harness `garden-steady`), window views,
+  pot colours, compost, Water all; Test Lab `garden.decor`.
+
 ### QZ2. Quiz: more and harder questions, typed answers, a tournament, more jokers (owner, 15 Nov 2026; Game Studio 2)
 - Why: the owner wants more variety and more fun; an answer sometimes needs two clicks.
 - What:

@@ -45,10 +45,3 @@ Game Studio 2 QZ2 → WG2.
 - Tests: games harnesses open the tutorial from the menu; shots at 4 sizes.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 
-### WG2. Window Garden: steady buttons, a few simple new things (owner, 15 Nov 2026; Game Studio 2, after QZ2)
-- Why: when texts change, buttons jump; the owner wants the garden nicer to play.
-- What: no layout shift (fixed widths, reserved lines, tabular numbers); simple additions: backgrounds to pick, small
-  customisations (pots, colours), one or two light mechanics.
-- Done when: no button moves while playing (a layout-shift check); the additions live; Test Lab hook `garden.decor`.
-- Tests: the window-garden harness with a layout-shift measure; shots.
-- Owner's pick: his message (Planner chat, 15 Nov 2026).
