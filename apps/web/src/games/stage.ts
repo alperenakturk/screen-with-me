@@ -286,7 +286,7 @@ export function createGameStage(opts: StageOptions) {
     const tableHere = !!current && !narrow.matches && !shortsView();
     if (tableHere) mode = tableMode() === 'full' ? 'max' : 'float';
     // GW2: a frame I placed myself stays a frame (it may sit over the player).
-    if (mode === 'float' && !tableHere && youtube && !inFullscreen() && !(kind && readPair(spotKey(kind))) && !besidePlayer() && !(kind && isTablet() && homeBox(kind))) mode = 'below';
+    if (mode === 'float' && youtube && !inFullscreen() && !(kind && readPair(spotKey(kind))) && !besidePlayer() && !(kind && isSoloKind(kind) && isTablet() && homeBox(kind))) mode = 'below';
     // QA1 (B2's state matrix): in cinema mode a YouTube player fills the page, so "under it" is below the screen (the
     // game's head unreachable). Like fullscreen (YTG): a game brought up there leaves cinema mode (the side panel comes
     // back and the game sits beside the player), and turning cinema on with a game open puts the game away.
@@ -883,7 +883,9 @@ export function createGameStage(opts: StageOptions) {
       const iw = sw - (stage.offsetWidth - W);
       const ih = sh - (stage.offsetHeight - H);
       const up = Math.min(W / iw, H / ih);
-      if (up > 1.001) {
+      // GW2: a table's frame smaller than its own size scales its own layout down too (squeezing it cut the Classics
+      // picker's cards on an upright tablet); the side games keep their own small-window layouts.
+      if (up > 1.001 || (!isSoloKind(kind) && up < 0.999)) {
         scale = up;
         own = [iw, ih];
       }

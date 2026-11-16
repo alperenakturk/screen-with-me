@@ -83,11 +83,13 @@ function measure() {
   const offScreen = box.left < -1 || box.top < -1 || box.right > innerWidth + 1 || box.bottom > innerHeight + 1;
   return {
     shown: true,
-    mode: stage.dataset.place || ['float', 'stage', 'below', 'full'].find((m) => stage.classList.contains(m)) || '?',
+    mode: stage.dataset.place || ['float', 'stage', 'below', 'full', 'max'].find((m) => stage.classList.contains(m)) || '?',
     youtube: !!theater?.classList.contains('yt-rail') || !!document.querySelector('#theater iframe[src*="youtube"]'),
     box: [box.left, box.top, box.width, box.height].map(Math.round),
     player: p ? [p.left, p.top, p.width, p.height].map(Math.round) : null,
     overPlayer: overlaps(box, p),
+    vw: innerWidth,
+    vh: innerHeight,
     offScreen,
     cut: cut.slice(0, 6),
   };
@@ -161,8 +163,12 @@ async function setVideo(page, video) {
   return !!ok;
 }
 /** The placements this game offers here: the switch's enabled buttons, or the one it is in. */
+const SOLO = ['snack', 'garden', 'word'];
+/** GW2: a table switches between ⛶ full screen and the 🪟 frame with the head's button: both are tested. */
 const placesOf = (page) =>
   page.evaluate(() => {
+    const mode = document.querySelector('#game-stage .game-mode');
+    if (mode && !mode.hidden) return ['mode-max', 'mode-float'];
     const sw = document.querySelector('#game-stage .game-place');
     if (!sw || sw.hidden || sw.getBoundingClientRect().width === 0) return [];
     return [...sw.querySelectorAll('.game-place-btn')].filter((b) => !b.disabled && b.getBoundingClientRect().width > 0).map((b) => [...b.classList].find((c) => c.startsWith('place-')).slice(6));
@@ -195,7 +201,12 @@ async function runState(browser, kinds, size, video, side) {
       }
       const places = await placesOf(page);
       for (const place of places.length ? places : [null]) {
-        if (place) {
+        if (place?.startsWith('mode-')) {
+          await page.evaluate((cls) => {
+            if (!document.getElementById('game-stage')?.classList.contains(cls)) document.querySelector('#game-stage .game-mode')?.click();
+          }, place.slice(5));
+          await wait(900);
+        } else if (place) {
           await page.evaluate((p) => document.querySelector(`#game-stage .game-place-btn.place-${p}`)?.click(), place);
           await wait(600);
         }
@@ -206,8 +217,13 @@ async function runState(browser, kinds, size, video, side) {
           continue;
         }
         check(!m.offScreen && m.cut.length === 0, `${label}: nothing cut off`, m.offScreen ? { box: m.box } : m.cut);
-        if (m.youtube) check(!m.overPlayer, `${label}: nothing over the YouTube player`, { game: m.box, player: m.player });
-        else if (video === 'file' && m.mode === 'float' && m.overPlayer) {
+        // GW2 (Planner's pick A): in ⛶ the table fills the whole screen with the video paused, so the YouTube player is
+        // not on the screen at all (nothing of ours sits over a player you can see).
+        if (m.mode === 'max') check(m.box[0] <= 0 && m.box[1] <= 0 && m.box[2] >= m.vw - 1 && m.box[3] >= m.vh - 1, `${label}: ⛶ fills the screen`, { game: m.box, screen: [m.vw, m.vh] });
+        else if (m.youtube) check(!m.overPlayer, `${label}: nothing over the YouTube player`, { game: m.box, player: m.player });
+        // GW2: a table's frame starts at the right edge at a readable size and may cover part of a video file there (never
+        // a YouTube player); the rule below is the side games'.
+        else if (video === 'file' && m.mode === 'float' && m.overPlayer && SOLO.includes(kind)) {
           // Allowed on purpose: beside the video (side panel open) a side game keeps its minSize in the right column and
           // may cover the theater card's padding (≤ 48 px), never the picture (0.9.97.121). QA2 (owner's rule, Planner
           // 11 Nov 2026): no other exception: tablets line up with the side panel, a side game leaves cinema mode.
