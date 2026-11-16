@@ -2348,6 +2348,16 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: the stream harness at 1366 and 1920, a tablet check, and the owner's hand test with a friend's tab share.
 - Owner's pick: "one button: fullscreen or a window I can put anywhere; simple" (Planner chat, 15 Nov 2026).
 - Done: #451 (0.9.97.139), Developer B2: one ⛶ Fullscreen ⇄ 🪟 Window toggle; a free window on a computer (drag, corner resize, remembered across a reload, beside a YouTube player); phones unchanged; Test Lab `stream.view`; `voice/live.mjs` at 1366, 1920 and a tablet.
+### WG2. Window Garden: steady buttons, a few simple new things (owner, 15 Nov 2026; Game Studio 2, after QZ2)
+- Why: when texts change, buttons jump; the owner wants the garden nicer to play.
+- What: no layout shift (fixed widths, reserved lines, tabular numbers); simple additions: backgrounds to pick, small
+  customisations (pots, colours), one or two light mechanics.
+- Done when: no button moves while playing (a layout-shift check); the additions live; Test Lab hook `garden.decor`.
+- Tests: the window-garden harness with a layout-shift measure; shots.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: #467 (Game Studio 2): the pot's card keeps one height (nothing moves; harness `garden-steady`), window views,
+  pot colours, compost, Water all; Test Lab `garden.decor`.
+
 ### QZ2. Quiz: more and harder questions, typed answers, a tournament, more jokers (owner, 15 Nov 2026; Game Studio 2)
 - Why: the owner wants more variety and more fun; an answer sometimes needs two clicks.
 - What:
@@ -2388,3 +2398,109 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: a games-hall timing harness, the snack-bar harnesses.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 - Done: branch `claude/gp1-fast-open` (Game Studio, 16 Nov 2026).
+
+### CH1. PRIORITY: chat history kept until the room is deleted (owner, 15 Nov 2026; lane A, right after SH1 item 0/1)
+- Why: the owner and a friend saw their chat "deleted at random". The server keeps only the last 50 messages
+  (`CHAT_HISTORY = 50` in `apps/server/src/room.ts`), so older ones vanish, after a reload or for someone who joins. A
+  one-time room is wiped 24 h after it empties, a saved one after 30 days; that part stays.
+- What:
+  - Keep the chat until the room is deleted: at least the last 1,000 messages. Older ones are dropped quietly only past
+    that cap ("compressed": their images and reactions go first, then the oldest texts).
+  - A Durable Object value is capped at 128 KiB, so store the chat in pages (e.g. 100 messages per key) or in the
+    object's SQLite storage. Never one big array.
+  - On join, send the last 100; scrolling up loads older pages on demand. Rate-limited, `readCapped` rules apply.
+  - Confirm that a deploy or a restart never clears the chat (the storage reload in the constructor). If something
+    else wiped it, say what.
+  - Images keep their current lifetime (IMG2). Message deletion (MSG1) works on the paged store.
+  - The privacy page: chat is kept until the room is deleted (both languages, dated line).
+- Done when:
+  - 1,200 messages in a room: a reload shows the last 100, and scrolling reaches the 1,000th.
+  - The chat survives a deploy (a harness restarts the object) and an empty room within its lifetime.
+  - Test Lab hook `chat.history` (count, pages).
+- Tests: room server unit tests (paging, cap, compaction, restart), e2e reload + scroll back, the owner's hand test.
+- Owner's pick: "don't delete chat unless the room is deleted; maybe compress past some count; you decide" (Planner
+  chat, 15 Nov 2026).
+- Done: #455 (paged chat store, `chat-older`, Test Lab `chat.history`; live as v0.9.97.141) and #474 (chat-history e2e order).
+
+### SR2. A search result plays on a click; a clear "＋ Queue" button adds it (owner, 15 Nov 2026; lane A, with CH1)
+- Why: today a click on a search result's row adds it to the queue, and people expect it to open; "▶ Play now" is the
+  only way to play.
+- What:
+  - A click or tap anywhere on a result row plays it now, the same as "▶ Play now".
+  - Each row gets a small, clearly labelled **"＋ Queue"** button (icon and word, "＋ Sıraya" in Turkish, with a
+    tooltip and aria-label). It adds the video to the queue without playing, with a short "Added to queue" confirmation.
+  - The same rule for every source list (YouTube, Vimeo, Discover, feeds) and on the phone's Search tab. Targets
+    ≥ 44 px on a phone. Keyboard: Enter plays; the button is reachable with Tab.
+- Done when: a click plays, "＋ Queue" queues, and both are clear in EN and TR on a computer and a phone. Test Lab hook
+  `search.results`.
+- Tests: the sources and search harnesses, a phone harness, `check-texts`.
+- **Also in SR2 (owner, 15 Nov 2026): a ♪ TikTok tile in "Where to search".** TikTok gives no search API, so the
+  tile opens TikTok: a new tab on a computer, the TikTok app on a phone. It says "Copy a video's link and come back".
+  When the person comes back, a big "📋 Paste and play" button appears; it reads the clipboard after a tap and asks
+  first if needed. A pasted TikTok plays in the Shorts view, and several links go to the queue. The tile reads
+  "TikTok" in plain text with a generic music-note icon: no TikTok logo without permission (Research
+  `tiktok-shorts.md` §3). No scraping and no extension involvement.
+- Owner's pick: his screenshot and message (Planner chat, 15 Nov 2026); the TikTok tile, option A.
+- Done: #460 (17f4101): rows play on a tap, "＋ Queue" on every result list, ♪ TikTok tile, "📋 Paste and play"; Test Lab `sources.state`.
+
+### GR1. PRIORITY: opening a game must never throw you out of the room and reload the page (owner, 16 Nov 2026; B2 + lane A)
+- Why: the owner sees some games kick him out and reload when he opens them or presses Play. The likely cause is the
+  stale-chunk path: after a deploy, a tab still running the old build asks for a lazy chunk (a game, a panel) whose
+  hashed file is gone, and `main.ts` reloads the page (OFFLINE2). With CI3 batches, deploys are more frequent, so this
+  will happen more.
+- What:
+  - **Confirm the cause first** (B2): reproduce with a tab open across a deploy and open each game; also rule out a game
+    socket error. Report what it was.
+  - **Keep old chunks for a while** (B2, deploy): each deploy also serves the previous builds' hashed assets for at
+    least 24 h (e.g. carry the last builds' `assets/` forward), so an open tab never misses a chunk.
+  - **Never a silent reload mid-room** (lane A, `main.ts` / `loadChunk`): if a chunk is still missing, show a calm
+    "Sidelit was updated · ↻ Refresh" note and reload only on the tap; the room, name and seat come back after it.
+- Done when: a tab open across two deploys opens every game without a reload (harness); a missing chunk shows the note,
+  never reloads by itself; Test Lab hook `app.staleChunk`.
+- Tests: a deploy-across harness (old build → new build, open all games), unit test of the note path.
+- Owner's pick: his message (Planner chat, 16 Nov 2026).
+- Done: #477 (B2: earlier builds' assets kept 7 days) and #476 (lane A: "Sidelit was updated · ↻ Refresh" note, never a silent reload in a room; Test Lab `app.staleChunk`; also the BUD2 phone-room race fix: `scripts/harness/phone-ready.cjs`).
+
+### UI2. Rail ⋯ menu: one compact speed control; "Keep the controls open" starts off (owner, 15 Nov 2026; lane A, after EC1)
+- Why: 12 speed buttons tire the eye; the owner found "Keep the controls open" ticked.
+- What:
+  - **Speed:** one row "⏩ Speed · 1×" instead of the grid. Tapping it opens a small picker: 0.5 / 1 / 1.25 / 1.5 / 2
+    plus − / + (or a slider) for a custom speed from 0.25× to 3× in 0.05 steps. YouTube only plays its own rates, so
+    there the custom value snaps to the nearest one. Same control in the phone ＋ sheet; the menu gets shorter.
+  - **Keep the controls open:** `opt:railPin` must start off for everyone. Check that nothing (a migration, Test Lab,
+    a default) turns it on by itself; if nothing does, the owner's browser saved it once (tell the Planner).
+- Done when: speed row + picker work on YouTube, a file and the extension, synced; a fresh browser has the pin off;
+  Test Lab hook `rail.speed`.
+- Tests: sync-engine scenario for a custom rate, room harness for the menu height, phone ＋ sheet harness.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026).
+- Done: #469 (bc77a73): one compact "⏩ Speed" row in the rail ⋯ menu, "Keep the controls open" off by default; Test Lab `rail.speed`.
+
+### CI3. Release train: several finished PRs go live together, without the one-by-one wait (owner, 15 Nov 2026; B2, after #452)
+- Why: the owner asked why every release waits on so many tests when most of them find nothing. The tests stay (on
+  15 Nov they caught a Snack Bar text that fell under 11 px, which main's push run had let through). What costs is
+  the queue: each PR is updated from main, runs the full PR CI again (~8.5 min), merges, then waits for its own
+  deploy + live e2e (~11 min) before the next one may start, so three ready PRs take about an hour.
+- What:
+  - **One release for a batch:** PRs that are green merge as soon as they are green (no "update from main and re-run"
+    when the files don't overlap); main's run deploys and runs the live e2e once for whatever has landed. The
+    version and `CHANGELOG.md` block cover the batch (one fourth-part number per batch; the Planner assigns it).
+  - **Main's push run checks what the PRs skipped:** the job that failed on 15 Nov (games-more) never runs on main, so
+    a regression from a combination of two PRs or a date-dependent test reached main unseen. Run the jobs the merged
+    PRs touched once on main before deploying (or a short nightly full run), so main never goes red silently.
+  - **No date- or time-dependent results:** a test that depends on today's date (Snack Bar daily special, seasonal
+    themes, schedules) forces every variant instead (lane A's per-special harness from #447 is the model).
+  - **Keep:** every gate in CLAUDE.md §7 "CI" and §9 (live e2e green before the tag, the canary gate, no
+    `paths-ignore`). Docs-only PRs keep skipping the heavy jobs.
+- Done when: three ready code PRs go live in ≤ 25 min from the first merge (measured on a real batch); main's run
+  catches a regression that only the combination of two PRs causes (a forced test case); no test result depends on the
+  date (a forced-date run in CI); `docs/internal/architecture/reference.md` "CI" updated.
+- Tests: the CI itself (a dry run on a test branch), the measurement in the PR.
+- Owner's pick: his message (Planner chat, 15 Nov 2026).
+- Done: #464, #472, #473, #480, #482 (tested-code mark, 2-min settle, CI numbering via `release-series.txt` +
+  `changelog/next/` + `check-version-edits.mjs`, nightly forced-date sweep, 3 live shards, 7 PR jobs). Measured on
+  main: 1 PR whose code a PR tested ≈ 13 min (merge → live e2e end); 2-PR untested combination 22 min (#473 + #474);
+  busy 3-PR batch before #482: 38 min. After #482, busy batch #485 + #484 + #467 + #469 (2 code, 2 docs; run
+  43891275318, v0.9.97.149): first merge 14:53 → live e2e end 15:34 = 41 min, of which 18 min waiting for the
+  previous main run (#482's deploy + live e2e) to finish; the batch's own run (settle → live e2e end) 23 min; test jobs
+  started 2 s after `changes` (runners free; on a busy office before #482: 4–9 min). Quiet path ≤ 25 min holds; a busy
+  office adds the previous run's remaining time.

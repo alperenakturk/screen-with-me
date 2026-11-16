@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, isPublicMedia, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
+import { AVATAR_PAGES, PROTOCOL_VERSION, REMOVED_AVATARS, isAvatar, isDrawnAvatar, replaceRemovedAvatar, AVATAR_GRID, AVATARS, DRAWN_AVATARS, avatarPageOf, avatarText, cleanChatText, cleanName, cleanText, cleanTitle, expectedPosition, fitRate, PRESET_RATES, stepRateFor, isPublicMedia, isShortMedia, waitPausePosition, WAIT_REWIND_S, parseClientMessage, personOf, type PlaybackState } from './protocol.ts';
 
 const playing: PlaybackState = {
   item: { id: 'a1', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' }, title: null, by: 'Ali' },
@@ -48,6 +48,9 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'ready', ready: false, ad: true })).toEqual({ t: 'ready', ready: false, ad: true });
     expect(parse({ t: 'ready', ready: true })).toEqual({ t: 'ready', ready: true });
     expect(parse({ t: 'ready', ready: true, ad: 'evet' })).toEqual({ t: 'ready', ready: true });
+    // Card SH1 (2): `primed` is an item id; anything else is dropped.
+    expect(parse({ t: 'ready', ready: true, primed: 'abc123' })).toEqual({ t: 'ready', ready: true, primed: 'abc123' });
+    expect(parse({ t: 'ready', ready: true, primed: { x: 1 } })).toEqual({ t: 'ready', ready: true });
   });
 
   it('accepts pages with a cleaned title, and drops titles for other media', () => {
@@ -319,5 +322,61 @@ describe('personOf (R11)', () => {
     expect(personOf({ ...a, name: 'Alex 2' })).toBe(personOf(a));
     expect(personOf({ name: 'Alex', avatar: 'wizard' })).toBe(personOf({ name: 'Alex', avatar: 'wizard' }));
     expect(personOf({ name: 'Alex' })).not.toBe(personOf(a));
+  });
+});
+
+// Card SH1 (2): the "everyone ready" wait in a video's first seconds waits at 0:00, so nobody loses the start.
+describe('waitPausePosition', () => {
+  const started = { ...playing, position: 0 };
+  it('holds a wait in the first seconds at 0:00', () => {
+    expect(waitPausePosition(started, 1_001_500)).toBe(0);
+    expect(waitPausePosition(started, 1_000_000 + (WAIT_REWIND_S * 1000 - 100))).toBe(0);
+  });
+  it('waits where the video is once it is past its start', () => {
+    expect(waitPausePosition(started, 1_000_000 + WAIT_REWIND_S * 1000 + 500)).toBeCloseTo(WAIT_REWIND_S + 0.5);
+    expect(waitPausePosition(playing, 1_002_000)).toBe(12);
+  });
+  it('a Short still held in its lead-in waits at 0:00', () => {
+    expect(waitPausePosition({ ...started, updatedAt: 1_001_500 }, 1_000_200)).toBe(0);
+  });
+});
+
+describe('isShortMedia', () => {
+  it('is true for a YouTube Short and any TikTok, false for other videos', () => {
+    expect(isShortMedia({ kind: 'youtube', id: 'dQw4w9WgXcQ', short: true })).toBe(true);
+    expect(isShortMedia({ kind: 'tiktok', id: '6718335390845095173' })).toBe(true);
+    expect(isShortMedia({ kind: 'youtube', id: 'dQw4w9WgXcQ' })).toBe(false);
+  });
+});
+
+describe('speed picker (card UI2)', () => {
+  const file = { kind: 'html5', url: 'https://example.com/a.mp4' } as const;
+  const youtube = { kind: 'youtube', id: 'aqz-KE-bpKQ' } as const;
+  it('keeps a custom speed on 0.05 steps between 0.25× and 3× for a file', () => {
+    expect(fitRate(file, 1.3)).toBe(1.3);
+    expect(fitRate(file, 1.33)).toBe(1.35);
+    expect(fitRate(file, 0.1)).toBe(0.25);
+    expect(fitRate(file, 4)).toBe(3);
+    expect(fitRate(file, Number.NaN)).toBe(1);
+  });
+  it('snaps a custom speed to the nearest of YouTube\'s own', () => {
+    expect(fitRate(youtube, 1.3)).toBe(1.25);
+    expect(fitRate(youtube, 1.4)).toBe(1.5);
+    expect(fitRate(youtube, 3)).toBe(2);
+    expect(PRESET_RATES.every((r) => fitRate(youtube, r) === r)).toBe(true);
+  });
+  it('steps by 0.05 on a file and by YouTube\'s own speeds on YouTube, stopping at the ends', () => {
+    expect(stepRateFor(file, 1, 1)).toBe(1.05);
+    expect(stepRateFor(file, 1.05, -1)).toBe(1);
+    expect(stepRateFor(file, 3, 1)).toBe(3);
+    expect(stepRateFor(file, 0.25, -1)).toBe(0.25);
+    expect(stepRateFor(youtube, 1, 1)).toBe(1.25);
+    expect(stepRateFor(youtube, 1, -1)).toBe(0.75);
+    expect(stepRateFor(youtube, 2, 1)).toBe(2);
+    expect(stepRateFor(youtube, 0.25, -1)).toBe(0.25);
+  });
+  it('keeps TikTok and Vimeo at 1×', () => {
+    expect(fitRate({ kind: 'tiktok', id: '1' } as never, 2)).toBe(1);
+    expect(stepRateFor({ kind: 'vimeo', id: '1' } as never, 1, 1)).toBe(1);
   });
 });

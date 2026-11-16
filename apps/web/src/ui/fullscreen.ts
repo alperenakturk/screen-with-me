@@ -85,7 +85,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   dockMore.addEventListener('click', () => dockLabels());
   // Card 6e (owner): the empty room has the rail too, so voice, cameras, games and emojis work before any video; the
   // video controls stay on it dimmed and say "add a video first" when pressed (capture phase: before their own handler).
-  const NEEDS_VIDEO = '#dock-pin, #dock-exit, #dock-play, #dock-speed, #dock-skip, .dock-speed-opt, .dock-more-item[data-press="#sync-all"], .dock-more-item[data-press="#skip"]';
+  const NEEDS_VIDEO = '#dock-pin, #dock-exit, #dock-play, #dock-speed, #dock-skip, .dock-speed-opt, #dock-speed-row, .dock-more-item[data-press="#sync-all"], .dock-more-item[data-press="#skip"]';
   dock.addEventListener(
     'click',
     (event) => {
@@ -233,7 +233,7 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   dockLabels();
   addEventListener('langchange', dockLabels);
   for (const [button] of pops) button.addEventListener('click', () => openPop(openButton === button ? null : button));
-  for (const option of dock.querySelectorAll<HTMLButtonElement>('.dock-speed-opt')) {
+  for (const option of dock.querySelectorAll<HTMLButtonElement>('.dock-speed-opt[data-rate]')) {
     option.addEventListener('click', () => {
       onRate(Number(option.dataset.rate));
       openPop(null);
@@ -864,7 +864,8 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
       setFake(on, false);
     },
     setRate(rate: number): void {
-      speed.value = String(rate);
+      // Its old select lists the usual speeds only; a custom one (card UI2) shows on the button and the pickers.
+      if ([...speed.options].some((o) => Number(o.value) === rate)) speed.value = String(rate);
       dockSpeed.textContent = `${rate}×`;
       for (const option of dock.querySelectorAll<HTMLElement>('.dock-speed-opt')) option.classList.toggle('on', Number(option.dataset.rate) === rate);
     },

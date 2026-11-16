@@ -90,6 +90,14 @@ export const GARDEN_DECOR: readonly { id: GardenDecorId; cost: number }[] = [
   { id: 'cat', cost: 6 },
   { id: 'lantern', cost: 8 },
 ];
+/** WG2: what the window looks out on (free to pick; `lights` = the first scene's scattered city lights). */
+export const GARDEN_VIEWS = ['lights', 'sea', 'hills', 'city'] as const;
+export type GardenView = (typeof GARDEN_VIEWS)[number];
+/** WG2: the pots' colour (free to pick; `clay` = terracotta). */
+export const POT_COLORS = ['clay', 'sky', 'cream', 'sage'] as const;
+export type PotColor = (typeof POT_COLORS)[number];
+/** WG2: petals a compost turns into one common seed. */
+export const COMPOST_PETALS = 5;
 export type VisitorId = 'moth' | 'firefly';
 /** Which decoration brings which visitor (only at dusk and at night). */
 export const VISITORS: readonly { id: VisitorId; decor: GardenDecorId }[] = [
@@ -166,6 +174,9 @@ export interface GardenSave {
   visitors: VisitorId[];
   /** Cuttings from friends, waiting to be planted. */
   giftSeeds: GiftSeed[];
+  /** WG2: the window's view and the pots' colour. */
+  view: GardenView;
+  potColor: PotColor;
 }
 
 export interface GardenContext {
@@ -201,6 +212,8 @@ export function freshGarden(): GardenSave {
     decor: [],
     visitors: [],
     giftSeeds: [],
+    view: 'lights',
+    potColor: 'clay',
   };
 }
 
@@ -237,6 +250,9 @@ export function loadGarden(raw: unknown): GardenSave {
   }
   garden.petals = Math.floor(num(record.petals, 9_999));
   garden.decor = Array.isArray(record.decor) ? [...new Set(record.decor.filter((id): id is GardenDecorId => GARDEN_DECOR.some((d) => d.id === id)))] : [];
+  // WG2 (older saves have neither: the defaults).
+  if ((GARDEN_VIEWS as readonly unknown[]).includes(record.view)) garden.view = record.view as GardenView;
+  if ((POT_COLORS as readonly unknown[]).includes(record.potColor)) garden.potColor = record.potColor as PotColor;
   garden.visitors = Array.isArray(record.visitors) ? [...new Set(record.visitors.filter((id): id is VisitorId => VISITORS.some((v) => v.id === id)))] : [];
   garden.giftSeeds = (Array.isArray(record.giftSeeds) ? record.giftSeeds : [])
     .filter((g): g is GiftSeed => !!g && typeof g === 'object' && typeof (g as GiftSeed).plant === 'string' && !!rarityOf((g as GiftSeed).plant) && typeof (g as GiftSeed).from === 'string')
@@ -387,6 +403,23 @@ export function placeLamp(garden: GardenSave, pot: number, itemId: string | null
   if (!itemId || !lampFree(garden, itemId) || !target || target.growth >= 1) return false;
   garden.lamp = { pot, item: itemId };
   return true;
+}
+
+/** WG2 compost: `COMPOST_PETALS` petals become one common seed (while the seed tray has room). */
+export function compost(garden: GardenSave): boolean {
+  if (garden.petals < COMPOST_PETALS || garden.seeds.common >= SEEDS_MAX) return false;
+  garden.petals -= COMPOST_PETALS;
+  garden.seeds.common += 1;
+  return true;
+}
+
+/** WG2: waters every thirsty pot that is still growing; how many it watered. */
+export function waterAll(garden: GardenSave, thirsty: number): number {
+  let n = 0;
+  garden.pots.forEach((p, i) => {
+    if (p && p.growth < 1 && p.water < thirsty && water(garden, i)) n++;
+  });
+  return n;
 }
 
 export function water(garden: GardenSave, pot: number): boolean {
