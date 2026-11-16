@@ -67,23 +67,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
 - Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
 
-### VC1. Voice: a deafen button, and the YouTube volume slider (owner, 15 Nov 2026; lane A, after SH1)
-- Why: the owner wants a Discord-like "deafen" in voice, and on YouTube he can't drag the volume, because one click
-  jumps it.
-- What:
-  1. **🎧 Deafen:** in voice, next to 🎙, a headphones button turns off what you hear from voice (everyone's voice,
-     the stream's sound if any). It also mutes your own mic, like Discord, and shows the state to others (a crossed 🎧
-     on your face). It is kept per room over a reload. The film's sound is untouched.
-  2. **Volume dragging:** find why dragging the volume on a YouTube video doesn't work and one click jumps it. Check
-     our rail's `#dock-vol`, an overlay or pointer capture over YouTube's own slider, and touch vs mouse. Make it drag
-     smoothly on a computer and a phone. Never put anything of ours over YouTube's player.
-- Done when:
-  - Deafen silences voice for you only, shows to others, and survives a reload.
-  - Volume drags smoothly.
-  - Test Lab hook `voice.deafen`.
-- Tests: voice e2e (deafen state), a harness for the volume drag, the owner's hand test.
-- Owner's pick: his message (Planner chat, 15 Nov 2026).
-
 ### MSG1. Delete a chat message for everyone; the host can delete others' (owner, 15 Nov 2026; lane A, after VC1)
 - Why: there is no way to take back a message.
 - What:
@@ -105,31 +88,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: room server unit tests (permissions, history removal, rate limit), e2e with three clients (sender, host,
   other), phone long-press harness, the owner's hand test.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
-
-### SH3. Shorts view on a computer: the chat in a panel you can open and close (owner's friend, 15 Nov 2026; lane A, after SH1)
-- Why: in the Shorts view on a computer, 💬 opens only a box to send a message; you can't read the chat. A friend of
-  the owner asked to see it, with a panel that opens and closes.
-- What: 💬 in the Shorts view (computer) toggles a chat panel beside the upright video, in the empty space on the
-  right: the room's chat list (newest at the bottom), the message box and 😀, ✕ to close. It never covers the video
-  (nothing over the YouTube player); the open / closed choice is remembered per room (`shortsChat:<room>`); unread
-  count on 💬 while closed. The phone keeps its 💬 sheet (PH1).
-- Done when: open / close, send, read, unread count at 1366 and 1920 and on a sideways tablet; Test Lab hook
-  `shorts.chat`.
-- Tests: Shorts view harness (panel open, no overlap with the player), shots (QA1).
-- Owner's pick: his message (Planner chat, 15 Nov 2026).
-
-### VC3. Voice that can't connect says so (VPN, strict networks) (owner, 16 Nov 2026; lane A, with VC1)
-- Why: with a VPN (or a strict school / work network) voice "connects" but nobody hears anybody: voice goes directly
-  between people, and these networks block the direct path. The owner chose a clear warning for now, no relay server
-  (TURN) yet.
-- What: watch each voice link; when one can't connect within ~10 s (ICE failed / never connected), show the person a
-  plain note: "Your voice isn't reaching the others. A VPN or this network may be blocking it — turn the VPN off and try
-  again." (TR too), with a small ⓘ in the people list on the link that failed. No technical words. Clears itself when the
-  link works. The help page gets a short "Voice and VPNs" entry.
-- Done when: a forced ICE failure shows the note and the ⓘ; a good link shows nothing; Test Lab hook `voice.blocked`.
-- Tests: voice harness with a forced failed link; texts check.
-- Owner's pick: "warning only for now" (Planner chat, 16 Nov 2026). A relay (Cloudflare TURN, 1,000 GB/month free) can
-  come later as its own card if VPN users ask for it.
 
 Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 
