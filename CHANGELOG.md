@@ -24,6 +24,15 @@ games' tip jar, cuttings and badges.
   YouTube video's fullscreen it steps aside; 📺 in the bar beside the video brings it back. The old
   "pop out", "put back" and "bigger / smaller" buttons are gone. Phones work as before.
 
+### 0.9.97.138 — 15 Nov
+
+- 👁 **Watch a game live:** join a full Sea Battle or Five Frames Duel table from the games hall and you see both
+  fleets as they are shot, or both boards with every letter, while the players still see only their own. On a phone
+  the watcher follows the sea being shot at.
+- 🎟️ **Five Frames knows far more words:** over 11,000 English and 15,000 Turkish words are accepted as guesses
+  (Turkish forms such as "evler" or "kitabı" too), and the daily word now comes from over 2,000 common, clean words in
+  each language. The day's word changes with this update.
+
 ### 0.9.97.137 — 15 Nov
 
 - After "↩ Room view", a playing Short always has a way back: on a phone a "📱 Shorts view" button sits in the strip

@@ -8,8 +8,8 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Game Studio, next pass: Snack Bar's "Closed until the film plays" note covers the SNACK BAR sign (all sizes; on a
-  phone the bottom-left "#1 · …" is also cut off). Found by 0.9.97.119's first-look reviewer; queued by the Planner.
+- [ ] Game Studio, card GMP: (a) watchers + word lists on claude/gmp-words-watchers (PR, merge, deploy check); then
+  (b) 2–6 players for the Duel and Sea Battle (targets, elimination, ranks, phone with 6 at 360×640, e2e 2 / 3 / 6).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -120,7 +120,11 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   emojis disappear for you only (ask them: they still see yours); reload, still hidden; 🔈 Unblock brings the lines
   back. Then 🚩 Report: pick a reason, open "See what is sent", send; tell the Planner when the report issue arrives in
   the private feedback repository. On the phone the same two buttons are on their row in the People list.
-- [ ] 27h. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
+- [ ] 27h. [GMP-a, 0.9.97.138] With a friend at Sea Battle and your phone as a third person: open 🎮 on the phone and
+  Join the table: you watch, and you see both fleets as they are shot; the friend never sees yours. Same in the Five
+  Frames Duel: the phone shows both boards with their letters. Five Frames in English and Turkish: new everyday words
+  are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
+- [ ] 27j. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
   it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
   watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.
 
