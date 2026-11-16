@@ -259,8 +259,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     commands: [
       {
         id: 'voice.switchCam',
-        title: { en: 'Switch to my next camera', tr: 'Sıradaki kamerama geç' },
-        help: { en: 'My camera changes to the next one on this device without leaving voice (on a phone: front, back, wide); the others see "camera changing…".', tr: 'Kameram sesten çıkmadan bu cihazdaki sıradakine geçer (telefonda: ön, arka, geniş); diğerleri "kamera değişiyor…" görür.' },
         tab: 'video',
         where: CAM_ON,
         available: camReady,
@@ -272,8 +270,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       },
       {
         id: 'voice.camPause',
-        title: { en: 'My camera freezes for the others for 6 s', tr: 'Kameram diğerlerinde 6 sn donsun' },
-        help: { en: 'My picture stops reaching the others, as when a phone stalls: their tile must say "waiting for the picture…" and come back by itself. A number sets the seconds (1–30).', tr: 'Görüntüm diğerlerine gitmez, telefon takılınca olduğu gibi: onların ekranında "görüntü bekleniyor…" yazmalı ve kendiliğinden geri gelmeli. Bir sayı yazarsan saniye olur (1–30).' },
         tab: 'video',
         where: CAM_ON,
         available: camReady,

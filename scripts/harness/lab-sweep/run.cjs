@@ -70,6 +70,9 @@ async function sweep(browser, device, lang) {
   await page.waitForSelector('.room');
   check(!!(await until(() => page.evaluate(() => !!window.__swmLab && !!document.querySelector('.debug-fab')))), `${tag}: the lab survives a reload of the room`);
   await wait(3500); // past the intro
+  // Card BUD1: commands registered in the room's own chunk get their title and help from the lab chunk (ui/lab-texts.ts).
+  const untitled = await page.evaluate(() => window.__swmLab.list().filter((c) => !c.help || c.title === c.id).map((c) => c.id));
+  check(untitled.length === 0, `${tag}: every command has its title and help line`, untitled);
 
   // Something playing: the room's own 🧪 Sync test (a video file link only plays on a local server, not on a live-like host). It
   // needs a second person, so a fake friend comes first (it stays for the friends' commands; undone at the end).
