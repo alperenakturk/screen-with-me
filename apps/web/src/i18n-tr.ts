@@ -420,6 +420,8 @@ export const tr: Record<I18nKey, string> = {
   'games.score': 'Skor',
   'games.reconnecting': 'Bağlantı koptu, yeniden bağlanıyor…',
   'games.version': 'Site güncellendi, sayfayı yenile.',
+  'app.updated': 'Sidelit güncellendi',
+  'app.refresh': 'Yenile',
   'games.full': 'Bu oyun dolu.',
   'games.cell': 'Satır {r}, sütun {c}',
   'games.cellEmpty': 'boş',

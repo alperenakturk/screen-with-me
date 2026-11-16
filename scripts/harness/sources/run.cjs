@@ -5,6 +5,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/sources/run.cjs [http://localhost:8787] [out-dir]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const OUT = process.argv[3] || require('os').tmpdir();
@@ -48,6 +49,7 @@ const VIMEO_ITEMS = [
     await page.waitForSelector('.room');
     await page.waitForTimeout(800);
     const showSearch = async () => {
+      await phoneReady(page);
       if (phone && !(await page.isVisible('#media-input'))) await page.click('#ph-tab-search');
     };
     await showSearch();

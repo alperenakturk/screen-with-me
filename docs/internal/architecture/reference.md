@@ -715,7 +715,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
   not the Shorts view / TV (set by `createPhoneRoom`, not in the shell). **`ui/phone-room.ts` is a lazy chunk (card
   BUD2):** room.ts loads it when the phone layout is on at start or first turns on (`onPhoneLayout`), so a computer
-  never downloads it; room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
+  never downloads it, and a phone starts fetching it while the name form is up (`renderRoom`), so the layout is there when the room opens. Harnesses wait for `html.ph-room` on a phone-sized page before looking (`scripts/harness/phone-ready.cjs`). room.ts makes the Games tab's hidden 🎮 (`#ph-games-open`) itself and hands it in
   (`deps.gamesButton`), since games/stage.ts takes its triggers when the room starts. The desktop DOM stays: `.stage`, `.side`,
   `.together-card`, `.tabs-card` are `display: contents`, so the column is the theater (edge to edge, `order` 1) → the
   faces strip `.together-strip` (`#voice-people` + `#strip-voice` quick 🎙 / 📷 / 🖥️ (voice.ts quick id `strip`; 🖥️ only
@@ -858,7 +858,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `navigator.onLine` is true, see the Live line):** `reloadForNewVersion` does nothing while `navigator.onLine` is false (a reload then showed the browser's
   offline page and threw the room away after a Wi-Fi blip); chunks missed offline are fetched again on `online` and the
   page reloads only if one still fails (in Chrome always: it keeps a failed module import for the page's life); harness
-  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. Voice, streams and watching fail closed when
+  `games-pair` (`OFFLINE_CHUNK=1`, the drops) checks it on the built site. **Never a silent reload in a room (card
+  GR1):** `staleChunk` in main.ts routes every failed chunk; in a room (`/r/<id>`) it shows `#update-note` ("Sidelit was
+  updated · ↻ Refresh", styles.css, built without any chunk) and reloads only on the tap; elsewhere it is
+  `reloadForNewVersion` as before. Harness `scripts/harness/offline-reload` (CI) checks both the gone chunk and the
+  network-back path; Test Lab `app.staleChunk` fires a `vite:preloadError`. Voice, streams and watching fail closed when
   their chunks can't load (harness `scripts/harness/lazy-gates/run.cjs` in CI blocks `voice-check` and `live-engine`;
   the IP notice chunk it used to block was removed by card SIMP1). Measure a module's share of the
   room chunk with a sourcemap build (`npx vite build --sourcemap`; gzip of separate files overstates the saving).

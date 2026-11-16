@@ -4,6 +4,7 @@
 // `npm run dev`) and a local video:
 //   NODE_PATH=$(npm root -g) node scripts/harness/tv/run.cjs [http://localhost:8787] [http://localhost:5300/video.webm]
 const { chromium, devices } = require('playwright');
+const { phoneReady } = require('../phone-ready.cjs');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -115,6 +116,7 @@ async function enter(page, room, name) {
 
   // A video from the phone plays on the TV (fills the screen); the phone's own player is muted.
   // On a phone the link box lives in the Search tab (PH1; as in harness/phone `addMedia`).
+  await phoneReady(phone);
   if (!(await phone.isVisible('#media-input'))) await phone.click('#ph-tab-search');
   await phone.fill('#media-input', VIDEO);
   await phone.click('#media-form button[value=load]');
