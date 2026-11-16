@@ -139,7 +139,7 @@ interface Attachment {
   /** 'ext': eklentiyle film sayfasında. */
   client?: ClientKind;
   /** Sesli sohbette: mikrofon açık mı, yayınladığı akış ve Cloudflare oturumu (oturum istemcilere gitmez). */
-  voice?: { mic: boolean; track?: string; session?: string; cam?: boolean; switching?: boolean };
+  voice?: { mic: boolean; track?: string; session?: string; cam?: boolean; switching?: boolean; deaf?: boolean };
   /** Film sayfasında reklam oynuyor (eklenti bildirir): oda bu kişiyi beklemez. */
   ad?: boolean;
   /** Yayın yapıyor (odada tek yayın) / yayını izliyor. */
@@ -203,7 +203,7 @@ function memberOf(attachment: Joined): Member {
   if (attachment.client === 'ext') member.client = 'ext';
   // Cloudflare oturumu gizli kalır; diğerleri sadece akışın adını ve mikrofon durumunu görür.
   if (attachment.voice) {
-    member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}), ...(attachment.voice.cam ? { cam: true } : {}), ...(attachment.voice.cam && attachment.voice.switching ? { switching: true } : {}) };
+    member.voice = { mic: attachment.voice.mic, ...(attachment.voice.track ? { track: attachment.voice.track } : {}), ...(attachment.voice.cam ? { cam: true } : {}), ...(attachment.voice.cam && attachment.voice.switching ? { switching: true } : {}), ...(attachment.voice.deaf ? { deaf: true } : {}) };
   }
   if (attachment.ad) member.ad = true;
   if (attachment.live) member.live = attachment.live;
@@ -589,7 +589,7 @@ export class Room extends DurableObject<Env> {
         await this.vote(keyOf(attachment), message.id, message.up);
         return;
       case 'voice':
-        await this.setVoice(ws, attachment, message.on, message.mic, message.cam, message.switching);
+        await this.setVoice(ws, attachment, message.on, message.mic, message.cam, message.switching, message.deaf);
         return;
       case 'live':
         this.setLive(ws, attachment, message.on, message.kind);
@@ -1746,13 +1746,18 @@ export class Room extends DurableObject<Env> {
   }
 
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa (bağlantı başına; herkese `members` gider). */
-  private async setVoice(ws: WebSocket, attachment: Attachment, on: boolean, mic?: boolean, cam?: boolean, switching?: boolean): Promise<void> {
+  private async setVoice(ws: WebSocket, attachment: Attachment, on: boolean, mic?: boolean, cam?: boolean, switching?: boolean, deaf?: boolean): Promise<void> {
     if (on) {
       if (this.env.VOICE === 'off') return this.sendTo(ws, { t: 'error', code: 'voice_unavailable' });
       const max = realtimeConfig(this.env) ? VOICE_MAX : VOICE_MAX_P2P;
       const inVoice = this.joined().filter((a) => a.voice && a.id !== attachment.id).length;
       if (!attachment.voice && inVoice >= max) return this.sendTo(ws, { t: 'error', code: 'voice_full' });
       attachment.voice = { ...attachment.voice, mic: mic ?? attachment.voice?.mic ?? true };
+      // Card VC1: every voice message says whether its sender is deafened (no flag = not deafened); a deafened mic is off.
+      if (deaf) {
+        attachment.voice.deaf = true;
+        attachment.voice.mic = false;
+      } else delete attachment.voice.deaf;
       // Kamera sadece eşler arası seste (Cloudflare yolunda görüntü yok); aynı anda en fazla CAM_MAX.
       if (cam !== undefined && !realtimeConfig(this.env)) {
         const cams = this.joined().filter((a) => a.voice?.cam && a.id !== attachment.id).length;

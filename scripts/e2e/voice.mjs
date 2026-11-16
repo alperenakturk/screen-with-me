@@ -51,6 +51,15 @@ if (wa.voice !== true) {
   a.send({ t: 'signal', to: wc.you, data: { candidate: { candidate: 'candidate:x', sdpMid: '0', sdpMLineIndex: 0 } } });
   await sleep(500);
   ok(!c.inbox.some((m) => m.t === 'signal'), 'Seste olmayan Max\'a bağlantı mesajı gitmiyor');
+  // Card VC1: 🎧 deafen shows to the others (the mic is off with it), and the next voice message without it clears it.
+  c.inbox.length = 0;
+  a.send({ t: 'voice', on: true, mic: true, deaf: true });
+  const deafened = await c.wait((m) => m.t === 'members' && m.members.some((x) => x.id === wa.you && x.voice?.deaf), 'deafened');
+  const alex = deafened.members.find((x) => x.id === wa.you);
+  ok(alex.voice.deaf === true && alex.voice.mic === false, 'Deafened Alex shows 🎧 to the others, with the mic off');
+  a.send({ t: 'voice', on: true, mic: true });
+  const back = await c.wait((m) => m.t === 'members' && m.members.some((x) => x.id === wa.you && x.voice && !x.voice.deaf), 'undeafened');
+  ok(back.members.find((x) => x.id === wa.you).voice.mic === true, 'Undeafened: the 🎧 mark goes, the mic is on again');
   // Sınır: 6 kişi doluysa 7. reddedilir.
   const extra = [];
   for (let i = 0; i < 4; i++) {

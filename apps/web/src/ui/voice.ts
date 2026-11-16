@@ -19,6 +19,7 @@ import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { isTyping } from './typing.ts';
+import { setDeafNow } from './deafen.ts';
 import { debugHooks, labFail, labPeer, labText, type LabText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
 
@@ -86,6 +87,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const micBar = el('i');
   micButton.replaceChildren(micIcon, el('span', { class: 'mic-level', 'aria-hidden': 'true' }, micBar));
   const leaveButton = root.querySelector<HTMLButtonElement>('#voice-leave')!;
+  // Card VC1: 🎧 deafen (Discord-like): I hear no voice and no stream, my mic goes off too, the others see a crossed 🎧
+  // on my face. Kept per room over a reload (`voiceDeaf:<room>`); the film's own sound is untouched.
+  const deafButton = root.querySelector<HTMLButtonElement>('#voice-deaf')!;
+  const deafKey = `voiceDeaf:${roomId}`;
+  let deaf = load(deafKey) === '1';
   const peopleBox = root.querySelector<HTMLElement>('#voice-people')!;
   const camButton = root.querySelector<HTMLButtonElement>('#voice-cam')!;
   const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
@@ -190,7 +196,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     });
 
   const announce = (on: boolean, mic?: boolean, cam?: boolean, switching?: boolean) => {
-    send(on ? { t: 'voice', on, mic: mic ?? true, ...(cam !== undefined ? { cam } : {}), ...(switching ? { switching: true } : {}) } : { t: 'voice', on: false });
+    send(on ? { t: 'voice', on, mic: mic ?? true, ...(cam !== undefined ? { cam } : {}), ...(switching ? { switching: true } : {}), ...(deaf ? { deaf: true } : {}) } : { t: 'voice', on: false });
     // My own picture's "camera changing…" note follows at once (the room's echo comes a round trip later).
     if (cam !== undefined) renderCams();
   };
@@ -280,6 +286,18 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
           return { en: `no picture for the others for ${s} s`, tr: `diğerlerine ${s} sn görüntü gitmiyor` };
         },
       },
+      {
+        // Card VC1: `on` / `off` deafens or undeafens me; with nothing it only reports.
+        id: 'voice.deafen',
+        tab: 'status',
+        run: (arg?: string) => {
+          const want = arg?.trim();
+          if (want === 'on' || want === 'off') setDeaf(want === 'on');
+          const others = members.filter((m) => m.voice?.deaf && m.id !== myId()).map((m) => m.name);
+          const text = JSON.stringify({ deaf, inVoice: client.active, mic: client.active && client.micEnabled, voicesMuted: [...audios.values()].every((a) => a.muted), deafened: others });
+          return { en: text, tr: text };
+        },
+      },
     ],
     status: () => {
       const peers = p2p?.peerStates() ?? [];
@@ -362,7 +380,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   const remember = (on: boolean) => save(wantKey, on ? '1' : '0');
   const micKey = `voiceMic:${roomId}`;
   /** Was my microphone on the last time I chose (default on)? With push-to-talk it always starts off (render). */
-  const micWanted = () => load(micKey) !== '0';
+  const micWanted = () => load(micKey) !== '0' && !deaf;
 
   let wasActive = false;
   function render(): void {
@@ -377,6 +395,12 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     joinButton.hidden = active;
     onBox.hidden = !active;
     setIcon(micIcon, client.micEnabled ? 'mic' : 'mic-off');
+    setIcon(deafButton, deaf ? 'headphones-off' : 'headphones');
+    const deafLabel = deaf ? t('voice.undeafen') : t('voice.deafen');
+    deafButton.title = deafLabel;
+    deafButton.setAttribute('aria-label', deafLabel);
+    deafButton.setAttribute('aria-pressed', String(deaf));
+    setDeafNow(deaf && active);
     micButton.classList.toggle('ptt', ptt);
     micButton.classList.toggle('talking', ptt && talking);
     const micLabel = ptt ? t('voice.pttHold') : client.micEnabled ? t('voice.mute') : t('voice.unmute');
@@ -401,7 +425,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         const face = el('span', { class: `voice-face${m.voice ? ' in-voice' : ''}`, 'data-voice-id': m.id }, avatarNode(m.avatar, 'voice-avatar'));
         if (m.voice && !m.voice.mic) {
           const badge = el('span', { class: 'voice-muted' });
-          setIcon(badge, 'mic-off');
+          // Card VC1: a deafened person shows a crossed 🎧 (their mic is off too).
+          setIcon(badge, m.voice.deaf ? 'headphones-off' : 'mic-off');
+          if (m.voice.deaf) badge.title = t('voice.deafened');
           face.append(badge);
         }
         const label = m.id === me ? t('voice.me') : m.name;
@@ -625,7 +651,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let silenced = false;
   let master = 1;
   function volumeOf(memberId: string): number {
-    if (isMyOtherTab(memberId) || silenced) return 0;
+    if (isMyOtherTab(memberId) || silenced || deaf) return 0;
     const member = members.find((m) => m.id === memberId);
     const s = member ? sound[personOf(member)] : undefined;
     return s?.m ? 0 : Math.min(1, Math.max(0, s?.v ?? 1)) * master;
@@ -734,6 +760,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (isMe && client.active) {
       // My own controls (owner's feedback, 0.9.88: clicking myself while in voice used to say "you're not in voice").
       if (!ptt) items.push(button(client.micEnabled ? `🔇 ${t('voice.mute')}` : `🎙 ${t('voice.unmute')}`, () => micButton.click()));
+      items.push(button(`🎧 ${deaf ? t('voice.undeafen') : t('voice.deafen')}`, () => deafButton.click()));
       if (!camButton.hidden) items.push(button(client.camEnabled ? `📷 ${t('voice.camOff')}` : `📷 ${t('voice.camOn')}`, () => camButton.click()));
     }
     if (isMe && client.camEnabled && p2p && client === p2p && camCount > 1) {
@@ -891,7 +918,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     joinButton.disabled = true;
     try {
       client.sync(members, myId());
-      await joinVoice(choice.mic);
+      await joinVoice(choice.mic && !deaf);
       remember(true);
       playSound('meJoin');
       save(micKey, choice.mic ? '1' : '0');
@@ -911,8 +938,29 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       render();
     }
   });
+  /** Card VC1: deafen on / off. Off brings the mic back as I last chose it (unless push-to-talk keeps it off). */
+  function setDeaf(on: boolean): void {
+    if (on === deaf) return;
+    deaf = on;
+    save(deafKey, on ? '1' : '0');
+    talking = false;
+    applyVolumes();
+    if (client.active) {
+      client.setMic(on || ptt ? false : load(micKey) !== '0');
+      // setMic may say nothing when the mic was already off: the room learns the 🎧 state here.
+      announce(true, client.micEnabled);
+    }
+    playSound(on ? 'micOff' : 'micOn');
+    render();
+  }
+  deafButton.addEventListener('click', () => setDeaf(!deaf));
   micButton.addEventListener('click', () => {
     if (ptt) return;
+    // Discord-like: unmuting while deafened undeafens.
+    if (deaf) {
+      save(micKey, '1');
+      return setDeaf(false);
+    }
     client.setMic(!client.micEnabled);
     // Confirms what isn't visible when M is pressed while watching (privacy: is my microphone really off?).
     playSound(client.micEnabled ? 'micOn' : 'micOff');
@@ -922,7 +970,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   });
   // Bas-konuş: tuş ya da 🎙 basılı tutulurken konuşulur; pencereden çıkınca (tuş bırakılmadan) kapanır.
   function talk(on: boolean): void {
-    if (!ptt || !client.active || talking === on) return;
+    if (!ptt || !client.active || talking === on || (on && deaf)) return;
     talking = on;
     client.setMic(on);
     playSound(on ? 'pttDown' : 'pttUp');

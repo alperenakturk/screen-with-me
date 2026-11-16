@@ -327,6 +327,14 @@ jobs:
       - name: Speaking ring in the Shorts view
         run: node scripts/harness/speak-ring/run.cjs http://localhost:8787
 
+      # Card VC1: 🎧 deafen in voice (two Chromes with a fake microphone: voices silent, mic off, the crossed 🎧 for the
+      # other person, 🎙 undeafens, kept over a reload) and the focus after a click in the YouTube player (back to the
+      # room at once, but not while YouTube's volume is being dragged). The second needs YouTube.
+      - name: Deafen in voice
+        run: node scripts/harness/deafen/run.cjs http://localhost:8787
+      - name: Focus after a click in the YouTube player
+        run: node scripts/harness/yt-focus/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true

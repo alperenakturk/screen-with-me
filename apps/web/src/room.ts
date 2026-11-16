@@ -574,6 +574,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <button id="voice-join" type="button" class="btn primary voice-join"><span data-i18n="voice.join"></span></button>
               <div id="voice-on" class="voice-on" hidden>
                 <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
+                <button id="voice-deaf" type="button" class="btn small-btn voice-deaf" aria-pressed="false"></button>
                 <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden></button>
                 <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
                 <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>

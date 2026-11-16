@@ -37,6 +37,14 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
     help: { en: 'Writes who is blocked for me in this room and how the last report went into the log.', tr: 'Bu odada benim için engellenenleri ve son bildirimin sonucunu kayda yazar.' },
   },
+  'voice.deafen': {
+    title: { en: 'Voice: 🎧 deafen (on / off)', tr: 'Ses: 🎧 sesleri kapat (on / off)' },
+    help: { en: 'With "on" or "off" deafens or undeafens me; then writes whether I am deafened, in voice, my mic, whether every voice is silent here and who else is deafened into the log.', tr: '"on" ya da "off" ile benim için sesleri kapatır ya da açar; sonra seslerimin kapalı olup olmadığını, seste olup olmadığımı, mikrofonumu, buradaki bütün seslerin kısık olup olmadığını ve başka kimin seslerini kapattığını kayda yazar.' },
+  },
+  'player.focus': {
+    title: { en: 'Player: is the keyboard focus in it', tr: 'Oynatıcı: klavye odağı onda mı' },
+    help: { en: 'Writes whether the keyboard focus is inside the player\'s frame now (after a click there it comes back to the room, later while YouTube\'s volume is being dragged) and the player\'s volume into the log.', tr: 'Klavye odağının şu an oynatıcının çerçevesinde olup olmadığını (oraya tıklayınca odaya geri döner, YouTube\'un sesi sürüklenirken daha geç) ve oynatıcının ses düzeyini kayda yazar.' },
+  },
   'shorts.state': {
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },

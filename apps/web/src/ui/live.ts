@@ -1,4 +1,5 @@
 import { LIVE_MAX_VIEWERS, type ClientMessage, type LiveKind, type Member, type Signal } from '@swm/shared/protocol';
+import { isDeaf } from './deafen.ts';
 import type { LiveP2p, LiveQuality } from '@swm/shared/live-p2p';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
@@ -48,6 +49,8 @@ export function createLive(
   const limit = root.querySelector<HTMLElement>('#live-limit')!;
   const win = root.querySelector<HTMLElement>('#live-window')!;
   const video = root.querySelector<HTMLVideoElement>('#live-video')!;
+  // Card VC1: 🎧 deafened silences the stream I watch too (my own preview is always silent).
+  addEventListener('deafchange', () => (video.muted = video.dataset.mine === '1' || isDeaf()));
   const title = root.querySelector<HTMLElement>('#live-title')!;
   const closeButton = root.querySelector<HTMLButtonElement>('#live-close')!;
   const killButton = root.querySelector<HTMLButtonElement>('#live-kill')!;
@@ -236,7 +239,8 @@ export function createLive(
     else if (!stream) float?.syncRail();
     if (stream && video.srcObject !== stream) {
       video.srcObject = stream;
-      video.muted = mine;
+      video.dataset.mine = mine ? '1' : '';
+      video.muted = mine || isDeaf();
       void video.play().catch(() => {});
     }
     if (!stream) {
