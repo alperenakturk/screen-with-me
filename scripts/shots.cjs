@@ -48,7 +48,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** The screens, each a way to get there from a fresh page. `room` = a fresh room as its first person (the host). */
 const SCREENS = {
-  home: { what: 'Home page', go: (p) => p.goto(`${SITE}/`) },
+  // TH3: the home art freezes at its middle (the Test Lab's `home.art` class), so every shot is the same frame.
+  home: { what: 'Home page', go: (p) => p.goto(`${SITE}/`), after: (p) => p.evaluate(() => document.documentElement.classList.add('hm-frozen')) },
   help: { what: 'Help page', go: (p) => p.goto(`${SITE}/help.html`) },
   privacy: { what: 'Privacy policy', go: (p) => p.goto(`${SITE}/privacy.html`) },
   terms: { what: 'Terms of use', go: (p) => p.goto(`${SITE}/terms.html`) },
