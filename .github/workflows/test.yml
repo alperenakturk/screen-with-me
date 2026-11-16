@@ -79,7 +79,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check the change detection and the workflow guards
-        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
+        run: node --test scripts/ci-changes.test.mjs scripts/ci-settle.test.mjs scripts/harness/forced-date.test.cjs scripts/release.test.mjs scripts/keep-assets.test.mjs scripts/ci-workflow.test.mjs scripts/tag-live.test.mjs scripts/e2e/shard.test.mjs
 
       - id: diff
         env:
@@ -635,6 +635,13 @@ jobs:
           if env | grep -qE '^(CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|YOUTUBE_API_KEY|VIMEO_TOKEN|FEEDBACK_GITHUB_TOKEN|USAGE_TOKEN|LAB_CODE)='; then
             echo "::error::A deploy secret is in the install / build environment."; exit 1
           fi
+
+      # Card GR1: a tab opened before this deploy keeps loading its lazy chunks (a game, a panel) after it: the earlier
+      # builds' hashed files are copied from the live site into dist/assets and served for 7 more days. Without this a
+      # missing chunk got the index.html fallback and the page reloaded mid-room. Never fails the deploy.
+      - name: Keep earlier builds' files for open tabs
+        if: steps.keys.outputs.ok == 'true'
+        run: node scripts/keep-assets.mjs "$(node scripts/site-config.mjs origin)"
 
       - name: Deploy to Cloudflare
         if: steps.keys.outputs.ok == 'true'
