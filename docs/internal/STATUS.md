@@ -14,9 +14,10 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] EC1 #465 (`claude/ec1-end-card`): green except the state-matrix games-window drag / hover flake (Game Studio's
     fix, top priority). When state-matrix is green on main: merge main into it, re-run, merge.
   - [ ] SH1 item 3, #471 (`claude/sh1-ring`): same blocker as EC1; then merge.
-  - [ ] SH1 item 2, #486 (`claude/sh1-start`): ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on
-    `ready`, `waitPausePosition`), e2e `shorts-start.mjs`. Get CI green, merge. After #471: add the start offset to
-    Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
+  - [x] SH1 item 2, #486: ready-based Short lead-in (`SHORT_LEAD_MS` cap 1.5 s, `primed` on `ready`,
+    `waitPausePosition`), e2e `shorts-start.mjs`; merged, live v0.9.97.150 (live e2e green). Owner hand test: how long
+    the pause before a swiped Short feels.
+  - [ ] After #471: add the start offset to Test Lab `shorts.state` (SH1's "Done when").
   - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness): built on
     `claude/sh1-tiktok-small` (harness `shorts-mixed` green locally); PR, CI, merge.
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
