@@ -569,6 +569,13 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       document.querySelector('#media-form button[value="load"]').click();
     }, WEBM);
     await until(() => page.evaluate(() => document.querySelector('.room')?.classList.contains('has-item')), 15000);
+    // GP1: note whether the paused note ever shows in the head's title line (it lasts 2.8 s).
+    await page.evaluate(() => {
+      window.__noteInHead = false;
+      new MutationObserver(() => {
+        if (document.querySelector('#game-stage .game-stage-title .game-paused-note')) window.__noteInHead = true;
+      }).observe(document.body, { childList: true, subtree: true });
+    });
     await openGame(page, 'xox');
     // The head fills in after the window opens (the game's "?" comes with its chunk): read it until it holds a name and
     // a "?" on one row, at most 6 s, then check what is there (13 Nov 2026: read once, it caught the head before "?").
@@ -604,6 +611,10 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       return n ? { top: Math.round(n.top), video: Math.round(v.bottom), head: Math.round(h.bottom) } : null;
     });
     check(!note || (note.top >= note.video && note.top >= note.head - 1), `${L} 135: the paused note sits under the game's head, not over the video`, note);
+    // GP1 (first look): in the Games tab the note is the head's title line for a moment, so it covers none of the game.
+    const inHead = await page.evaluate(() => window.__noteInHead === true);
+    // (Here the phone's video often hasn't started, so there may be nothing to pause and no note at all.)
+    check(!note, `${L} GP1: no note floats over the game (when the table pauses the video it says so in the head's title line${inHead ? ', seen' : ''})`, { inHead, note });
     if (L === 'phone-land') {
       check(s.upright === 'held', 'phone-land PH2: opened sideways, the room is held upright', s);
       // 0.9.97.135 (B2 on .132): the strip shows, "▶ Back to video" under it (never over the player) goes back to the

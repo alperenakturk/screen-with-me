@@ -167,7 +167,9 @@ export function createGameStage(opts: StageOptions) {
 
   const titleText = el('b', { class: 'game-stage-title-text' });
   const titleIcon = el('span', { class: 'game-stage-title-icon', 'aria-hidden': 'true' });
-  const title = el('span', { class: 'game-stage-title' }, titleIcon, titleText);
+  // GP1: the phone's "Video paused for the game" line takes the title's place for a moment (the label redraws leave it).
+  const titleNote = el('b', { class: 'game-stage-title-text game-paused-note', role: 'status', hidden: '' });
+  const title = el('span', { class: 'game-stage-title' }, titleIcon, titleText, titleNote);
   // Head buttons: icon + text (icon only on phones).
   const headButton = (glyph: string, cls = '') => {
     const text = el('span', { class: 'game-head-text' });
@@ -1204,7 +1206,15 @@ export function createGameStage(opts: StageOptions) {
     // player: YouTube's rules).
     const note = () => flashHint(head, t('game.pausedForGame'), 2800, true);
     if (!stage.classList.contains('in-tab')) return note();
-    requestAnimationFrame(() => requestAnimationFrame(() => head.getBoundingClientRect().height > 0 && note()));
+    // GP1 (first look): in a phone's Games tab a note under the head covered the game's own title and buttons, so the
+    // head's title line says it for the same 2.8 s instead (it covers nothing there).
+    titleNote.textContent = `⏸ ${t('game.pausedForGame')}`;
+    titleNote.hidden = false;
+    titleText.hidden = true;
+    setTimeout(() => {
+      titleNote.hidden = true;
+      titleText.hidden = false;
+    }, 2800);
   }
 
   /** Leave my table (for me only): the game closes, the room learns I'm no longer there. */
