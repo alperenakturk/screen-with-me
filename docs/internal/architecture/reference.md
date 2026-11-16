@@ -2500,6 +2500,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   neither ("the cause is likely the code or the test"). After a restart (the first two), the file's one retry waits
   until the canaries have been quiet for 45 s (at most 4 min) so it doesn't land in the same wave; after "likely the
   code" it retries at once.
+  **16 Nov 2026 (runs 43938199779, 43941157478; no tag after .154):** not overlapping deploys (the concurrency group
+  serialises main's runs; the next deploy began after the previous live e2e ended). Canary drops came 0.5–12 min after
+  the deploy, *after* `wait-live.mjs`'s quiet spell, only while the shards ran, and each shard saw drops only on its
+  own rooms (shard 1 none while 2 and 3 had many), also during pure limit waits: object restarts on Cloudflare's side
+  near each runner, not a test's load. Every file a drop hit passed on its retry; the runs were red because of files
+  that failed **with no drop at all**, in tests that read another person's state without waiting (or used fixed sleeps
+  / absolute timings) and broke when live latency rose in that window: `sea-many` / `duel` (a player's or the
+  watcher's last state checked right after Alex's), `knock` (fixed 800 ms sleeps), `fallback` (a signal sent before
+  the server had Alice in voice: the room relays signals only to someone in voice), `shorts-start` (upper bounds
+  now allow one measured round trip). Rule for live e2e files: wait for what another connection should see
+  (`until` / `wait`), never a fixed sleep, and measure timings against the round trip.
   **For people, not only tests:** a deploy restarts room and game objects one at a time for several minutes (seen 2.5–5
   min after it, once 10–12 min), so a real person in a room during a release can see one reconnect too (the site
   reconnects by itself). Every release deploys, so an owner's hand test right after a release may meet one; that is a

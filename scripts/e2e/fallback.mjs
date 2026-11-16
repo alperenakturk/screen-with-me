@@ -137,7 +137,9 @@ ok(tooMany.status === 400, 'More than 40 messages in one request are refused');
 // 4) Voice signalling between a WebSocket and an HTTP person.
 alice.send({ t: 'voice', on: true, mic: true });
 await bob.send({ t: 'voice', on: true, mic: true });
-await alice.next((m) => m.t === 'members' && m.members.find((x) => x.name === 'Bob')?.voice, 'Bob in voice');
+// Both in voice before a signal: the server relays a signal only to someone in voice, and Alice's WebSocket `voice`
+// can reach the room after Bob's HTTP requests (a slow live run, 16 Nov 2026: "timeout waiting for signal").
+await alice.next((m) => m.t === 'members' && ['Alice', 'Bob'].every((n) => m.members.find((x) => x.name === n)?.voice), 'Alice and Bob in voice');
 await bob.send({ t: 'signal', to: wa.you, data: { candidate: { candidate: 'candidate:http', sdpMid: '0', sdpMLineIndex: 0 } } });
 const sig = await alice.next((m) => m.t === 'signal', 'signal');
 ok(sig.from === wb.you && sig.data.candidate.candidate === 'candidate:http', 'Voice signal HTTP → WebSocket');
