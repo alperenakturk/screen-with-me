@@ -2448,6 +2448,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   video's edge, cinema mode's SPOT_HOME, the tablet keeping clear of the chat). Its findings so far: YouTube + cinema
   put the head below the screen (W, .114) and the room's intro took the first click on a game (W, .116). In CI as the
   `state-matrix` job (its own: `game-windows` + it would pass 10 min).
+  Shared pointer (16 Nov 2026, the "lights up" / "dragging moves" failures now and then): the three headful windows
+  share one X pointer, so a window opening, closing or going ⛶ elsewhere sends a page a buttonless pointer move at the
+  real cursor and can take its pointer capture. The harness opens and closes windows and drives the real mouse in turn
+  (`withMouse`, the front window), and tries a hover a window-system event took away up to three times. The drag
+  (`stage.ts`) no longer ends on `lostpointercapture`: it takes the capture back on the next move with the button held,
+  ignores buttonless moves and ends on `pointerup` / `pointercancel` or the next press; the matrix drops the head's
+  capture after the drag's first step to prove it.
   **Tags (card TAG1):** the `tag` job runs `scripts/tag-live.mjs`: this run's version at this run's commit, and a catch-up
   for any earlier version (from `FIRST_TAGGED` 0.9.97.70) whose commit has a successful `deploy` job but no tag. Its token
   has `contents: write` + `actions: read`, never `workflows`: GitHub refuses it a tag on a commit whose
