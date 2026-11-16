@@ -57,6 +57,7 @@ import { labOnRequest, labRemembered } from './lab.ts';
 import { PLANT_IDS } from '@swm/shared/games/garden';
 import { RateLimiter } from './rate-limit.ts';
 import { ChatStore } from '@swm/shared/chat-store';
+import { ChatOwners, canDeleteChat, deletedChat } from '@swm/shared/chat-delete';
 import { closeTracks, newSession, publish, pull, realtimeConfig, renegotiate } from './realtime.ts';
 import { resolveTitle } from './titles.ts';
 import { recordUsage } from './usage.ts';
@@ -263,6 +264,8 @@ export class Room extends DurableObject<Env> {
    * Only its newest two pages are in memory (`chatStore.recent`); older pages are read when someone scrolls up.
    */
   private readonly chatStore = new ChatStore(this.ctx.storage);
+  /** Card MSG1: who sent each message (a short tag of the browser key), server-only, for "Delete for everyone". */
+  private readonly chatOwners = new ChatOwners(this.ctx.storage);
   /**
    * Odanın özel emojileri (kimlik → data: adresi), eklenme sırasıyla. Her biri depoda ayrı
    * anahtarda (`sticker:<id>`; tek değer en fazla 128 KB), sıra `stickers` listesinde.
@@ -350,6 +353,8 @@ export class Room extends DurableObject<Env> {
   private readonly chatLimit = new RateLimiter(8, 1);
   /** CH1: older chat pages one person may ask for (a page a second, a short burst for a quick scroll). */
   private readonly chatOlderLimit = new RateLimiter(4, 1);
+  /** MSG1: deletes per person (a few at once, then one every 2 s). */
+  private readonly chatDeleteLimit = new RateLimiter(5, 0.5);
   /** Sesli sohbetin bağlantı işleri (her yeni dinlenen kişi için birkaç istek). */
   private readonly rtcLimit = new RateLimiter(30, 3);
   /** Eşler arası seste bağlantı mesajları (her eş için teklif/cevap + birkaç ağ adayı). */
@@ -386,6 +391,7 @@ export class Room extends DurableObject<Env> {
       const saved = await ctx.storage.get<RoomData>('room');
       if (saved && Array.isArray(saved.queue)) this.room = saved;
       await this.chatStore.load();
+      await this.chatOwners.load();
       this.voters = (await ctx.storage.get<Record<string, string[]>>('voters')) ?? {};
       const stickerIds = (await ctx.storage.get<string[]>('stickers')) ?? [];
       this.stickerOwners = (await ctx.storage.get<Record<string, string>>('stickerOwners')) ?? {};
@@ -855,6 +861,9 @@ export class Room extends DurableObject<Env> {
         this.sendTo(ws, { t: 'chat-older', page: message.page, messages: older.messages, ...(older.more === undefined ? {} : { more: older.more }) });
         return;
       }
+      case 'chat-delete':
+        await this.deleteChat(ws, attachment, me, message.id);
+        return;
       case 'recaps':
         this.sendTo(ws, { t: 'recaps', recaps: this.recaps.filter((r) => Date.now() - r.to < RECAP_MAX_AGE_MS) });
         return;
@@ -875,11 +884,13 @@ export class Room extends DurableObject<Env> {
           image = await this.storeChatImage(message.image);
         }
         if (message.to !== undefined) {
-          this.sendPrivate(ws, me, message.to, message.text);
+          await this.sendPrivate(ws, me, message.to, message.text);
           return;
         }
         this.stats.chat(keyOf(attachment), me);
-        await this.addChat({ id: newId(), text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
+        const id = newId();
+        await this.chatOwners.add(id, { k: await this.ownerTag(attachment) });
+        await this.addChat({ id, text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
         // IMG2: the alarm drops the image when its time is up.
         if (image) await this.scheduleAlarm();
         return;
@@ -1043,6 +1054,7 @@ export class Room extends DurableObject<Env> {
       await this.ctx.storage.deleteAll();
       this.room = initialRoom(now);
       this.chatStore.reset();
+      this.chatOwners.reset();
       this.stickers.clear();
       this.stickerOwners = {};
       this.stickerDay = { day: 0, count: 0 };
@@ -1199,11 +1211,7 @@ export class Room extends DurableObject<Env> {
    * can't be turned back into the id or linked to the same person in another room.
    */
   private async personKeyFor(attachment: Attachment): Promise<string> {
-    this.personSalt ??= (await this.ctx.storage.get<string>('personSalt')) ?? null;
-    if (!this.personSalt) {
-      this.personSalt = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
-      await this.ctx.storage.put('personSalt', this.personSalt);
-    }
+    await this.salt();
     // R16 / R17: a person is the browser *and* the name (as kicks are: `banKey`): two names in one browser are two
     // people (the owner's "alperen" and "alperen 2" in one Chrome), the same name in its tabs / TV stays one.
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${this.personSalt}|${keyOf(attachment)}|n:${attachment.name ?? ''}`));
@@ -2294,7 +2302,7 @@ export class Room extends DurableObject<Env> {
    * R13: a private message goes to the person's own connections (not their TV) and back to mine; never into the
    * room's history, the recap or anyone else's socket.
    */
-  private sendPrivate(ws: WebSocket, me: Member, toId: string, text: string): void {
+  private async sendPrivate(ws: WebSocket, me: Member, toId: string, text: string): Promise<void> {
     // R16: by person (browser + name), so another name in the same browser is someone else, not myself.
     const mine = (ws.deserializeAttachment() as Attachment).pk;
     const target = this.joined().find((a) => a.id === toId && !a.tv);
@@ -2304,11 +2312,65 @@ export class Room extends DurableObject<Env> {
     }
     const theirs = target.pk;
     const message: ChatMessage = { id: newId(), text, by: me, at: Date.now(), to: memberOf(target) };
+    // MSG1: only who sent it and the two person keys are kept (never the text), so the sender can delete it.
+    await this.chatOwners.add(message.id, { k: await this.ownerTag(ws.deserializeAttachment() as Attachment), p: [mine, theirs ?? ''] });
     for (const socket of this.openSockets()) {
       const a = socket.deserializeAttachment() as Attachment | null;
       if (!a?.name || a.tv || a.knock) continue;
       if (a.pk === mine || a.pk === theirs) this.sendTo(socket, { t: 'chat', message });
     }
+  }
+
+  /**
+   * Card MSG1: "Delete for everyone". The sender may delete their message, the (acting) host anyone's in the room's
+   * chat (not a private one). The text and image leave the stored history (the message is replaced, not hidden) and
+   * everyone gets the line that stands in its place; a private one goes only to its two people.
+   */
+  private async deleteChat(ws: WebSocket, attachment: Attachment, me: Member, id: string): Promise<void> {
+    if (!this.chatDeleteLimit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate_limited' });
+    const owner = this.chatOwners.get(id);
+    const tag = await this.ownerTag(attachment);
+    if (owner?.p) {
+      if (owner.k !== tag) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+      // Private messages are never stored: the clients merge this line into the bubble they hold.
+      const line: ChatMessage = { id, text: '', by: me, at: Date.now(), deleted: { by: me } };
+      for (const socket of this.openSockets()) {
+        const a = socket.deserializeAttachment() as Attachment | null;
+        if (!a?.name || a.tv || a.knock) continue;
+        if (a.pk && owner.p.includes(a.pk)) this.sendTo(socket, { t: 'chat-deleted', message: line });
+      }
+      return;
+    }
+    const isHost = this.isHost(ws);
+    let refused = false;
+    const old = await this.chatStore.replace(id, (m) => {
+      if (m.deleted || !canDeleteChat(owner, tag, isHost, true)) {
+        refused = !m.deleted;
+        return m;
+      }
+      return deletedChat(m, me);
+    });
+    if (refused) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+    if (!old || old.deleted) return;
+    this.broadcast({ t: 'chat-deleted', message: deletedChat(old, me) });
+    if (old.image) await this.pruneChatImages();
+  }
+
+  /** The room's random salt for person keys and owner tags (made once, kept in storage). */
+  private async salt(): Promise<string> {
+    this.personSalt ??= (await this.ctx.storage.get<string>('personSalt')) ?? null;
+    if (!this.personSalt) {
+      this.personSalt = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, '0')).join('');
+      await this.ctx.storage.put('personSalt', this.personSalt);
+    }
+    return this.personSalt;
+  }
+
+  /** MSG1: a short tag of the browser key (salted like `personKeyFor`, without the name: a rename keeps my messages). */
+  private async ownerTag(attachment: Attachment): Promise<string> {
+    await this.salt();
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${this.personSalt}|owner|${keyOf(attachment)}`));
+    return [...new Uint8Array(digest).slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   private async addChat(message: ChatMessage): Promise<void> {
@@ -2320,7 +2382,7 @@ export class Room extends DurableObject<Env> {
   private async onLeave(leaving: WebSocket): Promise<void> {
     const attachment = leaving.deserializeAttachment() as Attachment | null;
     if (attachment) {
-      for (const limiter of [this.commandLimit, this.chatLimit, this.chatOlderLimit, this.rtcLimit, this.signalLimit, this.tvLimit]) limiter.forget(attachment.id);
+      for (const limiter of [this.commandLimit, this.chatLimit, this.chatOlderLimit, this.chatDeleteLimit, this.rtcLimit, this.signalLimit, this.tvLimit]) limiter.forget(attachment.id);
       // Kişi başı tutulanlar: aynı tarayıcının başka bağlantısı kalmadıysa unutulur.
       const key = keyOf(attachment);
       if (!this.joined(leaving).some((other) => keyOf(other) === key)) {
@@ -2426,7 +2488,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'chat-older' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'chat-older' | 'chat-delete' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

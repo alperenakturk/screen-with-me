@@ -173,6 +173,28 @@ const SCREENS = {
       await wait(800);
     },
   },
+  'chat-delete': {
+    what: 'Card MSG1: the chat with a deleted message\'s muted line ("Alex deleted a message") and the ⋯ message menu open on my newest message ("🗑 Delete for everyone")',
+    room: true,
+    after: async (p) => {
+      const say = async (text) => {
+        await p.fill('#chat-input', text);
+        await p.press('#chat-input', 'Enter');
+        await p.waitForFunction((t) => [...document.querySelectorAll('#chat-list .chat-text')].some((e) => e.textContent === t), text);
+      };
+      await say('Oops, wrong link');
+      await p.evaluate(() => window.__swmLab.run('chat.delete'));
+      await p.waitForSelector('#chat-list .chat-deleted');
+      await say('Hello everyone!');
+      await say('Movie night at 9?');
+      await p.locator('#chat-input').blur();
+      const more = p.locator('#chat-list .chat-line.me .chat-more').last();
+      await more.scrollIntoViewIfNeeded();
+      await more.click({ force: true });
+      await p.waitForSelector('.chat-menu:not([hidden])');
+      await wait(300);
+    },
+  },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
       `settings-${sec}`,
@@ -183,6 +205,7 @@ const SCREENS = {
 /** Which screens a changed file shows (first match wins; a file nobody maps shows the main room screens). */
 const SCREEN_FOR = [
   [/^docs\/|\.md$|^\.github\/|^scripts\/(?!shots)/, []],
+  [/^apps\/web\/src\/ui\/chat\.ts$/, ['chat-delete', 'room']],
   [/^apps\/web\/public\/help/, ['help']],
   [/^apps\/web\/public\/privacy/, ['privacy']],
   [/^apps\/web\/public\/terms/, ['terms']],

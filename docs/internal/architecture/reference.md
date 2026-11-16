@@ -2061,6 +2061,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     chat out in a busy room). Test Lab `chat.history` (loaded, activity lines, older page) and lab-only `chat.fill`
     (250 numbered messages, `{t:'lab', op:'chat-fill'}`); e2e `chat-history.mjs`; harness `scripts/harness/chat-history`
     (CI `site`).
+  - **Delete a chat message for everyone (card MSG1):** `{t:'chat-delete', id}` (optional new types, no protocol
+    bump). The server keeps who sent each message in `ChatOwners` (`packages/shared/src/chat-delete.ts`, storage
+    `chatOwners`, newest `CHAT_OWNERS_MAX` = 1050 entries, never sent to clients): `k` = a salted 16-hex tag of the
+    browser key (`ownerTag`, without the name, so a rename or reload keeps ownership), `p` = the two person keys of a
+    private message (its text is never kept). `canDeleteChat`: the sender always; the (acting) host anyone's room
+    message, never a private one; a message with no owner record (sent before MSG1) only the host. A room message is
+    replaced in its page (`ChatStore.replace`, older pages read from storage) by `deletedChat`: `text: ''`, no `image`,
+    `deleted: {by}` (who deleted it), then `{t:'chat-deleted', message}` goes to everyone and unused images are pruned;
+    a private one sends a bare line (`id`, `deleted`) only to its two people, whose clients keep their bubble's
+    sender, recipient and time. Refused: `not_host`; a second delete does nothing; `chatDeleteLimit` 5 burst, 1 per
+    2 s (`rate_limited`). Client (`ui/chat.ts`): `⋯` (`.chat-more`, shown on hover / focus) on lines I may delete
+    (`isMe`: my member id or my person key; `amHost` for others' room messages) opens `.chat-menu` ("🗑 Delete for
+    everyone", `menuKeys`), a long press (500 ms touch timer, or `contextmenu` from touch) opens it on a phone; a
+    question (`confirmDialog`), then the send. A deleted message draws as `li.chat-deleted` ("Alex deleted a message"
+    / "Alex (host) deleted Sam's message", not a `.chat-line`, so unread counters skip it) and breaks bubble grouping.
+    Test Lab `chat.delete` (deletes my newest message, no question). e2e `chat-delete.mjs`; harness
+    `scripts/harness/chat-delete` (CI `site`); shots screen `chat-delete`.
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count

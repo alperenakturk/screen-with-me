@@ -1,0 +1,1 @@
+- Chat: delete a message for everyone. Open ⋯ on your message (on a phone, press and hold it) and pick "🗑 Delete for everyone"; everyone sees a short "Alex deleted a message" line in its place. The room's host can delete anyone's message. Private messages can be deleted by their sender.

@@ -7,6 +7,8 @@ import { load, save } from '../storage.ts';
 import { linkify } from './links.ts';
 import { setIcon } from './icons.ts';
 import { isPhoneLayout } from '../device.ts';
+import { menuKeys } from './menu-keys.ts';
+import { loadChunk } from './lazy.ts';
 
 /**
  * Card CH1: how much of the room's chat stays loaded here (the server keeps at least 1,000 messages; older pages load on
@@ -35,6 +37,10 @@ export function createChatPanel(
   openLink: (url: string) => void,
   /** SAFE1: someone I blocked for me; their lines stay in memory (an unblock shows them again) but are not drawn. */
   isBlocked: (by: Member) => boolean = () => false,
+  /** MSG1: I am the (acting) host now (I may delete others' room messages). */
+  amHost: () => boolean = () => false,
+  /** MSG1: this sender is me (this tab, or my earlier tab: the same person key). */
+  isMe: (by: Member) => boolean = (by) => by.id === myId(),
 ) {
   const list = root.querySelector<HTMLUListElement>('#chat-list')!;
   const form = root.querySelector<HTMLFormElement>('#chat-form')!;
@@ -212,10 +218,16 @@ export function createChatPanel(
       return el('li', { class: 'chat-system' }, el('span', {}, el('time', {}, time(line.at)), ' ', line.text()));
     }
     const { message } = line;
+    if (message.deleted) {
+      const own = personOf(message.deleted.by) === personOf(message.by);
+      const text = own ? t('chat.deleted', { name: message.by.name }) : t('chat.deletedByHost', { host: message.deleted.by.name, name: message.by.name });
+      return el('li', { class: `chat-deleted${message.to ? ' private' : ''}`, 'data-id': message.id }, el('span', {}, el('time', {}, time(message.at)), ' ', text));
+    }
     const mine = message.by.id === myId();
     const priv = message.to;
     const cont =
       prev?.kind === 'chat' &&
+      !prev.message.deleted &&
       prev.message.by.id === message.by.id &&
       prev.message.to?.id === priv?.id &&
       message.at - prev.message.at < GROUP_MS;
@@ -240,10 +252,11 @@ export function createChatPanel(
     const meta = mine
       ? el('div', { class: 'chat-meta' }, ...(label ? [label] : []), el('time', {}, time(message.at)))
       : el('div', { class: 'chat-meta' }, label ?? nameButton(), el('time', {}, time(message.at)));
+    const more = deletable(message) ? [moreButton(message)] : [];
     return el(
       'li',
-      { class: `chat-line${mine ? ' me' : ''}${cont ? ' cont' : ''}${priv ? ' private' : ''}`, title: time(message.at) },
-      ...(mine ? [] : [avatarNode(message.by.avatar, 'chat-avatar')]),
+      { class: `chat-line${mine ? ' me' : ''}${cont ? ' cont' : ''}${priv ? ' private' : ''}`, title: time(message.at), 'data-id': message.id },
+      ...(mine ? more : [avatarNode(message.by.avatar, 'chat-avatar')]),
       el(
         'div',
         { class: 'chat-body' },
@@ -251,7 +264,116 @@ export function createChatPanel(
         ...(message.image ? [imageNode(message.image)] : []),
         ...(message.text ? [el('p', { class: 'chat-text' }, ...linkify(message.text, openLink))] : []),
       ),
+      ...(mine ? [] : more),
     );
+  }
+
+  // MSG1: "Delete for everyone" in a message's menu (⋯ on hover or focus on a computer, a long press on a phone): my
+  // own messages, and anyone's room message for the host. The server checks again and has the last word.
+  function deletable(message: ChatMessage): boolean {
+    if (message.deleted) return false;
+    return isMe(message.by) || (amHost() && !message.to);
+  }
+  const menuItem = el('button', { type: 'button', role: 'menuitem', class: 'chat-menu-item' });
+  const menu = el('div', { class: 'chat-menu', role: 'menu', hidden: '' }, menuItem);
+  document.body.append(menu);
+  let menuFor: { message: ChatMessage; button: HTMLElement } | null = null;
+  const closeMenu = () => {
+    menu.hidden = true;
+    menuFor?.button.setAttribute('aria-expanded', 'false');
+    menuFor?.button.closest('.chat-line')?.classList.remove('menu-open');
+    menuFor = null;
+  };
+  // Esc gives the focus back to the ⋯ that opened the menu (menuKeys focuses this stand-in after closing).
+  let opener: HTMLElement | null = null;
+  const keys = menuKeys(menu, { focus: () => opener?.isConnected && opener.focus() } as unknown as HTMLElement, closeMenu);
+  // The menu opens under its anchor (the ⋯, or the bubble after a long press) and stays inside the chat panel, so it
+  // never reaches over the video (QA1 first look).
+  // The menu's and ⋯'s styles are a lazy stylesheet (the room page's CSS budget), asked for as the chat starts.
+  const menuCss = loadChunk(() => import('./chat-menu-css.ts'));
+  async function openMenu(message: ChatMessage, button: HTMLElement, anchor: HTMLElement = button): Promise<void> {
+    closeMenu();
+    await menuCss;
+    if (!button.isConnected) return;
+    menuFor = { message, button };
+    opener = button;
+    menuItem.textContent = t('chat.delete');
+    menu.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    button.closest('.chat-line')?.classList.add('menu-open');
+    const r = anchor.getBoundingClientRect();
+    const box = list.getBoundingClientRect();
+    const w = menu.offsetWidth;
+    const h = menu.offsetHeight;
+    const mine = !!button.closest('.chat-line.me');
+    const min = Math.max(8, box.left + 4);
+    const max = Math.min(window.innerWidth - 8, box.right - 4) - w;
+    const left = Math.max(min, Math.min(max, mine ? r.right - w : r.left));
+    const top = r.bottom + 4 + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 4) : r.bottom + 4;
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    keys.focusFirst();
+  }
+  function moreButton(message: ChatMessage): HTMLElement {
+    const b = el('button', { type: 'button', class: 'chat-more', 'aria-haspopup': 'menu', 'aria-expanded': 'false', 'aria-label': t('chat.more'), title: t('chat.more') }, '⋯');
+    b.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (menuFor?.button === b) closeMenu();
+      else void openMenu(message, b);
+    });
+    return b;
+  }
+  menuItem.addEventListener('click', () => {
+    const target = menuFor;
+    closeMenu();
+    if (target) void askDelete(target.message, target.button);
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (menuFor && !menu.contains(event.target as Node) && !menuFor.button.contains(event.target as Node)) closeMenu();
+  });
+  list.addEventListener('scroll', () => menuFor && closeMenu(), { passive: true });
+  window.addEventListener('resize', () => menuFor && closeMenu());
+  async function askDelete(message: ChatMessage, focusBack: HTMLElement): Promise<void> {
+    const yes = await confirmDialog({ icon: '🗑', title: t('chat.deleteTitle'), text: t('chat.deleteText'), yes: t('chat.deleteYes') });
+    if (yes) send({ t: 'chat-delete', id: message.id });
+    else if (focusBack.isConnected) focusBack.focus();
+  }
+  /** The message of a drawn line (by its `data-id`), when I may delete it. */
+  const deletableAt = (target: EventTarget | null): { message: ChatMessage; line: HTMLElement } | null => {
+    const line = (target as Element | null)?.closest?.<HTMLElement>('.chat-line[data-id]');
+    const found = line && lines.find((l): l is Extract<Line, { kind: 'chat' }> => l.kind === 'chat' && l.message.id === line.dataset.id);
+    return found && line && deletable(found.message) ? { message: found.message, line } : null;
+  };
+  // A long press on a phone (Android fires contextmenu; iOS doesn't, so a 500 ms touch timer opens it too).
+  let press: { timer: number; x: number; y: number } | null = null;
+  const cancelPress = () => {
+    if (press) clearTimeout(press.timer);
+    press = null;
+  };
+  list.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch') return;
+    const hit = deletableAt(event.target);
+    if (!hit) return;
+    const { clientX: x, clientY: y } = event;
+    press = { x, y, timer: window.setTimeout(() => {
+      press = null;
+      openLong(hit);
+    }, 500) };
+  });
+  list.addEventListener('pointermove', (event) => {
+    if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 10) cancelPress();
+  });
+  for (const type of ['pointerup', 'pointercancel'] as const) list.addEventListener(type, cancelPress);
+  list.addEventListener('contextmenu', (event) => {
+    if (!(event as PointerEvent).pointerType || (event as PointerEvent).pointerType === 'mouse') return;
+    const hit = deletableAt(event.target);
+    if (!hit) return;
+    event.preventDefault();
+    cancelPress();
+    openLong(hit);
+  });
+  function openLong(hit: { message: ChatMessage; line: HTMLElement }): void {
+    void openMenu(hit.message, hit.line.querySelector<HTMLElement>('.chat-more') ?? hit.line, hit.line.querySelector<HTMLElement>('.chat-body') ?? hit.line);
   }
 
   function scrollToEnd(): void {
@@ -362,6 +484,23 @@ export function createChatPanel(
     add(message: ChatMessage): void {
       push({ kind: 'chat', message }, message.by.id !== myId());
     },
+    /**
+     * MSG1: a message was deleted: its line becomes "Alex deleted a message". A private one arrives without its
+     * details (they are never stored), so the bubble I hold keeps its sender, recipient and time.
+     */
+    deleted(message: ChatMessage): void {
+      const line = lines.find((l): l is Extract<Line, { kind: 'chat' }> => l.kind === 'chat' && l.message.id === message.id);
+      if (!line || line.message.deleted || !message.deleted) return;
+      if (menuFor?.message.id === message.id) closeMenu();
+      const { image: _image, ...kept } = line.message;
+      line.message = line.message.to ? { ...kept, text: '', deleted: message.deleted } : message;
+      render(true);
+    },
+    /** MSG1 Test Lab: my newest message I may delete (null: none), and how many lines read "deleted". */
+    deleteState(): { mine: string | null; deleted: number } {
+      const mine = [...lines].reverse().find((l): l is Extract<Line, { kind: 'chat' }> => l.kind === 'chat' && !l.message.deleted && isMe(l.message.by));
+      return { mine: mine?.message.id ?? null, deleted: lines.filter((l) => l.kind === 'chat' && l.message.deleted).length };
+    },
     /** Data of a chat image (it may arrive after its message: the placeholder is replaced). */
     setImage(id: string, data: string): void {
       images.set(id, data);
@@ -386,7 +525,7 @@ export function createChatPanel(
     /** SAFE1: the last chat lines this person sent (for a report), oldest first; pictures read as 🖼️. */
     linesBy(member: Member, count: number): string[] {
       return lines
-        .filter((line): line is Extract<Line, { kind: 'chat' }> => line.kind === 'chat' && personOf(line.message.by) === personOf(member))
+        .filter((line): line is Extract<Line, { kind: 'chat' }> => line.kind === 'chat' && !line.message.deleted && personOf(line.message.by) === personOf(member))
         .slice(-count)
         .map((line) => (line.message.image ? `🖼️ ${line.message.text}`.trim() : line.message.text));
     },

@@ -426,6 +426,11 @@ export interface ChatMessage {
    * never kept in the room's history and never reaches anyone else, the host included.
    */
   to?: Member;
+  /**
+   * Card MSG1: the message was deleted for everyone (its text and image are gone from the room's history; `text` is
+   * empty). `by` is who deleted it: the sender, or the (acting) host for someone else's. Old clients ignore it.
+   */
+  deleted?: { by: Member };
 }
 
 export type PlaybackAction = 'load' | 'next' | 'play' | 'pause' | 'seek' | 'rate';
@@ -483,6 +488,8 @@ export type ClientMessage =
   | { t: 'recaps' }
   /** Card CH1: one older page of the room's chat (the number from `welcome.chatMore` or the last `chat-older`). */
   | { t: 'chat-older'; page: number }
+  /** Card MSG1: delete a chat message for everyone (my own, or anyone's when I am the (acting) host). */
+  | { t: 'chat-delete'; id: string }
   /** Film sayfasından odaya dönüyorum: filmdeki diğerlerine "sen de dön" diye sorulur. */
   | { t: 'home' }
   /** Snack Bar served a customer while the film plays: a coin for the room's shared tip jar (side games 2, pick 5). */
@@ -673,6 +680,8 @@ export type ServerMessage =
   | { t: 'chat'; message: ChatMessage }
   /** Data of a chat image (sent before its message, and one by one after `welcome` for the history). */
   | { t: 'chat-image'; id: string; data: string }
+  /** Card MSG1: a chat message was deleted; `message` is what now stands in its place (`deleted` set, no text). */
+  | { t: 'chat-deleted'; message: ChatMessage }
   | { t: 'error'; code: ErrorCode }
   /** Relayed from my paired TV / my phone (`TvOp`); `present` comes from the server: my TV joined (true) or left. */
   | { t: 'tv'; op: TvOp | 'present' | 'linked'; value?: number | boolean }
@@ -1034,6 +1043,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'make-host':
     case 'unban':
     case 'unpin':
+    case 'chat-delete':
       return isItemId(m.id) ? { t: m.t, id: m.id } : null;
     case 'ready':
       if (typeof m.ready !== 'boolean') return null;

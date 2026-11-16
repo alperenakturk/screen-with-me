@@ -11,7 +11,8 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (fresh session 16 Nov, evening):
   - [x] SH3 #499, VC1 #501 live in v0.9.97.155, VC3 #502 live in v0.9.97.156 (live e2e green): Done lines, cards in
     `archive/cards-done.md`, hand tests 27u–27x; GMP-b's duplicate 27p renumbered 27p2.
-  - [ ] MSG1 (delete a chat message for everyone; host deletes others'): not started; branch it from main.
+  - [ ] MSG1 (delete a chat message for everyone; host deletes others'): built on `claude/msg1-delete-message` (e2e
+    `chat-delete.mjs`, harness `chat-delete`, QA1 done); PR open → merge, deploy, live e2e, Done line + hand test.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale

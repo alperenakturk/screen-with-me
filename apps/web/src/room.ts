@@ -957,7 +957,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const chat = createChatPanel(app, send, () => myId, (count) => {
     chatBadge.hidden = count === 0;
     chatBadge.textContent = count > 9 ? '9+' : String(count);
-  }, (url) => void openExternalLink(url, () => isShell && postToExtension({ type: 'open-ok' })), (by) => blocks.has(by));
+  }, (url) => void openExternalLink(url, () => isShell && postToExtension({ type: 'open-ok' })), (by) => blocks.has(by), amHost, (by) => {
+    if (by.id === myId) return true;
+    // MSG1: my message from before a reload (another member id, the same person key).
+    const mine = members.find((m) => m.id === myId)?.pk;
+    return !!mine && by.pk === mine;
+  });
   blocks.onChange(() => {
     chat.render();
     people.render();
@@ -976,6 +981,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         run: () => {
           send({ t: 'lab', op: 'chat-fill' });
           return 'sent';
+        },
+      },
+      {
+        // Card MSG1: delete my newest message for everyone (no question asked); JSON of what was sent and how many
+        // lines read "deleted" here.
+        id: 'chat.delete',
+        tab: 'status',
+        run: () => {
+          const { mine, deleted } = chat.deleteState();
+          if (mine) send({ t: 'chat-delete', id: mine });
+          return JSON.stringify({ sent: mine, deleted });
         },
       },
     ],
@@ -1770,6 +1786,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         break;
       case 'chat-older':
         chat.older(message.messages, message.more);
+        break;
+      case 'chat-deleted':
+        chat.deleted(message.message);
         break;
       case 'chat': {
         const { by } = message.message;

@@ -103,6 +103,28 @@ export class ChatStore {
     return { messages, ...(page > this.meta.first ? { more: page - 1 } : {}) };
   }
 
+  /**
+   * Card MSG1: replaces the message with this id wherever its page is (the newest pages first, then older ones from
+   * storage) and rewrites only that page (not when `change` returns the message itself). Returns the message as it was, or null when it is not kept (any more).
+   */
+  async replace(id: string, change: (message: ChatMessage) => ChatMessage): Promise<ChatMessage | null> {
+    for (let page = this.meta.last; page >= this.meta.first; page--) {
+      const messages =
+        page === this.meta.last ? this.lastPage : page === this.meta.last - 1 ? this.prevPage : ((await this.kv.get<ChatMessage[]>(chatPageKey(page))) ?? []);
+      const at = messages.findIndex((m) => m.id === id);
+      if (at < 0) continue;
+      const old = messages[at]!;
+      const changed = change(old);
+      if (changed === old) return old;
+      const next = messages.map((m, i) => (i === at ? changed : m));
+      if (page === this.meta.last) this.lastPage = next;
+      else if (page === this.meta.last - 1) this.prevPage = next;
+      await this.kv.put(chatPageKey(page), next);
+      return old;
+    }
+    return null;
+  }
+
   /** How many messages are kept (pages before the last are full). */
   get count(): number {
     return (this.meta.last - this.meta.first) * CHAT_PAGE_SIZE + this.lastPage.length;
