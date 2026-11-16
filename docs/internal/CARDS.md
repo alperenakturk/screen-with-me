@@ -37,19 +37,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 (see `STATUS.md` "Task queue")
 
-### CR2. YouTube Music playlists and albums into the queue (Research, 15 Nov 2026; owner's pick 17 Nov: "add it if easy"; lane A, after MSG1)
-- Why: `music.youtube.com/watch?v=` already plays (`media.ts` accepts the host), but playlist / album links don't;
-  SyncUp lists YouTube Music as a no-extension source (`research/competitors/no-extension-sources.md`).
-- Done when: a `music.youtube.com/playlist?list=` (and `browse/` album link where it resolves to a playlist id) adds its
-  videos to the queue through the Data API calls we already make (quota counted in the usage book); an
-  embedding-disabled track shows the existing "can't play here" state and is skipped; help says YouTube Music links
-  work; a Test Lab scenario adds a fixture playlist.
-- Tests: unit (link parsing in `media.ts`), e2e with a mocked playlist answer, the owner's real check.
-- Owner's pick: "add it if easy" (Planner chat, 17 Nov 2026).
-- Test Lab hook: `queue.playlist` (three fixture tracks, no YouTube call).
-- Progress (lane A, 16 Nov 2026): built on `claude/cr2-yt-playlists` (`/api/youtube/playlist`, `parsePlaylist`, harness
-  `playlist`); album `browse/` links don't resolve to a playlist id without scraping, so help points to Share → Copy link.
-
 ## Ready
 
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
