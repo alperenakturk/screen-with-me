@@ -2398,3 +2398,79 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Tests: a games-hall timing harness, the snack-bar harnesses.
 - Owner's pick: his message (Planner chat, 15 Nov 2026).
 - Done: branch `claude/gp1-fast-open` (Game Studio, 16 Nov 2026).
+
+### CH1. PRIORITY: chat history kept until the room is deleted (owner, 15 Nov 2026; lane A, right after SH1 item 0/1)
+- Why: the owner and a friend saw their chat "deleted at random". The server keeps only the last 50 messages
+  (`CHAT_HISTORY = 50` in `apps/server/src/room.ts`), so older ones vanish, after a reload or for someone who joins. A
+  one-time room is wiped 24 h after it empties, a saved one after 30 days; that part stays.
+- What:
+  - Keep the chat until the room is deleted: at least the last 1,000 messages. Older ones are dropped quietly only past
+    that cap ("compressed": their images and reactions go first, then the oldest texts).
+  - A Durable Object value is capped at 128 KiB, so store the chat in pages (e.g. 100 messages per key) or in the
+    object's SQLite storage. Never one big array.
+  - On join, send the last 100; scrolling up loads older pages on demand. Rate-limited, `readCapped` rules apply.
+  - Confirm that a deploy or a restart never clears the chat (the storage reload in the constructor). If something
+    else wiped it, say what.
+  - Images keep their current lifetime (IMG2). Message deletion (MSG1) works on the paged store.
+  - The privacy page: chat is kept until the room is deleted (both languages, dated line).
+- Done when:
+  - 1,200 messages in a room: a reload shows the last 100, and scrolling reaches the 1,000th.
+  - The chat survives a deploy (a harness restarts the object) and an empty room within its lifetime.
+  - Test Lab hook `chat.history` (count, pages).
+- Tests: room server unit tests (paging, cap, compaction, restart), e2e reload + scroll back, the owner's hand test.
+- Owner's pick: "don't delete chat unless the room is deleted; maybe compress past some count; you decide" (Planner
+  chat, 15 Nov 2026).
+- Done: #455 (paged chat store, `chat-older`, Test Lab `chat.history`; live as v0.9.97.141) and #474 (chat-history e2e order).
+
+### SR2. A search result plays on a click; a clear "＋ Queue" button adds it (owner, 15 Nov 2026; lane A, with CH1)
+- Why: today a click on a search result's row adds it to the queue, and people expect it to open; "▶ Play now" is the
+  only way to play.
+- What:
+  - A click or tap anywhere on a result row plays it now, the same as "▶ Play now".
+  - Each row gets a small, clearly labelled **"＋ Queue"** button (icon and word, "＋ Sıraya" in Turkish, with a
+    tooltip and aria-label). It adds the video to the queue without playing, with a short "Added to queue" confirmation.
+  - The same rule for every source list (YouTube, Vimeo, Discover, feeds) and on the phone's Search tab. Targets
+    ≥ 44 px on a phone. Keyboard: Enter plays; the button is reachable with Tab.
+- Done when: a click plays, "＋ Queue" queues, and both are clear in EN and TR on a computer and a phone. Test Lab hook
+  `search.results`.
+- Tests: the sources and search harnesses, a phone harness, `check-texts`.
+- **Also in SR2 (owner, 15 Nov 2026): a ♪ TikTok tile in "Where to search".** TikTok gives no search API, so the
+  tile opens TikTok: a new tab on a computer, the TikTok app on a phone. It says "Copy a video's link and come back".
+  When the person comes back, a big "📋 Paste and play" button appears; it reads the clipboard after a tap and asks
+  first if needed. A pasted TikTok plays in the Shorts view, and several links go to the queue. The tile reads
+  "TikTok" in plain text with a generic music-note icon: no TikTok logo without permission (Research
+  `tiktok-shorts.md` §3). No scraping and no extension involvement.
+- Owner's pick: his screenshot and message (Planner chat, 15 Nov 2026); the TikTok tile, option A.
+- Done: #460 (17f4101): rows play on a tap, "＋ Queue" on every result list, ♪ TikTok tile, "📋 Paste and play"; Test Lab `sources.state`.
+
+### GR1. PRIORITY: opening a game must never throw you out of the room and reload the page (owner, 16 Nov 2026; B2 + lane A)
+- Why: the owner sees some games kick him out and reload when he opens them or presses Play. The likely cause is the
+  stale-chunk path: after a deploy, a tab still running the old build asks for a lazy chunk (a game, a panel) whose
+  hashed file is gone, and `main.ts` reloads the page (OFFLINE2). With CI3 batches, deploys are more frequent, so this
+  will happen more.
+- What:
+  - **Confirm the cause first** (B2): reproduce with a tab open across a deploy and open each game; also rule out a game
+    socket error. Report what it was.
+  - **Keep old chunks for a while** (B2, deploy): each deploy also serves the previous builds' hashed assets for at
+    least 24 h (e.g. carry the last builds' `assets/` forward), so an open tab never misses a chunk.
+  - **Never a silent reload mid-room** (lane A, `main.ts` / `loadChunk`): if a chunk is still missing, show a calm
+    "Sidelit was updated · ↻ Refresh" note and reload only on the tap; the room, name and seat come back after it.
+- Done when: a tab open across two deploys opens every game without a reload (harness); a missing chunk shows the note,
+  never reloads by itself; Test Lab hook `app.staleChunk`.
+- Tests: a deploy-across harness (old build → new build, open all games), unit test of the note path.
+- Owner's pick: his message (Planner chat, 16 Nov 2026).
+- Done: #477 (B2: earlier builds' assets kept 7 days) and #476 (lane A: "Sidelit was updated · ↻ Refresh" note, never a silent reload in a room; Test Lab `app.staleChunk`; also the BUD2 phone-room race fix: `scripts/harness/phone-ready.cjs`).
+
+### UI2. Rail ⋯ menu: one compact speed control; "Keep the controls open" starts off (owner, 15 Nov 2026; lane A, after EC1)
+- Why: 12 speed buttons tire the eye; the owner found "Keep the controls open" ticked.
+- What:
+  - **Speed:** one row "⏩ Speed · 1×" instead of the grid. Tapping it opens a small picker: 0.5 / 1 / 1.25 / 1.5 / 2
+    plus − / + (or a slider) for a custom speed from 0.25× to 3× in 0.05 steps. YouTube only plays its own rates, so
+    there the custom value snaps to the nearest one. Same control in the phone ＋ sheet; the menu gets shorter.
+  - **Keep the controls open:** `opt:railPin` must start off for everyone. Check that nothing (a migration, Test Lab,
+    a default) turns it on by itself; if nothing does, the owner's browser saved it once (tell the Planner).
+- Done when: speed row + picker work on YouTube, a file and the extension, synced; a fresh browser has the pin off;
+  Test Lab hook `rail.speed`.
+- Tests: sync-engine scenario for a custom rate, room harness for the menu height, phone ＋ sheet harness.
+- Owner's pick: his message with screenshots (Planner chat, 15 Nov 2026).
+- Done: #469 (bc77a73): one compact "⏩ Speed" row in the rail ⋯ menu, "Keep the controls open" off by default; Test Lab `rail.speed`.
