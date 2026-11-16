@@ -210,7 +210,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   görünümü" in room view: since 0.9.97.137, card SH1, `#shorts-enter` sits in the "Now playing" row beside Next on a
   computer (the toolbar it was in is hidden in rail mode), and a phone's Room tab has `.ph-shorts-back` at the front of
   the strip's tools, shown exactly when `#shorts-enter` is (`phone-room.ts` mirrors its `hidden`); Test Lab
-  `shorts.state` reports the view and the way back; harness `scripts/harness/shorts-back`, CI `site`). View changes use View Transitions (video `view-transition-name: swm-player`; without
+  `shorts.state` reports the view and the way back; harness `scripts/harness/shorts-back`, CI `site`). Speaking ring
+  (SH1 3): `voice.ts` samples every level every 100 ms (the people I hear and, now, my own microphone, so
+  my face rings too; `#voice-people` / camera tiles keep their `.speaking` class), smooths it (rises at once, falls
+  slowly; lit for 600 ms after the last sound) and hands `onSpeak(map)` to `seats.speak()`; `ui/speak-ring.ts`
+  `ringFace()` puts a green ring + glow growing with the level and `scale(1–1.08)` on the seat's `.seat-av` as inline
+  styles (the room CSS budget is full), and only the ring under `prefers-reduced-motion`. Leaving voice clears every
+  ring. `shorts.state` adds `speakers` (names) and `rings` (lit seat faces); harness `scripts/harness/speak-ring`
+  (computer + phone with Chromium's fake microphone, mute, reduce motion, leave), CI `site`. View changes use View Transitions (video `view-transition-name: swm-player`; without
   rendering, no transition after 0.6 s). ↑/↓, PageUp/Down, ▲▼ and the mouse wheel (outside the video, once per 0.9 s):
   ↓ = `next` (not sent when the queue is empty, a note appears), ↑ = `{t:'prev', from}`: the server keeps recently
   played items in `played` (30, in storage), opens the previous one, puts the current one at the head of the queue
@@ -882,7 +889,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   live-compose; `live.ts` makes it on `ensure()`: someone streams, a hover / focus / touch on Share or Watch, a press,
   a signal; until then "not streaming, not watching"), the TikTok / Vimeo / sync-test players, the sound recipes
   (`@swm/shared/sounds`, loaded on the first press; a sound whose recipes come > 300 ms late is dropped, as before),
-  the shortcuts card and the Shorts search list. First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
+  the shortcuts card and the Shorts search list. **The games window (`games/stage.ts`, budget step after BUD2: room JS
+  139.1 → 124.8 kB):** room.ts makes `games/stage-lazy.ts` `createLazyGameStage`, which loads the real stage on a
+  press of any games button (held, then pressed again once it is there), when the room lists a table, at once when the
+  Test Lab is on or this tab was at a game before a reload (`swm:table:<path>`), else on `whenIdle`; calls before that
+  are replayed in order (`membersChanged` only matters once the hall is drawn, so it is dropped). First presses stay instant: `ui/lazy.ts` `whenIdle` fetches the voice
   windows and the stream engine 4 s after the room starts, when the browser is idle. **Load a lazy chunk with
   `loadChunk(() => import('./x.ts'))` and check for null; never chain onto `import()`:** main.ts handles a failed chunk
   (`vite:preloadError`, one reload "for the new version") and Vite then resolves the import to nothing, and a `.then`
@@ -1070,7 +1081,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `{t:'game', kind}`. A room holds one game at a time (`RoomGame {kind, id, by, at}`, storage `game` + opener's
   persistent key; `welcome.game`, on change `{t:'game', game, by?}`); only the opener or the host changes/ends it
   (`{t:'game', end:true}`), others get `game_busy`. The game id is a fresh `newId()` from the room; the game itself
-  runs in the objects below. Site `games/stage.ts`: the game opens in the video's place as a "game stage"
+  runs in the objects below. Site `games/stage.ts` (a lazy chunk behind `games/stage-lazy.ts`, see Room chunk): the game opens in the video's place as a "game stage"
   (`#game-stage`, child of `.player-wrap`: an island in the shell automatically; at ≤860 px moved to body and
   fullscreen `.full`); opens immediately for the opener, others get an "Ali opened XOX · Join / Later" card
   (`#game-invite`), "▶ Videoya dön" minimizes it (connection stays open, a blinking dot on 🎮), a grey chat line.
@@ -2525,3 +2536,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   ⋯ height, `opt:railPin`). Harness `scripts/harness/rail-speed` (CI games-more).
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
+- **"Video ended" card (card EC1):** `ui/end-card.ts` `showNextCard` (from the engine's `onEnded` and the film page's
+  `next`, only when autoNext is off and the queue has more). Outside the Shorts view it is a centered page dialog: a
+  shared `.dialog-backdrop.end-backdrop` on `body` (`fs-layer.ts` lifts it into fullscreen; on the film page it closes
+  the hole like every dialog) with `.end-dialog` ("Video ended" small, the title as plain text clamped to 2 lines, the
+  link only as a 24 px ↗ `.end-link`, Close + ▶ Play next side by side; on a phone a 1fr 1fr grid of 44 px buttons).
+  Focus starts on Play next; Esc, a click outside, Close or Play next close it, and it closes itself after 60 s or when
+  the item changes (`closeNextCard` in `applyState`). The dialog (`openDialog`) and its styles
+  (`ui/end-card.css`) come with the `ui/end-card-css.ts` chunk, loaded when it first opens (room JS and CSS budget). It never appears before a video ended and is a
+  page dialog, never a layer on the YouTube player (RMF). In the Shorts view the old small `.end-card` stays in the
+  notes corner (`placeNotices`, card BH12). Test Lab `endcard.show` (Video tab: opens a sample, run again to read what
+  is open). Harness `scripts/harness/end-card` (CI games-more, with the :5300 webm).

@@ -19,33 +19,27 @@ One handoff per lane or role; each session updates only its own lines and delete
     Test Lab `shorts.state` (the card's "Done when"). Owner hand test: how long the pause before a swiped Short feels.
   - [ ] SH1 item 4 (TikTok small: `vm.`/`vt.` links via the Worker, ♾ window note, mixed-queue swipe harness).
   - [ ] SH3 → VC1 + VC3 → MSG1 (cards in `CARDS.md`).
-- [ ] B2 (session 16 Nov, 15:40):
-  - [x] CI3 closed (measured batch after #482 in its Done line; card in `archive/cards-done.md`).
-  - [ ] SH2 feeds: PR #488 (`claude/sh2-feeds`): shared feed on the room object, ▶ video feed, Queue row, steer window,
-    played-id memory, Test Lab `feed.state`, harness `feed`. Merge-tree clean against lane A's `claude/sh1-ring` and
-    `claude/sh1-start`. Then: merge when green, deploy + live e2e check, Done line, card to archive.
+- [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
+  - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - Game Studio owns the state-matrix hover flake ("1366 garden: a head button lights up under the mouse", main run
-    43886203220).
+  - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
+    `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
 - [ ] Game Studio 2, QZ2: #458 (first press) → #463 (questions, typed answers) → #466 (jokers, tournament), in that
   order; no version bumps (CI3), notes in changelog/next/.
 - [ ] Game Studio 2, WG2: #467 (Window Garden steady, views, pot colours, compost, Water all).
-- [ ] Game Studio (handoff 16 Nov 2026, the old session stopped; a fresh one continues from here):
-  [x] GW2 + GP1 #470 live (v0.9.97.145).
-  [ ] #491 `claude/drag-capture`: state-matrix drag/hover flake (root cause: CI's headful windows share one X pointer;
-  `stage.ts` drag survives `lostpointercapture`; harness `withMouse` + hover retry + capture-drop check) and the
-  game-proportions "text 0 px" flake (`quiz:howSeen` / `sea:howSeen` not set, How to play covered the first table;
-  now set + waits for text). Merge when green, then tell the Planner (lane A's EC1 #465 and #471 wait on it).
-  [ ] #483 `claude/gmp-b-players` (card GMP b, already moved to the archive with "Done: #483"): all built and tested
-  locally (Duel 2–6, Sea Battle 2–6 server + page + chips, e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`,
-  docs, changelog note, hand test 27p, first-look review done); main merged in at 4d0d467. Left: CI green → merge →
-  main's deploy, live e2e and tag → report. Nothing half-done.
-  [ ] Open flakes to look at (seen once on lane A's #489, not reproduced here): games job "Turn turns a picked ship" and
-  "phone: a tap in another corner zooms into that quarter" (Sea Battle harness); game-windows `laptop/sea/float` text
-  0 px is likely the same How-to-play cause #491 fixes.
-  Then: lazy-load `games/stage.ts` (budget step; room JS 138.4/145 kB after BUD2), then card GT1 (tutorials).
+- [ ] Game Studio (session 16 Nov, 16:20; continues the 16 Nov handoff):
+  [ ] #491 `claude/drag-capture`: state-matrix drag/hover (harness `withMouse`) + proportions "text 0 px" fixes (also
+  game-windows `laptop/sea/float`), plus state-based waits:
+  rail-speed's row (the same lines as B2's #488), Sea Turn (settle, each ship once) and phone zoom, Snack special
+  (menu steps, measure once steady). games-resume "never an XOX grid first" did not reproduce (3 runs side by side).
+  Merge when green, then tell lane A (EC1 #465, #471) and the Planner.
+  [ ] #483 `claude/gmp-b-players` (GMP b; e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`): merge main after #491, CI green → merge → deploy, live e2e, tag → hand test
+  27p to the Planner.
+  [ ] #493 `claude/stage-lazy`: games window as a lazy chunk (room JS 139.1 → 124.8 kB). Green → merge after #483.
+  [ ] Then card GT1 (every game already has "?": fuller cards EN + TR, "❓ How to play" in each game's menu, Test Lab
+  `games.tutorial`).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.

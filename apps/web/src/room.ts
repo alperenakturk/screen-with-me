@@ -76,7 +76,7 @@ import { createSeats } from './ui/seats.ts';
 import { createShortsFeed } from './ui/shorts-feed.ts';
 import { createFeedRow } from './ui/feed-row.ts';
 import { createPins } from './ui/pins.ts';
-import { showNextCard } from './ui/end-card.ts';
+import { closeNextCard, showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
@@ -87,7 +87,7 @@ import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
 import { createSettingsDialog, type SettingsSection } from './ui/settings-dialog.ts';
 import { rememberGift, watchFilmEnds } from './games/film-end.ts';
-import { createGameStage } from './games/stage.ts';
+import { createLazyGameStage } from './games/stage-lazy.ts';
 import type { SoloRoom } from '@swm/shared/games/catalog';
 import { createLive } from './ui/live.ts';
 import { createVoice } from './ui/voice.ts';
@@ -1267,7 +1267,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       gift: (to: string, plant: string) => send({ t: 'gift', to, plant }) !== false,
     };
   }
-  const games = createGameStage({
+  const games = createLazyGameStage({
     wrap: $('.player-wrap'),
     button: $<HTMLButtonElement>('#game-btn'),
     menu: $('#game-menu'),
@@ -1893,6 +1893,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
 
     // Video değişti: eskisini kapat, yenisini aç.
     currentItemId = itemId;
+    // Card EC1: a "Video ended" dialog left open closes once the room moves on (someone else started the next one).
+    closeNextCard();
     renderShorts();
     if (state.item && isShortItem(state.item)) {
       // Shorts'tan Shorts'a: yeni video aşağıdan (daha önce oynayansa yukarıdan) kayarak gelir.
@@ -2711,18 +2713,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   /** Bu sekmede oynayan Shorts'lar: yeni video bunlardan biriyse (↑ ile dönüldü) yukarıdan kayarak gelir. */
   const seenShorts: string[] = [];
 
-  // Card SH1: the Shorts view in the Test Lab (the start of the latest Short and who is speaking come with SH1 2 / 3).
+  voice.onSpeak((speak) => seats.speak(speak));
   // Card GR1: a chunk that is gone after a deploy shows "Sidelit was updated · ↻ Refresh" (main.ts), never a reload.
   debugHooks.register('app', () => ({
     commands: [
       {
         id: 'app.staleChunk',
         tab: 'status',
-        title: { en: 'A missing chunk after an update', tr: 'Güncellemeden sonra eksik parça' },
-        help: {
-          en: 'Acts as if a chunk failed to load: the "Sidelit was updated" note shows, the room stays. Run again to read it.',
-          tr: 'Bir parça yüklenemedi gibi davranır: "Sidelit güncellendi" notu çıkar, oda kalır. Tekrar çalıştırınca okur.',
-        },
         run: () => {
           const note = document.getElementById('update-note');
           if (note) return JSON.stringify({ note: note.textContent, inRoom: true });
@@ -2732,6 +2729,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
     ],
   }));
+  // Card SH1: the Shorts view in the Test Lab (the start of the latest Short comes with SH1 2).
   debugHooks.register('shorts', () => ({
     commands: [
       {
@@ -2741,6 +2739,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           JSON.stringify({
             view: shortsOn ? 'shorts' : isShortItem(roomState?.item) ? 'room' : 'none',
             wayBack: !$('#shorts-enter').hidden,
+            speakers: [...voice.speakers()].map((id) => members.find((m) => m.id === id)?.name ?? id),
+            rings: document.querySelectorAll('.seat-av[data-speak]').length,
           }),
       },
     ],

@@ -2536,3 +2536,50 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 - Owner's pick: his message (Planner chat, 15 Nov 2026). He allows extra skills or tools for the word lists. The
   studio says which and why before using them.
 - Done: #483 (Game Studio, 16 Nov 2026): (a) word lists + watchers in 0.9.97.138, (b) 2–6 players for the Duel and Sea Battle.
+
+### SH2. Feeds: ♾ Shorts and ▶ Videos, reachable from the room, steerable, no repeats (owner, 15 Nov 2026; B2, after SH1)
+- Why: the infinite Shorts feed only lives inside the Shorts view, its window is confusing, and a new feed brings back
+  Shorts the room has already watched.
+- What:
+  1. **Reach it from the normal room:** the Queue ("Up next" / Sıra) shows the active ♾ feed as a row (its name and
+     what it follows). It can be paused, resumed and steered there without entering the Shorts view.
+  2. **A simple, clear ♾ window:** one screen with the active feed on top and plain choices. Steer the running feed
+     instead of making a new one:
+     - "Continue from this channel";
+     - "Same topic, other country";
+     - "More like this one";
+     - "Change the topic".
+     One line explains each; changes apply to the next Shorts without a restart.
+  2b. **▶ Video feed (owner, 15 Nov 2026 evening):** the same idea for normal YouTube videos. The Queue gets two
+     buttons, "♾ Shorts feed" and "▶ Video feed". A video feed starts from:
+     - "like this video" (a pasted link or the playing one);
+     - "this channel" (newest / random / most viewed);
+     - "popular now" (country and category);
+     - "a topic".
+     It is steerable the same way.
+     - **Quota-aware:** `search.list` costs 100 units of the 10,000 a day, so prefer the cheap calls: `playlistItems`
+       of a channel's uploads, the `videos` `chart=mostPopular` with region and category, `videos.list` (1 unit each).
+     - Cache per room and per query in the Worker.
+     - Never call search per video.
+     - Planner's extra ideas, for the studio to pick from if cheap: length filter (short / medium / long), "two
+       channels mixed", continue a pasted playlist, "room votes between 3 next videos" (reuse voting), "each person's
+       turn".
+  3. **No repeats:** the room remembers the Short ids it has played, on the room's server object, ids only. A new or
+     steered feed skips them.
+     - A one-time room forgets them when it is deleted.
+     - A saved room keeps the last 2,000 ids for 30 days.
+     - The privacy page notes it in both languages if needed (ids of public videos, no personal data).
+- Done when:
+  - The feed is visible and steerable from the Queue on a computer and a phone.
+  - Each steer changes the next Shorts.
+  - A new feed doesn't replay watched ids (unit + e2e).
+  - The memory is wiped with the room.
+  - Test Lab hook `feed.state` (active feed, steer, remembered count).
+- Tests: room server unit tests for the memory and its caps, e2e feed → steer → no repeat, the shorts harnesses, and
+  the owner's hand test.
+- Owner's pick: his message (Planner chat, 15 Nov 2026); the memory length is the Planner's call.
+- Done: #488 (`claude/sh2-feeds`, 3b7275e, v0.9.97.151, live e2e green): the feed lives on the room object and shows as a Queue row for
+  everyone (Pause / Resume, 🧭 Steer, ✕; "♾ Shorts feed" / "▶ Video feed" when none); ▶ video feed (popular now via
+  `chart=mostPopular` 1 unit, channel newest / random / most viewed, like a video, topic); one window with four steers;
+  the room remembers played YouTube ids (2000 / 30 days, wiped with the room; privacy page EN + TR); Test Lab
+  `feed.state`; e2e `shorts.mjs` + `search.mjs`, CI harness `feed`. Lane A's TikTok note lives in the new ♾ tab.
