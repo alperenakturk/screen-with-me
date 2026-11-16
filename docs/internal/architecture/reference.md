@@ -2194,7 +2194,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     run on main first, and `test` must pass before `deploy`. Forced case: `ci-changes.test.mjs` "two PRs, each green
     on its own, merged together".
   - *Merges close together, one deploy.* The first job on a push to main, `settle` (`scripts/ci-settle.mjs`, the
-    only job with `actions: write`), waits until main's head is this run's commit and 2 min old (`SETTLE_S`). If main
+    only job with `actions: write`; it always runs and its steps act only on a push, because a skipped job would skip
+    every job after it: on #464's first run all test jobs were skipped and `test` still went green, so `test` now
+    fails when code changed but `checks` did not run), waits until main's head is this run's commit and 2 min old (`SETTLE_S`). If main
     moved on meanwhile, the run cancels itself: the newer run is pending behind it (the concurrency group keeps one)
     and its range starts at the last successful run, so it tests and deploys this code too. API trouble or a refused
     cancel: it goes on (never a lost deploy). Once past `settle` a run is never cancelled.

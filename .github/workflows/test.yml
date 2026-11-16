@@ -41,9 +41,10 @@ jobs:
   # an older pending one, and a docs-only push after a cancelled code push must still test and deploy that code.
   # Card CI3 (release train): on main, wait until main has been quiet for 2 minutes, so PRs merged close together go
   # live in one deploy; a run that a newer merge overtakes cancels itself and the newer run takes its code along
-  # (scripts/ci-settle.mjs). The only job with `actions: write` (to cancel its own run); PRs skip it.
+  # (scripts/ci-settle.mjs). The only job with `actions: write` (to cancel its own run). It always runs and succeeds
+  # (its steps do nothing outside a push): a skipped job here would skip every job after it, because a job's `if`
+  # without a status function checks every job up its `needs` chain (it did, on #464's first run).
   settle:
-    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -51,17 +52,17 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'push'
         with:
           sparse-checkout: scripts
       - name: Wait for a quiet main
+        if: github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/ci-settle.mjs
 
   changes:
     needs: settle
-    # Runs after `settle` on main, and without it (skipped) on a PR or a manual run.
-    if: ${{ !cancelled() && needs.settle.result != 'failure' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -531,10 +532,14 @@ jobs:
       - name: All test jobs passed
         env:
           CHANGES: ${{ needs.changes.result }}
+          CODE: ${{ needs.changes.outputs.code }}
+          CHECKS: ${{ needs.checks.result }}
           RESULTS: ${{ needs.checks.result }} ${{ needs.e2e.result }} ${{ needs.site.result }} ${{ needs.contrast.result }} ${{ needs.games.result }} ${{ needs.games-more.result }} ${{ needs.game-windows.result }} ${{ needs.state-matrix.result }} ${{ needs.lab-sweep.result }}
         run: |
           echo "changes: $CHANGES · checks, e2e, site, contrast, games, games-more, game-windows, state-matrix, lab-sweep: $RESULTS"
           [ "$CHANGES" = success ] || { echo "::error::The change detection did not succeed."; exit 1; }
+          # CI3: code changed, so `checks` must have run; a skip here means a job up the chain skipped them all.
+          [ "$CODE" != true ] || [ "$CHECKS" = success ] || { echo "::error::Code changed but checks ended as $CHECKS."; exit 1; }
           for r in $RESULTS; do
             case "$r" in success|skipped) ;; *) echo "::error::A test job ended as $r."; exit 1 ;; esac
           done
