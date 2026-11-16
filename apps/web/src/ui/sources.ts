@@ -3,6 +3,7 @@ import { t, type I18nKey } from '../i18n.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { flashHint } from './hint.ts';
 import { loadChunk } from './lazy.ts';
+import type { TikTokDoor } from './sources-pop.ts';
 
 /**
  * Card SRC1: the ⠿ Sources picker beside the link box (computer room and the phone's 🔍 Search tab). Three tiles pick
@@ -10,13 +11,18 @@ import { loadChunk } from './lazy.ts';
  * `VIMEO_TOKEN` secret) or the web (a new tab with one general search engine; back in the room a hint says to paste
  * the link). The pick sticks per device (`searchSource`). No in-page browser, no site list, no site filter: Sidelit
  * stays a neutral sync tool. Test Lab: `sources.state` (the source, Vimeo on or off, the last search).
+ *
+ * Card SR2: a fourth tile, ♪ TikTok. TikTok has no search API, so it is not a source: the tile opens TikTok itself (a
+ * new tab; on a phone the TikTok app takes the link when it is installed), with the typed words as a TikTok search.
+ * Back in the room a big "📋 Paste and play" button reads the clipboard after a tap (the browser may ask first) and
+ * plays the pasted link (several links: the first plays, the rest are queued). Plain text, a generic ♪, no TikTok
+ * logo, no scraping, no extension.
  */
 export type Source = 'youtube' | 'vimeo' | 'web';
 const SOURCES: readonly Source[] = ['youtube', 'vimeo', 'web'];
 const KEY = 'searchSource';
 /** One general search engine (the owner's pick: Google; no site filters). */
 const WEB_SEARCH = 'https://www.google.com/search';
-
 export function webSearchUrl(words: string): string {
   const url = new URL(WEB_SEARCH);
   url.searchParams.set('q', words.trim());
@@ -42,9 +48,11 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   let source = stored();
   /** Vimeo on the server: null until asked (once per page, when the picker first opens or Vimeo is searched). */
   let vimeoOn: boolean | null = null;
-  let last: { source: Source; words: string; result: string } | null = null;
+  let last: { source: Source | 'tiktok'; words: string; result: string } | null = null;
   /** Set when "Search the web" opened a tab: the next time the room is shown again, the paste hint. */
   let awayForWeb = false;
+  /** Card SR2: the ♪ TikTok door and its "📋 Paste and play", from the picker's lazy chunk (null until it loads). */
+  let door: TikTokDoor | null = null;
 
   const pop = el('div', { class: 'sources-pop', id: 'sources-pop', role: 'radiogroup', hidden: '' });
   form.append(pop);
@@ -89,13 +97,16 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
         tile.addEventListener('click', () => choose(value));
         return tile;
       }),
+      ...(door ? [door.tile()] : []),
     );
   }
 
-  let styled = false;
   async function open(): Promise<void> {
-    // The tiles' styles come with a small chunk on the first open (the room page's CSS budget).
-    if (!styled) styled = !!(await loadChunk(() => import('./sources-pop.ts')));
+    // The tiles' styles and the TikTok door come with a small chunk on the first open (the room page's budget).
+    if (!door) {
+      const chunk = await loadChunk(() => import('./sources-pop.ts'));
+      door = chunk ? chunk.tiktokDoor({ form, input, button, note, close }) : null;
+    }
     draw();
     pop.hidden = false;
     button.setAttribute('aria-expanded', 'true');
@@ -147,7 +158,8 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     awayForWeb = true;
   }
   const back = () => {
-    if (!awayForWeb || document.hidden) return;
+    if (document.hidden || door?.back()) return;
+    if (!awayForWeb) return;
     awayForWeb = false;
     input.focus();
     flashHint(input, t('sources.pasteHint'), 4500);
@@ -155,7 +167,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   document.addEventListener('visibilitychange', back);
   addEventListener('focus', back);
 
-  function note(value: Source, words: string, result: string): void {
+  function note(value: Source | 'tiktok', words: string, result: string): void {
     last = { source: value, words, result };
   }
 
@@ -163,6 +175,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   // A language change re-applies the box's default placeholder: put this source's back.
   addEventListener('langchange', () => {
     label();
+    door?.relabel();
     if (!pop.hidden) draw();
   });
 
@@ -171,7 +184,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
       {
         id: 'sources.state',
         tab: 'status',
-        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last }),
+        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last, pasteShown: door?.pasteShown() ?? false }),
       },
     ],
   }));

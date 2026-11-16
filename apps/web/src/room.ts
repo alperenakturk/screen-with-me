@@ -3329,11 +3329,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const search = createSearch(
     mediaForm,
     mediaInput,
-    (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode),
+    (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode, undefined, mode === 'enqueue'),
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
     (query) => feed.start(query),
     // "🎧 Podcasts" on the results (card P2): an episode is an audio file with its cover art.
-    (media, title, mode) => addMedia(media, mode, title),
+    (media, title, mode) => addMedia(media, mode, title, mode === 'enqueue'),
   );
   // Card SRC1: ⠿ picks what typed words search (YouTube, Vimeo or the web).
   const sources = createSources(mediaForm, mediaInput, $<HTMLButtonElement>('#media-sources'));
@@ -3513,11 +3513,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     setTimeout(() => (done.hidden = true), 4000);
   }
 
-  function addMedia(media: Media, mode: 'load' | 'enqueue', title?: string): void {
+  /** `fromList`: "＋ Queue" on a results list (card SR2): the box keeps its words and the list stays open. */
+  function addMedia(media: Media, mode: 'load' | 'enqueue', title?: string, fromList = false): void {
     const add = () => {
       send(title ? { t: mode, media, title } : { t: mode, media });
-      mediaInput.value = '';
-      setAdding(false);
+      if (!fromList) {
+        mediaInput.value = '';
+        setAdding(false);
+      }
       // Sıraya eklendiyse (video oynarken) sessiz kalmasın: kısa bir onay.
       if (mode === 'enqueue' && roomState?.item) {
         const done = $('#media-done');
