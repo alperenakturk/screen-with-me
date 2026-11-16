@@ -1690,3 +1690,10 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
     state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
+
+## B2: live e2e red on 16 Nov evening (closed 16 Nov 2026, 21:20)
+  - [x] Live e2e red again 16 Nov evening (runs 43938199779, 43941157478): not overlapping deploys; drops are
+    restarts near each shard's runner, retried fine; the red came from latency races in sea-many, duel, knock, fallback,
+    shorts-start (no drop). Fixed on `claude/live-e2e-races` (reference.md CI "16 Nov 2026"). Then: green + tag,
+    lane A's VC3 #502 (update from main) deploy + live e2e.
+    Done: #505 merged, v0.9.97.155 green on the first attempt (SH3 + VC1 live); #504 merged; VC3 #502 merged, v0.9.97.156 green.

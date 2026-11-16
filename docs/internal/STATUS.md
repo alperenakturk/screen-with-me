@@ -29,10 +29,6 @@ One handoff per lane or role; each session updates only its own lines and delete
     Run 43923095993 (105eadc, the same server code as 1caaf0e) went green on the first attempt with no drop in any
     shard: tagged v0.9.97.153. Merges may resume. If it comes back, compare the canary drop times with the deploy's
     "Wait for the new version" end before blaming a PR.
-  - [ ] Live e2e red again 16 Nov evening (runs 43938199779, 43941157478): not overlapping deploys; drops are
-    restarts near each shard's runner, retried fine; the red came from latency races in sea-many, duel, knock, fallback,
-    shorts-start (no drop). Fixed on `claude/live-e2e-races` (reference.md CI "16 Nov 2026"). Then: green + tag,
-    lane A's VC3 #502 (update from main) deploy + live e2e.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
   - Owner (via Planner): `v0.9.97.141` (d776b4f) and `v0.9.97.113` (8ce4385) need hand tags or TAG_TOKEN.
