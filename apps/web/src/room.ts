@@ -3745,22 +3745,29 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     })();
     return take.length;
   }
+  // Card CR2: three fixture songs as if a YouTube Music album link had been pasted (no YouTube call).
+  const LAB_TRACKS = ['aqz-KE-bpKQ', 'dQw4w9WgXcQ', 'jNQXAC9IVRw'];
+  let labQueueBefore = new Set<string>();
   debugHooks.register('playlist', () => ({
     commands: [
       {
-        // Card CR2: three fixture songs as if a YouTube Music album link had been pasted (no YouTube call).
         id: 'queue.playlist',
         tab: 'friends',
         run: () => {
+          labQueueBefore = new Set(queue.items.map((item) => item.id));
           const n = queuePlaylistItems(
-            [
-              { id: 'aqz-KE-bpKQ', title: 'Lab album · Track 1' },
-              { id: 'dQw4w9WgXcQ', title: 'Lab album · Track 2' },
-              { id: 'jNQXAC9IVRw', title: 'Lab album · Track 3' },
-            ],
+            LAB_TRACKS.map((id, i) => ({ id, title: `Lab album · Track ${i + 1}` })),
             'enqueue',
           );
           return JSON.stringify({ queued: n });
+        },
+        // The sweep runs every command: once the fixture tracks are in (they go 300 ms apart), take them out again so
+        // later scenarios see the room as it was.
+        undo: async () => {
+          const added = () => queue.items.filter((item) => !labQueueBefore.has(item.id) && item.media.kind === 'youtube' && LAB_TRACKS.includes(item.media.id));
+          for (let waited = 0; added().length < LAB_TRACKS.length && waited < 3000; waited += 100) await new Promise((resolve) => setTimeout(resolve, 100));
+          for (const item of added()) send({ t: 'dequeue', id: item.id });
+          return JSON.stringify({ removed: added().length });
         },
       },
     ],
