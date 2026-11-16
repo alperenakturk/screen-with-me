@@ -1229,7 +1229,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   answered or time is up (4 s: correct option + who chose what), podium at the end; the correct option is not sent
   before the reveal. Piece `games/quiz.ts`: a question's nodes are built once (`buildQuestion`) and later states only
   patch them; an option answers on `pointerdown` (keys and screen readers come as a click; `answer` counts once), so a
-  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`). Test:
+  state arriving mid-press no longer swallows the answer (QZ2, 16 Nov 2026; harness `quiz-click`).
+  **QZ2 questions (16 Nov 2026):** `quiz-questions-3.ts` (`QUIZ_BANK_3`, 587 more (1762 in all), written by subagents and fact-checked
+  line by line) adds the categories `language`, `body`, `world` and typed-answer entries (`typed`, `a` = accepted answers,
+  the first shown at the reveal; no options, `QUIZ_TYPED_MS` 20 s). An answer is `{t:'answer', n, text}`: `parseQuizMessage`
+  runs `cleanText` and caps it at `QUIZ_TYPED_MAX` (40); the server checks it with `matchTyped` (`foldAnswer`: case, accents,
+  ı / İ, punctuation, a leading "the" ignored, a number's minus kept; one typo (Damerau) on non-numeric answers of 5+ letters)
+  and keeps it as `said`, sent only in the reveal with the right `answer` (a player's `pick` there is 0 right / 1 wrong).
+  Points × `quizLevelBonus` (easy 1, medium 1.2, hard 1.5; typed × 1.3). `QUIZ_PROTOCOL_VERSION` 3. Test Lab
+  `quiz.typed` (lab op `typed`: the next game asks only typed questions; local lab server). e2e `quiz.mjs` typed part. Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their

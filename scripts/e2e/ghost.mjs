@@ -103,9 +103,9 @@ async function draw() {
 
 async function quiz() {
   const path = `/api/quiz/gh${tag}/ws`;
-  const alex = client(path, { t: 'hello', v: 2, name: 'Alex', cid: 'ghostQuizAlex01', lang: 'en' }, true);
+  const alex = client(path, { t: 'hello', v: 3, name: 'Alex', cid: 'ghostQuizAlex01', lang: 'en' }, true);
   await until(() => alex.state, 8000);
-  const sam = client(path, { t: 'hello', v: 2, name: 'Sam', cid: 'ghostQuizSam001', lang: 'en' }, false);
+  const sam = client(path, { t: 'hello', v: 3, name: 'Sam', cid: 'ghostQuizSam001', lang: 'en' }, false);
   ok(await until(() => alex.state?.players?.filter((p) => p.online).length === 2, 8000), 'Quiz: two players online');
   alex.send({ t: 'start' });
   ok(await until(() => alex.state.phase === 'question', 8000), 'Quiz: the game starts');
