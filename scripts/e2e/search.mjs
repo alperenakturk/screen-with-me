@@ -67,4 +67,11 @@ ok((await fetch(`${http}/api/youtube/channel?c=@abc&hl=en`, { headers: { Origin:
 if (!live) {
   ok((await (await fetch(`${http}/api/youtube/pool?kind=music&hl=en&region=world`)).json()).error === 'off', 'Discover: "world" is accepted (off without a key)');
   ok((await (await fetch(`${http}/api/youtube/channel?c=@somechannel&hl=en`)).json()).error === 'off', 'Channel feed: an @handle is accepted (off without a key)');
+  ok((await (await fetch(`${http}/api/youtube/chart?kind=music&hl=en&region=JP`)).json()).error === 'off', 'Video feed: "popular now" by country is accepted (off without a key)');
+  ok((await (await fetch(`${http}/api/youtube/channel?of=dQw4w9WgXcQ&videos=1&order=popular&hl=en`)).json()).error === 'off', 'Video feed: "continue from this channel" is accepted (off without a key)');
 }
+// Card SH2: the ▶ video feed's "popular now" chart and "continue from this channel" check their inputs too.
+ok((await fetch(`${http}/api/youtube/chart?kind=films&hl=en`)).status === 400, 'Video feed: an unknown chart kind is refused');
+ok((await fetch(`${http}/api/youtube/chart?kind=music&hl=en&region=ZZ`)).status === 400, 'Video feed: an unknown chart region is refused');
+ok((await fetch(`${http}/api/youtube/channel?of=nope&hl=en`)).status === 400, 'Video feed: a broken video id for its channel is refused');
+ok((await fetch(`${http}/api/youtube/chart?kind=music&hl=en`, { headers: { Origin: 'https://other-site.example' } })).status === 403, 'Video feed: another site may not use the chart');

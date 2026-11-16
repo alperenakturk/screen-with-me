@@ -72,6 +72,48 @@ guest.send({ t: 'next', from: after.state.item.id, end: true });
 const ttLoop = await guest.wait((m) => m.t === 'state' && m.action === 'seek' && m.state.position === 0, 'tiktok looped');
 ok(ttLoop.state.item.media.kind === 'tiktok', 'Döngüde biten TikTok başa sardı');
 
+// Card SH2: the room's feed lives on the room (everyone sees it, anyone may steer it) and the room remembers what it
+// played, so a new or steered feed skips it. The YouTube calls themselves are the runner tab's (no key here).
+host.send({ t: 'settings', loop: false });
+await guest.wait((m) => m.t === 'settings' && m.settings.loop === false, 'loop off');
+const feedIn = { kind: 'shorts', label: 'cats', source: { kind: 'topic', q: 'cats' }, paused: false };
+host.send({ t: 'feed', feed: feedIn });
+const started = await guest.wait((m) => m.t === 'feed' && m.feed?.label === 'cats', 'feed started');
+ok(started.feed.by !== undefined && started.feed.steers === 0 && started.feed.kind === 'shorts', 'Feed: everyone sees the started feed and who runs it');
+const runner = started.feed.by;
+// A feed's videos are marked, so a new or steered feed can take them out of the queue again.
+host.send({ t: 'enqueue', media: short('M7lc1UVf-VE'), feed: true });
+const marked = await guest.wait((m) => m.t === 'queue' && m.queue.some((i) => i.media.id === 'M7lc1UVf-VE'), 'feed item queued');
+ok(marked.queue.find((i) => i.media.id === 'M7lc1UVf-VE').feed === true, 'Feed: its videos are marked in the queue');
+// Pause from the other side: the same feed, the runner stays.
+guest.send({ t: 'feed', feed: { ...feedIn, paused: true } });
+const paused = await host.wait((m) => m.t === 'feed' && m.feed?.paused === true, 'feed paused');
+ok(paused.feed.by === runner && paused.feed.steers === 0, 'Feed: anyone can pause it; the runner stays');
+// Steer from the other side: other words, same kind; counted, and the one who steered runs it now.
+guest.send({ t: 'feed', feed: { kind: 'shorts', label: 'cats · 🇯🇵', source: { kind: 'topic', q: 'cats', region: 'JP' }, paused: false } });
+const steered = await host.wait((m) => m.t === 'feed' && m.feed?.label === 'cats · 🇯🇵', 'feed steered');
+ok(steered.feed.steers === 1 && steered.feed.by !== runner && steered.feed.source.region === 'JP', 'Feed: a steer is counted and keeps the feed going');
+// A broken feed is refused (the server checks every field).
+guest.send({ t: 'feed', feed: { kind: 'films', label: 'x', source: { kind: 'topic', q: 'x' }, paused: false } });
+ok((await guest.wait((m) => m.t === 'error', 'bad feed')).code === 'bad_message', 'Feed: a broken feed is refused');
+// The room remembers what it played: these ids come back to the runner, oldest first, once each.
+guest.send({ t: 'feed-played' });
+const played = await guest.wait((m) => m.t === 'feed-played', 'played ids');
+ok(['dQw4w9WgXcQ', 'jNQXAC9IVRw'].every((id) => played.ids.includes(id)) && new Set(played.ids).size === played.ids.length, 'Feed: the room remembers the videos it played (no repeats)');
+ok(!played.ids.includes('M7lc1UVf-VE'), 'Feed: a queued video that never played is not remembered');
+// A newcomer gets the running feed with the welcome.
+const late = client({ name: 'Robin', cid: 'shortsRobin123' });
+const welcome = await late.wait((m) => m.t === 'welcome', 'welcome late');
+ok(welcome.feed?.label === 'cats · 🇯🇵', 'Feed: a newcomer sees the running feed');
+// A locked queue locks the feed for everyone but the host.
+host.send({ t: 'settings', lockQueue: true });
+await guest.wait((m) => m.t === 'settings' && m.settings.lockQueue === true, 'lock queue');
+guest.send({ t: 'feed', feed: null });
+ok((await guest.wait((m) => m.t === 'error', 'locked feed')).code === 'not_host', 'Feed: a locked queue locks the feed');
+host.send({ t: 'feed', feed: null });
+ok((await late.wait((m) => m.t === 'feed', 'feed stopped')).feed === null, 'Feed: stopped for everyone');
+late.ws.close();
+
 host.ws.close();
 guest.ws.close();
 process.exit(0);

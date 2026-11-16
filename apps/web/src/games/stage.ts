@@ -757,9 +757,18 @@ export function createGameStage(opts: StageOptions) {
   });
   addEventListener('pointermove', (event) => {
     if (!drag || event.pointerId !== drag.id) return;
-    // A move with no button held is not part of the drag (another pointer, or a release nobody heard: see below).
+    // A move with no button held is not part of the drag (another pointer, a window-system move such as another
+    // window opening under the cursor, or a release nobody heard: the next press ends that, see below).
     if (!(event.buttons & 1)) return;
     if (mode !== 'float') return endDrag(event, true);
+    // Lost capture (below): take it back while the button is still held, so the drag goes on over iframes too.
+    if (!head.hasPointerCapture(event.pointerId)) {
+      try {
+        head.setPointerCapture(event.pointerId);
+      } catch {
+        /* the page-level listeners carry the drag */
+      }
+    }
     dragAt = { x: event.clientX, y: event.clientY };
     if (!dragFrame) dragFrame = requestAnimationFrame(dragStep);
   });
@@ -793,7 +802,10 @@ export function createGameStage(opts: StageOptions) {
   }
   addEventListener('pointerup', (event) => endDrag(event));
   addEventListener('pointercancel', (event) => endDrag(event));
-  head.addEventListener('lostpointercapture', (event) => endDrag(event));
+  // CI (state matrix, 16 Nov 2026): Chromium can drop the capture in the middle of a drag while the button is still
+  // held (a busy page, another window taking focus); it reports buttons 0 then, so the event can't tell a release from
+  // a lost capture. Ending the drag there stopped the window after one step. The drag ends only on a real release
+  // (`pointerup` / `pointercancel` on the page), a move with no button, or the next press anywhere.
   /** Double click on the head (or the lab): the game's own size, back where it first opened. */
   function resetFloat(): void {
     const kind = shownKind();

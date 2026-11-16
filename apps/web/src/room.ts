@@ -37,7 +37,8 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
-import { channelParam, isPoolRegionChoice, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice } from '@swm/shared/youtube-search';
+import { isPoolRegionChoice, type PoolRegionChoice } from '@swm/shared/youtube-search';
+import type { FeedKind } from '@swm/shared/feed';
 import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from './device.ts';
 import { el } from './dom.ts';
 import { helpHref, lang, t, translate, type I18nKey } from './i18n.ts';
@@ -73,6 +74,7 @@ import { createPeoplePanel } from './ui/people.ts';
 import { createReactions, isTyping } from './ui/reactions.ts';
 import { createSeats } from './ui/seats.ts';
 import { createShortsFeed } from './ui/shorts-feed.ts';
+import { createFeedRow } from './ui/feed-row.ts';
 import { createPins } from './ui/pins.ts';
 import { showNextCard } from './ui/end-card.ts';
 import { confirmDialog } from './ui/confirm.ts';
@@ -549,21 +551,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false" data-i18n-title="tool.game">🎮 <span data-i18n="tool.game"></span></button>
           </div>
           <div class="shorts-feed-wrap">
-            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
-            <form id="shorts-feed-form" class="shorts-feed-pop card" hidden>
-              <div class="feed-head phone-only"><b data-i18n="feed.short"></b><button id="shorts-feed-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
-              <div id="shorts-feed-now" class="feed-now" hidden><span id="shorts-feed-now-text"></span><button id="shorts-feed-stop" type="button" class="btn small-btn" data-i18n="feed.stop"></button></div>
-              <button id="shorts-like" type="button" class="feed-like" data-i18n-title="feed.likeHint"><b data-i18n="feed.like"></b><span class="muted small" data-i18n="feed.likeText"></span></button>
-              <p class="small feed-discover-title"><b data-i18n="feed.discover"></b> <span class="muted" data-i18n="feed.discoverHint"></span> <select id="shorts-region" class="feed-region" data-i18n-title="feed.region"></select></p>
-              <div id="shorts-pools" class="feed-pools" role="group"></div>
-              <label class="small" for="shorts-feed-topic" data-i18n="feed.topicLabel"></label>
-              <div class="feed-topic-row">
-                <input id="shorts-feed-topic" autocomplete="off" maxlength="80" data-i18n-placeholder="feed.topic" />
-                <button class="btn primary small-btn" data-i18n="feed.start"></button>
-              </div>
-              <p class="muted small" data-i18n="feed.hint"></p>
-              <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
-            </form>
+            <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" aria-haspopup="dialog" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
           <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
@@ -655,6 +643,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="tab-panel" data-panel="queue" hidden>
             <label class="set-row queue-auto"><span class="set-text"><b data-i18n="autoNext"></b></span><input type="checkbox" role="switch" class="switch" id="opt-autonext" /></label>
             <p class="muted small queue-hint" data-i18n="voteExplain"></p>
+            <div id="feed-row" class="feed-qrow"></div>
             <ol id="queue" class="queue"></ol>
             <p id="queue-empty" class="muted small" data-i18n="queueEmpty"></p>
           </div>
@@ -1585,6 +1574,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         waitingIds = message.waiting ?? [];
         renderWaiting();
         queue.set(message.queue);
+        feed.set(message.feed ?? null);
         chat.set(message.chat, message.chatMore);
         lastBy = null;
         void applyState(message.state);
@@ -1682,6 +1672,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         renderWaiting();
         break;
       }
+      case 'feed':
+        feed.set(message.feed);
+        return;
+      case 'feed-played':
+        feed.played(message.ids);
+        return;
       case 'settings': {
         // "Film time" reached: the server clears the plan when the time comes (a host clearing it early is quiet).
         const planned = roomSettings.startsAt;
@@ -2573,98 +2569,56 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   // ---- Shorts görünümü ("Oturma odası"): dikey video ortada, arkadaşlar iki yanında, altta mesaj + emoji.
   // Sıra, sohbet geçmişi ve ayarlar oda görünümünde kalır. ↑/↓ (▲▼, fare tekerleği) önceki/sonraki Shorts. ----
   const roomEl = $('.room');
-  // ---- Endless Shorts feed (0.9.91): a topic keeps the queue full of Shorts (YouTube search, Shorts only). ----
+  // ---- The room's feeds (0.9.91 ♾ Shorts; card SH2: ▶ videos, shared on the room object, steerable from the Queue). ----
   const feedButton = $<HTMLButtonElement>('#shorts-feed');
-  const feedForm = $<HTMLFormElement>('#shorts-feed-form');
-  const feedTopic = $<HTMLInputElement>('#shorts-feed-topic');
   const feed = createShortsFeed({
-    roomId,
     queueItems: () => queue.items,
     current: () => roomState?.item ?? null,
+    myId: () => myId,
+    memberIds: () => members.map((m) => m.id),
     canAdd: () => !(roomSettings.lockQueue && !amHost()),
-    add: (media) => send({ t: 'enqueue', media }),
-    remove: (itemId) => send({ t: 'dequeue', id: itemId }),
+    send,
     note: (text) => flashHint(shortsOn ? feedButton : mediaInput, text, 5000),
     changed: () => renderFeed(),
   });
-  /** The home door's feed: 🎲 Discover "Popular" in the region chosen for Discover (the viewer's own by default). */
-  function startDoorFeed(): void {
-    feed.start(t('pool.popular'), { kind: 'pool', pool: 'popular', region: poolRegion });
-  }
-  function renderFeed(): void {
-    const topic = feed.topic;
-    feedButton.classList.toggle('on', topic !== null);
-    feedButton.setAttribute('aria-pressed', String(topic !== null));
-    $('#shorts-feed-label').textContent = topic ?? t('feed.short');
-    feedButton.title = topic ? t('feed.stopHint', { topic }) : t('feed.hint');
-    // A running feed is shown at the top of its window with a stop button (0.9.92.6, owner: pressing ♾ used to stop
-    // it without a word; now it always opens the window, the feed stops only from there).
-    $('#shorts-feed-now').hidden = topic === null;
-    $('#shorts-feed-now-text').textContent = topic ? t('feed.now', { topic }) : '';
-  }
-  feedButton.addEventListener('click', () => {
-    feedForm.hidden = !feedForm.hidden;
-    renderFeed();
-    // Not on a phone: the keyboard would cover the window before the person chose anything.
-    if (!feedForm.hidden && !isPhoneLayout()) feedTopic.focus();
-  });
-  $('#shorts-feed-stop').addEventListener('click', () => {
-    feed.stop();
-    feedForm.hidden = true;
-  });
-  $('#shorts-feed-close').addEventListener('click', () => (feedForm.hidden = true));
-  // "🎲 Keşfet" (0.9.91.18): one tap starts an endless feed from today's shared pool of a category.
-  const pools = $('#shorts-pools');
-  // Card 10 (owner's pick A): Discover shows the viewer's country by default ("🌍 Auto": the server uses the
+  // Card 10 (owner's pick A): Discover / Popular show the viewer's country by default ("🌍 Auto": the server uses the
   // connection's country, never stored), or a chosen one, or the whole world. Remembered in this browser.
-  const regionSelect = $<HTMLSelectElement>('#shorts-region');
   const savedRegion = load('opt:poolRegion');
   let poolRegion: PoolRegionChoice = isPoolRegionChoice(savedRegion) ? savedRegion : 'auto';
-  regionSelect.addEventListener('change', () => {
-    poolRegion = isPoolRegionChoice(regionSelect.value) ? regionSelect.value : 'auto';
-    save('opt:poolRegion', poolRegion);
-  });
-  const renderPools = () => {
-    const names = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames([lang()], { type: 'region' }) : null;
-    regionSelect.replaceChildren(
-      el('option', { value: 'auto' }, `🌍 ${t('feed.regionAuto')}`),
-      el('option', { value: 'world' }, `🌐 ${t('feed.regionWorld')}`),
-      ...POOL_REGIONS.map((code) => el('option', { value: code }, names?.of(code) ?? code)),
-    );
-    regionSelect.value = poolRegion;
-    pools.replaceChildren(
-      ...POOL_KINDS.map((kind) => {
-        const chip = el('button', { type: 'button', class: 'feed-pool', 'data-pool': kind }, t(`pool.${kind}`));
-        chip.addEventListener('click', () => {
-          feedForm.hidden = true;
-          feed.start(t(`pool.${kind}`), { kind: 'pool', pool: kind, region: poolRegion });
-        });
-        return chip;
-      }),
-    );
-  };
-  renderPools();
-  window.addEventListener('langchange', renderPools);
-  // "✨ Bunun gibi": more from the playing Short's channel, then Shorts with similar titles.
-  $('#shorts-like').addEventListener('click', () => {
-    const media = roomState?.item?.media;
-    feedForm.hidden = true;
-    if (media?.kind !== 'youtube' || !media.short) return flashHint(feedButton, t('feed.likeNone'), 4000);
-    feed.start(t('feed.likeLabel'), { kind: 'like', id: media.id });
-  });
-  feedForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    feedForm.hidden = true;
-    // Card 10: a channel link or @handle follows that channel's Shorts; words stay a topic search.
-    const channel = parseChannelInput(feedTopic.value);
-    if (channel) feed.start('id' in channel ? t('feed.channel') : `@${channel.handle}`, { kind: 'channel', c: channelParam(channel) });
-    else feed.start(feedTopic.value);
-    feedTopic.value = '';
-  });
-  document.addEventListener('pointerdown', (event) => {
-    if (!feedForm.hidden && !(event.target as Element).closest?.('.shorts-feed-wrap')) feedForm.hidden = true;
-    if (!shortsAddForm.hidden && !(event.target as Element).closest?.('.shorts-add-wrap')) setShortsAdd(false);
-  });
+  /** The home door's feed: 🎲 Discover "Popular" in the region chosen for Discover (the viewer's own by default). */
+  function startDoorFeed(): void {
+    feed.start('shorts', t('pool.popular'), { kind: 'pool', pool: 'popular', region: poolRegion });
+  }
+  /** Card SH2: the ♾ / ▶ window (a lazy chunk). */
+  let feedWindowRefresh: (() => void) | null = null;
+  function openFeed(kind: FeedKind): void {
+    void loadChunk(() => import('./ui/feed-window.ts')).then((m) => {
+      if (!m) return;
+      feedWindowRefresh = m.refreshFeedWindow;
+      m.openFeedWindow({
+        kind,
+        feed,
+        playing: () => roomState?.item ?? null,
+        region: () => poolRegion,
+        setRegion: (region) => {
+          poolRegion = region;
+          save('opt:poolRegion', poolRegion);
+        },
+      });
+    });
+  }
+  const feedRow = createFeedRow($('#feed-row'), feed, openFeed);
+  function renderFeed(): void {
+    const info = feed.info;
+    const shortsOnNow = info?.kind === 'shorts';
+    feedButton.classList.toggle('on', shortsOnNow);
+    feedButton.setAttribute('aria-pressed', String(shortsOnNow));
+    $('#shorts-feed-label').textContent = shortsOnNow ? info.label : t('feed.short');
+    feedButton.title = shortsOnNow ? t('feed.stopHint', { topic: info.label }) : t('feed.hint');
+    feedRow.render();
+    feedWindowRefresh?.();
+  }
+  feedButton.addEventListener('click', () => openFeed(feed.info?.kind ?? 'shorts'));
   // Add to the queue from the Shorts bar (0.9.91.5, owner: without going back to the room view). Links only, one or
   // many (searching is the ♾ feed's job); the same paths as the link box.
   const shortsAdd = $<HTMLButtonElement>('#shorts-add');
@@ -2673,10 +2627,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const setShortsAdd = (open: boolean) => {
     shortsAddForm.hidden = !open;
     shortsAdd.setAttribute('aria-expanded', String(open));
-    if (open) {
-      feedForm.hidden = true;
-      shortsAddInput.focus();
-    }
+    if (open) shortsAddInput.focus();
   };
   shortsAdd.addEventListener('click', () => setShortsAdd(shortsAdd.getAttribute('aria-expanded') !== 'true'));
   $('#shorts-add-close').addEventListener('click', () => setShortsAdd(false));
@@ -3424,7 +3375,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     mediaInput,
     (id, _title, mode, short) => addMedia(short ? { kind: 'youtube', id, short: true } : { kind: 'youtube', id }, mode, undefined, mode === 'enqueue'),
     // "📱 Shorts akışı" on the results: the feed fills the queue with Shorts about these words.
-    (query) => feed.start(query),
+    (query) => feed.startTopic(query),
     // "🎧 Podcasts" on the results (card P2): an episode is an audio file with its cover art.
     (media, title, mode) => addMedia(media, mode, title, mode === 'enqueue'),
   );

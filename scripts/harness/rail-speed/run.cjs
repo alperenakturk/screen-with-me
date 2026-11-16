@@ -85,6 +85,8 @@ const check = (ok, label, extra = '') => {
   if (await alex.isHidden('#dock-more-picker')) await alex.click('#dock-speed-row');
   await alex.click('#dock-more-picker [data-step="1"]');
   check((await rateIs(alex, 1.55)) && (await rateIs(sam, 1.55)), '+ makes a custom 1.55× for everyone');
+  // The row and the picker redraw a moment after the room's new rate arrives (CI saw the old 1.5× once or twice).
+  await alex.waitForFunction(() => document.querySelector('#dock-speed-row .dock-speed-now')?.textContent === '1.55×', null, { timeout: 2000 }).catch(() => {});
   const shown = await alex.evaluate(() => ({ row: document.querySelector('#dock-speed-row .dock-speed-now').textContent, value: document.querySelector('#dock-more-picker .speed-value').textContent, open: !document.querySelector('#dock-more-picker').hidden }));
   check(shown.row === '1.55×' && shown.value === '1.55×' && shown.open, 'the row and the picker show 1.55×; the picker stays open for more steps', JSON.stringify(shown));
   const video = await alex.evaluate(() => document.querySelector('#player video')?.playbackRate);
