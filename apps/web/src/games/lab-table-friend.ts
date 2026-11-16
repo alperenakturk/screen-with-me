@@ -95,6 +95,11 @@ export function sitFriend(kind: FriendTable, table: string): string {
     if (kind === 'quiz') {
       const mine = (s.players as { id: string; answered: boolean }[]).find((p) => p.id === me);
       const key = `q${s.n}`;
+      // QZ2 tournament: the friend picks the first offered topic on its turn.
+      if (s.phase === 'pick' && s.picker === me && done !== `pick${s.round}`) {
+        done = `pick${s.round}`;
+        later(1500, () => send({ t: 'pick', cat: s.offer[0] }));
+      }
       if (s.phase === 'question' && mine && !mine.answered && done !== key && Array.isArray(s.options)) {
         done = key;
         // QZ2: a typed question gets a typed guess.
