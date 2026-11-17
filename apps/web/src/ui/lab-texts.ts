@@ -65,6 +65,14 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },
   },
+  'recap.show': {
+    title: { en: 'Recap: show it to everyone now (lab server)', tr: 'Özet: şimdi herkese göster (test sunucusu)' },
+    help: { en: 'As the host, shows this session\'s recap to everyone in the video\'s place without waiting for 30 minutes together (only a local lab server allows that). A second show in the same session is refused, as for everyone.', tr: 'Yönetici olarak bu oturumun özetini, birlikte 30 dakika beklemeden videonun yerinde herkese gösterir (bunu yalnızca yerel test sunucusu izin verir). Aynı oturumda ikinci gösterim herkes için olduğu gibi reddedilir.' },
+  },
+  'recap.state': {
+    title: { en: 'Recap: status, ready, scene', tr: 'Özet: durum, hazır mı, sahne' },
+    help: { en: 'Writes this session\'s recap status into the log: minutes watched together, whether it was shown, whether ✨ is ready, the show running and which scene the stage is on.', tr: 'Bu oturumun özet durumunu kayda yazar: birlikte izlenen dakikalar, gösterildi mi, ✨ hazır mı, açık gösteri ve sahnenin hangi sahnede olduğu.' },
+  },
   'shorts.tidy': {
     title: { en: 'Shorts view: rail groups, labels, pill, overlaps', tr: 'Shorts görünümü: ray grupları, etiketler, şerit, çakışmalar' },
     help: { en: 'Writes the Shorts view\'s layout into the log: the rail\'s group headings, how many buttons show a name, the "N left" line, where the feed pill sits (above the Short or not), whether any rail button overlaps another or the video, the last note\'s place and the phone bar\'s captions.', tr: 'Shorts görünümünün düzenini kayda yazar: rayın grup başlıkları, kaç düğmenin adı göründüğü, "N kaldı" satırı, akış şeridinin yeri (Short\'un üstünde mi), bir ray düğmesinin başka birinin ya da videonun üstüne binip binmediği, son notun yeri ve telefon çubuğunun yazıları.' },

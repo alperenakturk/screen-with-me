@@ -180,6 +180,32 @@ const SCREENS = {
       await p.waitForSelector('#sources-paste:not([hidden])');
     },
   },
+  // Card RC1: the session recap for everyone in the video's place (Test Lab `recap.show`; the lab server skips the
+  // 30 min together). The first scene (time), then the summary poster.
+  ...Object.fromEntries(
+    [
+      ['recap-show', 'the first scene (night sky, the time watched, our logo and its light cone, Glowbeam), the filmstrip and the controls under it; the host sees "▶ Back to the video"', 0],
+      ['recap-summary', 'the last scene (the poster: every number, "⬇ Save image")', 1],
+    ].map(([id, what, steps]) => [
+      id,
+      {
+        what: `Card RC1: the session recap shown to everyone in the video's place: ${what}; the player is hidden behind it, never covered (it may stay blank: YouTube is blocked in this test)`,
+        room: true,
+        after: async (p) => {
+          await searchTab(p);
+          await p.fill('#media-input', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
+          await p.click('#media-form button[value="load"]');
+          await wait(1500);
+          if (await p.isVisible('#ph-tab-room')) await p.click('#ph-tab-room');
+          await p.evaluate(() => window.__swmLab.run('recap.show'));
+          await p.waitForSelector('.rc-stage');
+          await wait(3800);
+          for (let i = 0; i < steps; i++) await p.click('.rc-next');
+          await wait(700);
+        },
+      },
+    ]),
+  ),
   // Card FD1b: the Shorts view with a ♾ Shorts feed running: the rail in three labelled groups, "N left" under ▲, the
   // feed pill above the Short (never on the player), the phone's bar with ♾ Feed.
   'shorts-feed': {
@@ -258,6 +284,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/src\/ui\/end-card/, ['end-card']],
   [/^apps\/web\/src\/ui\/(feed-window|feed-row|shorts-feed)/, ['feed-drawer', 'feed-window', 'feed-queue', 'shorts-feed']],
   [/^apps\/web\/src\/shorts\.css$/, ['shorts-feed', 'shorts-chat']],
+  [/^apps\/web\/src\/ui\/recap/, ['recap-show', 'recap-summary']],
   [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'sources-youtube', 'sources-music', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],

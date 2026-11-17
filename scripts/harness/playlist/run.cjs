@@ -28,6 +28,19 @@ const lab = async (page, id) => (await page.evaluate(async (id) => (await window
 const roomTitles = (page) =>
   page.evaluate(() => [...document.querySelectorAll('.queue-item img.thumb')].map((e) => e.src.match(/\/vi\/([A-Za-z0-9_-]{11})\//)?.[1] ?? e.src));
 
+/** Waits until the queue's length has not changed for a second (at most 8 s). */
+async function settled(page) {
+  let last = -1;
+  let since = Date.now();
+  for (const end = Date.now() + 8000; Date.now() < end; await page.waitForTimeout(100)) {
+    const n = await page.evaluate(() => document.querySelectorAll('.queue-item').length);
+    if (n !== last) {
+      last = n;
+      since = Date.now();
+    } else if (Date.now() - since >= 1000) return;
+  }
+}
+
 (async () => {
   const browser = await chromium.launch();
   for (const [label, options, lang] of [
@@ -72,6 +85,9 @@ const roomTitles = (page) =>
     await page.press('#media-input', 'Enter');
     if (!phone) await page.click('.tab[data-tab="queue"]').catch(() => {});
     await page.waitForFunction((n) => document.querySelectorAll('.queue-item').length >= n, TRACKS.length - 1, { timeout: 15000 }).catch(() => {});
+    // The tracks arrive one message at a time and the first may start playing (leaving the queue) a moment later:
+    // read the queue once it has stopped changing, so the count is the room's, not a moment in between (CR2 flake).
+    await settled(page);
     const titles = await roomTitles(page);
     const want = TRACKS.map((t) => t.id);
     const tail = want.slice(want.length - titles.length);
@@ -84,6 +100,7 @@ const roomTitles = (page) =>
     const before = titles.length;
     const out = JSON.parse(await lab(page, 'queue.playlist'));
     await page.waitForFunction((n) => document.querySelectorAll('.queue-item').length >= n, before + 3, { timeout: 10000 }).catch(() => {});
+    await settled(page);
     const after = await roomTitles(page);
     check(out.queued === 3 && JSON.stringify(after.slice(-3)) === JSON.stringify(['aqz-KE-bpKQ', 'dQw4w9WgXcQ', 'jNQXAC9IVRw']), `${label}: queue.playlist adds the three fixture tracks`, JSON.stringify({ out, last: after.slice(-3) }));
     await ctx.close();

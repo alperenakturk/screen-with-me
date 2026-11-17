@@ -32,6 +32,10 @@ export interface StatsData {
   people: Record<string, PersonStats>;
   /** Son hareket (izleme, sohbet, tepki…); bundan uzun ara verilince yeni oturum başlar. */
   last?: number;
+  /** Card RC1: time watched while two or more people were in the room (the recap unlocks at `RECAP_READY_MS`). */
+  togetherMs?: number;
+  /** Card RC1: when the host showed this session's recap to everyone (once per session). */
+  shownAt?: number;
 }
 
 export interface RecapPerson {
@@ -65,6 +69,8 @@ export interface Recap {
   /** Odanın en çok kullandığı emojiler (en fazla 3). */
   emojis: Array<[string, number]>;
   people: RecapPerson[];
+  /** Card RC1: a finished session's recap that was shown to everyone (one that wasn't is offered next time, N4). */
+  shown?: boolean;
 }
 
 const SAD = new Set(['😢', '💔', '😭']);
@@ -80,6 +86,38 @@ type Who = { name: string; avatar?: Avatar };
 
 /** İzlemeye bu kadar ara verilince yeni oturum başlar (kaydedilmemiş özet silinir). */
 export const SESSION_GAP_MS = 4 * 3600_000;
+/** Card RC1: the recap can be shown to everyone after this much watching together (two or more people). */
+export const RECAP_READY_MS = 30 * 60_000;
+/** Card RC1: one scene of the show; the 3-2-1 before the first one. */
+export const RECAP_SCENE_MS = 5000;
+export const RECAP_COUNTDOWN_MS = 3000;
+/** Card RC1: one "ask the host" per person in this long. */
+export const RECAP_ASK_GAP_MS = 10 * 60_000;
+
+/** Card RC1: the room's recap for everyone, played in the video's place (the same scenes, in step). */
+export interface RecapShow {
+  id: string;
+  /** Server time the first scene starts (after the 3-2-1). */
+  at: number;
+  facts: Fact[];
+  recap: Recap;
+  /** Member id of the host who showed it. */
+  by: string;
+}
+
+/** Card RC1: how close this session is to its recap. `sec` = watched together at server time `at`. */
+export interface RecapStatus {
+  sec: number;
+  at: number;
+  shown: boolean;
+  /** When this session started (it names the session: a nudge is once per person per session). */
+  since: number;
+}
+
+/** How long a show lasts on screen before it may be dropped (its scenes plus a minute on the last one). */
+export function recapShowEnd(show: Pick<RecapShow, 'at' | 'facts'>): number {
+  return show.at + show.facts.length * RECAP_SCENE_MS + 60_000;
+}
 
 export class StatsTracker {
   data: StatsData;
@@ -93,16 +131,30 @@ export class StatsTracker {
    * Oynarken geçen süreyi ekler. Oda durumu her değişmeden ÖNCE eski durumla çağrılır.
    * `present`: odada biri var mı (yoksa sayım durur, dönünce kaldığı yerden başlar).
    */
-  tick(now: number, playing: boolean, rate: number, present: boolean): void {
+  tick(now: number, playing: boolean, rate: number, present: boolean, together = false): void {
     if (playing && present) this.activity(now);
     const d = this.data;
     if (d.tick !== null && playing && now > d.tick) {
       const ms = Math.min(now - d.tick, 6 * 3600_000);
       d.watchMs += ms;
       d.videoMs += ms * rate;
+      // Card RC1 (b): only watching together counts toward the recap's 30 minutes.
+      if (together) d.togetherMs = (d.togetherMs ?? 0) + ms;
     }
     d.tick = present ? now : null;
   }
+
+  /** Card RC1: the session's recap may be shown to everyone (30 min together, not shown yet). */
+  ready(): boolean {
+    return !this.data.shownAt && (this.data.togetherMs ?? 0) >= RECAP_READY_MS;
+  }
+
+  status(now: number): RecapStatus {
+    return { sec: Math.floor((this.data.togetherMs ?? 0) / 1000), at: now, shown: !!this.data.shownAt, since: this.data.since };
+  }
+
+  /** Card RC1 (d): the session that just ended (a ≥ 4 h gap), for the room's recap list; taken once. */
+  ended: Recap | null = null;
 
   /**
    * Bir hareket oldu. Son hareketten bu yana SESSION_GAP_MS geçtiyse önceki oturum kapanır (kaydedilmediyse
@@ -110,7 +162,11 @@ export class StatsTracker {
    */
   activity(now = this.clock()): void {
     const last = this.data.last ?? this.data.since;
-    if (now - last > SESSION_GAP_MS) this.reset(now, true);
+    // Card RC1 (a): "after 4 h" means 4 h or more, as the help page says.
+    if (now - last >= SESSION_GAP_MS) {
+      if (!this.isEmpty()) this.ended = { ...this.recap(last, `s${this.data.since.toString(36)}`), ...(this.data.shownAt ? { shown: true } : {}) };
+      this.reset(now, true);
+    }
     this.data.last = now;
   }
 
