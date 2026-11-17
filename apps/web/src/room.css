@@ -9345,8 +9345,9 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
 /* ==== 0.9.92.2: the Shorts rail (owner chose C on https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379: "too small on my
    laptop"). On wide screens the bottom bar becomes a column of square buttons right of the video (▲▼ stay at its
    foot), so the video takes the height the bar used; the message box is a small window opened by 💬 or Enter. On
-   screens under 900 px tall the top bar folds too: ⋯ at the end of the rail (or the mouse at the top edge) brings it
-   back over the page. Phones and narrow windows keep the bottom bar (≤ 860 px). ==== */
+   screens under 900 px tall the top bar folds too (the mouse at the top edge brings it back over the page); ⋯ More at
+   the end of the rail opens the room's More menu with Invite and Settings (UI4). Phones and narrow windows keep the
+   bottom bar (≤ 860 px). ==== */
 .rail-only,
 .rail-more {
   display: none;
@@ -9384,12 +9385,8 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
     align-self: end;
   }
 
-  .room.shorts .shorts-bar .rail-only {
+  .room.shorts .shorts-bar :is(.rail-only, .rail-more) {
     display: inline-flex;
-  }
-
-  .room.shorts .shorts-bar .rail-more {
-    display: none;
   }
 
   .room.shorts .shorts-bar > :is(div, form),
@@ -9528,10 +9525,6 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
 
   .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
     height: clamp(320px, calc(100dvh - 40px), 1100px);
-  }
-
-  .room.shorts .shorts-bar .rail-more {
-    display: inline-flex;
   }
 }
 

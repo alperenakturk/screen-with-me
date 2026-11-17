@@ -1,0 +1,4 @@
+- In the Shorts view, ⋯ More beside the Short now opens the room's menu (Invite, film time, save the room, recap, rules, settings) on every screen size.
+- The feed no longer shows as a strip above the video or the Short: it lives in the Queue's feed row and the feed window.
+- New visitors start in the Drive-In theme; a theme you already picked stays.
+- "What are we watching?" sits in the middle of its space, and a "Subscription services · Coming" row says what is planned.

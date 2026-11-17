@@ -32,7 +32,7 @@ const SIZES = {
   'tablet-land': { viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   'phone-land': devices['iPhone 13 landscape'],
 };
-// Themes by id (themes.ts): gece = Night (the default), matinee = Matinee, sinema / lokum … = scene themes.
+// Themes by id (themes.ts): gece = Night (the shots' usual one; a new visitor gets acikhava = Drive-In, card UI4), matinee = Matinee, sinema / lokum … = scene themes.
 const THEMES = flag('themes', 'gece').split(',');
 const sizeNames = flag('sizes', 'laptop,desktop,tablet,phone').split(',');
 const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
@@ -209,7 +209,7 @@ const SCREENS = {
   // Card FD1b: the Shorts view with a ♾ Shorts feed running: the rail in three labelled groups, "N left" under ▲, the
   // feed pill above the Short (never on the player), the phone's bar with ♾ Feed.
   'shorts-feed': {
-    what: 'Card FD1b: the Shorts view while a ♾ Shorts feed runs: the rail in three labelled groups (Talk · Watch · Room; labels beside the icons when there is room), ♾ Feed marked on, "N left" under ▲, the feed pill above the Short (never on the player); on a phone the bar 💬 Chat · 😀 React · ♾ Feed · ▲ N left ▼ · ⋯ More (the player may stay blank: YouTube is blocked in this test)',
+    what: 'Card FD1b: the Shorts view while a ♾ Shorts feed runs: the rail in three labelled groups (Talk · Watch · Room; labels beside the icons when there is room), ♾ Feed marked on, "N left" under ▲, no feed pill (UI4); on a phone the bar 💬 Chat · 😀 React · ♾ Feed · ▲ N left ▼ · ⋯ More (the player may stay blank: YouTube is blocked in this test)',
     room: true,
     sizes: ['laptop', 'desktop', 'tablet', 'phone'],
     after: async (p) => {
@@ -223,6 +223,20 @@ const SCREENS = {
       await p.waitForFunction(() => document.documentElement.classList.contains('shorts-view'));
       await p.keyboard.press('Escape');
       await wait(1500);
+    },
+  },
+  'shorts-more': {
+    what: 'Card UI4: the Shorts view with the rail\'s ⋯ More pressed: the room\'s More menu beside the rail (Invite first, Settings last), whole inside the window; on a phone the bar\'s ⋯ sheet',
+    room: true,
+    sizes: ['laptop', 'desktop', 'tablet', 'phone'],
+    after: async (p) => {
+      await searchTab(p);
+      await p.fill('#media-input', 'https://www.youtube.com/shorts/aqz-KE-bpKQ');
+      await p.click('#media-form button[value=load]');
+      await p.waitForFunction(() => document.documentElement.classList.contains('shorts-view'));
+      await p.waitForTimeout(800);
+      await p.evaluate(async () => window.__swmLab.run('shorts.more'));
+      await p.waitForTimeout(300);
     },
   },
   'shorts-chat': {
@@ -283,7 +297,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
   [/^apps\/web\/src\/ui\/end-card/, ['end-card']],
   [/^apps\/web\/src\/ui\/(feed-window|feed-row|shorts-feed)/, ['feed-drawer', 'feed-window', 'feed-queue', 'shorts-feed']],
-  [/^apps\/web\/src\/shorts\.css$/, ['shorts-feed', 'shorts-chat']],
+  [/^apps\/web\/src\/shorts\.css$/, ['shorts-feed', 'shorts-chat', 'shorts-more']],
   [/^apps\/web\/src\/ui\/recap/, ['recap-show', 'recap-summary']],
   [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'sources-youtube', 'sources-music', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],

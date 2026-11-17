@@ -2,7 +2,7 @@
 // page, /connection and the TV pages never download them.
 import './room.css';
 import { friendlyRoomName } from '@swm/shared/room-id';
-import { createRoomMoreMenu, roomMoreItems } from './ui/room-more.ts';
+import { createRoomMoreMenu, roomMoreItems, type MoreItem } from './ui/room-more.ts';
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { isForwardedKey, isRelayable } from '@swm/shared/embed';
@@ -365,7 +365,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
-            <div id="feed-pill" class="feed-pill" role="status" hidden></div>
             <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" style="margin-left:auto" hidden>📱 <span data-i18n="shorts.view"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
@@ -2704,12 +2703,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
     ],
   }));
-  const feedRow = createFeedRow($('#feed-row'), feed, openFeed, {
-    root: $('#feed-pill'),
-    who: (id) => members.find((m) => m.id === id)?.name ?? null,
-    left: () => queue.items.filter((item) => item.feed === true).length,
-    locked: feedLocked,
-  });
+  const feedRow = createFeedRow($('#feed-row'), feed, openFeed, { locked: feedLocked });
   function renderFeed(): void {
     const info = feed.info;
     const shortsOnNow = info?.kind === 'shorts';
@@ -2871,13 +2865,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       () => void (shortsCssReady = true),
       () => void (shortsCssReady = true),
     ));
-  /** Card FD1b: in the Shorts view the feed pill sits above the Short (our frame, never on the player); back in the
-   * room view it returns to the bar above the video. */
-  function placeFeedPill(): void {
-    const pill = $('#feed-pill');
-    if (shortsOn) $('.stage').insertBefore(pill, $('#theater'));
-    else $('#shorts-enter').before(pill);
-  }
   function renderShorts(): void {
     const short = isShortItem(roomState?.item);
     if (short) {
@@ -2910,7 +2897,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     if (shortsOn && fullscreen.isActive() && !document.documentElement.classList.contains('tv-mode')) fullscreen.toggle();
     // Sınıflar o anki değere göre: art arda iki değişiklikte geç kalan geçiş eski hâli geri getirmesin.
     const apply = () => {
-      placeFeedPill();
       roomEl.classList.toggle('shorts', shortsOn);
       document.documentElement.classList.toggle('shorts-view', shortsOn);
       if (!shortsOn) document.documentElement.classList.remove('topbar-peek');
@@ -3133,7 +3119,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       },
     ],
   }));
-  // Card FD1b: Test Lab `shorts.tidy` writes the Shorts view's layout (rail groups, labels, "N left", the pill's place,
+  // Card FD1b: Test Lab `shorts.tidy` writes the Shorts view's layout (rail groups, labels, "N left", no feed pill (UI4),
   // anything overlapping); `shorts.note` flashes a sample note from ♾ the way a feed's note shows.
   debugHooks.register('shorts-tidy', () => ({
     commands: [
@@ -3149,7 +3135,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const meets = (a: Box | null, b: Box | null) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
           const shown = (sel: string) => [...document.querySelectorAll<HTMLElement>(sel)].filter((n) => n.getBoundingClientRect().width > 0);
           const player = rect($('.player-wrap'));
-          const pill = rect($('#feed-pill'));
           const buttons = shown('#shorts-bar > :is(button, div, form) :is(.small-btn, .react-open, .cam-ctl):not(.shorts-feed-pop *, .react-tray *, .game-menu *), #shorts-bar > button, #shorts-nav .shorts-arrow');
           const boxes = buttons.map(rect);
           const hint = document.querySelector('.hint-bubble');
@@ -3159,7 +3144,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             heads: shown('#shorts-bar > .rail-head').map((n) => n.textContent),
             labels: shown('#shorts-bar .small-btn > span:not(.badge)').length + buttons.filter((b) => b.classList.contains('cam-ctl') && getComputedStyle(b, '::after').content.length > 2).length,
             left: $('#shorts-left').textContent,
-            pill: pill && { box: pill, inStage: $('#feed-pill').parentElement?.classList.contains('stage') ?? false, abovePlayer: !!player && pill.b <= player.y + 1 },
+            // UI4: no feed pill anywhere (it was above the Short).
+            pill: !!document.querySelector('.feed-pill'),
             overlaps: boxes.some((a, i) => boxes.some((b, j) => j > i && meets(a, b))) || boxes.some((b) => meets(b, player)),
             hint: hint && { text: hint.textContent, overPlayer: meets(rect(hint), player), overRail: meets(rect(hint), rect($('#shorts-bar'))) },
             phone: phoneBar && { feedOn: phoneBar.querySelector('#ph-shorts-feed')?.classList.contains('on') ?? false, captions: [...phoneBar.querySelectorAll('.ph-cap')].map((n) => n.textContent).filter(Boolean) },
@@ -3174,6 +3160,31 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           return 'shown';
         },
       },
+      {
+        // UI4: presses the Shorts view's ⋯ More as a person would (the rail's on a computer, the bar's on a phone) and
+        // writes the menu that opened: its rows and whether it fits the window.
+        id: 'shorts.more',
+        tab: 'screen',
+        run: async () => {
+          const button = ['#shorts-more', '#ph-shorts-more'].map((sel) => document.querySelector<HTMLElement>(sel)).find((b) => !!b && b.getBoundingClientRect().width > 0);
+          if (!button) return JSON.stringify({ button: null });
+          button.click();
+          await new Promise((r) => setTimeout(r, 300));
+          const menu = [...document.querySelectorAll<HTMLElement>('.room-more-pop, .ph-sheet')].find((m) => !m.hidden && m.getBoundingClientRect().width > 0);
+          const r = menu?.getBoundingClientRect();
+          return JSON.stringify({
+            button: button.id,
+            open: !!menu,
+            rows: menu ? [...menu.querySelectorAll('.room-more-item, .ph-row')].map((n) => n.textContent?.trim()) : [],
+            inView: !!r && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth,
+            // Nothing of ours over the YouTube player (the phone's sheet is the phone bar's own, below the Short).
+            overVideo: (() => {
+              const v = document.querySelector('.player-wrap')?.getBoundingClientRect();
+              return !!r && !!v && button.id === 'shorts-more' && r.left < v.right && v.left < r.right && r.top < v.bottom && v.top < r.bottom;
+            })(),
+          });
+        },
+      },
     ],
   }));
   $('#shorts-input').addEventListener('keydown', (event) => {
@@ -3183,9 +3194,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   const foldedTop = matchMedia('(min-width: 861px) and (max-height: 899px)');
   const peekTop = (on: boolean) => {
     rootEl.classList.toggle('topbar-peek', on);
-    $('#shorts-more').setAttribute('aria-expanded', String(on));
   };
-  $('#shorts-more').addEventListener('click', () => peekTop(!rootEl.classList.contains('topbar-peek')));
+  // UI4 (owner: "Other does nothing"): the rail's ⋯ More opens the room's More menu beside the rail, with Invite and
+  // Settings first (the top bar that holds them folds away on a short screen; the mouse at the top edge still peeks it).
+  const railMoreItems = (): MoreItem[] => [
+    { icon: '🔗', label: 'inviteButton', run: () => requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('#invite-btn')?.click()) },
+    ...moreItems(true),
+    { icon: '⚙️', label: 'tab.settings', run: () => settingsDialog.open('view') },
+  ];
+  createRoomMoreMenu($('#shorts-more') as HTMLButtonElement, railMoreItems, 'beside');
   document.addEventListener('pointerdown', (event) => {
     const target = event.target as Element | null;
     if (!target) return;

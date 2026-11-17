@@ -91,7 +91,11 @@ async function settled(page) {
     const titles = await roomTitles(page);
     const want = TRACKS.map((t) => t.id);
     const tail = want.slice(want.length - titles.length);
-    check(titles.length >= TRACKS.length - 1 && JSON.stringify(titles) === JSON.stringify(tail), `${label}: the album's tracks are in the queue, in the playlist's order`, JSON.stringify(titles));
+    // The player may skip a track it can't play here (YouTube is blocked on CI), so more than the first can leave the
+    // queue: what plays now is the track just before the queue's first, so no track is lost or out of order.
+    const now = await page.evaluate(() => document.querySelector('#player iframe')?.src.match(/\/embed\/([A-Za-z0-9_-]{11})/)?.[1] ?? null);
+    const playing = want[want.length - titles.length - 1];
+    check(titles.length >= 2 && JSON.stringify(titles) === JSON.stringify(tail) && !!playing && now === playing, `${label}: the album's tracks are in the queue, in the playlist's order, the one before them playing`, JSON.stringify({ titles, now }));
     check(asked.filter((l) => l === ALBUM).length === 1, `${label}: the playlist was asked for once`, JSON.stringify(asked));
     check((await page.inputValue('#media-input')) === '', `${label}: the link box is empty again`);
     await page.screenshot({ path: `${OUT}/playlist-${label}.png` });

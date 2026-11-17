@@ -2828,3 +2828,30 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done when: the picked design is live; Test Lab hook `feed.start`; the host rule enforced on the server (protocol
   optional field) with an e2e; shots at 4 sizes; owner's hand test.
 - Done: #529 (FD1a, v0.9.97.160) + #535 (FD1b, v0.9.97.161), 17 Nov 2026.
+
+### FC1. PRIORITY: the feed's country choice really gives that country's videos (owner, 17 Nov 2026; lane A, first)
+- Why: the owner picks Japan in the ♾ Shorts feed and keeps getting Indian videos; "the country options never work,
+  something is wrong in the logic; this is important".
+- Lead (Planner, not verified): the Shorts pool (`youtubePool`, `apps/server/src/youtube.ts`) is a `search.list` with
+  `regionCode` + `relevanceLanguage` = the UI language (`tr` / `en`). On `search.list`, `regionCode` only limits to
+  videos *viewable* in that country, not made there, and the language is never the country's (Japanese for Japan), so
+  globally popular Shorts win. The ▶ video chart uses `videos.list chart=mostPopular` with `regionCode`, which is
+  per-country: check whether it behaves correctly.
+- What: audit every place a country is used (Shorts pool, video chart, 🧭 "Same topic, another country", the
+  steering) and fix the logic so a chosen country yields that country's content: e.g. the country's main language
+  as `relevanceLanguage` (a small country → language map), the chart where the API offers one, and a test that
+  the chosen region reaches the request. Keep quota cost in mind (`EXPECTED_UNITS`) and the shared cache keys.
+- Also (owner, same day): **words, country and kind combine.** Today the words box and the country are separate. He
+  wants e.g. Japan + "hay" = Shorts tagged / titled "hay" from Japan, and Popular + Japan + "hay" = the most viewed of
+  those. Make every pick in the feed window (kind chip, country, words / @channel) one combined query where the API
+  allows it (`search.list` takes `q` + `regionCode` + `relevanceLanguage` + `videoCategoryId` + `order`;
+  `chart=mostPopular` takes no words, so with words use `order=viewCount`); say plainly in the window what "Will
+  play" means. Where a combination truly can't work, don't fake it: grey it out with a one-line reason.
+- Also: **review the kind chips** (Popular, Music, Gaming, Comedy, Animals, Sports): check what each really returns
+  per country (category ids that exist per region, empty or off-topic results) and keep, fix, rename or drop each;
+  write the findings in the PR. Don't add complexity that doesn't pay off.
+- Done when: Japan, Turkey, US, Brazil and Germany each give mostly that country's Shorts and videos, alone and
+  combined with words and a kind (a live
+  spot-check list in the PR); unit tests for the request parameters; Test Lab hook `feed.region`; owner's hand test.
+- Owner's pick: his message to the Planner (17 Nov 2026).
+- Done: #539 (v0.9.97.163), 17 Nov 2026.

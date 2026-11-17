@@ -48,7 +48,7 @@ export function roomMoreItems(deps: {
 }
 
 /** The computer's "⋯ More" menu under its top-bar button. */
-export function createRoomMoreMenu(button: HTMLButtonElement, items: () => MoreItem[]) {
+export function createRoomMoreMenu(button: HTMLButtonElement, items: () => MoreItem[], place: 'below' | 'beside' = 'below') {
   const pop = el('div', { class: 'room-more-pop', role: 'menu', 'aria-label': t('more.button'), hidden: 'hidden' });
   document.body.append(pop);
   const close = () => {
@@ -72,9 +72,23 @@ export function createRoomMoreMenu(button: HTMLButtonElement, items: () => MoreI
       }),
     );
     const r = button.getBoundingClientRect();
-    pop.style.top = `${Math.round(r.bottom + 6)}px`;
-    pop.style.right = `${Math.max(8, Math.round(innerWidth - r.right))}px`;
     pop.hidden = false;
+    if (place === 'beside') {
+      // UI4: the Shorts rail's ⋯ More: right of the rail where there is room, else left of it; its bottom at the
+      // button's, kept inside the window.
+      const w = pop.offsetWidth;
+      const h = pop.offsetHeight;
+      // Never over the video (nothing of ours over the YouTube player): with no room on the right it covers the rail.
+      const video = document.querySelector('.player-wrap')?.getBoundingClientRect();
+      const leftOf = r.left - 8 - w;
+      const left = r.right + 8 + w <= innerWidth - 8 ? r.right + 8 : video && leftOf < video.right ? Math.max(8, innerWidth - 8 - w) : Math.max(8, leftOf);
+      pop.style.left = `${Math.round(left)}px`;
+      pop.style.right = '';
+      pop.style.top = `${Math.round(Math.min(Math.max(8, r.bottom - h), innerHeight - 8 - h))}px`;
+    } else {
+      pop.style.top = `${Math.round(r.bottom + 6)}px`;
+      pop.style.right = `${Math.max(8, Math.round(innerWidth - r.right))}px`;
+    }
     button.setAttribute('aria-expanded', 'true');
     keys.focusFirst();
   };
