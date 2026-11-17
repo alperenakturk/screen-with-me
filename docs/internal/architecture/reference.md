@@ -1161,7 +1161,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (narrow screens keep their below / large pick, `gamePlace:<kind>`). **GW3 (owner, 17 Nov 2026: "only videos ever go
   fullscreen"; it replaced GW2's ⛶ real full screen):** a table on a computer or tablet plays **in the video's place**
   (mode `stage`: `#game-stage` inside `.player-wrap`, scaled to that box by `refit` from its own or wide shape; the
-  side panel, chat, voice and the top bar stay usable beside it; on a computer the rail stays out beside the table, `games/stage.css`, the window's own lazy stylesheet) or in its **🪟 frame** (the free window), switched any
+  side panel, chat, voice and the top bar stay usable beside it; on a computer the rail comes out beside the table as beside the video: hidden at rest, out at the right edge, always on a touch screen, the table making room meanwhile; `games/stage.css`, the window's own lazy stylesheet. Five Frames Duel for 3–6 puts the others' marks in two narrow columns there, so its letters keep 24 px) or in its **🪟 frame** (the free window), switched any
   time with the head's `.game-mode` button (▣ / 🪟, words "In the video's place" / "Frame"; `setTableMode`) or a bare
   Esc (place → frame); the mode used last is remembered for every table (`gameMode`: `place` | `frame`; GW2's saved
   `full` reads as `place`, the first time too). **No game ever calls `requestFullscreen`** (`scripts/check-games-fullscreen.mjs`
