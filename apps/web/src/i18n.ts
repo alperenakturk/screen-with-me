@@ -111,6 +111,7 @@ const en = {
   'game.toPlace': 'In the video’s place',
   'game.toFrame': 'Frame',
   'game.pausedForGame': 'Video paused for the game',
+  'game.pausedShort': 'Video paused',
   'game.besideYoutube': 'YouTube doesn’t allow anything over its video, so the game keeps beside it. Drag it by this bar; double-click to put it back.',
   'game.back': 'Back to the game',
   'game.end': 'End game',

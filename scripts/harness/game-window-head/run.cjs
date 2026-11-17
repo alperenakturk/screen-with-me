@@ -551,11 +551,12 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await wait(200);
     const head = await page.evaluate(() => {
       const h = document.querySelector('#game-stage .game-stage-head').getBoundingClientRect();
-      const n = document.querySelector('.hint-bubble')?.getBoundingClientRect();
-      return { labels: document.getElementById('game-stage').classList.contains('head-labels'), words: [...document.querySelectorAll('#game-stage .game-head-text')].filter((e) => e.getBoundingClientRect().width > 0).length, hint: n ? Math.round(n.top - h.bottom) : null };
+      const n = document.querySelector('#game-stage .game-paused-note:not([hidden])')?.getBoundingClientRect();
+      return { labels: document.getElementById('game-stage').classList.contains('head-labels'), words: [...document.querySelectorAll('#game-stage .game-head-text')].filter((e) => e.getBoundingClientRect().width > 0).length, inHead: !!n && n.width > 0 && n.top >= h.top - 1 && n.bottom <= h.bottom + 1, bubble: !!document.querySelector('.hint-bubble') };
     });
     check(head.labels && head.words >= 3, '1366 QA2: a table\'s head shows its buttons\' words when they fit', head);
-    check(head.hint !== null && head.hint >= 0, '1366 QA2: "Video paused for the game" shows under the head, not over its buttons', head);
+    // GW4: the note is the head's title line for 2.8 s (under the head it covered Sea Battle's "My sea" header).
+    check(head.inHead && !head.bubble, '1366 GW4: "Video paused for the game" shows in the head\'s title line, over none of the game', head);
     check(!errors.length, '1366 QA2: no page errors', errors.slice(0, 2));
     await ctx.close();
   }

@@ -9591,10 +9591,10 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
 
   /* QA2-A #8 (Planner): the room fills the window's height. When the width (not the height) limits the 16:9 card,
      the card and the side panel still reach the bottom: the video's box grows taller and the picture sits in it. */
-  /* Not while a game is open (in the video's place, under it or as a window beside a YouTube player): the games are
-     sized for the room as it was. 212 = what is really above and below the picture (top bar, link box, "Now playing"
-     line, the card's padding). */
-  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up):not(:has(#game-stage:not([hidden]))) main {
+  /* GW4 (owner, 17 Nov 2026): the same while a game is open. Opening, playing or closing a game never moves or resizes
+     the video and the side panel; a game in the video's place scales to that box (`refit`). 212 = what is really above
+     and below the picture (top bar, link box, "Now playing" line, the card's padding). */
+  .in-room:not(.shell, .shorts-view, .tv-mode, .phone, .tablet-up) main {
     --stage-over: 212px;
     display: flex;
     flex-direction: column;

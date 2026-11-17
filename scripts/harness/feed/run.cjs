@@ -129,6 +129,33 @@ async function fakeYouTube(ctx, asked) {
     await friend.click('#feed-row-stop');
     await page.waitForFunction(() => !!document.getElementById('feed-open-shorts'), null, { timeout: 5000 }).catch(() => {});
     check(await page.evaluate(() => !!document.getElementById('feed-open-shorts')), `${label}: ✕ from the friend stops it for everyone`);
+
+    // Card FC1: words + a kind chip + a country combine into one query; a video link greys the kind and the country.
+    // (A long video plays, so the ▶ Videos kind: a Shorts feed waits while a video of the other kind plays.)
+    await showQueue(page, phone);
+    await page.click('#feed-open-videos');
+    await page.click('#feed-pools .feed-pool[data-pool="popular"]');
+    await page.fill('#feed-topic', 'hay');
+    await page.selectOption('#feed-region', 'JP');
+    const willPlay = await page.textContent('#feed-summary');
+    asked.length = 0;
+    await page.click('#feed-start');
+    for (let i = 0; i < 40 && !asked.some((a) => a.includes('/search')); i++) await page.waitForTimeout(200);
+    const region = JSON.parse((await page.evaluate(async () => (await window.__swmLab.run('feed.region')).text)).replace(/^▶ /, ''));
+    check(
+      region.source?.kind === 'topic' && region.source.q === 'hay' && region.source.pool === 'popular' && region.source.region === 'JP' && region.youtube?.relevanceLanguage === 'ja' && region.youtube?.regionCode === 'JP' && region.youtube?.order === 'viewCount' && region.youtube?.q === 'hay',
+      `${label}: Popular + Japan + "hay" is one query in Japanese, by views (feed.region)`,
+      JSON.stringify({ region, willPlay }),
+    );
+    check(asked.some((a) => /\/search\?long=1&region=JP&cat=popular/.test(a)), `${label}: the request carries the country and the kind`, JSON.stringify(asked.slice(0, 3)));
+    check(/hay/.test(willPlay ?? '') && /🇯🇵/.test(willPlay ?? ''), `${label}: "Will play" names the words and the country`, willPlay);
+    await friend.click('#feed-row-stop').catch(() => {});
+    await page.waitForFunction(() => !!document.getElementById('feed-open-shorts'), null, { timeout: 5000 }).catch(() => {});
+    await page.click('#feed-open-shorts');
+    await page.fill('#feed-topic', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
+    const grey = await page.evaluate(() => ({ note: !document.getElementById('feed-no-combine')?.hidden, tiles: [...document.querySelectorAll('#feed-pools .feed-pool')].every((b) => b.disabled), region: document.getElementById('feed-region')?.disabled }));
+    check(grey.note && grey.tiles && grey.region, `${label}: a video link greys the kinds and the country, with the reason`, JSON.stringify(grey));
+    await page.keyboard.press('Escape').catch(() => {});
     await page.context().close();
     await friend.context().close();
   }

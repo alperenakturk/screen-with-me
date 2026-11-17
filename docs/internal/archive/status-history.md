@@ -1723,3 +1723,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
       live e2e failed only `quota.mjs` "13th HTTP-fallback session gets 429 (11 opened, 2 refused)": the live shards
       seem to share an address; it passed in .160). Done line in `archive/cards-done.md`; hand test 27ab.
     - [x] FD1a feed drawer + pill + host rule: #529 (`claude/fd1-feed-drawer`), live in v0.9.97.160; hand test 27ac.
+  - [x] FD1b the Shorts view tidy: #535 (`claude/fd1b-shorts-tidy`) live in v0.9.97.161 (live e2e green on its re-run after Cloudflare object drops); FD1's Done line in the archive.
+  - [x] FC1 feed country (owner's priority): #539 (`claude/fc1-feed-country`) merged; `feedSearchParams` with the
+    country's language, words + kind + country combined, chart fallback, Lab `feed.region`, hand test 27af. Live
+    spot-check of JP / TR / US / BR / DE: the cloud session's network can't reach the live site, so it is the owner's
+    hand test (and the Planner's, if a session with that host allowed runs it).

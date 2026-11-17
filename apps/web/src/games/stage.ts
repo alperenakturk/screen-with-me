@@ -17,6 +17,7 @@ import { slideIn } from './motion.ts';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
 import { hasMouse, holdUpright, isPhoneLayout, isSideways, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
+import { flashHint } from '../ui/hint.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
@@ -25,7 +26,6 @@ import { avatarNode } from '../ui/avatar.ts';
 import { icon, type IconName } from '../ui/icons.ts';
 import { confirmDialog } from '../ui/confirm.ts';
 import { gameLive } from './live.ts';
-import { flashHint } from '../ui/hint.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { loadChunk } from '../ui/lazy.ts';
 import type { WindowLab } from './lab-tools.ts';
@@ -1238,18 +1238,33 @@ export function createGameStage(opts: StageOptions) {
     if ((mode !== 'stage' && !stage.classList.contains('in-tab')) || !current || !opts.pauseVideo?.()) return;
     pausedAt = Date.now();
     if (mode === 'stage') pausedForPlace = true;
-    // QA2: under the head, on the game's top (on the 🎮 it covered the tops of ?, 🎮 and Leave).
-    // 0.9.97.135: on a phone the Games tab shows a moment after the game opens (ui/phone-room.ts), so the note waits for
-    // its head to be on screen; before that it measured an empty box and fell over the video strip (never over a
-    // player: YouTube's rules).
-    const note = () => flashHint(head, t('game.pausedForGame'), 2800, true);
-    if (!stage.classList.contains('in-tab')) return note();
-    // GP1 (first look): in a phone's Games tab a note under the head covered the game's own title and buttons, so the
-    // head's title line says it for the same 2.8 s instead (it covers nothing there).
+    // GP1 (first look): in a phone's Games tab a note under the head covered the game's own title and buttons; GW4: on a
+    // computer it covered Sea Battle's "My sea" header the same way. The head's title line says it for 2.8 s instead,
+    // everywhere (it covers nothing).
     titleNote.textContent = `⏸ ${t('game.pausedForGame')}`;
     titleNote.hidden = false;
     titleText.hidden = true;
+    // A narrow head (a tablet's: 20–90 px for the title once the game's own buttons are in) cut the note to "⏸ Vide…":
+    // the short words, and when even they don't fit, a bubble above the head (over the page, not the game; under it
+    // only with no room above). Watched while the note shows, as the head fills in after the window opens.
+    const fit = new ResizeObserver(() => {
+      if (titleNote.hidden || titleNote.scrollWidth <= titleNote.clientWidth + 1) return;
+      if (!titleNote.dataset.short) {
+        titleNote.dataset.short = '1';
+        titleNote.textContent = `⏸ ${t('game.pausedShort')}`;
+        if (titleNote.scrollWidth <= titleNote.clientWidth + 1) return;
+      }
+      // A phone's Games tab keeps the short words: above its head is the video strip (0.9.97.135: nothing over it).
+      if (stage.classList.contains('in-tab')) return;
+      fit.disconnect();
+      titleNote.hidden = true;
+      titleText.hidden = false;
+      flashHint(head, `⏸ ${t('game.pausedForGame')}`, 2800);
+    });
+    delete titleNote.dataset.short;
+    fit.observe(titleNote);
     setTimeout(() => {
+      fit.disconnect();
       titleNote.hidden = true;
       titleText.hidden = false;
     }, 2800);

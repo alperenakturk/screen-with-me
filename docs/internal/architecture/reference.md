@@ -271,7 +271,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   room for ("Play now": the first one loads); `playlist.*` texts for empty / quota / failed. Test Lab `queue.playlist`
   (three fixture tracks); harness `scripts/harness/playlist` (endpoint faked, CI `site`); e2e `search.mjs` (input
   rules). Album `browse/MPREb_…` links are not read (no API for them): help says Share → Copy link. Discover's `region` (`opt:poolRegion`, 🌍 select:
-  auto = `cf.country`, world, or `POOL_REGIONS`), the pool cache is per kind + region + language + day (`yt-pool2`). **Switch measurement:** `?measure=1` (the old `?olcum=1` too) once in a tab → `#shorts-measure` by
+  auto = `cf.country`, world, or `POOL_REGIONS`), the pool cache is per kind + region + language + day (`yt-pool3`). **Card FC1 (17 Nov 2026), the country really counts:** on `search.list` `regionCode` only means "viewable in", so every feed search now goes through `feedSearchParams` (`@swm/shared/youtube-search`): `regionCode` + that country's language as `relevanceLanguage` (`REGION_LANGUAGE`, `regionLanguage`; the page's language only for `world` or an unlisted country) + the kind chip (`videoCategoryId`; Popular = no category) + words; without words, or with Popular, `order=viewCount`. A topic feed carries `region` (also `auto` = `cf.country`) and `pool` (`/api/youtube/search?…&region&cat`, cache `yt-search3`), so words, kind and country combine (Popular + Japan + "hay" = the most viewed Japanese "hay" Shorts). The ▶ chart (`chart=mostPopular`) is per country already; when YouTube has no chart for a kind in a country (400 / 404) it falls back to that kind's most viewed videos of the last week by search. The drawer: a kind chip and the own words are picked independently (a second click takes the chip off); a video link or a channel greys the chips and the country with one line (`#feed-no-combine`). Test Lab `feed.region` (the running feed's request and the YouTube selection); harness `feed` (the combined query, the grey-out); unit tests `youtube-search.test.ts`, `feed.test.ts`. **Switch measurement:** `?measure=1` (the old `?olcum=1` too) once in a tab → `#shorts-measure` by
   ▲▼ shows how many ms after the room switched (server time, `state.updatedAt`) this Short started moving, and the
   average of the last 5 (`measureSwitch`; nothing is sent).
   **Card FD1b (17 Nov 2026, `design/feed-start.md` §5), the tidy Shorts view:** the Shorts view's styles are a lazy
@@ -370,7 +370,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   calls that reach YouTube count against `SEARCH_LIMIT` (10/min per IP hash); a foreign `Origin` gets 403. Answers:
   `{items:[{id,title,channel,duration,live,short?}]}` or `{error: quota|busy|off|failed}` (`short`, 0.9.91.12: videos.list
   also asks `player` with `maxWidth=100`; an embed taller than wide + ≤ 180 s = a Short, marked 📱 in the list and
-  opened in the Shorts view; the cache key is `yt-search2`) (each has a friendly note; links
+  opened in the Shorts view; the cache key is `yt-search3`) (each has a friendly note; links
   always still work). The thumbnail is built from the id (`i.ytimg.com`, already in the CSP); the page also caches
   full answers in memory. A row adds to the queue (plays at once in an empty room), "▶ Şimdi aç" loads it. Privacy
   policy has a "YouTube search" section (YouTube API Services, YouTube Terms, Google privacy policy). Every YouTube result
@@ -1251,7 +1251,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   a laptop: every game 40–110 ms; at CPU 4× with 150 ms latency, Classics and Snack Bar 230–320 ms. The game window's
   Lab commands (`gameWindow.*`, `games.frame`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
   (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
-  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
+  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game;
+  since GW4 on every device (under the head it covered Sea Battle's "My sea").
+  **GW4 (owner, 17 Nov 2026): opening a game never moves the room.** The room's "fill the window's height" layout
+  (`room.css`, QA2-A #8, `--stage-over`) stays on while a game is open (it used to switch off, so the video shrank and
+  the side panel moved 32 px); a table in the video's place scales to that box and a free window lies over the page.
+  Only the phone's Games tab changes the room on purpose (PH2: the video becomes a strip). Lab `games.layoutStable`
+  (arg: a game kind, default `word`: opens it, minimizes it, writes the video's and side panel's boxes before / during /
+  after and `stable`); harness `games-layout` (CI `games`: every game at 1366 with a file and YouTube, 1920, phone).
   **A table's frame never starts unreadable beside YouTube** (Planner, 16 Nov 2026: no frame with text under 11 px):
   without a spot of mine, a frame that would get less than `READ_ZOOM` (0.85) of the table's size in the strip beside
   the player opens under the player when the screen has room for it there (`below`), else in the video's place

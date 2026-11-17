@@ -11,10 +11,8 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
   `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
   still missing (the owner's Releases page or a session allowed to push tags).
-  - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
-    `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
-    After merge: deploy, live e2e, tag; FD1's Done line + archive.
-  - [ ] RC1 session recap: branch `claude/rc1-session-recap` (on top of FD1b), PR open; server `recap-show` /
+  - [x] FC1 feed country: #539 (`claude/fc1-feed-country`) merged; hand test 27af (live spot-check: owner).
+  - [ ] RC1 session recap: #536 (`claude/rc1-session-recap`), merged after FC1 is live; server `recap-show` /
     `recap-end` / `recap-ask` + lab `recap-gap`, e2e `recap.mjs`, harness `recap`, Lab `recap.show` / `recap.state`,
     privacy page updated (EN + TR), hand test 27ae. After merge: deploy, live e2e, tag; RC1's Done line + archive.
   - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
@@ -39,9 +37,9 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [x] Game Studio (session 17 Nov, card GW3): #525 merged, live in v0.9.97.159 (live e2e green, tagged); hand test 27aa.
-  Next for a fresh Game Studio session: GW4, GW5, GMP2 (cards-games.md). Sideways-tablet tables in the video's place
-  still have text under 13 px (Duel, Sea Battle six; not in CI's sweep): for GW5.
+- [ ] Game Studio (17 Nov b, handoff): [x] GW4 #532 (snack-bar-3's red was the test: CI's narrow column fits
+  three rows, and QA2 drops the locked stand first; card archived): merge, live check. [ ] GW5 #537 (draft, on #532; open points in its body).
+  [ ] GMP2.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -217,6 +215,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   friend's ✨ offers "🙋 Ask the host"; you get one toast. Press "✨ Show to everyone": after 3-2-1 you both see the same
   scenes in the video's place (the video pauses), with a soft tune (🔇 turns it off). "✕ Close for me" closes it only
   for one of you; "▶ Back to the video" ends it for both and the video plays on. ✨ is then gone for this session.
+- [ ] 27af. [FC1] Start a ♾ Shorts feed with Japan: the Shorts are Japanese. Then 🔥 Popular + type "hay" + Japan:
+  "Will play" says so, and the most watched Japanese Shorts about hay come. Try Turkey, US, Brazil, Germany the same
+  way. Paste a video link instead of words: the kinds and the country grey out with a one-line reason.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
