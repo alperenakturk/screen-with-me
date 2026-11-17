@@ -80,6 +80,7 @@ async function snackAt(browser, day) {
       fit: Math.round(fit * 1000) / 1000,
       minText: Math.round(Math.min(...texts.map((e) => parseFloat(getComputedStyle(e).fontSize) * fit)) * 10) / 10,
       rows: Object.fromEntries(rows.map((r) => [r.dataset.stand, r.offsetHeight])),
+      locked: rows.filter((r) => r.classList.contains('locked')).map((r) => r.dataset.stand),
       special: s.querySelector('.sb-row.special')?.dataset.stand ?? null,
       tag: s.querySelector('.sb-row.special .sb-tag')?.textContent ?? '',
     };
@@ -109,7 +110,8 @@ async function snackAt(browser, day) {
   // The baseline: a day whose special is not among the rows shown.
   const base = results.find((g) => !g.special || !(g.special in g.rows));
   check(!!base, 'a day with the special out of sight exists (the baseline)', base ?? results);
-  const shown = Object.keys(base?.rows ?? {});
+  // A locked stand (the next one to open) is never the special: only the open ones need a day.
+  const shown = Object.keys(base?.rows ?? {}).filter((id) => !base.locked.includes(id));
   const covered = new Set(results.filter((g) => g.special && g.special in g.rows).map((g) => g.special));
   check(shown.length > 0 && shown.every((id) => covered.has(id)), `every stand shown is the special on one of the days (${shown.join(', ')})`, [...covered]);
   for (const g of results) {
