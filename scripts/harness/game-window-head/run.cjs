@@ -125,13 +125,17 @@ async function dragHead(page, dx, dy, steps = 12) {
   await wait(200);
   return path;
 }
-/** 0.9.97.117: a side game's home lines up with the side panel (its right edge and top) and stops above the message box. */
+/**
+ * 0.9.97.117: a side game's home lines up with the side panel (its right edge) and stops above the message box. GW5: it
+ * keeps the game's shape, so it sits at the panel's foot and its top is at or under the panel's top (Together and voice
+ * stay in view above it); `top` is that.
+ */
 const panelFit = (page) =>
   page.evaluate(() => {
     const w = document.getElementById('game-stage').getBoundingClientRect();
     const p = document.querySelector('.room .side').getBoundingClientRect();
     const f = document.getElementById('chat-form').getBoundingClientRect();
-    return { right: Math.abs(w.right - p.right) <= 2, top: Math.abs(w.top - p.top) <= 2, aboveInput: w.bottom <= f.top + 1, gap: Math.round(f.top - w.bottom) };
+    return { right: Math.abs(w.right - p.right) <= 2, top: w.top >= p.top - 2, aboveInput: w.bottom <= f.top + 1, gap: Math.round(f.top - w.bottom) };
   });
 const dblHead = (page) => page.evaluate(() => document.querySelector('#game-stage .game-stage-title').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
 const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <= d && Math.abs(a.w - b.w) <= d && Math.abs(a.h - b.h) <= d;
@@ -223,13 +227,14 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       const hy = t.y + t.height / 2;
       await page.mouse.move(hx, hy);
       await page.mouse.down();
-      await page.mouse.move(hx - 20, hy + 10, { steps: 3 });
+      // (Up and left: GW5's Snack Bar keeps its shape, so after the corner grew it the window reaches the screen's foot.)
+      await page.mouse.move(hx - 20, hy - 10, { steps: 3 });
       await page.evaluate(() => document.querySelector('#game-stage .game-stage-head').dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, pointerType: 'mouse', buttons: 0, clientX: 5, clientY: 5, bubbles: true })));
-      await page.mouse.move(hx - 60, hy + 30, { steps: 4 });
+      await page.mouse.move(hx - 60, hy - 30, { steps: 4 });
       await page.mouse.up();
       await wait(300);
       const went = await box(page);
-      check(Math.abs(went.x - (before.x - 60)) <= 3 && Math.abs(went.y - (before.y + 30)) <= 3, `${L} 117: a stray buttonless move doesn't end a drag`, { before, went });
+      check(Math.abs(went.x - (before.x - 60)) <= 3 && Math.abs(went.y - (before.y - 30)) <= 3, `${L} 117: a stray buttonless move doesn't end a drag`, { before, went });
       // A release nobody heard: press, move, then the button comes up outside (no pointerup reaches the page).
       await page.mouse.move(hx - 60, hy + 30);
       await page.mouse.down();
