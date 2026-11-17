@@ -79,7 +79,17 @@ Two sessions never edit the same lines; the Planner splits work by files.
   steering) and fix the logic so a chosen country yields that country's content: e.g. the country's main language
   as `relevanceLanguage` (a small country → language map), the chart where the API offers one, and a test that
   the chosen region reaches the request. Keep quota cost in mind (`EXPECTED_UNITS`) and the shared cache keys.
-- Done when: Japan, Turkey, US, Brazil and Germany each give mostly that country's Shorts and videos (a live
+- Also (owner, same day): **words, country and kind combine.** Today the words box and the country are separate. He
+  wants e.g. Japan + "hay" = Shorts tagged / titled "hay" from Japan, and Popular + Japan + "hay" = the most viewed of
+  those. Make every pick in the feed window (kind chip, country, words / @channel) one combined query where the API
+  allows it (`search.list` takes `q` + `regionCode` + `relevanceLanguage` + `videoCategoryId` + `order`;
+  `chart=mostPopular` takes no words, so with words use `order=viewCount`); say plainly in the window what "Will
+  play" means. Where a combination truly can't work, don't fake it: grey it out with a one-line reason.
+- Also: **review the kind chips** (Popular, Music, Gaming, Comedy, Animals, Sports): check what each really returns
+  per country (category ids that exist per region, empty or off-topic results) and keep, fix, rename or drop each;
+  write the findings in the PR. Don't add complexity that doesn't pay off.
+- Done when: Japan, Turkey, US, Brazil and Germany each give mostly that country's Shorts and videos, alone and
+  combined with words and a kind (a live
   spot-check list in the PR); unit tests for the request parameters; Test Lab hook `feed.region`; owner's hand test.
 - Owner's pick: his message to the Planner (17 Nov 2026).
 
