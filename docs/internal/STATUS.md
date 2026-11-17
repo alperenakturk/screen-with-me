@@ -37,10 +37,10 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (17 Nov c, handoff): [x] GW4 #532 merged. [ ] GW5 #537: Snack Bar with eight stands shows 2 rows in
-  its 320×480 design (busy head on 2 lines + hint): fit 3 in the design (not a taller one: text < 11 px at 1366), then
-  merge; also games-sweep's snackBusy overflows the design (TR 459 in 401). Shrinking a side game's home to clear the Together card
-  breaks the 13 px rule (tried, reverted): Five Frames still covers Together at 1366. [ ] GMP2 #538 (re-run of lane A's shorts-back). Open: Last Heart running on a sideways tablet ≈ 10 px.
+- [ ] Game Studio (17 Nov d): [x] GW4 #532 merged. [x] GW5 Snack Bar busy: one-line head (pills on the counter
+  picture), 📋 on the stand's icon, three stands in the design (EN + TR). [ ] GW5 #537 CI → merge → live → Done.
+  [ ] GMP2 #538 CI → merge → live → Done. Open (sent to the Planner): Five Frames' home covers Together's buttons at
+  1366 (an owner pick); Last Heart running on a sideways tablet ≈ 10 px (card proposed).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.

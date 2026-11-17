@@ -363,3 +363,28 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
 @container game (max-height: 420px) {
   #game-stage .sb-foot .sb-cinema { display: none; }
 }
+
+/* GW5: the room's pills (▶ / ⏸, 👥 bonus, 🫙 tip jar) sit on the counter picture's top left, clear of the SNACK BAR
+   sign at its top right, so the head (coins, income, ?) is one line at every size. They wrap under each other rather
+   than reach the sign. */
+.sb-scene-pills {
+  position: absolute; top: 5px; left: 5px; z-index: 1; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 3px;
+  max-width: 52%; pointer-events: none;
+}
+.sb-scene-pills .sb-pill { pointer-events: auto; padding: 2px 7px; line-height: 1.3; }
+.sb-scene-pills .sb-pill:not(.on, .sb-together) { background: rgba(20, 16, 43, 0.86); color: var(--sb-cream); box-shadow: 0 0 0 1px var(--sb-line); }
+.sb-scene-pills .sb-pill[hidden] { display: none; }
+:root[data-theme='matinee'] .sb .sb-scene-pills .sb-pill:not(.on, .sb-together) { background: rgb(241 234 221 / 0.94); color: var(--text); box-shadow: 0 0 0 1px var(--border); }
+/* GW5: the 📋 menu mark on the stand's picture (bottom right), not in the name's line. */
+.sb-icon-box { position: relative; width: 32px; height: 32px; display: block; }
+.sb-icon-box > .sb-icon { width: 100%; height: 100%; }
+.sb-menu-mark { position: absolute; right: -5px; bottom: -4px; font-size: 13px; line-height: 1; }
+.sb-menu-mark[hidden] { display: none; }
+/* GW5: in the small design (every free window is it, scaled) a stand's name and line keep one line each, so three
+   stands fit even with the longest numbers and names. */
+@container game (max-width: 360px) {
+  #game-stage .sb-row { grid-template-columns: 28px 1fr auto; gap: 7px; padding-inline: 5px; }
+  #game-stage .sb-icon-box { width: 28px; height: 28px; }
+  #game-stage .sb-price { min-width: 58px; padding-inline: 7px; gap: 3px; }
+  #game-stage .sb-more { white-space: nowrap; }
+}

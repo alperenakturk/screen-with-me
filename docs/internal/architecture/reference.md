@@ -1261,7 +1261,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `classics.css`, `how-to-play.css`; a side game's compact head is always on). The side games' home keeps their shape
   too: as wide as the panel column, at its foot just above the message box (Together and voice stay in view), or as
   tall as a short column, right-aligned; an upright tablet's column beside the chat keeps it at the top. Snack Bar's
-  design grew to 320 × 480 (size 400 × 600) so its busiest Turkish rows fit. In the video's place a box smaller than the
+  design grew to 320 × 480 (size 400 × 600); its head is one line at every size (coins, income, ?): the room's pills
+  (▶ / ⏸, 👥, 🫙) sit on the counter picture's top left (`.sb-scene-pills`), the 📋 menu mark on the stand's picture
+  (`.sb-menu-mark`), and in the small design a stand's name and line keep one line, so three stands show even at the
+  busiest (games-sweep `snackBusy`); in a free window the "+N more" line points to the video's place (`moreFloat`). In the video's place a box smaller than the
   table's own size lays the table out in the box at full size instead of scaling it under 13 px (a sideways tablet),
   unless that would shrink it more than the scaled design (Last Heart running keeps the design: its small print is
   still ≈ 10 px there, open point). Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of

@@ -239,7 +239,7 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
     return ['hotdog', 'ice-cream', 'arcade'].map((g) => art.querySelector(`#${p}${g}`)?.style.display !== 'none');
   });
   check(scene.every(Boolean), 'the hot dog grill, ice cream cart and arcade show in the scene', JSON.stringify(scene));
-  check(await page.evaluate(() => /📋/.test(document.querySelector('#game-stage .sb-row[data-stand="popcorn"] .sb-tag')?.textContent ?? '') || document.querySelector('#game-stage .sb-row[data-stand="popcorn"]').hidden), 'a stand at level 25+ carries the menu mark');
+  check(await page.evaluate(() => /📋/.test(document.querySelector('#game-stage .sb-row[data-stand="popcorn"] .sb-menu-mark')?.textContent ?? '') || document.querySelector('#game-stage .sb-row[data-stand="popcorn"]').hidden), 'a stand at level 25+ carries the menu mark');
   await page.screenshot({ path: __dirname + '/sb3-laptop.png' });
 
   // The new places: seaside (cinema #5) and planetarium (#6).

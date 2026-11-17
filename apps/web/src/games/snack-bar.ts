@@ -131,6 +131,7 @@ const TEXT = {
     'buy': 'Buy for {price}',
     'milestone': 'Lv {n}: income ×2',
     'more': '+{n} more when the window is bigger',
+    moreFloat: '+{n} more in the video’s place',
     'cinema': 'Cinema #{n} · ★ {stars}',
     cinemaShort: '{icon} Cinema {n} · ★ {stars}',
     'place.lobby': 'The lobby',
@@ -303,6 +304,7 @@ const TEXT = {
     'buy': '{price} karşılığında al',
     'milestone': 'Sev. {n}: gelir ×2',
     'more': 'Pencere büyüyünce +{n} tane daha',
+    moreFloat: 'Videonun yerinde +{n} tane daha',
     'cinema': '{n}. sinema · ★ {stars}',
     cinemaShort: '{icon} {n}. sinema · ★ {stars}',
     'place.lobby': 'Lobi',
@@ -600,7 +602,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   // The room's shared tip jar (pick 5): every serve drops a coin; full = +10 % for everyone this film.
   const jar = el('span', { class: 'sb-pill sb-jar' });
   let boosted = false;
-  const head = el('div', { class: 'sb-head' }, art(coin, 'sb-coin'), coins, rate, el('span', { class: 'sb-gap' }), state, together, jar);
+  // GW5: the head is one line at every size (coins, income, ?): the room's pills sit on the counter picture's top left.
+  const head = el('div', { class: 'sb-head' }, art(coin, 'sb-coin'), coins, rate, el('span', { class: 'sb-gap' }));
+  const scenePills = el('div', { class: 'sb-scene-pills' }, state, together, jar);
 
   // ---- The scene: a tap serves a customer ----
   const decorated = scene
@@ -626,7 +630,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   const rest = el('span', { class: 'sb-rest', 'aria-hidden': 'true' }, restTitle, restLine);
   // Customers walk up to the counter (owner's pick 1): one at a time, while the film plays.
   const customers = el('div', { class: 'sb-customers' });
-  const sceneBox = el('div', { class: 'sb-scene-box' }, sceneButton, customers, rest, pops);
+  const sceneBox = el('div', { class: 'sb-scene-box' }, sceneButton, customers, rest, pops, scenePills);
   const group = (name: string) => sceneArt.querySelector<SVGGElement>(`#${sceneArt.dataset.prefix}${name}`);
 
   // ---- Buy ×1 / ×10 / Max and the Upgrades panel (SB3) ----
@@ -651,17 +655,20 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   }
 
   // ---- Upgrade rows ----
-  interface Row { id: StandId; node: HTMLElement; level: HTMLElement; bar: HTMLElement; price: HTMLButtonElement; name: HTMLElement; tag: HTMLElement }
+  interface Row { id: StandId; node: HTMLElement; level: HTMLElement; bar: HTMLElement; price: HTMLButtonElement; name: HTMLElement; tag: HTMLElement; menu: HTMLElement }
   const rows: Row[] = STANDS.map((stand) => {
     const name = el('b', { class: 'sb-name' });
     const tag = el('span', { class: 'sb-tag' });
     const level = el('small', { class: 'sb-level' });
     const bar = el('span', { class: 'sb-bar-fill' });
     const price = el('button', { type: 'button', class: 'sb-price' });
+    // GW5: the 📋 menu mark sits on the stand's picture (in the name's line it pushed long names to two lines).
+    const menu = el('span', { class: 'sb-menu-mark' });
+    const icon = art(ART[stand.id], 'sb-icon');
     const node = el(
       'li',
       { class: 'sb-row', 'data-stand': stand.id },
-      art(ART[stand.id], 'sb-icon'),
+      el('span', { class: 'sb-icon-box' }, icon, menu),
       el('span', { class: 'sb-row-text' }, el('span', { class: 'sb-name-line' }, name, tag), level, el('span', { class: 'sb-bar' }, bar)),
       price,
     );
@@ -678,7 +685,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       persist();
       draw();
     });
-    return { id: stand.id, node, level, bar, price, name, tag };
+    return { id: stand.id, node, level, bar, price, name, tag, menu };
   });
   const list = el('ul', { class: 'sb-rows' }, ...rows.map((r) => r.node));
 
@@ -1171,10 +1178,15 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
       row.node.classList.toggle('locked', !open);
       row.node.classList.toggle('special', open && special === stand.id);
       row.name.textContent = t(`stand.${stand.id}`);
-      const tags = [special === stand.id ? t('special') : '', level >= MENU_LEVEL ? t('menuMark') : ''].filter(Boolean).join(' ');
+      const tags = special === stand.id ? t('special') : '';
       row.tag.textContent = tags;
       row.tag.hidden = !tags;
-      row.tag.title = [special === stand.id ? t('specialTitle') : '', level >= MENU_LEVEL ? t('menuTitle', { n: MENU_LEVEL }) : ''].filter(Boolean).join(' ');
+      row.tag.title = tags ? t('specialTitle') : '';
+      const onMenu = level >= MENU_LEVEL;
+      row.menu.hidden = !onMenu;
+      row.menu.textContent = onMenu ? t('menuMark') : '';
+      row.menu.title = onMenu ? t('menuTitle', { n: MENU_LEVEL }) : '';
+      if (onMenu) row.menu.setAttribute('aria-label', row.menu.title);
       const income = (lv: number) => standIncome({ ...game, levels: { ...game.levels, [stand.id]: lv } }, stand.id, special) * factor;
       row.level.textContent = open
         ? level > 0
@@ -1190,7 +1202,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const openCount = STANDS.filter((st) => unlocked(game, st.id)).length + (STANDS.some((st) => !unlocked(game, st.id)) ? 1 : 0);
     const hidden = Math.max(0, openCount - shown.size);
     more.hidden = hidden < 1;
-    more.textContent = t('more', { n: hidden });
+    // GW5: a free window always shows the same stands at any size; the video's place has room for more.
+    const free = root.closest<HTMLElement>('#game-stage')?.dataset.place === 'float' && !root.closest('#game-stage.in-tab');
+    more.textContent = t(free ? 'moreFloat' : 'more', { n: hidden });
     cinema.textContent = t('cinemaShort', { icon: PLACE_ICON[placeOf(game)], n: game.cinemas + 1, stars: game.stars });
     cinema.title = `${t('cinema', { n: game.cinemas + 1, stars: game.stars })} · ${t(`place.${placeOf(game)}`)}: ${t(`twist.${placeOf(game)}`)}`;
     badgeButton.textContent = t('badges', { n: game.badges.length, all: BADGES.length });
