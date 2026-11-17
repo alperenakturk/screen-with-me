@@ -139,7 +139,7 @@ const SIZES = [
           await page.click('.rules-groups [data-rules="room"]');
           const r = await page.evaluate(MEASURE);
           const rows = await page.evaluate(() => [...document.querySelectorAll('.rules-box .set-row')].filter((x) => x.getBoundingClientRect().height > 0).map((x) => x.dataset.group));
-          check(r.over <= 1 && rows.length === 5 && rows.every((g) => g === 'room'), `${where} rules → In the room: its five rows, no scrolling`, { over: r.over, rows });
+          check(r.over <= 1 && rows.length === 6 && rows.every((g) => g === 'room'), `${where} rules → In the room: its six rows (FD1 added "Only the host can start a feed"), no scrolling`, { over: r.over, rows });
           await page.click('.rules-groups [data-rules="play"]');
         }
       }
