@@ -160,13 +160,17 @@ function measure({ mayScroll, minTarget, whole }) {
   const tableBox = stage.querySelector('.mt-table');
   if (b && tableBox && !tableBox.hidden) {
     const br = b.getBoundingClientRect();
+    // BG1: in a wide video place (16 : 10 or wider: an upright tablet's, a computer's) the column beside the board is
+    // the intended layout (card PROP: board on the left at the full height, the bar, players and buttons beside it).
+    const tr = tableBox.getBoundingClientRect();
+    const sideBySide = stage.dataset.place === 'stage' && tr.width / tr.height >= 1.6;
     for (const part of tableBox.children) {
       if (!visible(part) || part.contains(b) || part.matches('.mt-watch-pop')) continue;
       const r = part.getBoundingClientRect();
       if (r.width * r.height > br.width * br.height) hero += `${name(part)} is bigger than the board; `;
       const overlap = Math.min(r.bottom, br.bottom) - Math.max(r.top, br.top);
       const beside = r.right <= br.left + 2 || r.left >= br.right - 2;
-      if (beside && overlap > br.height * 0.3 && r.height > 60) hero += `${name(part)} stands beside the board; `;
+      if (!sideBySide && beside && overlap > br.height * 0.3 && r.height > 60) hero += `${name(part)} stands beside the board; `;
     }
   }
   // CL2: a Draw & Guess / Quiz lobby is one card: no players column beside it.
