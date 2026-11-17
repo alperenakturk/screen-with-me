@@ -320,12 +320,29 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   **Memory:** every YouTube item that starts playing is remembered (`feedMemory`, `[id, at][]`, `rememberPlayed`):
   ids only, at most `FEED_MEMORY_MAX` 2000 for `FEED_MEMORY_DAYS` 30, wiped with the room (`deleteAll` + reset in the
   alarm). **UI:** the Queue's `#feed-row` (`ui/feed-row.ts`): no feed → "♾ Shorts feed" / "▶ Video feed"; running →
-  label, ⏸ / ▶, 🧭 Steer, ✕. The window (`ui/feed-window.ts` + `.css`, a lazy chunk with its own `TEXT`; also from the
-  Shorts bar's ♾): tabs ♾ / ▶, the running feed with Pause / Stop, four steers with a line each (📺 continue from this
-  channel = `chanOf`, 🌍 same topic other country, ✨ more like this one = `like`, 🔤 change the topic), then the
-  starters (Discover / Popular-now chips + country, one box for words / a video link / a channel with ▶'s order).
-  Test Lab `feed.state` (active feed, mine, steers, remembered). Tests: `feed.test.ts`, `e2e/shorts.mjs` (feed part),
-  `e2e/search.mjs` (chart / `of=` inputs), harness `feed` (CI `site`, computer + phone, a friend pauses and stops).
+  label, ⏸ / ▶, 🧭 Steer, ✕. **The drawer (card FD1, owner's pick A, `design/feed-start.md`):** `ui/feed-window.ts` +
+  `.css` (a lazy chunk with its own `TEXT`; opened by the Queue row, the Shorts bar's ♾ and SRC2's feed tiles) is a
+  `role=dialog` **without** `aria-modal` and without a backdrop, fixed on the right edge below `.topbar` (an upright
+  phone: a half sheet, `max-height: 64dvh`, standing on `.ph-tabs`), so the video stays visible. Three steps on one
+  screen: 1 ♾ Shorts / ▶ Videos (radio tiles with a line), 2 six pool tiles (`POOL_KINDS`, a line each; dropped under
+  820 px tall) or the own box (words / a video link / `@channel`, with "Topic: … / Videos like this one / Channel: …"
+  under it; ▶ + a channel shows the order select), 3 country; the `#feed-summary` line ("Will play: … for everyone",
+  "replaces Sam's feed") and **only `#feed-start` starts** (tiles and Enter in the box only select). A running feed
+  shows "{kind}: {label} · by {name}" with ⏸ / ✕ (tooltip "for everyone"), then four steers whose lines are tooltips +
+  `aria-describedby` (📺 more from this channel = `chanOf`, ✨ more like this one = `like`, 🌍 same, other country, 🔤
+  new topic), then the picker ("▶ Start this feed instead"; folded behind "Start a different feed ▾" on an upright
+  phone or under 700 px tall). Esc / ✕ close with no change, focus back to the opener. **Pill:** `#feed-pill` in the
+  `.now-playing` bar (our frame, never over the player): "▶ Feed: 🎵 Music · 12 left · by Sam" (opens the drawer) +
+  ⏸ / ✕ (`ui/feed-row.ts`, `left` = queued `feed` items). **Host rule:** `RoomSettings.feedHostOnly` (Room rules
+  switch `#opt-feedhost`, optional field, no `PROTOCOL_VERSION` bump): the server refuses start, steer and stop from a
+  non-host with `feed_host`; pausing / resuming the same feed (`sameFeed`) stays open; guests see no ✕ and the
+  drawer's button `aria-disabled` with "🔒 Only the host can start a feed in this room". A stop broadcasts
+  `{t:'feed', feed:null, stopper:<member id>}` → everyone's chat line "Robin stopped Sam's feed".
+  Test Lab `feed.state` (active feed, mine, steers, remembered, pill), `feed.start` (opens the drawer, picks ▶ 🔥 Popular
+  or `<kind> <pool>`, starts through `#feed-start`), `feed.drawer` (the drawer's state). Tests: `feed.test.ts`,
+  `e2e/shorts.mjs` (feed part + the host rule + `stopper`), `e2e/search.mjs` (chart / `of=` inputs), harness `feed` (CI
+  `site`, computer + phone: select-then-start, right edge / no backdrop, the friend's pill, pause, steer, stop). Shots:
+  `feed-drawer`, `feed-window`, `feed-queue`.
 - **YouTube search (0.9.90.4, `packages/shared/src/youtube-search.ts`, Worker `src/youtube.ts`, site `ui/search.ts`):**
   words instead of a link + Enter in the link box → `POST /api/youtube/search?hl` with the words as a form body `q` (since 0.9.96.20, security M6: never in the logged address; `wordsRequest`, `readWords`; podcasts search the same) (only on Enter, never while
   typing). The Worker holds the key (`YOUTUBE_API_KEY`, a `production` environment secret; the deploy job uploads it with

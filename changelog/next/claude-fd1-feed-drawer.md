@@ -1,0 +1,4 @@
+- Starting a feed is clearer: the feed window now opens on the right side (from the bottom on a phone) so the video stays visible, asks three short questions (what to watch, where it comes from, which country), says what will play, and starts only when you press "▶ Start feed".
+- While a feed runs, everyone sees it above the video: what it plays, how many videos are left and who started it, with pause and stop.
+- New room rule: "Only the host can start a feed". Everyone can still pause it.
+- When someone stops a feed, the chat says who stopped it.

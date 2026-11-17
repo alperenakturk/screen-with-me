@@ -79,11 +79,16 @@ async function fakeYouTube(ctx, asked) {
     const box = await page.evaluate(() => {
       const r = document.getElementById('feed-window').getBoundingClientRect();
       const w = document.getElementById('feed-window');
-      return { x: r.left, y: r.top, r: r.right, b: r.bottom, vw: innerWidth, vh: innerHeight, scroll: w.scrollHeight > w.clientHeight + 1, tab: document.querySelector('.feed-tab[aria-checked="true"]')?.dataset.kind };
+      const video = document.querySelector('.player-wrap')?.getBoundingClientRect();
+      return { x: r.left, y: r.top, r: r.right, b: r.bottom, vw: innerWidth, vh: innerHeight, scroll: w.scrollHeight > w.clientHeight + 1, tab: document.querySelector('.feed-tab[aria-checked="true"]')?.dataset.kind, backdrop: !!document.querySelector('.feed-backdrop'), modal: w.getAttribute('aria-modal'), videoLeftFree: !video || video.width === 0 || r.left >= video.left + video.width * 0.5 || r.top >= video.top + video.height * 0.35 };
     });
-    check(box.x >= 0 && box.y >= 0 && box.r <= box.vw && box.b <= box.vh && !box.scroll && box.tab === 'videos', `${label}: the ▶ window is on screen, whole (no scrollbar), on the Video tab`, JSON.stringify(box));
+    check(box.x >= 0 && box.y >= 0 && Math.abs(box.r - box.vw) <= 1 && box.b <= box.vh + 1 && !box.scroll && box.tab === 'videos' && !box.backdrop && box.modal === null && box.videoLeftFree, `${label}: the ▶ drawer sits on the right (a half sheet on a phone), whole (no scrollbar), no backdrop, the video stays visible`, JSON.stringify(box));
     await page.screenshot({ path: `${OUT}/feed-${label}-start.png` });
+    // Card FD1: a tile only selects; the summary says what will play; "▶ Start feed" starts it.
     await page.click('#feed-pools .feed-pool[data-pool="music"]');
+    const chosen = await page.evaluate(() => ({ queue: document.querySelectorAll('#queue li').length, summary: document.getElementById('feed-summary')?.textContent ?? '', checked: document.querySelector('.feed-pool[aria-checked="true"]')?.dataset.pool, open: !!document.getElementById('feed-window') }));
+    check(chosen.open && chosen.queue === 0 && chosen.checked === 'music' && /Music|Müzik/.test(chosen.summary), `${label}: a tile only selects it; the summary says what will play`, JSON.stringify(chosen));
+    await page.click('#feed-start');
     await page.waitForFunction(() => document.querySelectorAll('#queue li').length >= 1, null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(2500);
     const started = await friend.evaluate(async () => ({ row: document.getElementById('feed-row-text')?.textContent ?? '', items: [...document.querySelectorAll('#queue li')].length, lab: (await window.__swmLab?.run('feed.state'))?.text }));
@@ -107,7 +112,10 @@ async function fakeYouTube(ctx, asked) {
       const r = w.getBoundingClientRect();
       return { b: r.bottom, vh: innerHeight, rows: document.querySelectorAll('.feed-row-line').length, lines: [...document.querySelectorAll('.feed-row-line p')].every((p) => p.textContent.length > 10) };
     });
-    check(steerBox.rows === 4 && steerBox.lines && steerBox.b <= steerBox.vh, `${label}: the window shows four ways to steer, each with its line`, JSON.stringify(steerBox));
+    check(steerBox.rows === 4 && steerBox.lines && steerBox.b <= steerBox.vh + 1, `${label}: the drawer shows four ways to steer, each described`, JSON.stringify(steerBox));
+    // Everyone sees the pill above the video: what runs, how many left, who started it.
+    const pill = await friend.evaluate(() => ({ hidden: document.getElementById('feed-pill')?.hidden, text: document.getElementById('feed-pill')?.textContent ?? '', stop: !!document.getElementById('feed-pill-stop') }));
+    check(!pill.hidden && /Alex/.test(pill.text) && /left|kaldı/.test(pill.text) && pill.stop, `${label}: the friend sees the feed pill (what, how many left, by Alex) with ⏸ and ✕`, JSON.stringify(pill));
     await page.selectOption('#feed-steer-region', 'JP');
     await page.click('#feed-steer-country');
     await page.waitForTimeout(5000);

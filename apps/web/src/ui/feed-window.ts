@@ -1,12 +1,15 @@
-// Card SH2: the ♾ Shorts / ▶ video feed window, one screen (a lazy chunk with its own texts and styles, for the room
-// page's size budget). On top: the running feed with Pause / Resume and Stop, and four plain ways to steer it, each
-// with one line saying what it does; a steer changes the next videos without a restart. Below: start a feed.
+// Card FD1 (owner's pick A, design/feed-start.md): the ♾ / ▶ feed drawer. It slides in on the right (a half sheet on an
+// upright phone), with no backdrop, so the playing Short / video stays visible. Three short steps on one screen:
+// 1 What to watch, 2 Where they come from (six tiles or your own words / video / @channel), 3 Country; a summary line
+// says what will play, and only "▶ Start feed" starts it. A running feed shows on top: who started it, ⏸ / ✕ for
+// everyone and four ways to steer it. "Only the host can start a feed" (Room rules) locks start / steer / stop for
+// guests. A lazy chunk with its own texts and styles (the room page's size budget). Test Lab: `feed.start`.
 import './feed-window.css';
 import type { ChannelOrder, FeedKind, FeedSource } from '@swm/shared/feed';
 import { isFeedRegion } from '@swm/shared/feed';
 import { parseMediaInput } from '@swm/shared/media';
 import type { QueueItem } from '@swm/shared/protocol';
-import { channelParam, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolRegionChoice, isPoolRegionChoice } from '@swm/shared/youtube-search';
+import { channelParam, parseChannelInput, POOL_KINDS, POOL_REGIONS, type PoolKind, type PoolRegionChoice, isPoolRegionChoice } from '@swm/shared/youtube-search';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
 import type { RoomFeed } from './shorts-feed.ts';
@@ -16,94 +19,121 @@ export const loaded = true;
 
 const TEXT = {
   en: {
-    shorts: '♾ Shorts feed',
-    videos: '▶ Video feed',
-    kinds: 'Which feed',
-    now: 'On now: {label}',
-    paused: 'Paused: {label}',
-    pause: 'Pause',
+    title: 'Start a feed',
+    titleOn: 'Feed',
+    step1: 'What to watch',
+    shorts: '♾ Shorts',
+    shortsLine: 'Short vertical clips, one after another',
+    videos: '▶ Videos',
+    videosLine: 'Longer videos, back to back',
+    step2: 'Where they come from',
+    'pool.popular': 'Most watched today',
+    'pool.music': 'Hits and new songs',
+    'pool.gaming': 'Plays and clips',
+    'pool.comedy': 'Sketches, fails',
+    'pool.animals': 'Cats, dogs, more',
+    'pool.sports': 'Goals, highlights',
+    own: '🔤 Or your own: words, a video or @channel',
+    ownTopic: 'Topic: {x}',
+    ownLike: 'Videos like this one',
+    ownChannel: 'Channel: {x}',
+    order: 'Order',
+    newest: 'Newest first',
+    popular: 'Most viewed',
+    random: 'Shuffled',
+    step3: 'Country',
+    regionAuto: 'My country',
+    regionWorld: 'World',
+    willPlay: 'Will play: {what} for everyone',
+    pickFirst: 'Pick where the videos come from.',
+    replaces: 'This replaces {name}’s feed.',
+    startBtn: '▶ Start feed',
+    startInstead: '▶ Start this feed instead',
+    locked: '🔒 Only the host can start a feed in this room',
+    now: '{kind}: {label} · by {name}',
+    nowPaused: 'Paused · {kind}: {label} · by {name}',
+    someone: 'someone',
+    pause: '❚❚ Pause',
     resume: '▶ Resume',
     stop: '✕ Stop',
+    forAll: 'For everyone in the room',
     steer: 'Steer it',
-    steerNote: 'The queue’s next videos follow your choice; nothing restarts.',
-    channel: '📺 Continue from this channel',
+    channel: '📺 More from this channel',
     channelText: 'More from the channel of the video playing now.',
     channelLabel: '📺 This channel',
-    country: '🌍 Same topic, other country',
+    country: '🌍 Same, other country',
     countryText: 'The same feed as people in another country see it.',
-    countryNone: 'Works for a topic or Discover / Popular feed.',
+    countryNone: 'Works for a topic or a Popular / category feed.',
     like: '✨ More like this one',
     likeText: 'Like the video playing now: its channel first, then similar titles.',
     likeLabel: '✨ Like this one',
-    topic: '🔤 Change the topic',
+    topic: '🔤 New topic',
     topicText: 'New words; the next videos are about them.',
     go: 'Go',
     noVideo: 'A YouTube video has to be playing first.',
-    start: 'Start a feed',
-    startOther: 'Or start a new one',
-    discoverShorts: '🎲 Discover: the most watched Shorts now',
-    discoverVideos: '🔥 Popular now on YouTube',
-    country2: 'Country',
-    regionAuto: 'My country',
-    regionWorld: 'World',
-    input: 'Words, a video link or a channel’s link / @handle',
-    inputHint: 'Words follow a topic; a video link brings videos like it; a channel brings that channel.',
-    placeholderShorts: 'e.g. cats or @channel',
-    placeholderVideos: 'e.g. cooking or @channel',
-    order: 'From a channel',
-    newest: 'Newest',
-    random: 'Random',
-    popular: 'Most viewed',
-    startBtn: 'Start',
-    switchNote: 'Starting this stops the {other}.',
+    startOther: 'Start a different feed',
     close: 'Close',
     tiktok: 'TikTok has no public feed. Add TikTok links with + beside the video (several at once is fine) or share them here from the TikTok app.',
   },
   tr: {
-    shorts: '♾ Shorts akışı',
-    videos: '▶ Video akışı',
-    kinds: 'Hangi akış',
-    now: 'Şu an açık: {label}',
-    paused: 'Duraklatıldı: {label}',
-    pause: 'Duraklat',
+    title: 'Akış başlat',
+    titleOn: 'Akış',
+    step1: 'Ne izlenecek',
+    shorts: '♾ Shorts',
+    shortsLine: 'Kısa dikey videolar, art arda',
+    videos: '▶ Videolar',
+    videosLine: 'Uzun videolar, art arda',
+    step2: 'Nereden gelsin',
+    'pool.popular': 'Bugün en çok izlenenler',
+    'pool.music': 'Hitler ve yeni şarkılar',
+    'pool.gaming': 'Oynanışlar ve klipler',
+    'pool.comedy': 'Skeçler, kazalar',
+    'pool.animals': 'Kediler, köpekler, daha fazlası',
+    'pool.sports': 'Goller, özetler',
+    own: '🔤 Ya da yaz: kelime, video ya da @kanal',
+    ownTopic: 'Konu: {x}',
+    ownLike: 'Bu videoya benzerler',
+    ownChannel: 'Kanal: {x}',
+    order: 'Sıra',
+    newest: 'Önce en yeniler',
+    popular: 'En çok izlenenler',
+    random: 'Karışık',
+    step3: 'Ülke',
+    regionAuto: 'Benim ülkem',
+    regionWorld: 'Dünya',
+    willPlay: 'Oynayacak: {what}, herkes için',
+    pickFirst: 'Videoların nereden geleceğini seç.',
+    replaces: 'Bu, {name} adlı kişinin akışının yerine geçer.',
+    startBtn: '▶ Akışı başlat',
+    startInstead: '▶ Bunun yerine bu akışı başlat',
+    locked: '🔒 Bu odada akışı yalnızca yönetici başlatabilir',
+    now: '{kind}: {label} · başlatan {name}',
+    nowPaused: 'Duraklatıldı · {kind}: {label} · başlatan {name}',
+    someone: 'biri',
+    pause: '❚❚ Duraklat',
     resume: '▶ Sürdür',
     stop: '✕ Durdur',
+    forAll: 'Odadaki herkes için',
     steer: 'Yönlendir',
-    steerNote: 'Sıradaki videolar seçtiğine göre gelir; hiçbir şey baştan başlamaz.',
-    channel: '📺 Bu kanaldan devam',
+    channel: '📺 Bu kanaldan daha fazla',
     channelText: 'Şu an oynayan videonun kanalından daha fazlası.',
     channelLabel: '📺 Bu kanal',
-    country: '🌍 Aynı konu, başka ülke',
+    country: '🌍 Aynısı, başka ülke',
     countryText: 'Aynı akış, başka bir ülkedeki insanların gördüğü gibi.',
-    countryNone: 'Bir konu ya da Keşfet / Popüler akışında çalışır.',
-    like: '✨ Buna benzer',
+    countryNone: 'Bir konu ya da Popüler / kategori akışında çalışır.',
+    like: '✨ Buna benzer daha fazla',
     likeText: 'Şu an oynayana benzer: önce kanalı, sonra benzer başlıklar.',
     likeLabel: '✨ Buna benzer',
-    topic: '🔤 Konuyu değiştir',
+    topic: '🔤 Yeni konu',
     topicText: 'Yeni kelimeler; sıradaki videolar onlarla ilgili olur.',
     go: 'Git',
     noVideo: 'Önce bir YouTube videosu oynamalı.',
-    start: 'Akış başlat',
-    startOther: 'Ya da yenisini başlat',
-    discoverShorts: '🎲 Keşfet: şu an en çok izlenen Shorts',
-    discoverVideos: '🔥 YouTube’da şu an popüler',
-    country2: 'Ülke',
-    regionAuto: 'Benim ülkem',
-    regionWorld: 'Dünya',
-    input: 'Kelimeler, bir video linki ya da kanal linki / @kullanıcı adı',
-    inputHint: 'Kelimeler bir konuyu izler; video linki ona benzerleri getirir; kanal o kanalı getirir.',
-    placeholderShorts: 'ör. kediler ya da @kanal',
-    placeholderVideos: 'ör. yemek ya da @kanal',
-    order: 'Kanaldan',
-    newest: 'En yeni',
-    random: 'Karışık',
-    popular: 'En çok izlenen',
-    startBtn: 'Başlat',
-    switchNote: 'Bunu başlatmak {other} kapatır.',
+    startOther: 'Başka bir akış başlat',
     close: 'Kapat',
     tiktok: "TikTok'un herkese açık bir akışı yok. TikTok linklerini videonun yanındaki + ile ekle (birkaç tane birden olur) ya da TikTok uygulamasından buraya paylaş.",
   },
 };
+type Tx = (typeof TEXT)['en'];
 
 export interface FeedWindowOptions {
   kind: FeedKind;
@@ -112,13 +142,33 @@ export interface FeedWindowOptions {
   /** The Discover / Popular region remembered in this browser. */
   region: () => PoolRegionChoice;
   setRegion: (region: PoolRegionChoice) => void;
+  /** A member's name by member id (who started the feed), null when they left. */
+  who: (id: string) => string | null;
+  /** "Only the host can start a feed" is on and I am not the host. */
+  locked: () => boolean;
 }
 
-let openNow: { close: () => void; render: () => void } | null = null;
+/** What is picked in the drawer (nothing starts until "▶ Start feed"). */
+type Choice = { pool: PoolKind } | { own: string } | null;
 
-/** Redraw the open window (the feed changed). */
+let openNow: { close: () => void; render: () => void; state: () => Record<string, unknown>; pick: (kind: FeedKind, pool: PoolKind) => void; start: () => void } | null = null;
+
+/** Redraw the open drawer (the feed or the room's rules changed). */
 export function refreshFeedWindow(): void {
   openNow?.render();
+}
+
+/** Test Lab `feed.start`: the open drawer's state, or a fixed pick (kind + pool) started through the drawer. */
+export function feedWindowLab(): { state: () => Record<string, unknown> | null; pickAndStart: (kind: FeedKind, pool: PoolKind) => boolean } {
+  return {
+    state: () => openNow?.state() ?? null,
+    pickAndStart(kind, pool) {
+      if (!openNow) return false;
+      openNow.pick(kind, pool);
+      openNow.start();
+      return true;
+    },
+  };
 }
 
 export function openFeedWindow(opts: FeedWindowOptions): void {
@@ -126,26 +176,24 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
   const tx = TEXT[lang() === 'tr' ? 'tr' : 'en'];
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   let kind = opts.kind;
+  let pick: Choice = null;
+  let own = '';
+  let order: ChannelOrder = 'newest';
+  let region = opts.region();
+  /** On a short phone a running feed folds the picker away ("Start a different feed ▾"). */
+  let pickerOpen = false;
   const closeX = el('button', { type: 'button', class: 'icon-btn', id: 'feed-close', title: tx.close, 'aria-label': tx.close }, '✕');
   const body = el('div', { class: 'feed-body' });
-  const dialog = el('div', { class: 'feed-window card', id: 'feed-window', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'feed-title' }, body);
-  const backdrop = el('div', { class: 'dialog-backdrop feed-backdrop' }, dialog);
+  const dialog = el('div', { class: 'feed-window feed-drawer', id: 'feed-window', role: 'dialog', 'aria-labelledby': 'feed-title' }, body);
   const playingId = () => {
     const item = opts.playing();
     return item?.media.kind === 'youtube' ? item.media.id : null;
-  };
-  /** One row: a button and the line that says what it does (and an extra control). */
-  const row = (id: string, label: string, text: string, onClick: () => void, extra?: HTMLElement, disabled = false) => {
-    const button = el('button', { type: 'button', class: 'btn small-btn feed-act', id }, label);
-    button.disabled = disabled;
-    button.addEventListener('click', onClick);
-    return el('div', { class: 'feed-row-line' }, el('div', { class: 'feed-row-main' }, button, extra ?? ''), el('p', { class: 'muted small' }, text));
   };
   const regionSelect = (value: string, withAuto: boolean) => {
     const names = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames([lang()], { type: 'region' }) : null;
     const select = el(
       'select',
-      { class: 'feed-region', 'aria-label': tx.country2 },
+      { class: 'feed-region', 'aria-label': tx.step3 },
       ...(withAuto ? [el('option', { value: 'auto' }, `🌍 ${tx.regionAuto}`)] : []),
       el('option', { value: 'world' }, `🌐 ${tx.regionWorld}`),
       ...POOL_REGIONS.map((code) => el('option', { value: code }, names?.of(code) ?? code)),
@@ -153,15 +201,76 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
     select.value = value;
     return select;
   };
+  const kindName = (k: FeedKind) => (k === 'shorts' ? tx.shorts : tx.videos);
+
+  /** The feed the picks describe, or null when nothing is picked yet. */
+  function chosen(): { label: string; source: FeedSource } | null {
+    if (pick && 'pool' in pick) return { label: t(`pool.${pick.pool}`), source: { kind: 'pool', pool: pick.pool, region } };
+    if (pick && 'own' in pick) {
+      const read = readInput(pick.own, kind, order, tx);
+      if (!read) return null;
+      // Words follow a country too (Step 3); a video or a channel has none.
+      if (read.source.kind === 'topic' && isFeedRegion(region)) return { label: withFlag(read.label, region), source: { ...read.source, region } };
+      return read;
+    }
+    return null;
+  }
+  /** "Topic: cats" / "Videos like this one" / "Channel: @name" under the own box. */
+  function ownHint(text: string): string {
+    const read = readInput(text, kind, order, tx);
+    if (!read) return '';
+    if (read.source.kind === 'channel') return tx.ownChannel.replace('{x}', read.label);
+    if (read.source.kind === 'like') return tx.ownLike;
+    return tx.ownTopic.replace('{x}', read.label);
+  }
+  function start(): void {
+    const feed = chosen();
+    if (!feed || opts.locked()) return;
+    opts.feed.start(kind, feed.label, feed.source);
+    close();
+  }
+
+  /** An upright phone (a half sheet) or a screen too short for the steer actions and the picker together. */
+  function shortScreen(): boolean {
+    const html = document.documentElement;
+    return (html.classList.contains('phone') && !html.classList.contains('sideways')) || innerHeight < 900;
+  }
 
   function render(): void {
     const info = opts.feed.info;
-    const other: FeedKind = kind === 'shorts' ? 'videos' : 'shorts';
-    const tabs = el(
+    const locked = opts.locked();
+    const runnerName = info ? (opts.who(info.by) ?? tx.someone) : '';
+    const head = el('div', { class: 'feed-head-row' }, el('h3', { id: 'feed-title', class: 'feed-title' }, info ? tx.titleOn : tx.title), closeX);
+    const parts: (HTMLElement | string)[] = [head];
+    // Card SH1 item 4: TikTok has no public feed or search; while a TikTok plays the drawer says so.
+    if (kind === 'shorts' && opts.playing()?.media.kind === 'tiktok') parts.push(el('p', { class: 'small feed-tiktok', id: 'feed-tiktok', role: 'note' }, tx.tiktok));
+
+    if (info) {
+      // The running feed: who started it, ⏸ / ✕ for everyone, then the steer actions.
+      const pause = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-pause', title: tx.forAll }, info.paused ? tx.resume : tx.pause);
+      pause.addEventListener('click', () => opts.feed.pause(!info.paused));
+      const stop = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-stop', title: tx.forAll }, tx.stop);
+      stop.addEventListener('click', () => {
+        opts.feed.stop();
+        close();
+      });
+      const line = (info.paused ? tx.nowPaused : tx.now).replace('{kind}', kindName(info.kind)).replace('{label}', info.label).replace('{name}', runnerName);
+      parts.push(el('div', { class: 'feed-now', id: 'feed-now' }, el('span', { id: 'feed-now-text' }, line), pause, locked ? '' : stop));
+      // A short screen shows either the steer actions or (after "Start a different feed ▾") the picker.
+      if (!locked && !(pickerOpen && shortScreen())) parts.push(steerBlock(info.kind, info.source, info.label));
+    }
+
+    // The picker: 1 what, 2 where from, 3 country, the summary and the one button that starts.
+    const kinds = el(
       'div',
-      { class: 'feed-tabs', role: 'radiogroup', 'aria-label': tx.kinds },
+      { class: 'feed-tabs', role: 'radiogroup', 'aria-label': tx.step1 },
       ...(['shorts', 'videos'] as const).map((k) => {
-        const tab = el('button', { type: 'button', class: 'feed-tab', role: 'radio', 'aria-checked': String(k === kind), 'data-kind': k }, tx[k]);
+        const tab = el(
+          'button',
+          { type: 'button', class: 'feed-tab', role: 'radio', 'aria-checked': String(k === kind), 'data-kind': k },
+          el('b', {}, kindName(k)),
+          el('span', { class: 'feed-tile-line' }, k === 'shorts' ? tx.shortsLine : tx.videosLine),
+        );
         tab.addEventListener('click', () => {
           kind = k;
           render();
@@ -169,121 +278,205 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
         return tab;
       }),
     );
-    const head = el('div', { class: 'feed-head-row' }, el('h3', { id: 'feed-title', class: 'sr-only' }, tx[kind]), tabs, closeX);
-    const parts: (HTMLElement | string)[] = [head];
-    // Card SH1 item 4: TikTok has no public feed or search; while a TikTok plays the ♾ tab says so and points to links.
-    if (kind === 'shorts' && opts.playing()?.media.kind === 'tiktok') parts.push(el('p', { class: 'small feed-tiktok', id: 'feed-tiktok', role: 'note' }, tx.tiktok));
-    const running = info && info.kind === kind ? info : null;
-    if (running) {
-      const pause = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-pause' }, running.paused ? tx.resume : tx.pause);
-      pause.addEventListener('click', () => opts.feed.pause(!running.paused));
-      const stop = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-stop' }, tx.stop);
-      stop.addEventListener('click', () => {
-        opts.feed.stop();
-        close();
-      });
-      parts.push(el('div', { class: 'feed-now', id: 'feed-now' }, el('span', { id: 'feed-now-text' }, (running.paused ? tx.paused : tx.now).replace('{label}', running.label)), pause, stop));
-      const id = playingId();
-      const source = running.source;
-      const regional = source.kind === 'topic' || source.kind === 'pool';
-      const current = source.kind === 'topic' ? (source.region ?? 'world') : source.kind === 'pool' ? (source.region ?? 'auto') : 'world';
-      const country = regionSelect(current, source.kind === 'pool');
-      country.id = 'feed-steer-region';
-      country.disabled = !regional;
-      const words = el('input', { id: 'feed-steer-topic', autocomplete: 'off', maxlength: '80', 'aria-label': tx.topic });
-      const wordsGo = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-steer-go' }, tx.go);
-      const steerTopic = () => {
-        const q = words.value.replace(/\s+/g, ' ').trim();
-        if (q) opts.feed.start(kind, q, { kind: 'topic', q });
-      };
-      wordsGo.addEventListener('click', steerTopic);
-      words.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') steerTopic();
-      });
-      parts.push(
-        el('h4', { class: 'feed-sub' }, tx.steer),
-        el('p', { class: 'muted small feed-note' }, tx.steerNote),
-        row('feed-steer-channel', tx.channel, id ? tx.channelText : tx.noVideo, () => id && opts.feed.start(kind, tx.channelLabel, { kind: 'chanOf', id, ...(running.source.kind === 'channel' || running.source.kind === 'chanOf' ? orderOf(running.source) : {}) }), undefined, !id),
-        row('feed-steer-country', tx.country, regional ? tx.countryText : tx.countryNone, () => {
-          const region = country.value;
-          if (source.kind === 'topic') opts.feed.start(kind, withFlag(running.label, region), isFeedRegion(region) ? { kind: 'topic', q: source.q, region } : { kind: 'topic', q: source.q });
-          else if (source.kind === 'pool' && isPoolRegionChoice(region)) opts.feed.start(kind, withFlag(running.label, region), { kind: 'pool', pool: source.pool, region });
-        }, country, !regional),
-        row('feed-steer-like', tx.like, id ? tx.likeText : tx.noVideo, () => id && opts.feed.start(kind, tx.likeLabel, { kind: 'like', id }), undefined, !id),
-        row('feed-steer-topic-btn', tx.topic, tx.topicText, () => words.focus(), el('span', { class: 'feed-words' }, words, wordsGo)),
-      );
-    }
-    // Start a feed: chips (Discover / Popular now) with a country, or one box for words, a video or a channel.
-    const region = regionSelect(opts.region(), true);
-    region.id = 'feed-region';
-    region.addEventListener('change', () => isPoolRegionChoice(region.value) && opts.setRegion(region.value));
-    const chips = el(
+    const pools = el(
       'div',
-      { class: 'feed-pools', id: 'feed-pools', role: 'group' },
+      { class: 'feed-pools', id: 'feed-pools', role: 'radiogroup', 'aria-label': tx.step2 },
       ...POOL_KINDS.map((pool) => {
-        const chip = el('button', { type: 'button', class: 'feed-pool', 'data-pool': pool }, t(`pool.${pool}`));
-        chip.addEventListener('click', () => {
-          opts.feed.start(kind, t(`pool.${pool}`), { kind: 'pool', pool, region: opts.region() });
-          close();
+        const on = pick !== null && 'pool' in pick && pick.pool === pool;
+        const tile = el(
+          'button',
+          { type: 'button', class: 'feed-pool', role: 'radio', 'aria-checked': String(on), 'data-pool': pool },
+          el('b', {}, t(`pool.${pool}`)),
+          el('span', { class: 'feed-tile-line' }, tx[`pool.${pool}`]),
+        );
+        tile.addEventListener('click', () => {
+          pick = { pool };
+          render();
         });
-        return chip;
+        return tile;
       }),
     );
-    const input = el('input', { id: 'feed-topic', autocomplete: 'off', maxlength: '200', placeholder: kind === 'shorts' ? tx.placeholderShorts : tx.placeholderVideos, 'aria-label': tx.input });
-    const order = el(
-      'select',
-      { id: 'feed-order', class: 'feed-region', 'aria-label': tx.order },
-      ...(['newest', 'random', 'popular'] as const).map((o) => el('option', { value: o }, tx[o])),
-    );
-    const startBtn = el('button', { type: 'submit', class: 'btn primary small-btn', id: 'feed-start' }, tx.startBtn);
-    const form = el(
-      'form',
-      { class: 'feed-start-form' },
-      el('label', { class: 'small', for: 'feed-topic' }, tx.input),
-      el('div', { class: 'feed-topic-row' }, input, kind === 'videos' ? order : '', startBtn),
-      el('p', { class: 'muted small' }, tx.inputHint),
-    );
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const picked = readInput(input.value, kind, order.value as ChannelOrder, tx);
-      if (!picked) return;
-      opts.feed.start(kind, picked.label, picked.source);
-      close();
+    const input = el('input', { id: 'feed-topic', autocomplete: 'off', maxlength: '200', value: own, 'aria-label': tx.own, placeholder: tx.own });
+    const hint = el('span', { class: 'feed-own-hint muted small', id: 'feed-own-hint' }, ownHint(own));
+    input.addEventListener('input', () => {
+      own = input.value;
+      pick = own.trim() ? { own } : null;
+      hint.textContent = ownHint(own);
+      summary();
+      // The tiles lose their ✓ when the own box is used.
+      for (const tile of pools.querySelectorAll('.feed-pool')) tile.setAttribute('aria-checked', 'false');
     });
-    const starters = [
-      info && info.kind !== kind ? el('p', { class: 'muted small' }, tx.switchNote.replace('{other}', tx[other])) : '',
-      el('p', { class: 'small feed-discover-title' }, el('b', {}, kind === 'shorts' ? tx.discoverShorts : tx.discoverVideos), ' ', region),
-      chips,
-      form,
+    // Enter selects "your own" and moves to the button; it never starts.
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      startBtn.focus();
+    });
+    const ownChannel = pick !== null && 'own' in pick && readInput(pick.own, kind, order, tx)?.source.kind === 'channel';
+    const orderSelect = el('select', { id: 'feed-order', class: 'feed-region', 'aria-label': tx.order }, ...(['newest', 'popular', 'random'] as const).map((o) => el('option', { value: o }, tx[o])));
+    orderSelect.value = order;
+    orderSelect.addEventListener('change', () => {
+      order = orderSelect.value as ChannelOrder;
+      summary();
+    });
+    const regionPick = regionSelect(region, true);
+    regionPick.id = 'feed-region';
+    regionPick.addEventListener('change', () => {
+      if (!isPoolRegionChoice(regionPick.value)) return;
+      region = regionPick.value;
+      opts.setRegion(region);
+      summary();
+    });
+    const summaryLine = el('p', { class: 'feed-summary', id: 'feed-summary', role: 'status' });
+    const startBtn = el('button', { type: 'button', class: 'btn primary feed-start', id: 'feed-start' }, info ? tx.startInstead : tx.startBtn);
+    startBtn.addEventListener('click', start);
+    function summary(): void {
+      const feed = chosen();
+      const flag = region === 'auto' ? `🌍 ${tx.regionAuto}` : region === 'world' ? '🌐' : flagOf(region);
+      const what = feed ? `${kindName(kind)} · ${feed.label}${feed.source.kind === 'pool' || feed.source.kind === 'topic' ? ` · ${flag}` : ''}` : '';
+      summaryLine.textContent = locked ? tx.locked : feed ? `${tx.willPlay.replace('{what}', what)}${info ? ` ${tx.replaces.replace('{name}', runnerName)}` : ''}` : tx.pickFirst;
+      startBtn.setAttribute('aria-disabled', String(!feed || locked));
+    }
+    summary();
+    const step = (n: number, title: string) => el('h4', { class: 'feed-sub' }, el('span', { class: 'feed-step', 'aria-hidden': 'true' }, String(n)), ' ', title);
+    const picker = [
+      step(1, tx.step1),
+      kinds,
+      step(2, tx.step2),
+      pools,
+      el('div', { class: 'feed-topic-row' }, input, kind === 'videos' && ownChannel ? orderSelect : ''),
+      hint,
+      el('div', { class: 'feed-country-row' }, step(3, tx.step3), regionPick),
+      summaryLine,
+      startBtn,
     ];
-    // While a feed runs, starting another is folded away, so the window fits a phone without scrolling.
-    if (running) parts.push(el('details', { class: 'feed-more', id: 'feed-more' }, el('summary', { class: 'feed-sub' }, tx.startOther), ...starters));
-    else parts.push(el('h4', { class: 'feed-sub' }, tx.start), ...starters);
+    // While a feed runs on an upright phone (a half sheet) or a short screen, the picker folds away so the drawer fits
+    // without scrolling.
+    const fold = info && shortScreen() && !pickerOpen;
+    if (fold) {
+      const more = el('button', { type: 'button', class: 'btn small-btn feed-more', id: 'feed-more', 'aria-expanded': 'false' }, `${tx.startOther} ▾`);
+      more.addEventListener('click', () => {
+        pickerOpen = true;
+        render();
+        document.querySelector<HTMLElement>('#feed-window .feed-tab[aria-checked="true"]')?.focus();
+      });
+      // In the head row beside ✕, so the steer actions and the YouTube attribution keep their room.
+      head.insertBefore(more, closeX);
+    } else parts.push(el('div', { class: 'feed-picker' }, ...picker));
     parts.push(el('p', { class: 'yt-attrib small' }, ytLogo(), el('span', {}, el('span', {}, t('yt.from')), ' · ', el('a', { href: 'https://www.youtube.com/t/terms', target: '_blank', rel: 'noopener' }, t('yt.terms')))));
     const focused = document.activeElement?.id;
     body.replaceChildren(...parts);
     if (focused) document.getElementById(focused)?.focus();
   }
 
+  /** The four steer actions, each with its line as a tooltip and description (not a second text line). */
+  function steerBlock(runKind: FeedKind, source: FeedSource, label: string): HTMLElement {
+    const id = playingId();
+    const regional = source.kind === 'topic' || source.kind === 'pool';
+    const current = source.kind === 'topic' ? (source.region ?? 'world') : source.kind === 'pool' ? (source.region ?? 'auto') : 'world';
+    const country = regionSelect(current, source.kind === 'pool');
+    country.id = 'feed-steer-region';
+    country.disabled = !regional;
+    const words = el('input', { id: 'feed-steer-topic', autocomplete: 'off', maxlength: '80', 'aria-label': tx.topic, placeholder: tx.topic });
+    const wordsGo = el('button', { type: 'button', class: 'btn small-btn', id: 'feed-steer-go' }, tx.go);
+    const steerTopic = () => {
+      const q = words.value.replace(/\s+/g, ' ').trim();
+      if (q) opts.feed.start(runKind, q, { kind: 'topic', q });
+    };
+    wordsGo.addEventListener('click', steerTopic);
+    words.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') steerTopic();
+    });
+    const row = (rowId: string, text: string, line: string, onClick: () => void, extra?: HTMLElement, disabled = false) => {
+      const button = el('button', { type: 'button', class: 'btn small-btn feed-act', id: rowId, title: line, 'aria-describedby': `${rowId}-d` }, text);
+      button.disabled = disabled;
+      button.addEventListener('click', onClick);
+      return el('div', { class: 'feed-row-line' }, button, extra ?? '', el('p', { class: 'sr-only', id: `${rowId}-d` }, line));
+    };
+    // 🔤 New topic is the box itself (its line describes it) with Go: no second "New topic" button beside it.
+    words.setAttribute('aria-describedby', 'feed-steer-topic-d');
+    return el(
+      'div',
+      { class: 'feed-steer' },
+      el('h4', { class: 'feed-sub' }, tx.steer),
+      el(
+        'div',
+        { class: 'feed-steer-grid' },
+        row('feed-steer-channel', tx.channel, id ? tx.channelText : tx.noVideo, () => id && opts.feed.start(runKind, tx.channelLabel, { kind: 'chanOf', id, ...orderOf(source) }), undefined, !id),
+        row('feed-steer-like', tx.like, id ? tx.likeText : tx.noVideo, () => id && opts.feed.start(runKind, tx.likeLabel, { kind: 'like', id }), undefined, !id),
+        row(
+          'feed-steer-country',
+          tx.country,
+          regional ? tx.countryText : tx.countryNone,
+          () => {
+            const value = country.value;
+            if (source.kind === 'topic') opts.feed.start(runKind, withFlag(label, value), isFeedRegion(value) ? { kind: 'topic', q: source.q, region: value } : { kind: 'topic', q: source.q });
+            else if (source.kind === 'pool' && isPoolRegionChoice(value)) opts.feed.start(runKind, withFlag(label, value), { kind: 'pool', pool: source.pool, region: value });
+          },
+          country,
+          !regional,
+        ),
+        el('div', { class: 'feed-row-line' }, el('span', { class: 'feed-words' }, words, wordsGo), el('p', { class: 'sr-only', id: 'feed-steer-topic-d' }, tx.topicText)),
+      ),
+    );
+  }
+
   function close(): void {
-    backdrop.remove();
+    dialog.remove();
     document.removeEventListener('keydown', onKey, true);
+    removeEventListener('resize', place);
     openNow = null;
     if (opener?.isConnected) opener.focus();
   }
   const onKey = (event: KeyboardEvent) => {
-    if (event.key !== 'Escape') return;
+    if (event.key !== 'Escape' || !dialog.contains(document.activeElement)) return;
     event.stopImmediatePropagation();
     close();
   };
+  /** Below the room's top bar on a computer (the drawer covers the side panel, never the video). */
+  function place(): void {
+    const bar = document.querySelector('.topbar')?.getBoundingClientRect();
+    dialog.style.top = bar && bar.height > 0 && bar.bottom < innerHeight / 3 ? `${Math.round(bar.bottom)}px` : '';
+    // A phone's tab bar stays usable: the sheet stands on it.
+    const tabs = document.querySelector('.ph-tabs')?.getBoundingClientRect();
+    const floor = tabs && tabs.height > 0 && tabs.top > innerHeight / 2 ? tabs.top : innerHeight;
+    dialog.style.bottom = floor < innerHeight ? `${Math.round(innerHeight - floor)}px` : '';
+    // An upright phone's sheet never reaches over the player (nothing of ours over a YouTube player).
+    const html = document.documentElement;
+    const playing = document.querySelector('#player iframe, #player video');
+    const player = playing && html.classList.contains('phone') && !html.classList.contains('sideways') ? document.querySelector('.player-wrap')?.getBoundingClientRect() : null;
+    dialog.style.maxHeight = player && player.height > 0 && player.bottom < floor ? `${Math.round(floor - Math.max(player.bottom, 0) - 4)}px` : '';
+  }
   closeX.addEventListener('click', close);
-  backdrop.addEventListener('click', (event) => {
-    if (event.target === backdrop) close();
-  });
   document.addEventListener('keydown', onKey, true);
+  addEventListener('resize', place);
   render();
-  document.body.append(backdrop);
-  openNow = { close, render };
+  document.body.append(dialog);
+  place();
+  openNow = {
+    close,
+    render,
+    start,
+    pick(k, pool) {
+      kind = k;
+      pick = { pool };
+      render();
+    },
+    state() {
+      const r = dialog.getBoundingClientRect();
+      return {
+        kind,
+        pick,
+        summary: document.getElementById('feed-summary')?.textContent ?? '',
+        locked: opts.locked(),
+        running: opts.feed.info ? { kind: opts.feed.info.kind, label: opts.feed.info.label, by: opts.who(opts.feed.info.by) } : null,
+        box: `${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}×${Math.round(r.height)}`,
+        right: Math.round(innerWidth - r.right) <= 1,
+        onScreen: r.left >= 0 && r.top >= 0 && r.bottom <= innerHeight + 1,
+        scrolls: dialog.scrollHeight > dialog.clientHeight + 1,
+      };
+    },
+  };
   dialog.querySelector<HTMLElement>('.feed-tab[aria-checked="true"]')?.focus();
 }
 
@@ -291,17 +484,20 @@ function orderOf(source: FeedSource): { order?: ChannelOrder } {
   return (source.kind === 'channel' || source.kind === 'chanOf') && source.order ? { order: source.order } : {};
 }
 
+function flagOf(region: string): string {
+  return String.fromCodePoint(...[...region].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}
+
 /** "cats" → "cats · 🇯🇵" (a steer to another country shows it in the label). */
 function withFlag(label: string, region: string): string {
   const base = label.replace(/ · \S+$/u, '');
   if (region === 'auto') return base;
   if (region === 'world') return `${base} · 🌐`;
-  const flag = String.fromCodePoint(...[...region].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
-  return `${base} · ${flag}`;
+  return `${base} · ${flagOf(region)}`;
 }
 
-/** The start box: a channel, a video link ("like this video") or words (a topic). */
-export function readInput(text: string, kind: FeedKind, order: ChannelOrder, tx: { channelLabel: string; likeLabel: string }): { label: string; source: FeedSource } | null {
+/** The own box: a channel, a video link ("like this video") or words (a topic). */
+export function readInput(text: string, kind: FeedKind, order: ChannelOrder, tx: Pick2): { label: string; source: FeedSource } | null {
   const raw = text.replace(/\s+/g, ' ').trim();
   if (!raw) return null;
   const channel = parseChannelInput(raw);
@@ -314,4 +510,4 @@ export function readInput(text: string, kind: FeedKind, order: ChannelOrder, tx:
   const q = raw.slice(0, 80);
   return { label: q, source: { kind: 'topic', q } };
 }
-
+type Pick2 = Pick<Tx, 'channelLabel' | 'likeLabel'>;

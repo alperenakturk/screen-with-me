@@ -105,13 +105,33 @@ ok(!played.ids.includes('M7lc1UVf-VE'), 'Feed: a queued video that never played 
 const late = client({ name: 'Robin', cid: 'shortsRobin123' });
 const welcome = await late.wait((m) => m.t === 'welcome', 'welcome late');
 ok(welcome.feed?.label === 'cats · 🇯🇵', 'Feed: a newcomer sees the running feed');
+// Card FD1: "Only the host can start a feed": a guest may still pause / resume, but not start, steer or stop.
+host.send({ t: 'settings', feedHostOnly: true });
+await guest.wait((m) => m.t === 'settings' && m.settings.feedHostOnly === true, 'feed host only');
+const current = { ...steered.feed };
+delete current.by;
+delete current.steers;
+guest.send({ t: 'feed', feed: { ...current, paused: true } });
+ok((await host.wait((m) => m.t === 'feed' && m.feed?.paused === true, 'guest pause with rule')).feed.label === current.label, 'Feed host rule: a guest can still pause the feed');
+guest.send({ t: 'feed', feed: { kind: 'shorts', label: 'dogs', source: { kind: 'topic', q: 'dogs' }, paused: false } });
+ok((await guest.wait((m) => m.t === 'error', 'guest start with rule')).code === 'feed_host', 'Feed host rule: a guest cannot start or steer a feed');
+guest.send({ t: 'feed', feed: null });
+ok((await guest.wait((m) => m.t === 'error', 'guest stop with rule')).code === 'feed_host', 'Feed host rule: a guest cannot stop the feed');
+host.send({ t: 'feed', feed: { kind: 'shorts', label: 'dogs', source: { kind: 'topic', q: 'dogs' }, paused: false } });
+ok((await guest.wait((m) => m.t === 'feed' && m.feed?.label === 'dogs', 'host start with rule')).feed.by !== undefined, 'Feed host rule: the host starts and steers');
+host.send({ t: 'settings', feedHostOnly: false });
+await guest.wait((m) => m.t === 'settings' && m.settings.feedHostOnly === false, 'feed host only off');
+guest.send({ t: 'feed', feed: { kind: 'shorts', label: 'birds', source: { kind: 'topic', q: 'birds' }, paused: false } });
+ok((await host.wait((m) => m.t === 'feed' && m.feed?.label === 'birds', 'guest start without rule')).feed.label === 'birds', 'Feed host rule off: anyone starts a feed again');
 // A locked queue locks the feed for everyone but the host.
+late.inbox.length = 0;
 host.send({ t: 'settings', lockQueue: true });
 await guest.wait((m) => m.t === 'settings' && m.settings.lockQueue === true, 'lock queue');
 guest.send({ t: 'feed', feed: null });
 ok((await guest.wait((m) => m.t === 'error', 'locked feed')).code === 'not_host', 'Feed: a locked queue locks the feed');
 host.send({ t: 'feed', feed: null });
-ok((await late.wait((m) => m.t === 'feed', 'feed stopped')).feed === null, 'Feed: stopped for everyone');
+const stopMsg = await late.wait((m) => m.t === 'feed', 'feed stopped');
+ok(stopMsg.feed === null && typeof stopMsg.stopper === 'string', 'Feed: stopped for everyone, with who stopped it (a member id)');
 late.ws.close();
 
 host.ws.close();

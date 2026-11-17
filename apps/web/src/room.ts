@@ -38,7 +38,7 @@ import {
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
-import { isPoolRegionChoice, type PoolRegionChoice } from '@swm/shared/youtube-search';
+import { isPoolRegionChoice, POOL_KINDS, type PoolKind, type PoolRegionChoice } from '@swm/shared/youtube-search';
 import type { FeedKind } from '@swm/shared/feed';
 import { canShareSheet, hasMouse, isPhoneLayout, isTouch, onPhoneLayout, onTabletUpright } from './device.ts';
 import { el } from './dom.ts';
@@ -365,6 +365,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <span class="muted small" data-i18n="nowPlaying"></span>
               <span id="now-title" class="now-title"></span>
             </div>
+            <div id="feed-pill" class="feed-pill" role="status" hidden></div>
             <button id="shorts-enter" type="button" class="btn small-btn shorts-enter" style="margin-left:auto" hidden>📱 <span data-i18n="shorts.view"></span></button>
             <button id="skip" type="button" class="btn small-btn"><span data-i18n="skip"></span> ⏭</button>
           </div>
@@ -776,6 +777,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.knock"></b><span data-i18n="settings.knock.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-knock" /></label>
               <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.noReactions"></b><span data-i18n="settings.noReactions.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-noreactions" /></label>
               <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.liveHostOnly"></b><span data-i18n="settings.liveHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-livehost" /></label>
+              <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.feedHostOnly"></b><span data-i18n="settings.feedHostOnly.d"></span></span><input type="checkbox" role="switch" class="switch" id="opt-feedhost" /></label>
               <div class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.clearStickers"></b><span data-i18n="settings.clearStickers.d"></span></span><button type="button" class="btn small-btn" id="opt-clear-stickers" data-i18n="settings.clearStickers.btn"></button></div>
               <label class="set-row" data-group="room"><span class="set-text"><b data-i18n="settings.reactionGap"></b><span data-i18n="settings.reactionGap.d"></span></span>
                 <select id="opt-reactiongap">${REACTION_GAPS.map((gap) => `<option value="${gap}" data-i18n="settings.reactionGap.${gap}"></option>`).join('')}</select>
@@ -1671,6 +1673,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         break;
       case 'queue': {
         queue.set(message.queue);
+        renderFeed();
         renderNowPlaying();
         renderShorts();
         const change = message.change;
@@ -1697,9 +1700,17 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         renderWaiting();
         break;
       }
-      case 'feed':
+      case 'feed': {
+        // Card FD1: "Robin stopped Sam's feed" for everyone (no line when nothing ran).
+        const was = feed.info;
+        const stopper = message.stopper ? members.find((m) => m.id === message.stopper) : undefined;
+        if (!message.feed && was && stopper) {
+          const owner = members.find((m) => m.id === was.by);
+          addActivity(() => (owner && owner.id !== stopper.id ? t('feed.stoppedBy', { name: displayName(stopper), owner: owner.name }) : t('feed.stoppedBySelf', { name: displayName(stopper) })));
+        }
         feed.set(message.feed);
         return;
+      }
       case 'feed-played':
         feed.played(message.ids);
         return;
@@ -2643,10 +2654,44 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           poolRegion = region;
           save('opt:poolRegion', poolRegion);
         },
+        who: (id) => members.find((m) => m.id === id)?.name ?? null,
+        locked: feedLocked,
       });
     });
   }
-  const feedRow = createFeedRow($('#feed-row'), feed, openFeed);
+  /** Card FD1: "Only the host can start a feed" is on and I am not the host (pausing stays open). */
+  const feedLocked = () => roomSettings.feedHostOnly === true && !amHost();
+  // Card FD1: Test Lab `feed.start` opens the drawer, picks ▶ Videos · 🔥 Popular (or the kind / pool given) and starts
+  // it through the drawer's own button; `feed.drawer` writes the open drawer's state.
+  debugHooks.register('feedStart', () => ({
+    commands: [
+      {
+        id: 'feed.start',
+        tab: 'screen',
+        run: async (arg?: string) => {
+          const [k, pool] = (arg ?? 'videos popular').split(/\s+/);
+          const kind: FeedKind = k === 'shorts' ? 'shorts' : 'videos';
+          openFeed(kind);
+          const m = await loadChunk(() => import('./ui/feed-window.ts'));
+          await new Promise((r) => setTimeout(r, 50));
+          const before = m?.feedWindowLab().state();
+          const ok = m?.feedWindowLab().pickAndStart(kind, (POOL_KINDS as readonly string[]).includes(pool ?? '') ? (pool as PoolKind) : 'popular');
+          return JSON.stringify({ started: ok === true, locked: feedLocked(), drawer: before });
+        },
+      },
+      {
+        id: 'feed.drawer',
+        tab: 'status',
+        run: async () => JSON.stringify((await loadChunk(() => import('./ui/feed-window.ts')))?.feedWindowLab().state() ?? null),
+      },
+    ],
+  }));
+  const feedRow = createFeedRow($('#feed-row'), feed, openFeed, {
+    root: $('#feed-pill'),
+    who: (id) => members.find((m) => m.id === id)?.name ?? null,
+    left: () => queue.items.filter((item) => item.feed === true).length,
+    locked: feedLocked,
+  });
   function renderFeed(): void {
     const info = feed.info;
     const shortsOnNow = info?.kind === 'shorts';
@@ -4105,9 +4150,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     $<HTMLInputElement>('#opt-knock').checked = roomSettings.knock === true;
     $<HTMLInputElement>('#opt-livehost').checked = roomSettings.liveHostOnly === true;
     live.settings(roomSettings.liveHostOnly === true);
+    $<HTMLInputElement>('#opt-feedhost').checked = roomSettings.feedHostOnly === true;
+    renderFeed();
     $<HTMLSelectElement>('#opt-reactiongap').value = String(roomSettings.reactionGap ?? 0);
     app.classList.toggle('no-reactions', roomSettings.noReactions === true);
-    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-countdown', '#opt-knock', '#opt-noreactions', '#opt-livehost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
+    for (const id of ['#opt-hostonly', '#opt-lockqueue', '#opt-countdown', '#opt-knock', '#opt-noreactions', '#opt-livehost', '#opt-feedhost', '#opt-clear-stickers', '#opt-reactiongap', '#opt-start', '#opt-start-set', '#opt-start-clear']) {
       $<HTMLInputElement>(id).disabled = !host;
     }
     // Yönetici olmayana kuralların kısa özeti.
@@ -4122,6 +4169,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       rule(roomSettings.countdown !== false, 'settings.countdown'),
       rule(roomSettings.noReactions === true, 'settings.noReactions'),
       rule(roomSettings.liveHostOnly === true, 'settings.liveHostOnly'),
+      rule(roomSettings.feedHostOnly === true, 'settings.feedHostOnly'),
       el('li', { class: gap ? 'on' : '' }, el('span', { 'aria-hidden': 'true' }, '⏱'), `${t('settings.reactionGap')}: ${t(`settings.reactionGap.${gap}` as I18nKey)}`),
     );
     $('#host-lock').hidden = host || !roomSettings.hostOnly;
@@ -4186,6 +4234,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   });
   $<HTMLInputElement>('#opt-livehost').addEventListener('change', (event) => {
     send({ t: 'settings', liveHostOnly: (event.target as HTMLInputElement).checked });
+  });
+  $<HTMLInputElement>('#opt-feedhost').addEventListener('change', (event) => {
+    send({ t: 'settings', feedHostOnly: (event.target as HTMLInputElement).checked });
   });
   $('#opt-clear-stickers').addEventListener('click', () => {
     void confirmDialog({ icon: '🖼️', title: t('settings.clearStickers'), text: t('settings.clearStickers.confirm'), yes: t('settings.clearStickers.btn') }).then((yes) => {
