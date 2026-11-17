@@ -21,7 +21,7 @@ export type FriendTable = (typeof FRIEND_TABLES)[number];
 export const canSit = (kind: RoomGameKind | null | undefined): kind is FriendTable => !!kind && (FRIEND_TABLES as readonly string[]).includes(kind);
 
 const VERSION: Record<FriendTable, number> = { quiz: QUIZ_PROTOCOL_VERSION, draw: DRAW_PROTOCOL_VERSION, poker: POKER_PROTOCOL_VERSION, duel: DUEL_PROTOCOL_VERSION, sea: SEA_PROTOCOL_VERSION };
-const NAMES = ['Sam', 'Alex', 'Kim', 'Lee'];
+const NAMES = ['Sam', 'Alex', 'Kim', 'Lee', 'Robin', 'Max'];
 /** Real five-letter words, so the Duel's guesses count (a refused one costs nothing, the friend just tries the next). */
 const WORDS = {
   en: ['slate', 'crane', 'pious', 'mound', 'lucky', 'brick', 'dwarf', 'nymph', 'fight', 'house', 'water', 'light'],
@@ -128,6 +128,11 @@ export function sitFriend(kind: FriendTable, table: string): string {
       }
     } else if (kind === 'duel') {
       const seat = s.seat as number;
+      // GMP2: the third and later friends take a seat with "sit" (the table grows up to six while it waits).
+      if (seat < 0 && s.phase === 'wait' && done !== 'sit') {
+        done = 'sit';
+        later(400, () => send({ t: 'sit' }));
+      }
       if (s.phase === 'wait' && seat >= 0 && !s.players[seat]?.ready && done !== 'ready') {
         done = 'ready';
         later(800, () => send({ t: 'ready', on: true }));
@@ -144,7 +149,14 @@ export function sitFriend(kind: FriendTable, table: string): string {
       }
     } else if (kind === 'sea') {
       const seat = s.seat as number;
-      if (seat < 0) return;
+      // GMP2: the third and later friends take a seat with "sit" while the fleets are placed.
+      if (seat < 0) {
+        if (s.phase !== 'play' && done !== 'sit') {
+          done = 'sit';
+          later(400, () => send({ t: 'sit' }));
+        }
+        return;
+      }
       if (s.phase === 'place' && !s.players[seat]?.ready && done !== 'ready') {
         done = 'ready';
         later(600, () => send({ t: 'shuffle' }));
@@ -152,13 +164,17 @@ export function sitFriend(kind: FriendTable, table: string): string {
       }
       if (s.phase === 'over') done = '';
       if (s.phase === 'play' && s.turn === seat) {
-        const theirs = s.seas[1 - seat] as { shots: [number, number][] };
-        const key = `shot:${theirs.shots.length}`;
-        if (done !== key) {
+        // GMP2: any fleet still afloat but mine (two seats: the other one), named as the shot's target.
+        const players = s.players as ({ out?: boolean } | null)[];
+        const targets = players.map((p, i) => (i !== seat && p && !p.out ? i : -1)).filter((i) => i >= 0);
+        const shots = (s.seas as { shots: [number, number][] }[]).reduce((n, sea) => n + (sea?.shots.length ?? 0), 0);
+        const key = `shot:${shots}`;
+        if (targets.length && done !== key) {
           done = key;
-          const taken = new Set(theirs.shots.map(([c]) => c));
+          const target = pick(targets);
+          const taken = new Set(s.seas[target].shots.map(([c]: [number, number]) => c));
           const free = Array.from({ length: 100 }, (_, i) => i).filter((c) => !taken.has(c));
-          if (free.length) later(1300, () => send({ t: 'shot', cell: pick(free) }));
+          if (free.length) later(1300, () => send({ t: 'shot', cell: pick(free), target }));
         }
       }
     }

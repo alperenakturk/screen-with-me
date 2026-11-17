@@ -1864,7 +1864,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`games/lab-table-friend.ts`, loaded on first use): `games.friend` seats a pretend player at the open Quiz, Draw &
   Guess, Last Heart, Duel or Sea Battle table (its own random `cid`, the normal hello through `openSocket`, "🤖" in its
   name; at the Classics it points to Stub). It answers questions, draws a circle / guesses words, checks or calls,
-  presses Ready and tries real words, places a fleet and shoots; it never presses Start. `games.friendQuiet` (no message
+  presses Ready and tries real words, places a fleet and shoots; it never presses Start. GMP2: `games.seats` seats three
+  friends at a Sea Battle or Duel table (four players with me); a third or later friend takes a seat with `sit`, and in
+  Sea Battle it names a `target` (any fleet still afloat but its own). `games.friendQuiet` (no message
   for 2 min: the table marks it offline at ≈ 90 s), `games.friendLeave`. Shortcuts: `quiz.toEnd` / `draw.toEnd` (skips
   every phase to the result card, local server), `snackBar.milestone` (popcorn one level below its next milestone, with
   the coins for it). The tables' commands carry their names (`Masa aç: Bilgi yarışması`). Harnesses

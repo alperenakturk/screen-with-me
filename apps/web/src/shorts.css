@@ -451,6 +451,33 @@ html.sideways.ph-shorts .ph-toast {
   }
 }
 
+/* Card FD1b fix: the group headings made the rail taller, and on screens up to 860 px tall (a 1024 × 768 tablet held
+   sideways, a 1366 × 768 laptop) its foot ran into ▲▼: slimmer buttons there, and under 700 px tall no headings. */
+@media (min-width: 861px) and (max-height: 860px) {
+  .room.shorts .shorts-bar,
+  .room.shorts .shorts-bar > :is(div, form),
+  .room.shorts .shorts-nav {
+    gap: 6px;
+  }
+
+  .room.shorts .shorts-bar :is(.small-btn, .react-open, .cam-ctl):not(.shorts-chat .btn, .shorts-feed-pop *, .react-tray *, .game-menu *),
+  .room.shorts .shorts-arrow {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+
+  html:not(.ph-shorts) .room.shorts .shorts-bar > .rail-head {
+    margin-top: 2px;
+  }
+}
+
+@media (min-width: 861px) and (max-height: 699px) {
+  html:not(.ph-shorts) .room.shorts .shorts-bar > .rail-head {
+    display: none;
+  }
+}
+
 /* Labels beside the icons where the page has the width for them (1366 and up has ~600 px free beside the Short). */
 @media (min-width: 1200px) {
   html:not(.ph-shorts) .room.shorts .shorts-bar {
