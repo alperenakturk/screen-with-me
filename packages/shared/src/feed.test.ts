@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanFeedIn, FEED_MEMORY_DAYS, FEED_MEMORY_MAX, freshIds, pruneMemory, readMemory, rememberPlayed, sameFeed, type FeedInfo, type FeedMemoryEntries } from './feed.ts';
+import { cleanFeedIn, cleanFeedSource, FEED_MEMORY_DAYS, FEED_MEMORY_MAX, freshIds, pruneMemory, readMemory, rememberPlayed, sameFeed, type FeedInfo, type FeedMemoryEntries } from './feed.ts';
 import { cleanText, parseClientMessage } from './protocol.ts';
 
 const DAY = 86_400_000;
@@ -64,5 +64,17 @@ describe('feed (card SH2)', () => {
 
   it('a new feed skips played and queued ids', () => {
     expect(freshIds([id(1), id(2), id(2), id(3)], new Set([id(1)]))).toEqual([id(2), id(3)]);
+  });
+});
+
+// Card FC1: words carry a country (also "auto") and a kind chip; anything else is dropped.
+describe('topic feeds combine (FC1)', () => {
+  const clean = (text: string, max: number) => text.slice(0, max);
+  it('keeps the country and the kind chip', () => {
+    expect(cleanFeedSource({ kind: 'topic', q: 'hay', region: 'JP', pool: 'popular' }, clean)).toEqual({ kind: 'topic', q: 'hay', region: 'JP', pool: 'popular' });
+    expect(cleanFeedSource({ kind: 'topic', q: 'hay', region: 'auto' }, clean)).toEqual({ kind: 'topic', q: 'hay', region: 'auto' });
+  });
+  it('drops an unknown kind or country', () => {
+    expect(cleanFeedSource({ kind: 'topic', q: 'hay', region: 'XX', pool: 'cooking' }, clean)).toEqual({ kind: 'topic', q: 'hay' });
   });
 });

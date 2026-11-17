@@ -327,3 +327,8 @@ html.phone:not(.sideways) :is(.feed-body, .feed-picker) {
 html.phone:not(.sideways) .feed-sub {
   font-size: 12px;
 }
+
+/* Card FC1: a video or a channel in the own box: the kind chips and the country don't apply (the reason shows below). */
+.feed-greyed {
+  opacity: 0.45;
+}

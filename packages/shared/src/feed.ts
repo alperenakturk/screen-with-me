@@ -20,8 +20,11 @@ export function isFeedRegion(value: unknown): value is FeedRegion {
 }
 
 export type FeedSource =
-  /** Words (a YouTube search, the costly call: cached per query in the Worker). */
-  | { kind: 'topic'; q: string; region?: FeedRegion }
+  /**
+   * Words (a YouTube search, the costly call: cached per query in the Worker). Card FC1: with a country (`auto` = the
+   * connection's) and a kind chip (`pool`: its category, or Popular = by views), all in one query.
+   */
+  | { kind: 'topic'; q: string; region?: FeedRegion | 'auto'; pool?: PoolKind }
   /** Shorts: today's shared Discover pool of a category. Videos: YouTube's "popular now" chart (1 unit a page). */
   | { kind: 'pool'; pool: PoolKind; region?: PoolRegionChoice }
   /** More like this video: its channel first, then its title's words. */
@@ -70,7 +73,10 @@ export function cleanFeedSource(x: unknown, clean: (text: string, max: number) =
     case 'topic': {
       const q = typeof s.q === 'string' ? clean(s.q, FEED_WORDS_MAX) : '';
       if (!q) return null;
-      return isFeedRegion(s.region) ? { kind: 'topic', q, region: s.region } : { kind: 'topic', q };
+      const topic: Extract<FeedSource, { kind: 'topic' }> = { kind: 'topic', q };
+      if (isFeedRegion(s.region) || s.region === 'auto') topic.region = s.region;
+      if (isPoolKind(s.pool)) topic.pool = s.pool;
+      return topic;
     }
     case 'pool':
       if (!isPoolKind(s.pool)) return null;

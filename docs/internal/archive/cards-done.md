@@ -2781,3 +2781,21 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Owner's pick: A "Big grid" (picks page, 17 Nov 2026).
 - Done: #527 (`claude/src2-source-picker-grid`, lane A, 17 Nov 2026; live in v0.9.97.160; harness `sources`, Test Lab
   `sources.picker` / `sources.open`, shots `sources`, `sources-youtube`, `sources-music`); owner's hand test 27ab.
+
+### FD1. Feed start window and Shorts view: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
+- Why: SH2's "♾ Shorts feed / ▶ Video feed" window and the Shorts view are cramped and unclear; things overlap; a
+  Discover chip (Popular, Music …) starts the feed at once, before he has chosen.
+- What (owner's asks):
+  - Choose first, then a clear "Start feed" button; options more detailed and meaningful but simple-looking, not cramped;
+    each control says what it does.
+  - The window opens on the RIGHT side of the screen so the playing Short / video stays visible while he sets it up.
+  - A started feed is seen by everyone; anyone may cancel it and start their own.
+  - Host setting in Room rules: "Only the host can start a feed" (default: everyone can).
+  - Tidy the Shorts view: nothing overlapping, clear labels.
+- Design step: `docs/internal/design/feed-start.md` with 2–3 options (recommended first, a short preview each, computer
+  + phone sketches), sent to the Planner as text. Build only after the owner's pick.
+- **Owner's pick (17 Nov 2026, picks page):** A, right drawer with 3 steps on one screen (`design/feed-start.md` A,
+  sketches `feed-start/a-*.svg` incl. the tidy Shorts view); the host rule also covers steering and stopping.
+- Done when: the picked design is live; Test Lab hook `feed.start`; the host rule enforced on the server (protocol
+  optional field) with an e2e; shots at 4 sizes; owner's hand test.
+- Done: #529 (FD1a, v0.9.97.160) + #535 (FD1b, v0.9.97.161), 17 Nov 2026.
