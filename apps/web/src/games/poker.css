@@ -41,10 +41,10 @@
 #game-stage.in-tab .pk-flask { width: 40px; height: auto; }
 #game-stage.in-tab .pk-center { gap: 4px; }
 #game-stage.in-tab .pk-board { gap: 4px; }
-/* LH3 (first look on LH2): the five shared cards use the pot box's width (up to 46 px each, they left its right third
+/* LH3 (first look on LH2): the five shared cards use the pot box's width (up to 40 px each, they left its right third
    empty), and the feed shows its newest line (a one-line clip showed the oldest, the newest cut in half). */
 #game-stage.in-tab .pk-center { justify-self: stretch; }
-#game-stage.in-tab .pk-board { display: grid; grid-template-columns: repeat(5, minmax(0, 46px)); }
+#game-stage.in-tab .pk-board { display: grid; grid-template-columns: repeat(5, minmax(0, 40px)); }
 #game-stage.in-tab .pk-board .pk-card { width: 100%; }
 #game-stage.in-tab .pk-feed p:not(:last-child) { display: none; }
 #game-stage.in-tab .pk-me { padding: 6px 8px; gap: 6px; flex: none; }

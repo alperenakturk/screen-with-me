@@ -1283,7 +1283,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   overflows no longer shrinks by scale alone (it fell to `MIN_FIT` 0.4: six at Last Heart): `shrinkToFit` grows the box
   to its content and scales the whole into the window. **LH3:** the same compact table also takes a very short, wide
   video place (an upright tablet, ≈ 714 × 349; container query `or` branch), with tighter opponent rows and the pot's
-  feed down to its newest line there; in a phone's Games tab the five shared cards use the pot box's width (≤ 46 px) and
+  feed down to its newest line there; in a phone's Games tab the five shared cards use the pot box's width (≤ 40 px) and
   the feed shows its newest line. games-sweep size `tabup` (820 × 1180), CI: game-proportions `upright`, games-sweep
   `tabup` Last Heart row. Lab `poker.compact` (five 🤖 friends sit, the hand starts);
   games-sweep `pokerSix`. Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of

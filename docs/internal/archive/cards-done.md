@@ -2933,5 +2933,5 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   hook `poker.compact` covers it (six players); owner's hand test on an upright tablet.
 - Owner's pick: the Planner's approval (17 Nov 2026).
 - Done: #547 (`claude/lh3-poker-upright`, Game Studio, 17 Nov 2026): the compact table's container query takes the
-  short, wide box too (tighter rows, newest feed line); phone pot box (board ≤ 46 px, newest feed line); games-sweep
+  short, wide box too (tighter rows, newest feed line); phone pot box (board ≤ 40 px, newest feed line); games-sweep
   `tabup`, CI game-proportions `upright` + games-sweep `tabup` Last Heart row.
