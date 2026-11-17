@@ -1,0 +1,2 @@
+- Games never go full screen any more: a table's big mode now fills the video's place, so chat, voice and the controls beside the video stay usable. 🪟 still turns it into a frame you can move anywhere, and Esc does the same.
+- In the Shorts view a game is a small frame beside the Short and never covers "Room view"; going back to the room view puts the game back where it was, without reconnecting.

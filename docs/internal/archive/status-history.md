@@ -31,6 +31,12 @@ only on its "Now" items (in order); "Next" items wait for 0.9.94, "Frozen" ones 
 waiting for the owner's pick", never straight into the work.
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
+- [x] Game Studio (session 16 Nov, 16:20; handoff at the end of it):
+  [x] #491 `claude/drag-capture` merged (drag/hover, proportions; harness `withMouse`, game-windows `laptop/sea/float`; state-based waits).
+  [x] #483 `claude/gmp-b-players` GMP b merged (e2e `duel-many` / `sea-many`, sweep `duelSix` / `seaSix`); hand test 27p sent to the Planner.
+  [x] #493 `claude/stage-lazy` games window as a lazy chunk merged (room JS 139.1 → 124.8 kB).
+  [x] #496 `claude/gt1-tutorials` (card GT1): "❓ How to play" in the head, fuller cards, Test Lab `games.tutorial`.
+  Green → merge → deploy check → card GT1 to the archive. Quiz's cards wait for Game Studio 2's QZ2.
 Owner's feedback from friends' real use (28 Oct 2026). Details in `ROADMAP.md` §1 "Feedback round 1".
 - [x] Record the plan, conventions and this queue (CLAUDE.md, ROADMAP, STATUS).
 - [x] Separate session: name brainstorm + inspiration page (results → `docs/internal/name-ideas.md`).
