@@ -44,10 +44,11 @@ export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440], minSize: [728, 507], maxSize: [1204, 840], wide: [880, 480] },
   // 🎲 Classics (P6): two players, or one against Stub. Its window follows the board on the table (`CLASSICS_SIZES`).
   classics: { min: 1, max: 2, place: 'stage', size: [600, 560], fit: [480, 440], minSize: [581, 543], maxSize: [960, 896], wide: [820, 440] },
-  // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Stub.
-  sea: { min: 1, max: 2, place: 'stage', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840], wide: [820, 440] },
-  // ⚔️ Five Frames Duel (FFDUEL): my board and the other's marks side by side, the letter tray under them.
-  duel: { min: 2, max: 2, place: 'stage', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990], wide: [860, 470] },
+  // 🚢 Sea Battle: two seas side by side on a computer (one at a time in a narrow window), or one player against Stub;
+  // GMP2: the hall says 2–6 (the server seats six since GMP b; Stub only at a table of two, its text says so).
+  sea: { min: 2, max: 6, place: 'stage', size: [780, 560], fit: [600, 440], minSize: [764, 548], maxSize: [1170, 840], wide: [820, 440] },
+  // ⚔️ Five Frames Duel (FFDUEL): my board and the other's marks side by side, the letter tray under them; 2–6 (GMP b).
+  duel: { min: 2, max: 6, place: 'stage', size: [600, 660], fit: [540, 600], minSize: [600, 660], maxSize: [900, 990], wide: [860, 470] },
 };
 
 /** Classics (CL2): the window's size per screen of the table: the picker, then each board built around itself. */

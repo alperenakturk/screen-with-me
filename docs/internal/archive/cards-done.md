@@ -2782,6 +2782,20 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done: #527 (`claude/src2-source-picker-grid`, lane A, 17 Nov 2026; live in v0.9.97.160; harness `sources`, Test Lab
   `sources.picker` / `sources.open`, shots `sources`, `sources-youtube`, `sources-music`); owner's hand test 27ab.
 
+### GMP2. Sea Battle and the Five Frames Duel show and offer 3–6 players (owner, 17 Nov 2026; Game Studio)
+- Why: the owner still sees "1–2 players" on Sea Battle and the Five Frames Duel; GMP b (#483, live since 0.9.97.153)
+  should allow up to 6 (anyone can attack any other fleet).
+- What: check the games hall and lobby labels and that the live build really seats 3–6 (old text, a missed path, or a
+  cached build); fix what is wrong. Optional, Game Studio's call: 1–2 jokers for 3+ player Sea Battle if they make it
+  more fun. Classics stay as they are.
+- Done when: the hall and lobby say "2–6 players" (EN + TR) for both, a 4-player live game works; Test Lab hook
+  `games.seats` (fills seats with bots).
+- Tests: a games e2e with 4 `GameSocket` players in each; live e2e green; a hand test for the owner (3+ people).
+- Owner's pick: his message to the Planner (17 Nov 2026).
+- Done: #538 (`claude/gmp2-six-seats`, Game Studio, 17 Nov 2026): the server seated six since GMP b (#483), only
+  the hall's `GAME_CATALOG` (`max: 2`) and the two descriptions said 2. Test Lab `games.seats` (three 🤖 friends),
+  harness `lab-table-friend` (hall label, four players at each); e2e `sea-many` / `duel-many` (3 and 6) unchanged.
+
 ### FD1. Feed start window and Shorts view: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
 - Why: SH2's "♾ Shorts feed / ▶ Video feed" window and the Shorts view are cramped and unclear; things overlap; a
   Discover chip (Popular, Music …) starts the feed at once, before he has chosen.

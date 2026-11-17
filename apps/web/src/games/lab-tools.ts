@@ -262,6 +262,35 @@ export function registerGamesLab(
         },
       },
       {
+        // GMP2: a bigger table without five other people (Sea Battle and the Duel seat up to six).
+        id: 'games.seats',
+        title: { en: 'Three 🤖 friends sit at this table (four players)', tr: 'Bu masaya üç 🤖 arkadaş otursun (dört oyuncu)' },
+        help: {
+          en: 'Three pretend players join the open Sea Battle or Duel table, so it has four players with me: they take seats, press Ready and play (in Sea Battle they shoot at any fleet still afloat). Start the game yourself. Undo: they leave.',
+          tr: 'Açık Amiral Battı ya da Düello masasına üç sahte oyuncu oturur, benimle dört kişi olur: yer alır, Hazır’a basar ve oynar (Amiral Battı’da batmamış herhangi bir filoya atış yapar). Oyunu sen başlat. Geri al: kalkar.',
+        },
+        tab: 'games',
+        where: { en: 'at a Sea Battle or Duel table, before it starts', tr: 'başlamadan önce Amiral Battı ya da Düello masasında' },
+        available: () => {
+          const open = table();
+          if (!open) return { en: 'open a table first', tr: 'önce bir masa aç' };
+          return open.kind === 'sea' || open.kind === 'duel' || { en: 'only Sea Battle and the Duel seat up to six', tr: 'sadece Amiral Battı ve Düello altı kişiye kadar oturur' };
+        },
+        run: async () => {
+          const open = table()!;
+          const m = await import('./lab-table-friend.ts');
+          if (!m.canSit(open.kind)) return '';
+          const names = [0, 1, 2].map(() => m.sitFriend(open.kind as 'sea' | 'duel', open.id));
+          friendsAtTables = m.tableFriends().length;
+          return names.join(', ');
+        },
+        undo: async () => {
+          const m = await import('./lab-table-friend.ts');
+          m.leaveFriends();
+          friendsAtTables = 0;
+        },
+      },
+      {
         // LAB2 (hand test G10): a friend's network drops in the middle of a game.
         id: 'games.friendQuiet',
         title: { en: 'The 🤖 friend loses the connection for 2 minutes', tr: '🤖 arkadaşın bağlantısı 2 dakika kopsun' },

@@ -130,6 +130,42 @@ const until = async (fn, ms = 15000) => {
   check(!!shot, 'Sea Battle: the friend shoots at my sea on its turn', JSON.stringify({ phase: last.sea?.phase, turn: last.sea?.turn }));
   await run('games.friendLeave');
 
+  // GMP2: the hall offers Sea Battle and the Duel for 2–6, and "three 🤖 friends" makes a table of four that plays.
+  const hall = await page.evaluate(async () => {
+    document.getElementById('game-btn').click();
+    for (let i = 0; i < 50 && !document.querySelector('#game-menu .hub-game[data-kind="sea"]'); i++) await new Promise((r) => setTimeout(r, 100));
+    const label = (k) => document.querySelector(`#game-menu .hub-game[data-kind="${k}"] small`)?.textContent ?? '';
+    const out = { sea: label('sea'), duel: label('duel') };
+    document.getElementById('game-btn').click();
+    return out;
+  });
+  check(/2–6/.test(hall.sea) && /2–6/.test(hall.duel), 'GMP2: the games hall says 2–6 players for Sea Battle and the Duel', JSON.stringify(hall));
+  for (const kind of ['sea', 'duel']) {
+    await open(kind);
+    const seats = await run('games.seats');
+    check(seats.dir === 'lab' && (seats.text.match(/🤖/g) || []).length === 3, `GMP2 ${kind}: "three 🤖 friends" names three`, seats.text);
+    const four = await until(async () => {
+      const ps = last[kind]?.players ?? [];
+      return ps.length === 4 && ps.filter((p) => p && /🤖/.test(p.name) && p.ready).length === 3;
+    }, 20000);
+    check(!!four, `GMP2 ${kind}: four seats, the three friends sit and press Ready`, JSON.stringify(last[kind]?.players?.map((p) => p && [p.name, p.ready])));
+    await press(READY);
+    const playing = await until(async () => {
+      const s = last[kind];
+      if (!s || s.phase !== 'play') return null;
+      if (kind === 'duel') return s.players.filter((p) => p && /🤖/.test(p.name) && p.marks.length > 0).length >= 1;
+      if (s.turn === s.seat) {
+        await page.evaluate(() => document.querySelector('#game-stage .sea-theirs .sea-cell:not(.miss):not(.hit):not(:disabled)')?.click());
+        await wait(300);
+        await page.evaluate(() => document.querySelector('#game-stage .sea-theirs .sea-cell.aimed')?.click());
+      }
+      // A friend's shot: a sea other than mine got a shot, or mine did.
+      return s.seas.reduce((n, sea) => n + (sea?.shots.length ?? 0), 0) >= 2;
+    }, 40000);
+    check(!!playing, `GMP2 ${kind}: the four-player game runs (the friends play their turns)`, JSON.stringify({ phase: last[kind]?.phase, turn: last[kind]?.turn }));
+    await run('games.friendLeave');
+  }
+
   // Draw & Guess: the friend draws on its turn or guesses on mine.
   await open('draw');
   await run('games.friend');
