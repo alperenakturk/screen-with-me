@@ -390,5 +390,7 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
   /* The foot (badges, ↺, New cinema) keeps one line with a wide device font too (Ubuntu's DejaVu Sans needed 276 px of
      270 and the foot took a second line, pushing the game 23 px past its design). */
   #game-stage .sb-foot { gap: 5px; }
+  /* ...and the column's gaps are 5 px (not 7), so three stands fit with a two-line one (the day's special tag) too. */
+  #game-stage .sb { gap: 5px; }
   #game-stage .sb .sb-badges-open, #game-stage .sb-prestige { padding-inline: 8px; }
 }

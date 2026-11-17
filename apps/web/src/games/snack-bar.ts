@@ -1095,7 +1095,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   /** How many rows fit (SB3): the window's height minus everything but the list, over one row's height. */
   let rowRoom = STANDS.length;
   /** The most stands that fitted at a window height (`fitRows`), found by an overflow. */
-  let rowCap: { height: number; rows: number } | null = null;
+  let rowCap: { height: number; rows: number; key: string } | null = null;
+  /** GW5: what the cap was found for (the open stands, today's special, the language): the window's height alone no
+   * longer changes, so a cap found early (a locked stand's two-line note) would stay forever. */
+  const capKey = () => `${STANDS.filter((st) => unlocked(game, st.id)).length}:${specialOf(dayNumber())}:${document.documentElement.lang}`;
   function draw(): void {
     const ctx = room();
     const income = incomeRate(game, ctx);
@@ -1327,7 +1330,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     const least = height < SHORT_H || head.offsetHeight > HEAD_ONE_LINE ? 2 : ROWS_COMPACT;
     let next = Math.max(least, Math.min(STANDS.length, Math.floor((height - others + gap) / rowH)));
     // A count that overflowed at this height stays the most (else the estimate puts the stand back and it flickers).
-    if (rowCap && rowCap.height === Math.round(height)) next = Math.max(2, Math.min(next, rowCap.rows));
+    if (rowCap && rowCap.height === Math.round(height) && rowCap.key === capKey()) next = Math.max(2, Math.min(next, rowCap.rows));
     if (next !== rowRoom) {
       rowRoom = next;
       draw();
@@ -1338,7 +1341,7 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     // is real, so it goes below the usual three).
     if (box.scrollHeight > box.clientHeight + 1 && rowRoom > 2) {
       rowRoom--;
-      rowCap = { height: Math.round(height), rows: rowRoom };
+      rowCap = { height: Math.round(height), rows: rowRoom, key: capKey() };
       draw();
       requestAnimationFrame(fitRows);
     }
@@ -1354,6 +1357,9 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
   fit.observe(root);
   // 0.9.97.134: the head wrapping to two lines (the 👥 pill of a busy bar) changes how many stands fit.
   fit.observe(head);
+  // GW5: a stand that grows a line (a longer price, the day's tag, a locked stand's note) re-counts the stands too: the
+  // window's size no longer changes with the game, so only the list's own size tells.
+  fit.observe(list);
   const onHide = () => persist();
   addEventListener('pagehide', onHide);
   const onLang = () => draw();
