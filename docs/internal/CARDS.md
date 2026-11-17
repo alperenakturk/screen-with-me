@@ -79,6 +79,17 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
 
+### SRC2. "What are we watching?" source picker: big grid (owner, 17 Nov 2026; lane A, first)
+- Why: the ⠿ popover (SRC1) is small and menu-like; the owner wants big tiles with category chips.
+- What: option A of `docs/internal/design/source-picker.md` (sketches `source-picker/a-computer.svg`,
+  `a-phone.svg`): the 12 tiles and chips in that note, source vs action tiles, Coming tiles that explain; in the
+  video's place on a computer, in the side panel's place while a YouTube video shows (nothing over the YouTube
+  player), a bottom sheet on a phone; opened by ⠿ and the empty room's "🔍 Search a video"; no brand logos; arrow keys,
+  Esc, focus return; no scroll inside the view.
+- Done when: it replaces SRC1's popover on computer + phone; Test Lab hook `sources.picker`; harness in the `site`
+  job (open, filter, pick a source, run an action, Esc); shots at 4 sizes; owner's hand test.
+- Owner's pick: A "Big grid" (picks page, 17 Nov 2026).
+
 ### FD1. Feed start window and Shorts view: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
 - Why: SH2's "♾ Shorts feed / ▶ Video feed" window and the Shorts view are cramped and unclear; things overlap; a
   Discover chip (Popular, Music …) starts the feed at once, before he has chosen.
@@ -91,6 +102,8 @@ Two sessions never edit the same lines; the Planner splits work by files.
   - Tidy the Shorts view: nothing overlapping, clear labels.
 - Design step: `docs/internal/design/feed-start.md` with 2–3 options (recommended first, a short preview each, computer
   + phone sketches), sent to the Planner as text. Build only after the owner's pick.
+- **Owner's pick (17 Nov 2026, picks page):** A, right drawer with 3 steps on one screen (`design/feed-start.md` A,
+  sketches `feed-start/a-*.svg` incl. the tidy Shorts view); the host rule also covers steering and stopping.
 - Done when: the picked design is live; Test Lab hook `feed.start`; the host rule enforced on the server (protocol
   optional field) with an e2e; shots at 4 sizes; owner's hand test.
 
@@ -112,6 +125,11 @@ Two sessions never edit the same lines; the Planner splits work by files.
     improves this rule.
 - Design step: `docs/internal/design/session-recap.md` with 2–3 options for look, entry point and flow (recommended
   first, short previews), sent to the Planner as text. Build only after the owner's pick.
+- **Owner's picks (17 Nov 2026, picks page):** look A night stage (one 16:9 scene per fact, own background each, logo,
+  filmstrip); who A host shows, guests ask ("🙋 Ask the host", one toast "Show to everyone / Not now"); where A ✨ on the
+  rail once ready (≥ 30 min, gold dot until opened); music A our own Web Audio pad, low, 🔇, off when sounds are muted.
+  Defaults he saw and did not object to: nudges N1 / N2 / N4 (max one per person per session, "Don't remind me"), the
+  session rule with Design's 4 improvements (`design/session-recap.md`).
 - Done when: the picked design is live; Test Lab hook `recap.show`; server rule (once per session) with an e2e;
   privacy page checked (no new data unless stated); shots at 4 sizes; owner's hand test.
 

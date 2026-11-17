@@ -33,8 +33,8 @@ B one question per step / C ready-made feed cards) and RC1 `design/session-recap
 recommended / filmstrip / postcards; Q2 who starts: host shows, guests ask recommended / anyone with 10 s cancel /
 everyone alone; Q3 where: ✨ on the rail when ready recommended / top-bar chip / Profile menu; Q4 music: our own Web
 Audio recommended / CC0 track / none). Tell him the defaults without asking: nudges N1, N2, N4 (one per person per
-session, "Don't remind me"), the session rule with Design's 4 improvements. Ask with clickable choices, then turn the
-picks into lane A build steps in FD1 / RC1.
+session, "Don't remind me"), the session rule with Design's 4 improvements. Owner picked all A on 17 Nov (picks page Artifact
+5jN5FuuqcPpVW3nRMba65Z): now cards SRC2 → FD1 → RC1 for lane A.
 
 **Waiting on the owner (board "Kararların" tab):** Dailymotion Player ID, VIMEO_TOKEN, the source picker pick: design
 `docs/internal/design/source-picker.md` (#516), options A grid (recommended) / B shelves / C bigger ⠿ menu; ask him
