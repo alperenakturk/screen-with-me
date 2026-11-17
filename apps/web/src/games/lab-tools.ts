@@ -87,6 +87,34 @@ const TABLE_NAMES: Record<RoomGameKind, { en: string; tr: string }> = {
   duel: { en: 'Five Frames Duel', tr: 'Beş Kare Düellosu' },
 };
 
+/** The video's and the side panel's boxes (screen px), for GW4's check. */
+function roomRects(): { video: number[] | null; side: number[] | null } {
+  const box = (sel: string): number[] | null => {
+    const r = document.querySelector(sel)?.getBoundingClientRect();
+    return r ? [r.left, r.top, r.width, r.height].map(Math.round) : null;
+  };
+  return { video: box('.player-wrap'), side: box('.room > .side') };
+}
+
+/** GW4: opens a game, then minimizes it, and compares the room's boxes before, during and after. */
+async function layoutStable(kind: string, openTable: (kind: RoomGameKind) => void, openSolo: (kind: SoloKind) => Promise<void>): Promise<unknown> {
+  const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const before = roomRects();
+  if ((SOLO_KINDS as readonly string[]).includes(kind)) await openSolo(kind as SoloKind);
+  else if ((ROOM_GAME_KINDS as readonly string[]).includes(kind)) openTable(kind as RoomGameKind);
+  else throw new Error(`no game "${kind}"`);
+  await pause(1500);
+  const during = roomRects();
+  document.querySelector<HTMLButtonElement>('#game-stage .game-minimize')?.click();
+  await pause(800);
+  const after = roomRects();
+  const same = (a: number[] | null, b: number[] | null) => !!a && !!b && a.every((v, i) => Math.abs(v - b[i]!) <= 1);
+  // PH2: a phone's Games tab turns the video into a strip on purpose; there only the panel is judged.
+  const phone = document.documentElement.classList.contains('ph-room');
+  const stable = (phone || (same(before.video, during.video) && same(before.video, after.video))) && same(before.side, during.side) && same(before.side, after.side);
+  return { kind, stable, phone, before, during, after };
+}
+
 /** The hall's commands, registered once by the games stage. */
 /** LAB2: the tables a 🤖 friend can sit at (`lab-table-friend.ts`, loaded only when one sits down). */
 const FRIEND_KINDS: readonly RoomGameKind[] = ['quiz', 'draw', 'poker', 'duel', 'sea'];
@@ -116,6 +144,18 @@ export function registerGamesLab(
         where: IN_ROOM,
         run: () => void openSolo(kind),
       })),
+      {
+        // GW4 (owner, 17 Nov 2026): opening, playing and closing a game never moves the video or the side panel.
+        id: 'games.layoutStable',
+        title: { en: 'Games: the room stays put when a game opens', tr: 'Oyunlar: oyun açılınca oda yerinde kalır' },
+        help: {
+          en: 'Opens a game (a name such as "word", "snack", "sea"; Five Frames when empty), waits, minimizes it, and writes where the video and the side panel were before, during and after, and whether they stayed within 1 px.',
+          tr: 'Bir oyun açar (word, snack, sea gibi bir ad; boşsa Beş Kare), bekler, küçültür; video ile yan panelin önce, sırasında ve sonra nerede durduğunu ve 1 px içinde kalıp kalmadığını yazar.',
+        },
+        tab: 'games',
+        where: IN_ROOM,
+        run: async (arg?: string) => JSON.stringify(await layoutStable(arg?.trim() || 'word', openTable, openSolo)),
+      },
       {
         // Card GT1: the open game's "How to play" cards, the same as its ❓ (the first-time cards stay off in tests).
         id: 'games.tutorial',

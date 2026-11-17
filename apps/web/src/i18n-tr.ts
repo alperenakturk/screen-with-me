@@ -113,6 +113,7 @@ export const tr: Record<I18nKey, string> = {
   'game.toPlace': 'Videonun yerinde',
   'game.toFrame': 'Çerçeve',
   'game.pausedForGame': 'Video oyun için durduruldu',
+  'game.pausedShort': 'Video durdu',
   'game.besideYoutube': 'YouTube videosunun üstüne bir şey konmasına izin vermiyor, oyun bu yüzden yanında durur. Bu çubuktan sürükle; geri koymak için çift tıkla.',
   'game.back': 'Oyuna dön',
   'game.end': 'Oyunu bitir',

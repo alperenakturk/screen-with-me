@@ -11,10 +11,13 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
   `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
   still missing (the owner's Releases page or a session allowed to push tags).
-  - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
-    `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
-    After merge: deploy, live e2e, tag; FD1's Done line + archive.
-  - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
+  - [x] FD1b the Shorts view tidy: #535 (`claude/fd1b-shorts-tidy`) live in v0.9.97.161 (live e2e green on its re-run after Cloudflare object drops); FD1's Done line in the archive.
+  - [ ] FC1 feed country (owner's priority): branch `claude/fc1-feed-country`, PR open; `feedSearchParams` with the
+    country's language, words + kind + country combined, chart fallback, Lab `feed.region`, hand test 27af. Live
+    spot-check of JP / TR / US / BR / DE: the cloud session's network can't reach the live site, so it is the owner's
+    hand test (and the Planner's, if a session with that host allowed runs it).
+  - [ ] Then RC1: PR #536 (`claude/rc1-session-recap`) is green and held until FC1 is live; merge it then (merge
+    main into it first).
   - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
     CI, passed on re-run): make it deterministic when that harness is next touched.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
@@ -37,9 +40,9 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [x] Game Studio (session 17 Nov, card GW3): #525 merged, live in v0.9.97.159 (live e2e green, tagged); hand test 27aa.
-  Next for a fresh Game Studio session: GW4, GW5, GMP2 (cards-games.md). Sideways-tablet tables in the video's place
-  still have text under 13 px (Duel, Sea Battle six; not in CI's sweep): for GW5.
+- [ ] Game Studio (17 Nov b, handoff): [x] GW4 #532 (snack-bar-3's red was the test: CI's narrow column fits
+  three rows, and QA2 drops the locked stand first; card archived): merge, live check. [ ] GW5 #537 (draft, on #532; open points in its body).
+  [ ] GMP2.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -211,6 +214,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", the feed pill sits above the Short (not on it), and
   a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
   shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More and the pill above the Short.
+- [ ] 27af. [FC1] Start a ♾ Shorts feed with Japan: the Shorts are Japanese. Then 🔥 Popular + type "hay" + Japan:
+  "Will play" says so, and the most watched Japanese Shorts about hay come. Try Turkey, US, Brazil, Germany the same
+  way. Paste a video link instead of words: the kinds and the country grey out with a one-line reason.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
