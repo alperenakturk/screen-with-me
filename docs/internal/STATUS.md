@@ -9,7 +9,7 @@
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
 - [ ] Lane A (handoff 17 Nov, 00:00; the session stopped: no lane A card is ready without the owner):
-  - [x] SH3, VC1, VC3, MSG1 (#509, v0.9.97.157) and CR2 (#512 + #520, vVERSION) live, Done lines in
+  - [x] SH3, VC1, VC3, MSG1 (#509, v0.9.97.157) and CR2 (#512 + #520, v0.9.97.158) live, Done lines in
     `archive/cards-done.md`; hand tests 27u–27y (+ CR2's 27z); 27w passed (archive). Branches `claude/msg1-delete-message`,
     `claude/cr2-yt-playlists`, `claude/cr2-playlist-404` merged. Tags: `v0.9.97.141` back-filled by TAG_TOKEN;
     `v0.9.97.113` (8ce4385) still missing (a tag push from a session was refused: owner's Releases page or a session
@@ -194,7 +194,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27x. [VC3, 0.9.97.156] With a VPN on, join voice: after ~10 s "Your voice isn't reaching the others" and an ⓘ.
 - [ ] 27y. [MSG1, 0.9.97.157] With a friend: open ⋯ on your message (on a phone, press and hold it), "🗑 Delete for
   everyone": you both see "… deleted a message"; as the host delete your friend's message; reload: the lines stay.
-- [ ] 27z. [CR2, vVERSION] In YouTube Music open an album or a playlist → Share → Copy link, paste it in the room:
+- [ ] 27z. [CR2, 0.9.97.158] In YouTube Music open an album or a playlist → Share → Copy link, paste it in the room:
   its songs go into the queue in order and play one after another (the cloud can't test real YouTube Music).
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear

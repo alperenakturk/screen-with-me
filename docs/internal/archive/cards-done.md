@@ -2727,4 +2727,4 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Progress (lane A, 16 Nov 2026): built on `claude/cr2-yt-playlists` (`/api/youtube/playlist`, `parsePlaylist`, harness
   `playlist`); album `browse/` links don't resolve to a playlist id without scraping, so help points to Share → Copy link.
 - Done: #512 (`claude/cr2-yt-playlists`, `/api/youtube/playlist`, `parsePlaylist`; Test Lab `queue.playlist`; harness
-  `playlist`) and #520 (`claude/cr2-playlist-404`, a private / unknown list = no items), live in vVERSION (live e2e green).
+  `playlist`) and #520 (`claude/cr2-playlist-404`, a private / unknown list = no items), live in v0.9.97.158 (live e2e green).
