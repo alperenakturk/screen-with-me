@@ -460,7 +460,7 @@ jobs:
       - name: Game frames scale in proportion
         run: |
           node scripts/harness/games-scale/run.cjs http://localhost:8787
-          GAMES=sea,seaPlay,seaSix,duel,duelPlay,duelSix,quiz,draw,chess,pokerPlay,pokerSix SIZES=tabland GW_LANGS=none LANGS=en node scripts/harness/games-sweep/run.cjs http://localhost:8787
+          GAMES=sea,seaPlay,seaSix,duel,duelPlay,duelSix,quiz,draw,chess,xox,pokerPlay,pokerSix SIZES=tabland GW_LANGS=none LANGS=en node scripts/harness/games-sweep/run.cjs http://localhost:8787
           GAMES=pokerPlay,pokerSix SIZES=tabup GW_LANGS=none LANGS=en node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Snack Bar and Five Frames whole on a laptop and a sideways tablet (EN + TR)
