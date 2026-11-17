@@ -1251,7 +1251,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   a laptop: every game 40–110 ms; at CPU 4× with 150 ms latency, Classics and Snack Bar 230–320 ms. The game window's
   Lab commands (`gameWindow.*`, `games.frame`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
   (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
-  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
+  "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game;
+  since GW4 on every device (under the head it covered Sea Battle's "My sea").
+  **GW4 (owner, 17 Nov 2026): opening a game never moves the room.** The room's "fill the window's height" layout
+  (`room.css`, QA2-A #8, `--stage-over`) stays on while a game is open (it used to switch off, so the video shrank and
+  the side panel moved 32 px); a table in the video's place scales to that box and a free window lies over the page.
+  Only the phone's Games tab changes the room on purpose (PH2: the video becomes a strip). Lab `games.layoutStable`
+  (arg: a game kind, default `word`: opens it, minimizes it, writes the video's and side panel's boxes before / during /
+  after and `stable`); harness `games-layout` (CI `games`: every game at 1366 with a file and YouTube, 1920, phone).
   **A table's frame never starts unreadable beside YouTube** (Planner, 16 Nov 2026: no frame with text under 11 px):
   without a spot of mine, a frame that would get less than `READ_ZOOM` (0.85) of the table's size in the strip beside
   the player opens under the player when the screen has room for it there (`below`), else in the video's place

@@ -233,7 +233,11 @@ async function placeIn(page, mode) {
         // An upright tablet's free window is the room left over the chat (smaller than the games' own sizes): reported,
         // not judged (its game shows in the video's place better, which is checked).
         if (size === 'upright' && mode === 'float') continue;
-        check(m.median >= (big ? 16 : Math.min(m.w, m.h) < 420 ? 11 : 11.5), `${label}: the game's usual text is a good size on the screen (${m.median} px in ${m.w}×${m.h})`);
+        // GW4: a sideways tablet's video's place grew from 740×362 to 740×567 (the room keeps its height with a game open)
+        // while Last Heart's running table kept its scale (text 11.0 → 11.2 px): it keeps the small box's 11 px tier
+        // until GW5 (the sideways-tablet tables' text, card in cards-games.md).
+        const tier = Math.min(m.w, m.h) < 420 || (size === 'tablet' && mode === 'stage' && Math.min(m.w, m.h) < 600) ? 11 : 11.5;
+        check(m.median >= (big ? 16 : tier), `${label}: the game's usual text is a good size on the screen (${m.median} px in ${m.w}×${m.h})`);
         check(m.min >= 8.5, `${label}: no text is tiny on the screen (${m.min} px)`);
         if (mode === 'stage') {
           // 0.9.97.115 (owner: "the How to play card is cut at the bottom"): every card of the game's "How to play" fits

@@ -2757,6 +2757,18 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done: #525 (`claude/gw3-video-place`, Game Studio, 17 Nov 2026; check `scripts/check-games-fullscreen.mjs`, harness
   `games-shorts`, Test Lab `games.frame`); owner's hand test sent to the Planner.
 
+### GW4. Opening a game never moves the room layout (owner, 17 Nov 2026; Game Studio, after GW3)
+- Why: opening Five Frames (a side game) made the YouTube frame and the side panel / chat shift and shrink.
+- What: a game (side game or table) opens over the existing screen (its frame, the video's place by the GW3 rule);
+  the video, the rail and the side panel keep their size and place while a game opens, plays and closes.
+- Done when: opening and closing every game at 1366, 1920 and a phone leaves the video and side panel rects unchanged
+  (± 1 px); Test Lab hook `games.layoutStable` (records the rects before / after).
+- Tests: a games harness compares `getBoundingClientRect()` of the player and `.side` before, during and after a
+  game; shots at 4 sizes.
+- Owner's pick: his message to the Planner (17 Nov 2026).
+- Done: #532 (`claude/gw4-layout-stable`, Game Studio, 17 Nov 2026; harness `games-layout`, Test Lab
+  `games.layoutStable`); owner's hand test sent to the Planner.
+
 ### SRC2. "What are we watching?" source picker: big grid (owner, 17 Nov 2026; lane A, first)
 - Why: the ⠿ popover (SRC1) is small and menu-like; the owner wants big tiles with category chips.
 - What: option A of `docs/internal/design/source-picker.md` (sketches `source-picker/a-computer.svg`,
