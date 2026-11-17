@@ -387,4 +387,8 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
   #game-stage .sb-icon-box { width: 28px; height: 28px; }
   #game-stage .sb-price { min-width: 58px; padding-inline: 7px; gap: 3px; }
   #game-stage .sb-more { white-space: nowrap; }
+  /* The foot (badges, ↺, New cinema) keeps one line with a wide device font too (Ubuntu's DejaVu Sans needed 276 px of
+     270 and the foot took a second line, pushing the game 23 px past its design). */
+  #game-stage .sb-foot { gap: 5px; }
+  #game-stage .sb .sb-badges-open, #game-stage .sb-prestige { padding-inline: 8px; }
 }
