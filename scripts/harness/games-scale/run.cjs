@@ -59,7 +59,10 @@ const look = () => {
  * = nothing moved, appeared or disappeared; the game only got bigger or smaller.
  */
 const boxes = () => {
-  const body = document.querySelector('#game-stage .game-stage-body');
+  // Measured from the game's own box (`.game-fit`, its design pixels): the window centres that box, and a head whose
+  // zoomed height rounds a pixel differently leaves a 1–3 px letterbox that is the window's, not the game's (CI's fonts).
+  const stageBody = document.querySelector('#game-stage .game-stage-body');
+  const body = stageBody?.querySelector(':scope > .game-fit') ?? stageBody;
   const out = {};
   if (!body) return out;
   const key = (e) => {
