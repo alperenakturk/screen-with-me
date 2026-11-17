@@ -1285,7 +1285,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   video place (an upright tablet, ≈ 714 × 349; container query `or` branch), with tighter opponent rows and the pot's
   feed down to its newest line there; in a phone's Games tab the five shared cards use the pot box's width (≤ 40 px) and
   the feed shows its newest line. games-sweep size `tabup` (820 × 1180), CI: game-proportions `upright`, games-sweep
-  `tabup` Last Heart row. Lab `poker.compact` (five 🤖 friends sit, the hand starts);
+  `tabup` Last Heart row. **XO1:** a Classics table still waiting for an opponent in a not-wide video place (a sideways
+  tablet) puts its note and "Just watch" on one row (`classics.css`, as the phone's Games tab), so the board keeps the
+  height (tic-tac-toe was 256 px); CI's tabland games-sweep row includes xox. Lab `poker.compact` (five 🤖 friends sit, the hand starts);
   games-sweep `pokerSix`. Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of
   the game's heights); harness `games-scale` (CI games-more, with a sideways-tablet sweep of Sea Battle, the Duel, Quiz,
   Draw & Guess and chess).
