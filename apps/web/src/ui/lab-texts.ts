@@ -81,6 +81,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Shorts view: show a feed note', tr: 'Shorts görünümü: bir akış notu göster' },
     help: { en: 'Shows the "Nothing new left … the feed stopped" note the way a feed shows it, to check it sits under the Short (or at its foot) and never over the rail, the chat or the video.', tr: '"… için yeni bir şey kalmadı, akış durdu" notunu bir akışın gösterdiği gibi gösterir; Short\'un altında (ya da dibinde) durduğunu, rayın, sohbetin ya da videonun üstüne binmediğini denemek için.' },
   },
+  'shorts.more': {
+    title: { en: 'Shorts view: open ⋯ More', tr: 'Shorts görünümü: ⋯ Diğer menüsünü aç' },
+    help: { en: 'Presses the Shorts view\'s ⋯ More as a person would (the rail\'s on a computer, the bottom bar\'s on a phone) and writes the menu that opened into the log: its rows and whether it fits the window.', tr: 'Shorts görünümünün ⋯ Diğer düğmesine bir kişi gibi basar (bilgisayarda raydakine, telefonda alt çubuktakine) ve açılan menüyü kayda yazar: satırları ve pencereye sığıp sığmadığı.' },
+  },
   'feed.region': {
     title: { en: 'Feed: its country, language, kind and words', tr: 'Akış: ülkesi, dili, türü ve kelimeleri' },
     help: { en: 'Writes the running feed\'s request and what it asks YouTube for: the country (regionCode), that country\'s language (relevanceLanguage), the kind\'s category, the words and the order. With "My country" the server picks the connection\'s country.', tr: 'Açık akışın isteğini ve YouTube\'dan ne istediğini kayda yazar: ülke (regionCode), o ülkenin dili (relevanceLanguage), türün kategorisi, kelimeler ve sıralama. "Benim ülkem" seçiliyse ülkeyi sunucu bağlantıdan seçer.' },

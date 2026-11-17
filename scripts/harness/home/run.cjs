@@ -344,6 +344,23 @@ const ours = () => location.hostname === 'localhost' || location.hostname === '1
     await ctx.close();
   }
 
+  // Card UI4: a new visitor gets Drive-In (a phone shows its plain Night for a scene theme); a saved choice stays.
+  for (const [where, options, seed, want] of [
+    ['computer, new visitor', { viewport: { width: 1366, height: 768 } }, null, { shown: 'acikhava', resolved: 'acikhava' }],
+    ['phone, new visitor', { ...devices['iPhone 13'] }, null, { shown: 'gece', resolved: 'acikhava' }],
+    ['computer, saved Neon', { viewport: { width: 1366, height: 768 } }, 'neon', { shown: 'neon', resolved: 'neon' }],
+    ['computer, saved Ocean Liner (removed)', { viewport: { width: 1366, height: 768 } }, 'gemi', { shown: 'gece', resolved: 'gece' }],
+  ]) {
+    const ctx = await browser.newContext(options);
+    if (seed) await ctx.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('theme', v); sessionStorage.setItem('seeded', '1'); } }, seed);
+    const page = await ctx.newPage();
+    await page.goto(`${SITE}/?debug=1`);
+    await page.waitForFunction(() => !!window.__swmLab && !!document.documentElement.dataset.theme, null, { timeout: 15000 }).catch(() => {});
+    const lab = await page.evaluate(async () => (await window.__swmLab.run('theme.default')).text.replace(/^▶ /, ''));
+    const got = JSON.parse(lab);
+    check(got.default === 'acikhava' && got.shown === want.shown && got.resolved === want.resolved && (seed !== 'neon' || got.saved === 'neon'), `UI4 ${where}: theme ${want.shown}`, got);
+    await ctx.close();
+  }
   await browser.close();
   console.log(failed ? `\n✗ ${failed} check(s) failed` : '\n✓ Home page (card 15b) fits and works at every size');
   process.exit(failed ? 1 : 0);

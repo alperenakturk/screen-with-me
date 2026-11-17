@@ -32,7 +32,7 @@ const SIZES = {
   'tablet-land': { viewport: { width: 1180, height: 820 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   'phone-land': devices['iPhone 13 landscape'],
 };
-// Themes by id (themes.ts): gece = Night (the default), matinee = Matinee, sinema / lokum … = scene themes.
+// Themes by id (themes.ts): gece = Night (the shots' usual one; a new visitor gets acikhava = Drive-In, card UI4), matinee = Matinee, sinema / lokum … = scene themes.
 const THEMES = flag('themes', 'gece').split(',');
 const sizeNames = flag('sizes', 'laptop,desktop,tablet,phone').split(',');
 const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();

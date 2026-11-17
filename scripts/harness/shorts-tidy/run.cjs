@@ -66,7 +66,7 @@ const lab = async (page, id) => (await page.evaluate(async (c) => (await window.
     const tidy = JSON.parse(await lab(page, 'shorts.tidy'));
     const scrolls = await page.evaluate(() => document.scrollingElement.scrollHeight > innerHeight + 1);
     check(!scrolls, `${name}: the page does not scroll`);
-    check(tidy.pill?.inStage && tidy.pill.abovePlayer, `${name}: the feed pill sits above the Short, not on it`, tidy.pill);
+    check(tidy.pill === false, `${name}: no feed pill above the Short (UI4: the feed lives in ♾ and the Queue)`, tidy.pill);
     check(/^\d+ left$/.test(tidy.left ?? ''), `${name}: "N left" under ▲`, tidy.left);
     if (kind === 'computer') {
       check(tidy.heads.join(',') === 'Talk,Watch,Room', `${name}: the rail has three labelled groups`, tidy.heads);
@@ -82,6 +82,10 @@ const lab = async (page, id) => (await page.evaluate(async (c) => (await window.
     await page.waitForTimeout(300);
     const noted = JSON.parse(await lab(page, 'shorts.tidy'));
     check(noted.hint && !noted.hint.overPlayer && !noted.hint.overRail, `${name}: a feed note never covers the video or the rail`, noted.hint);
+    // UI4 (owner: "Other does nothing"): ⋯ More opens a menu, inside the window, on every size.
+    const more = JSON.parse(await lab(page, 'shorts.more'));
+    const wantRow = kind === 'phone' ? /Room view/ : /Invite/;
+    check(more.open && more.inView && more.rows.some((r) => wantRow.test(r)), `${name}: ⋯ More opens its menu, whole`, more);
     check(errors.length === 0, `${name}: no page errors`, errors);
     await ctx.close();
   }

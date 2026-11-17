@@ -8,46 +8,22 @@ import type { RoomFeed } from './shorts-feed.ts';
  * Card SH2: the room's feed as a row at the top of the Queue ("Up next"), for everyone: what it follows, ⏸ / ▶, 🧭
  * Steer (the feed window) and ✕. With no feed running, two buttons start one: ♾ Shorts feed and ▶ Video feed.
  */
-export interface FeedPill {
-  /** The pill's place in our own frame (the bar above the video), never inside the player. */
-  root: HTMLElement;
-  /** A member's name by member id (who started the feed). */
-  who: (id: string) => string | null;
-  /** How many of the feed's videos wait in the queue. */
-  left: () => number;
+export interface FeedRowDeps {
   /** "Only the host can start a feed" is on and I am not the host: no ✕. */
   locked: () => boolean;
 }
 
 /**
- * Card FD1: while a feed runs, everyone sees a pill above the video: "♾ Feed: 🎵 Music · 12 left · by Sam ⏸ ✕"
- * (✕ stops it for the room; hidden for guests under "Only the host can start a feed"). The label opens the drawer.
+ * Card UI4 (owner, 17 Nov 2026): no feed pill above the video any more (FD1's "♾ Feed: … · 12 left · by Sam"); the
+ * feed shows only where it lives: this row and the feed drawer.
  */
-export function createFeedRow(root: HTMLElement, feed: RoomFeed, open: (kind: FeedKind) => void, pill: FeedPill) {
+export function createFeedRow(root: HTMLElement, feed: RoomFeed, open: (kind: FeedKind) => void, deps: FeedRowDeps) {
   const button = (id: string, label: string, text: string, onClick: () => void, cls = 'btn small-btn') => {
     const b = el('button', { type: 'button', class: cls, id, title: label, 'aria-label': label }, text);
     b.addEventListener('click', onClick);
     return b;
   };
-  function renderPill(): void {
-    const info = feed.info;
-    pill.root.hidden = !info;
-    if (!info) return pill.root.replaceChildren();
-    const kind = info.kind === 'shorts' ? '♾' : '▶';
-    const left = pill.left();
-    const name = pill.who(info.by);
-    const text = [`${t('feed.pill', { label: info.label })}`, t('feed.left', { n: left }), name ? t('feed.by', { name }) : ''].filter(Boolean).join(' · ');
-    const label = el('button', { type: 'button', class: 'btn small-btn primary feed-pill-text', id: 'feed-pill-text', title: t('feed.steerHint') }, `${kind} ${text}`);
-    label.addEventListener('click', () => open(info.kind));
-    pill.root.classList.toggle('paused', info.paused);
-    pill.root.replaceChildren(
-      label,
-      button('feed-pill-pause', info.paused ? t('feed.resume') : t('feed.pause'), info.paused ? '▶' : '❚❚', () => feed.pause(!info.paused), 'icon-btn'),
-      ...(pill.locked() ? [] : [button('feed-pill-stop', t('feed.stop'), '✕', () => feed.stop(), 'icon-btn')]),
-    );
-  }
   function render(): void {
-    renderPill();
     const info = feed.info;
     root.classList.toggle('on', info !== null);
     root.classList.toggle('paused', info?.paused === true);
@@ -63,7 +39,7 @@ export function createFeedRow(root: HTMLElement, feed: RoomFeed, open: (kind: Fe
       el('span', { class: 'feed-qrow-text', id: 'feed-row-text' }, el('b', {}, kind), ' · ', info.label, info.paused ? el('span', { class: 'muted' }, ` (${t('feed.pausedTag')})`) : ''),
       button('feed-row-pause', info.paused ? t('feed.resume') : t('feed.pause'), info.paused ? `▶ ${t('feed.resumeShort')}` : t('feed.pauseShort'), () => feed.pause(!info.paused)),
       button('feed-row-steer', t('feed.steerHint'), `🧭 ${t('feed.steer')}`, () => open(info.kind)),
-      ...(pill.locked() ? [] : [button('feed-row-stop', t('feed.stop'), '✕', () => feed.stop(), 'icon-btn')]),
+      ...(deps.locked() ? [] : [button('feed-row-stop', t('feed.stop'), '✕', () => feed.stop(), 'icon-btn')]),
     );
   }
   render();
@@ -85,9 +61,19 @@ export function createFeedRow(root: HTMLElement, feed: RoomFeed, open: (kind: Fe
             steers: info?.steers ?? 0,
             remembered: feed.remembered,
             row: root.textContent,
-            pill: pill.root.hidden ? null : pill.root.textContent,
           });
         },
+      },
+      {
+        // UI4: the feed shows only in the Queue's row and the drawer, never as a pill above the video.
+        id: 'ui.feedPill',
+        tab: 'status',
+        title: { en: 'Feed: no pill above the video', tr: 'Akış: videonun üstünde şerit yok' },
+        help: {
+          en: 'Writes into the log whether a feed pill shows anywhere (it should not: the feed lives in the Queue\'s row and the feed drawer) and what the Queue\'s feed row says.',
+          tr: 'Bir akış şeridinin herhangi bir yerde görünüp görünmediğini (görünmemeli: akış Sıra\'daki satırda ve akış çekmecesinde durur) ve Sıra\'daki akış satırının ne yazdığını kayda yazar.',
+        },
+        run: () => JSON.stringify({ pill: !!document.querySelector('.feed-pill, #feed-pill'), feed: feed.info?.label ?? null, row: root.textContent }),
       },
     ],
   }));

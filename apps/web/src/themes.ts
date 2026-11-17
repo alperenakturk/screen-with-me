@@ -1,4 +1,4 @@
-import { THEME_IDS, resolveTheme, type ThemeId } from '@swm/shared/themes';
+import { DEFAULT_THEME, THEME_IDS, resolveTheme, type ThemeId } from '@swm/shared/themes';
 import { isPhone } from './device.ts';
 import { debugHooks, type LabCommand } from './debug-lab.ts';
 import { el } from './dom.ts';
@@ -271,6 +271,17 @@ export function registerThemeLab(): void {
         run: () => show(id),
         undo: back,
       })),
+      {
+        // Card UI4: a new visitor's theme is Drive-In; a saved choice is kept.
+        id: 'theme.default',
+        title: { en: 'Theme: the default and what is saved', tr: 'Tema: varsayılan ve kayıtlı olan' },
+        help: {
+          en: 'Writes into the log the theme a new visitor gets (Drive-In), what this browser has saved, what that resolves to and what the page shows (a phone shows Night for a scene theme).',
+          tr: 'Yeni bir ziyaretçinin aldığı temayı (Açık Hava Sineması), bu tarayıcının kaydettiğini, bunun neye çözüldüğünü ve sayfanın ne gösterdiğini kayda yazar (telefon, sahneli bir temayı Gece olarak gösterir).',
+        },
+        tab: 'status',
+        run: () => JSON.stringify({ default: DEFAULT_THEME, saved: load('theme'), resolved: currentTheme(), shown: shownTheme() }),
+      },
     ],
     status: () => [[{ en: 'Theme shown', tr: 'Gösterilen tema' }, LAB_NAMES[shownTheme()]]],
   }));

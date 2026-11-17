@@ -113,9 +113,10 @@ async function fakeYouTube(ctx, asked) {
       return { b: r.bottom, vh: innerHeight, rows: document.querySelectorAll('.feed-row-line').length, lines: [...document.querySelectorAll('.feed-row-line p')].every((p) => p.textContent.length > 10) };
     });
     check(steerBox.rows === 4 && steerBox.lines && steerBox.b <= steerBox.vh + 1, `${label}: the drawer shows four ways to steer, each described`, JSON.stringify(steerBox));
-    // Everyone sees the pill above the video: what runs, how many left, who started it.
-    const pill = await friend.evaluate(() => ({ hidden: document.getElementById('feed-pill')?.hidden, text: document.getElementById('feed-pill')?.textContent ?? '', stop: !!document.getElementById('feed-pill-stop') }));
-    check(!pill.hidden && /Alex/.test(pill.text) && /left|kaldı/.test(pill.text) && pill.stop, `${label}: the friend sees the feed pill (what, how many left, by Alex) with ⏸ and ✕`, JSON.stringify(pill));
+    // UI4: no pill above the video for anyone; the friend sees the feed in the Queue's row, with ⏸ and ✕.
+    const pill = JSON.parse(await friend.evaluate(async () => (await window.__swmLab.run('ui.feedPill')).text).then((t) => t.replace(/^▶ /, '')));
+    const row = await friend.evaluate(() => ({ text: document.getElementById('feed-row')?.textContent ?? '', pause: !!document.getElementById('feed-row-pause'), stop: !!document.getElementById('feed-row-stop') }));
+    check(!pill.pill && /Popular|Music|Popüler|Müzik/.test(row.text) && row.pause && row.stop, `${label}: no feed pill above the video; the friend sees the feed in the Queue's row with ⏸ and ✕`, JSON.stringify({ pill, row }));
     await page.selectOption('#feed-steer-region', 'JP');
     await page.click('#feed-steer-country');
     await page.waitForTimeout(5000);
