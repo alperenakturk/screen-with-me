@@ -189,7 +189,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const start = await box(page);
     check(start.mode === 'float', `${L}: back to the free window`, start);
     // W5: a drag onto the video: the window follows the mouse every step and may cover the video.
-    const path = await dragHead(page, -560, 40);
+    // (GW5: Snack Bar's home now sits under the Together card, lower down: the drag goes up a little, so the corner
+    // resize below has room before the screen's foot.)
+    const path = await dragHead(page, -560, -40);
     const smooth = path.every((p, i) => i === 0 || (p.x < path[i - 1].x && path[i - 1].x - p.x < 80));
     const end = path[path.length - 1];
     check(smooth && Math.abs(end.x - (start.x - 560)) <= 3, `${L} W5: the window follows a drag of its head smoothly`, path.map((p) => p.x));

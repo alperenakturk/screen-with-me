@@ -685,10 +685,24 @@ export function createGameStage(opts: StageOptions) {
       // that, down at the column's foot (just above the chat's message box), so the panel's top (Together, voice, the
       // tabs) stays in view; or, when the column is the shorter side, as tall, right-aligned to the panel.
       const [dw, dh] = sizeOf(kind).size;
-      const tall = Math.round((home.width * dh) / dw);
+      let tall = Math.round((home.width * dh) / dw);
+      const beside = home.top < theater.getBoundingClientRect().bottom;
+      // GW5 (first look: Five Frames at 1366 covered Together): beside the video the window stays under the Together
+      // card when it can, shrinking in proportion down to 85 % of its design (the floor `homeBox` allows a tablet's panel, text
+      // ≥ 11 px); a smaller space (a 1280 × 720 laptop) keeps the design and covers the card's foot, as before.
+      const together = document.getElementById('together')?.getBoundingClientRect();
+      if (beside && together && together.height > 1 && together.bottom > home.top && together.top < home.top + home.height) {
+        const room = Math.round(home.top + home.height - (together.bottom + EDGE / 2));
+        const width = Math.round((room * dw) / dh);
+        if (tall > room && width >= frameDesign(kind)[0] * 0.85) {
+          home.left += home.width - width;
+          home.width = width;
+          tall = room;
+        }
+      }
       if (home.height > tall) {
         // (Under the video, an upright tablet's column beside the chat, it stays at the column's top.)
-        if (home.top < theater.getBoundingClientRect().bottom) home.top += home.height - tall;
+        if (beside) home.top += home.height - tall;
         home.height = tall;
       } else {
         const width = Math.round((home.height * dw) / dh);
