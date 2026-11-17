@@ -2921,3 +2921,17 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done: #546 (`claude/lh2-poker-compact`, Game Studio, 17 Nov 2026): compact layout in the video's place on a short box
   (`poker.css`), three+ opponents as compact rows in the wide one, `shrinkToFit` grows an overflowing own box (six at
   Last Heart fell to 0.4); Lab `poker.compact`, games-sweep `pokerSix` (CI tabland row).
+
+### LH3. Last Heart fits an upright tablet; the phone's pot box (Game Studio proposal, 17 Nov 2026; Game Studio)
+- Why: on an upright tablet (820 × 1180) Last Heart running in the video's place gets a very short, wide box
+  (≈ 714 × 349) and its text shows ≈ 10.6 px (rule: ≥ 13 px); game-proportions `upright/pokerPlay/stage` fails (also on
+  main, not in CI). In a phone's Games tab the pot box clips its second feed line and the board slots leave its right
+  third empty (first-look review on LH2).
+- What: a layout for that short, wide box at 13 px (no scrolling, 2–6 players); the phone's pot box shows its lines and
+  uses its width. Only the video's place and the Games tab; never a free window (GW5).
+- Done when: game-proportions `upright` pokerPlay passes and runs in CI; games-sweep Last Heart rows stay green; Test Lab
+  hook `poker.compact` covers it (six players); owner's hand test on an upright tablet.
+- Owner's pick: the Planner's approval (17 Nov 2026).
+- Done: PR (`claude/lh3-poker-upright`, Game Studio, 17 Nov 2026): the compact table's container query takes the
+  short, wide box too (tighter rows, newest feed line); phone pot box (board ≤ 46 px, newest feed line); games-sweep
+  `tabup`, CI game-proportions `upright` + games-sweep `tabup` Last Heart row.
