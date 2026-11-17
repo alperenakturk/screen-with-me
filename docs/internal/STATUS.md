@@ -34,12 +34,9 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (session 17 Nov, card GW3; handoff at the end of it):
-  [x] GT1 done (#496): card moved to the archive.
-  [ ] #525 `claude/gw3-video-place` (card GW3): a table's big mode = the video's place (no `requestFullscreen` in any game,
-  `scripts/check-games-fullscreen.mjs`), the rail stays out beside it, Shorts keeps the mode and sockets (harness
-  `games-shorts`), Lab `games.frame`. Green → merge → deploy + live e2e check → GW3 to the archive → report to the
-  Planner (card already in the archive). Next for a fresh session: GW4, GW5, GMP2 (cards-games.md).
+- [x] Game Studio (session 17 Nov, card GW3): #525 merged, live in v0.9.97.159 (live e2e green, tagged); hand test 27aa.
+  Next for a fresh Game Studio session: GW4, GW5, GMP2 (cards-games.md). Sideways-tablet tables in the video's place
+  still have text under 13 px (Duel, Sea Battle six; not in CI's sweep): for GW5.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -196,6 +193,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   everyone": you both see "… deleted a message"; as the host delete your friend's message; reload: the lines stay.
 - [ ] 27z. [CR2, 0.9.97.158] In YouTube Music open an album or a playlist → Share → Copy link, paste it in the room:
   its songs go into the queue in order and play one after another (the cloud can't test real YouTube Music).
+- [ ] 27aa. [GW3, 0.9.97.159] Open a table (Classics) with a YouTube video and with a video file: it fills the video's
+  place, never the whole screen; chat, voice and the rail at the video's right edge still work; 🪟 makes it a frame you
+  drag anywhere, ▣ / Esc back; 📱 Shorts view → a small frame beside the Short, "Room view" brings it back unchanged.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
