@@ -56,6 +56,8 @@ const GAMES = {
   quizPlay: { table: 'quiz', start: true },
   drawPlay: { table: 'draw', start: true, pick: true },
   pokerPlay: { table: 'poker', start: true },
+  // LH2: Last Heart with six players (me and five 🤖 friends, Test Lab `poker.compact`), the busiest table.
+  pokerSix: { table: 'poker', six: true },
   snack: { solo: 'snack', whole: true },
   garden: { solo: 'garden' },
   word: { solo: 'word' },
@@ -78,7 +80,7 @@ function catalogEntry(g) {
   return find(section('GAME_CATALOG'), g.table);
 }
 // Lists that grow without end and may scroll (the owner's rule allows them).
-const MAY_SCROLL = ['.draw-chat', '.draw-guesses', '.chat-list', '.quiz-players', '.sb-upgrades', '.wg-album-page', '.wg-decor-list', '.htp'];
+const MAY_SCROLL = ['.draw-chat', '.draw-guesses', '.chat-list', '.quiz-players', '.sb-upgrades', '.wg-album-page', '.wg-decor-list', '#game-stage.in-tab .pk-seats', '.htp'];
 
 let fails = 0;
 const problems = [];
@@ -386,6 +388,15 @@ async function windowPasses(page, label, g, phone) {
             await page.waitForFunction(() => !!document.querySelector('#game-stage .draw-overlay:not([hidden]) .btn.primary'), null, { timeout: 8000 }).catch(() => {});
             await page.evaluate(() => document.querySelector('#game-stage .draw-overlay:not([hidden]) .btn.primary')?.click());
           }
+          await wait(1500);
+        }
+        if (g.six) {
+          await page.waitForFunction(() => window.__swmLab?.list?.().some((c) => c.id === 'poker.compact'), null, { timeout: 15000 }).catch(() => {});
+          await run('poker.compact').catch(() => null);
+          const six = await page
+            .waitForFunction(() => !document.querySelector('#game-stage .pk-lobby') && document.querySelectorAll('#game-stage .pk-seat').length >= 5, null, { timeout: 15000, polling: 300 })
+            .then(() => true, () => false);
+          check(six, `${label}: six players at the table and the hand starts`);
           await wait(1500);
         }
         let sam = null;

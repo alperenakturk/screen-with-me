@@ -76,3 +76,68 @@
 .pk-amount-open { display: none; }
 /* The ♠ "hand ranks" help is a 24 px target with a 13 px glyph on a computer too (the running-table sweep, PH2). */
 .pk-help { min-width: 24px; min-height: 24px; font-size: 13px; }
+
+/* ==== LH2: Last Heart running in the video's place on a short, narrowish box (a sideways tablet: about 718 × 556).
+   The full table needs ≈ 930 × 715 and was scaled to ≈ 0.8 (small print ≈ 10 px). Here it lays out in the box at its own
+   size: the table (opponents as compact rows, two per line when there are many, then the pot and shared cards) on the
+   left, my hand and one row of actions (Fold · Call · ± · Raise, the amounts in the ± card as in the Games tab) and the
+   four special moves on the right. Only in the video's place: a free window is always the game's one design (GW5). ==== */
+@container game (max-width: 900px) and (max-height: 660px) and (max-aspect-ratio: 16 / 10) {
+  #game-stage[data-place='stage'] .pk:not(:has(.pk-lobby, .pk-howto)) {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto auto;
+    grid-template-areas: 'timer timer' 'seats me' 'middle me'; align-items: start; align-content: center; gap: 6px; min-height: 0; height: 100%;
+    box-sizing: border-box;
+  }
+  #game-stage[data-place='stage'] .pk-status { grid-area: timer; padding: 4px 10px; row-gap: 2px; }
+  #game-stage[data-place='stage'] .pk-status-text, #game-stage[data-place='stage'] .pk-secs { font-size: 15px; }
+  #game-stage[data-place='stage'] .pk-timer { height: 3px; }
+  #game-stage[data-place='stage'] .pk-note { grid-column: 1 / -1; }
+  #game-stage[data-place='stage'] .pk-seats { grid-area: seats; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px; }
+  #game-stage[data-place='stage'] .pk-seat {
+    min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'top cards' 'life cards' 'status cards';
+    gap: 0 6px; padding: 4px 8px; align-items: center;
+  }
+  #game-stage[data-place='stage'] .pk-seat-top { grid-area: top; min-width: 0; }
+  #game-stage[data-place='stage'] .pk-seat .pk-life { grid-area: life; }
+  #game-stage[data-place='stage'] .pk-seat-cards { grid-area: cards; min-height: 0; }
+  #game-stage[data-place='stage'] .pk-seat .pk-seat-status { grid-area: status; min-height: 0; }
+  #game-stage[data-place='stage'] .pk-seat .pk-card { width: 26px; }
+  #game-stage[data-place='stage'] .pk-middle { grid-area: middle; padding: 6px 8px; gap: 10px; }
+  #game-stage[data-place='stage'] .pk-flask { width: 46px; }
+  #game-stage[data-place='stage'] .pk-board { gap: 4px; }
+  #game-stage[data-place='stage'] .pk-board .pk-card { width: 38px; }
+  #game-stage[data-place='stage'] .pk-me { grid-area: me; align-self: stretch; align-content: start; padding: 8px 10px; gap: 8px; }
+  #game-stage[data-place='stage'] .pk-me-top { gap: 10px; }
+  #game-stage[data-place='stage'] .pk-me .pk-card.big { width: 52px; }
+  #game-stage[data-place='stage'] .pk-actions { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px minmax(0, 1fr); gap: 4px; }
+  #game-stage[data-place='stage'] :is(.pk-actions > .btn, .pk-raise-box > .btn) { min-height: 44px; min-width: 0; padding: 4px 6px; }
+  #game-stage[data-place='stage'] .pk-raise-box { display: contents; }
+  #game-stage[data-place='stage'] .pk-actions > .pk-amount-open { display: grid; place-items: center; grid-column: 3; grid-row: 1; padding: 0; font-size: 18px; }
+  #game-stage[data-place='stage'] .pk-raise-box .pk-raise { grid-column: 4; grid-row: 1; }
+  #game-stage[data-place='stage'] .pk-amounts { display: none; }
+  #game-stage[data-place='stage'] .pk-actions.amounts-open .pk-amounts {
+    display: flex; flex-direction: column; gap: 6px; position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 6; padding: 8px;
+    border-radius: 14px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+  }
+  #game-stage[data-place='stage'] .pk-quick .game-chip { min-height: 32px; }
+  #game-stage[data-place='stage'] .pk-moves { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  #game-stage[data-place='stage'] .pk-move { min-height: 44px; padding: 4px; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'icon name' 'icon cost'; justify-items: start; align-items: center; column-gap: 6px; row-gap: 0; text-align: left; }
+  #game-stage[data-place='stage'] .pk-move-icon { grid-area: icon; font-size: 18px; }
+  #game-stage[data-place='stage'] .pk-move-name { grid-area: name; text-align: left; }
+  #game-stage[data-place='stage'] .pk-move small { grid-area: cost; }
+  #game-stage[data-place='stage'] :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-street, .pk-move small, .pk-life b, .pk-help, .pk-quick .game-chip, .pk-move-name, .pk-moves-label) { font-size: 13px; }
+}
+/* LH2: the wide video's place (a computer) with three or more opponents: they take the same compact rows (name, life
+   and status beside their two cards, two per line), so six at the table fit the box at their own size. */
+@container game (min-aspect-ratio: 16 / 10) {
+  .pk-seats:has(> .pk-seat:nth-child(3)) { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 4px; }
+  .pk-seats:has(> .pk-seat:nth-child(3)) > .pk-seat {
+    min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'top cards' 'life cards' 'status cards';
+    gap: 0 6px; padding: 4px 8px; align-items: center;
+  }
+  .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-top { grid-area: top; min-width: 0; }
+  .pk-seats:has(> .pk-seat:nth-child(3)) .pk-life { grid-area: life; }
+  .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-cards { grid-area: cards; min-height: 0; }
+  .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-status { grid-area: status; min-height: 0; }
+  .pk-seats:has(> .pk-seat:nth-child(3)) .pk-card { width: 26px; }
+}
