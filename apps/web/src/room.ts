@@ -2700,7 +2700,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const shortsOnNow = info?.kind === 'shorts';
     feedButton.classList.toggle('on', shortsOnNow);
     feedButton.setAttribute('aria-pressed', String(shortsOnNow));
-    $('#shorts-feed-label').textContent = shortsOnNow ? info.label : t('feed.short');
+    // Card FD1b (first look): the rail's name says what the button is ("Feed"); what runs is in the pill and the title.
+    $('#shorts-feed-label').textContent = shortsOnNow ? t('shorts.feed') : t('feed.short');
     feedButton.title = shortsOnNow ? t('feed.stopHint', { topic: info.label }) : t('feed.hint');
     feedRow.render();
     feedWindowRefresh?.();
