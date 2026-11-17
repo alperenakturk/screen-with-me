@@ -1710,6 +1710,11 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   Passed: the owner, 17 Nov 2026 (via the Planner).
 
 ## Lane A handoff lines, archived 17 Nov 2026 (verbatim)
+- (UI4 PR, 17 Nov 2026: FC1 live in v0.9.97.163, RC1 merged as #536)
+  - [x] FC1 feed country: #539 (`claude/fc1-feed-country`) merged; hand test 27af (live spot-check: owner).
+  - [ ] RC1 session recap: #536 (`claude/rc1-session-recap`), merged after FC1 is live; server `recap-show` /
+    `recap-end` / `recap-ask` + lab `recap-gap`, e2e `recap.mjs`, harness `recap`, Lab `recap.show` / `recap.state`,
+    privacy page updated (EN + TR), hand test 27ae. After merge: deploy, live e2e, tag; RC1's Done line + archive.
 - (UI4 PR, 17 Nov 2026; done in #536: the playlist harness reads the queue once it stops changing)
   - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
     CI, passed on re-run): make it deterministic when that harness is next touched.
