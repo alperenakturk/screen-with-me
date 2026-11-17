@@ -111,7 +111,20 @@ const SCREENS = {
     },
   },
   // Card SR2: the link box's results and the ⠿ Sources picker. YouTube's answer is a fixed list (no quota, no network).
-  sources: { what: 'The ⠿ Sources picker open beside the link box (YouTube, Vimeo, Search the web, ♪ TikTok)', room: true, after: async (p) => { await searchTab(p); await p.click('#media-sources'); await p.waitForSelector('#sources-pop:not([hidden]) .sources-tile'); } },
+  sources: { what: '"What are we watching?" (card SRC2): ⠿ opens 12 big tiles with category chips, in the video\'s place (a sheet on a phone); YouTube is the source in use (✓)', room: true, after: async (p) => { await searchTab(p); await p.click('#media-sources'); await p.waitForSelector('#sources-pop:not([hidden]) .sources-tile'); } },
+  'sources-youtube': {
+    what: '"What are we watching?" while a YouTube video plays: it takes the side panel\'s place, 3 a row; nothing may cover the YouTube player (the player may stay blank here: YouTube is blocked in this test)',
+    room: true,
+    sizes: ['laptop', 'desktop'],
+    after: async (p) => {
+      await p.fill('#media-input', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
+      await p.click('#media-form button[value="load"]');
+      await wait(2500);
+      await p.click('#media-sources');
+      await p.waitForSelector('#sources-pop:not([hidden]) .sources-tile');
+    },
+  },
+  'sources-music': { what: '"What are we watching?" filtered by the Music chip (Podcasts, YouTube Music only)', room: true, after: async (p) => { await searchTab(p); await p.click('#media-sources'); await p.waitForSelector('#sources-pop:not([hidden]) .sources-tile'); await p.click('.srcp-chip[data-chip="music"]'); } },
   'search-results': {
     what: 'YouTube results under the link box while a video file plays: a tap on a row plays it, "＋ Queue" beside each row queues it (the second row was just queued)',
     room: true,
@@ -212,7 +225,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/public\/extension|^apps\/extension\//, ['extension']],
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
   [/^apps\/web\/src\/ui\/end-card/, ['end-card']],
-  [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'search-results', 'tiktok-back']],
+  [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'sources-youtube', 'sources-music', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],
   [/^apps\/web\/src\/(room\.|ui\/|phone|tablet|i18n)/, ['join', 'room', 'room-video', 'room-cinema']],

@@ -453,7 +453,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <h2 data-i18n="emptyTitle"></h2>
               <ol class="empty-steps">
                 <li><span data-i18n="emptyStep1"></span> <button id="empty-invite" type="button" class="btn small-btn primary"></button></li>
-                <li data-i18n="emptyBody"></li>
+                <li><span data-i18n="emptyBody"></span> <button id="empty-sources" type="button" class="btn small-btn primary">🔍 <span data-i18n="phone.searchVideo"></span></button></li>
               </ol>
               <button id="sync-test" type="button" class="btn small-btn">🧪 <span data-i18n="syncTest"></span></button>
               <div class="ph-empty-actions phone-only">
@@ -3494,12 +3494,40 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     (media, title, mode) => addMedia(media, mode, title, mode === 'enqueue'),
   );
   // Card SRC1: ⠿ picks what typed words search (YouTube, Vimeo or the web).
-  const sources = createSources(mediaForm, mediaInput, $<HTMLButtonElement>('#media-sources'));
+  // Card SRC2: ⠿ and the empty room's "🔍 Search a video" open "What are we watching?" (big tiles, category chips).
+  const sources = createSources(mediaForm, mediaInput, $<HTMLButtonElement>('#media-sources'), {
+    feed: (kind) => openFeed(kind),
+    games: () =>
+      requestAnimationFrame(() => {
+        const tab = document.documentElement.classList.contains('ph-room') ? document.querySelector<HTMLButtonElement>('#ph-tab-games') : null;
+        if (tab) tab.click();
+        else pressMoreGame();
+      }),
+    placement: () => {
+      if (document.documentElement.classList.contains('ph-room')) return 'sheet';
+      const item = roomState?.item?.media;
+      // Nothing of ours over the YouTube player, nor over a film page in the extension's overlay: the side panel's place.
+      if (item && (item.kind === 'youtube' || isShell)) {
+        if (!(document.querySelector('.room > .side')?.getBoundingClientRect().width ?? 0)) $<HTMLButtonElement>('#side-toggle').click();
+        return 'side';
+      }
+      return 'video';
+    },
+  });
+  $('#empty-sources').addEventListener('click', (event) => void sources.open(event.currentTarget as HTMLElement));
+  // The phone's "🔍 Search a video" first shows the Search tab (phone-room.ts), then the sheet.
+  $('#empty-search').addEventListener('click', (event) => {
+    const opener = event.currentTarget as HTMLElement;
+    requestAnimationFrame(() => void sources.open(opener));
+  });
   /** Words in the link box: searched where ⠿ points. */
   function searchWords(raw: string): void {
     if (sources.source === 'web') {
       search.close();
       sources.web(raw);
+    } else if (sources.source === 'podcasts') {
+      sources.note('podcasts', raw.trim(), 'searched');
+      void search.podcasts(raw);
     } else if (sources.source === 'vimeo') {
       void search.vimeo(raw, (result) => {
         sources.note('vimeo', raw.trim(), result);

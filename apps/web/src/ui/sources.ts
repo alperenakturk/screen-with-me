@@ -1,25 +1,24 @@
-import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 import { debugHooks } from '../debug-lab.ts';
 import { flashHint } from './hint.ts';
 import { loadChunk } from './lazy.ts';
-import type { TikTokDoor } from './sources-pop.ts';
+import type { Picker } from './sources-pop.ts';
 
 /**
- * Card SRC1: the ⠿ Sources picker beside the link box (computer room and the phone's 🔍 Search tab). Three tiles pick
- * what typed words search: YouTube (today's search), Vimeo (our Worker asks Vimeo; "not available yet" without the
- * `VIMEO_TOKEN` secret) or the web (a new tab with one general search engine; back in the room a hint says to paste
- * the link). The pick sticks per device (`searchSource`). No in-page browser, no site list, no site filter: Sidelit
- * stays a neutral sync tool. Test Lab: `sources.state` (the source, Vimeo on or off, the last search).
+ * Card SRC1: the ⠿ Sources button beside the link box (computer room and the phone's 🔍 Search tab) picks what typed
+ * words search: YouTube (today's search), Vimeo (our Worker asks Vimeo; "not available yet" without the `VIMEO_TOKEN`
+ * secret), 🎙 podcasts (card SRC2) or the web (a new tab with one general search engine; back in the room a hint says
+ * to paste the link). The pick sticks per device (`searchSource`). No in-page browser, no site list, no site filter:
+ * Sidelit stays a neutral sync tool. Test Lab: `sources.state` (the source, Vimeo on or off, the last search).
  *
- * Card SR2: a fourth tile, ♪ TikTok. TikTok has no search API, so it is not a source: the tile opens TikTok itself (a
- * new tab; on a phone the TikTok app takes the link when it is installed), with the typed words as a TikTok search.
- * Back in the room a big "📋 Paste and play" button reads the clipboard after a tap (the browser may ask first) and
- * plays the pasted link (several links: the first plays, the rest are queued). Plain text, a generic ♪, no TikTok
- * logo, no scraping, no extension.
+ * Card SRC2: ⠿ (and the empty room's "🔍 Search a video") opens "What are we watching?", a big grid of tiles with
+ * category chips (a lazy chunk, `sources-pop.ts`): source tiles set the search above, action tiles open the feeds, the
+ * ♪ TikTok door (card SR2), the games hall, a link hint or the extension page. It sits in the video's place, in the
+ * side panel's place while a YouTube video (or a film page) shows, or as a bottom sheet on a phone. Test Lab:
+ * `sources.picker`, `sources.open`.
  */
-export type Source = 'youtube' | 'vimeo' | 'web';
-const SOURCES: readonly Source[] = ['youtube', 'vimeo', 'web'];
+export type Source = 'youtube' | 'vimeo' | 'podcasts' | 'web';
+const SOURCES: readonly Source[] = ['youtube', 'vimeo', 'podcasts', 'web'];
 const KEY = 'searchSource';
 /** One general search engine (the owner's pick: Google; no site filters). */
 const WEB_SEARCH = 'https://www.google.com/search';
@@ -29,11 +28,21 @@ export function webSearchUrl(words: string): string {
   return url.toString();
 }
 
-const TILE: Record<Source, { icon: string; name: I18nKey; note: I18nKey; placeholder: I18nKey }> = {
-  youtube: { icon: '▶', name: 'sources.youtube', note: 'sources.youtubeNote', placeholder: 'mediaPlaceholder' },
-  vimeo: { icon: '🎞️', name: 'sources.vimeo', note: 'sources.vimeoNote', placeholder: 'sources.vimeoPlaceholder' },
-  web: { icon: '🌐', name: 'sources.web', note: 'sources.webNote', placeholder: 'sources.webPlaceholder' },
+const TILE: Record<Source, { name: I18nKey; placeholder: I18nKey }> = {
+  youtube: { name: 'sources.youtube', placeholder: 'mediaPlaceholder' },
+  vimeo: { name: 'sources.vimeo', placeholder: 'sources.vimeoPlaceholder' },
+  podcasts: { name: 'sources.podcasts', placeholder: 'sources.podcastsPlaceholder' },
+  web: { name: 'sources.web', placeholder: 'sources.webPlaceholder' },
 };
+
+/** Where the picker goes: the video's place, the side panel's place (a YouTube video or a film page shows) or a sheet. */
+export type Placement = 'video' | 'side' | 'sheet';
+
+export interface SourceActions {
+  feed: (kind: 'shorts' | 'videos') => void;
+  games: () => void;
+  placement: () => Placement;
+}
 
 function stored(): Source {
   try {
@@ -44,19 +53,17 @@ function stored(): Source {
   }
 }
 
-export function createSources(form: HTMLFormElement, input: HTMLInputElement, button: HTMLButtonElement) {
+export function createSources(form: HTMLFormElement, input: HTMLInputElement, button: HTMLButtonElement, actions: SourceActions) {
   let source = stored();
   /** Vimeo on the server: null until asked (once per page, when the picker first opens or Vimeo is searched). */
   let vimeoOn: boolean | null = null;
   let last: { source: Source | 'tiktok'; words: string; result: string } | null = null;
   /** Set when "Search the web" opened a tab: the next time the room is shown again, the paste hint. */
   let awayForWeb = false;
-  /** Card SR2: the ♪ TikTok door and its "📋 Paste and play", from the picker's lazy chunk (null until it loads). */
-  let door: TikTokDoor | null = null;
+  /** The big grid and its ♪ TikTok door, from the lazy chunk (null until the first open). */
+  let picker: Picker | null = null;
 
-  const pop = el('div', { class: 'sources-pop', id: 'sources-pop', role: 'radiogroup', hidden: '' });
-  form.append(pop);
-  button.setAttribute('aria-haspopup', 'true');
+  button.setAttribute('aria-haspopup', 'dialog');
   button.setAttribute('aria-expanded', 'false');
   button.setAttribute('aria-controls', 'sources-pop');
 
@@ -77,47 +84,32 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     } catch {
       return false;
     }
-    if (!pop.hidden) draw();
+    picker?.redraw();
     return vimeoOn;
   }
 
-  function draw(): void {
-    pop.replaceChildren(
-      el('p', { class: 'sources-title muted small' }, t('sources.title')),
-      ...SOURCES.map((value) => {
-        const off = value === 'vimeo' && vimeoOn === false;
-        const tile = el(
-          'button',
-          { type: 'button', class: 'sources-tile', role: 'radio', 'aria-checked': String(value === source), 'data-source': value },
-          el('span', { class: 'sources-icon', 'aria-hidden': 'true' }, TILE[value].icon),
-          el('span', { class: 'sources-name' }, t(TILE[value].name)),
-          el('span', { class: 'sources-note muted small' }, off ? t('sources.vimeoOff') : t(TILE[value].note)),
-        );
-        if (off) tile.classList.add('off');
-        tile.addEventListener('click', () => choose(value));
-        return tile;
-      }),
-      ...(door ? [door.tile()] : []),
-    );
-  }
-
-  async function open(): Promise<void> {
-    // The tiles' styles and the TikTok door come with a small chunk on the first open (the room page's budget).
-    if (!door) {
+  /** Opens "What are we watching?"; `opener` gets the focus back on Esc / ✕. */
+  async function open(opener: HTMLElement = button): Promise<void> {
+    if (!picker) {
       const chunk = await loadChunk(() => import('./sources-pop.ts'));
-      door = chunk ? chunk.tiktokDoor({ form, input, button, note, close }) : null;
+      if (!chunk) return;
+      picker ??= chunk.createPicker({
+        form,
+        input,
+        button,
+        source: () => source,
+        vimeoOn: () => vimeoOn,
+        choose,
+        note,
+        actions,
+        shown: (on) => button.setAttribute('aria-expanded', String(on)),
+      });
     }
-    draw();
-    pop.hidden = false;
-    button.setAttribute('aria-expanded', 'true');
-    pop.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
+    picker.open(actions.placement(), opener);
     void checkVimeo();
   }
   function close(focus = false): void {
-    if (pop.hidden) return;
-    pop.hidden = true;
-    button.setAttribute('aria-expanded', 'false');
-    if (focus) button.focus();
+    picker?.close(focus);
   }
 
   function choose(value: Source): void {
@@ -128,27 +120,9 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
       /* private mode: the pick lasts for this page */
     }
     label();
-    close();
-    input.focus();
   }
 
-  button.addEventListener('click', () => (pop.hidden ? void open() : close(true)));
-  pop.addEventListener('keydown', (event) => {
-    const tiles = [...pop.querySelectorAll<HTMLButtonElement>('.sources-tile')];
-    const index = tiles.indexOf(document.activeElement as HTMLButtonElement);
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      close(true);
-    } else if (index >= 0 && ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(event.key)) {
-      event.preventDefault();
-      const step = event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1;
-      tiles[(index + step + tiles.length) % tiles.length]!.focus();
-    }
-  });
-  document.addEventListener('pointerdown', (event) => {
-    if (!pop.hidden && !pop.contains(event.target as Node) && !button.contains(event.target as Node)) close();
-  });
+  button.addEventListener('click', () => (picker?.isOpen() ? close(true) : void open(button)));
 
   /** "Search the web": one new tab with the words; back in the room the box waits for the link. */
   function web(words: string): void {
@@ -158,7 +132,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     awayForWeb = true;
   }
   const back = () => {
-    if (document.hidden || door?.back()) return;
+    if (document.hidden || picker?.back()) return;
     if (!awayForWeb) return;
     awayForWeb = false;
     input.focus();
@@ -175,8 +149,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
   // A language change re-applies the box's default placeholder: put this source's back.
   addEventListener('langchange', () => {
     label();
-    door?.relabel();
-    if (!pop.hidden) draw();
+    picker?.relabel();
   });
 
   debugHooks.register('sources', () => ({
@@ -184,7 +157,18 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
       {
         id: 'sources.state',
         tab: 'status',
-        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last, pasteShown: door?.pasteShown() ?? false }),
+        run: async () => JSON.stringify({ source, vimeoOn: await checkVimeo(), last, pasteShown: picker?.pasteShown() ?? false }),
+      },
+      {
+        id: 'sources.picker',
+        tab: 'status',
+        run: () => JSON.stringify({ source, ...(picker?.state() ?? { open: false }) }),
+      },
+      {
+        id: 'sources.open',
+        tab: 'screen',
+        run: () => open(button),
+        undo: () => close(),
       },
     ],
   }));
@@ -195,6 +179,7 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     },
     web,
     note,
+    open,
     /** The Vimeo search said "off": the tile shows "not available yet" from now on. */
     vimeoOff(): void {
       vimeoOn = false;
@@ -203,3 +188,4 @@ export function createSources(form: HTMLFormElement, input: HTMLInputElement, bu
     relabel: label,
   };
 }
+

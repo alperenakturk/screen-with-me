@@ -396,13 +396,35 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "show · episode" (the server now keeps a client title for film pages and these). CSP `img-src` + `*.mzstatic.com`
   (`media-src` was already open). Privacy policy "Podcasts", help page. Tests: unit `podcasts.test.ts`, e2e
   `podcasts.mjs`, harness `scripts/harness/podcasts/run.cjs` (11, stand-in answers + a generated WAV).
-- **⠿ Sources picker (card SRC1, 0.9.97.136):** a ⠿ button after the link box (`#media-sources`, computer room and
-  the phone's 🔍 Search tab, since `#media-form` moves there) opens three tiles (`ui/sources.ts`, a `role=radiogroup`;
-  their styles are `ui/sources.css`, loaded with the tiny `ui/sources-pop.ts` chunk on the first open for the room
-  CSS budget). The pick is per device (`localStorage` `searchSource`: `youtube` default, `vimeo`, `web`) and sets the
+- **⠿ Sources picker (card SRC1, 0.9.97.136; card SRC2 "What are we watching?", 17 Nov 2026):** a ⠿ button after the
+  link box (`#media-sources`, computer room and the phone's 🔍 Search tab, since `#media-form` moves there) and the
+  empty room's "🔍 Search a video" (`#empty-sources` in step 2 on a computer, `#empty-search` on a phone after the
+  Search tab shows) open one picker, built by the lazy chunk `ui/sources-pop.ts` (`createPicker`; its own `TEXT` pair,
+  checked by `check-game-text.mjs`) with `ui/sources.css`. Design: `docs/internal/design/source-picker.md` option A.
+  - **Layout:** `#sources-pop.srcp` (`role=dialog`): a head (the theme's mascot, "What are we watching?"), a chip row
+    (All · Videos · Shorts · Music · From a link, `aria-pressed`; the chip resets to All on each open; Games only
+    under All), a `role=list` grid of 12 `.sources-tile` buttons (`data-source`: youtube, shorts, videos, tiktok,
+    vimeo, podcasts, ytmusic, dailymotion, link, web, extension, games; our own glyph in an `--accent` ring + the
+    name + one line, never a brand logo), a status line and ✕ last in the Tab order. Arrow keys move in 2-D (columns
+    read from the grid), Esc / ✕ close and give the focus back to whatever opened it; a redraw keeps the focus.
+  - **Placement** (`room.ts` `placement()`): a phone room (`html.ph-room`) → `sheet` (fixed bottom sheet standing on
+    `.ph-tabs`, 3 a row, the name only; sideways 6 a row); a YouTube item, or any item inside the extension's shell →
+    `side` (absolute over `.room > .side`, 3 a row; a hidden side panel is shown first with `#side-toggle`), so nothing
+    of ours covers the YouTube player or a film; else → `video` (over `#theater`, 4 a row, ≤ 118 px tall tiles).
+    The host gets `.srcp-host` (`position: relative`). Tiles shrink with `grid-auto-rows: minmax(…)`; a container
+    query hides the line under the name, then shrinks the badge, so no size scrolls.
+  - **Tiles:** source tiles (YouTube, Vimeo, 🎙 Podcasts, Search the web) set the search source, `aria-pressed` + a ✓
+    on the one in use, close, focus the box with "Type here: the search uses …". Actions: ♾ / ▶ feeds →
+    `openFeed('shorts' | 'videos')` (SH2's window); ♪ TikTok → the SR2 door below; YouTube Music (CR2 is live) and
+    Paste a link → close and focus the box with a paste hint; Any film page → `/extension.html` in a new tab; Games →
+    the phone's Games tab or `pressMoreGame()` (the hall). Dailymotion is **Coming** (DM1): the word on the tile and in
+    its name; a press writes "Dailymotion is coming soon." in the status line and keeps the picker open.
+  The source is per device (`localStorage` `searchSource`: `youtube` default, `vimeo`, `podcasts`, `web`) and sets the
   box's placeholder (`sources.ts` owns it; `#media-input` has no `data-i18n-placeholder`, `langchange` relabels).
   `room.ts` `searchWords` sends typed words where ⠿ points:
   - **YouTube:** today's `search.search` (unchanged).
+  - **🎙 Podcasts (SRC2):** `search.podcasts` → P2's `ui/podcasts.ts` list under the box (the same as its "🎧 Podcasts"
+    button on YouTube results).
   - **Vimeo:** `search.vimeo` → lazy chunk `ui/vimeo-results.ts` (own `TEXT`, checked by `check-game-text.mjs`, the
     YouTube rows' classes) → `POST /api/vimeo/search` (words in the body) → Worker `vimeo.ts`: Origin check,
     `normalizeQuery`, no `VIMEO_TOKEN` → `{error:'off'}`, a day's cache by the words, `SEARCH_LIMIT` for real calls,
@@ -414,7 +436,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   - **Search the web:** `window.open('https://www.google.com/search?q=<words>', '_blank', 'noopener')` (Google, the owner's pick in 0.9.97.137; one engine, no site
     filter or list), the box empties, and the next `visibilitychange` / `focus` back in the room focuses it with the
     "Found a video? Paste its link here." hint. No in-page browser, no scraping.
-  - **♪ TikTok (card SR2):** a fourth tile, not a source (`role` button, no `aria-checked`, the pick
+  - **♪ TikTok (card SR2):** a tile, not a source (no `aria-pressed`, the pick
     stays): TikTok has no search API. It opens `tiktokUrl(words)` (`https://www.tiktok.com/search?q=<words>`, the home
     page with no words or a link in the box) with `window.open(..., '_blank', 'noopener')`; on a phone the TikTok app
     takes the link when installed. Coming back (`visibilitychange` / `focus`) shows `#sources-paste` "📋 Paste and play"
@@ -422,11 +444,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     submit). A tap reads `navigator.clipboard.readText()` (the browser may ask; refused or empty → the box gets focus
     with "Paste the video's link here"), puts the text in the box and `requestSubmit`s with the box's "Play now" button:
     one link plays, several queue after the first. No TikTok logo (a plain ♪), no scraping, no extension.
-  Test Lab `sources.state` (source, Vimeo on, last search or TikTok action, `pasteShown`). Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
+  Test Lab `sources.state` (source, Vimeo on, last search or TikTok action, `pasteShown`), `sources.picker` (open,
+  placement, chip, tiles shown, columns, smallest tile, box, on screen, scrolls, last tile, status line),
+  `sources.open`. Deploy: GitHub secret `VIMEO_TOKEN` (an unauthenticated
   Vimeo app token, scope public) goes up with the other Worker secrets. Tests: `vimeo-search.test.ts`, e2e
   `search.mjs` (Vimeo input checks, `off`, status, no token in an answer), harness `scripts/harness/sources` (CI
   `site`: computer EN + phone TR, stubbed Vimeo → plays, web tab, paste hint, `off` tile, SR2's row tap / ＋ Queue,
-  TikTok tab and Paste and play).
+  TikTok tab and Paste and play; SRC2: the empty room's door, 12 tiles / columns / no scroll, chips, Coming, 2-D
+  arrows + Esc focus return, ▶ Video feed, the Vimeo `video` vs the YouTube `side` placement (never over `#player`),
+  🎮 Games). Shots: `sources`, `sources-youtube`, `sources-music`.
 - **Results rows (card SR2):** every results list under the link box (YouTube `ui/search.ts`, Vimeo
   `ui/vimeo-results.ts`, podcast episodes `ui/podcasts.ts`) builds its rows with `ui/result-row.ts` `resultRow`: the
   row's `.search-main` button plays now (`'load'`, the list closes and the box empties; on a phone the Search tab goes

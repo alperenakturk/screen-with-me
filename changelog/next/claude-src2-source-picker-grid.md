@@ -1,0 +1,3 @@
+- "What are we watching?": ⠿ beside the link box, and "🔍 Search a video" in an empty room, now open a big picker with category chips (All, Videos, Shorts, Music, From a link) and a large tile for every way to bring a video: YouTube, the Shorts and video feeds, TikTok, Vimeo, podcasts, YouTube Music, a pasted link, a web search, any film page with the extension and the games hall.
+- The picker never covers a YouTube video: while one plays it opens in the side panel's place. On a phone it slides up from the bottom.
+- Podcasts can now be the search source: typed words search podcasts directly.
