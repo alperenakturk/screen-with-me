@@ -53,6 +53,42 @@ const look = () => {
   return { text: Math.round(text * 10) / 10, button: Math.round(button), scroll };
 };
 
+/**
+ * GW5 acceptance (owner via the Planner, 17 Nov 2026): every element of the game in its own layout pixels (offsets are
+ * not touched by the window's scale), keyed by its place in the tree. The same keys and the same numbers at every size
+ * = nothing moved, appeared or disappeared; the game only got bigger or smaller.
+ */
+const boxes = () => {
+  const body = document.querySelector('#game-stage .game-stage-body');
+  const out = {};
+  if (!body) return out;
+  const key = (e) => {
+    const parts = [];
+    for (let n = e; n && n !== body; n = n.parentElement) parts.push(`${n.tagName}${[...(n.parentElement?.children ?? [])].indexOf(n)}`);
+    return parts.reverse().join('/');
+  };
+  for (const e of body.querySelectorAll('*')) {
+    if (!(e instanceof HTMLElement) || !e.offsetParent || e.closest('[hidden], .htp, .toast')) continue;
+    // Real layout only: offsets relative to the game's box (an element's own transform, a walking guest, is left out).
+    let x = 0;
+    let y = 0;
+    for (let n = e; n && n !== body && body.contains(n); n = n.offsetParent) {
+      x += n.offsetLeft;
+      y += n.offsetTop;
+    }
+    out[key(e)] = [Math.round(x), Math.round(y), e.offsetHeight];
+  }
+  return out;
+};
+/** Keys whose numbers differ between two reads at one size (a ticking number, a guest coming in): left out. */
+const volatile = (a, b) => new Set(Object.keys({ ...a, ...b }).filter((k) => JSON.stringify(a[k]) !== JSON.stringify(b[k])));
+const sameBoxes = (base, other, skip) => {
+  const missing = Object.keys(base).filter((k) => !skip.has(k) && !(k in other));
+  const extra = Object.keys(other).filter((k) => !skip.has(k) && !(k in base));
+  const moved = Object.keys(base).filter((k) => !skip.has(k) && k in other && base[k].some((v, i) => Math.abs(v - other[k][i]) > 1));
+  return { missing: missing.slice(0, 3), extra: extra.slice(0, 3), moved: moved.slice(0, 3).map((k) => [k, base[k], other[k]]), n: missing.length + extra.length + moved.length };
+};
+
 (async () => {
   const browser = await chromium.launch();
   for (const size of pick('SIZES', Object.keys(SIZES))) {
@@ -79,6 +115,9 @@ const look = () => {
         return b && !b.querySelector('.game-stage-loading, .mt-loading') && b.childElementCount > 0;
       }, null, { timeout: 12000 }).catch(() => {});
       await wait(800);
+      // GW5 acceptance: a side game at its home spot (under Together, maybe a little smaller than its design) shows the
+      // same as at any other size.
+      const home = SOLO.has(game) ? await page.evaluate(boxes) : null;
       if (!SOLO.has(game)) await lab('games.frame', 'frame');
       await page.waitForFunction(() => window.__swmLab.list().some((c) => c.id === 'games.scaleCheck' && c.available === true), null, { timeout: 6000 }).catch(() => {});
       const rows = [];
@@ -111,6 +150,54 @@ const look = () => {
       check(rows.every((r) => r.layout === rows[0].layout), `${size} · ${game}: the same layout at every size (nothing wraps or reflows)`, rows.map((r) => r.layout));
       check(rows.every((r) => r.labels === rows[0].labels), `${size} · ${game}: the head shows the same words at every size`, rows.map((r) => r.labels));
       check(rows[0].box[0] < rows[2].box[0] || rows[0].zoom === rows[2].zoom, `${size} · ${game}: the window grows from its smallest to its largest`, rows.map((r) => r.box));
+      // GW5 acceptance: smallest → largest → middle → smallest again, then a real drag of the corner: the same boxes.
+      const at = async (s) => {
+        await lab('games.scaleCheck', s);
+        await wait(700);
+        return page.evaluate(boxes);
+      };
+      const first = await at('min');
+      await wait(900);
+      const firstAgain = await page.evaluate(boxes);
+      const skip = volatile(first, firstAgain);
+      if (home) {
+        const d = sameBoxes(first, home, skip);
+        check(d.n === 0, `${size} · ${game}: at its home spot the same as at its smallest`, d);
+      }
+      for (const s of ['max', 'mid', 'min']) {
+        const d = sameBoxes(first, await at(s), skip);
+        check(d.n === 0, `${size} · ${game}: smallest → ${s}: nothing moves, appears or disappears`, d);
+      }
+      // (The smallest window may sit against the screen's right edge, where its top-left can't stay and it grow: move it
+      // left by its title first, as a person would.)
+      const title = await page.evaluate(() => {
+        const r = document.querySelector('#game-stage .game-stage-title')?.getBoundingClientRect();
+        const b = document.getElementById('game-stage').getBoundingClientRect();
+        return r ? { x: r.left + 12, y: r.top + r.height / 2, left: b.left } : null;
+      });
+      if (title) {
+        await page.mouse.move(title.x, title.y);
+        await page.mouse.down();
+        await page.mouse.move(title.x - (title.left - 40), title.y, { steps: 10 });
+        await page.mouse.up();
+        await wait(500);
+      }
+      const corner = await page.evaluate(() => {
+        const g = document.querySelector('#game-stage .game-resize')?.getBoundingClientRect();
+        const b = document.getElementById('game-stage').getBoundingClientRect();
+        return g && g.width ? { x: g.x + g.width / 2, y: g.y + g.height / 2, w: b.width, h: b.height } : null;
+      });
+      if (corner) {
+        await page.mouse.move(corner.x, corner.y);
+        await page.mouse.down();
+        await page.mouse.move(corner.x + 90, corner.y + 10, { steps: 8 });
+        await page.mouse.up();
+        await wait(700);
+        const after = await page.evaluate(() => { const b = document.getElementById('game-stage').getBoundingClientRect(); return { w: b.width, h: b.height }; });
+        check(after.w > corner.w + 20 && Math.abs(after.w / after.h - corner.w / corner.h) < 0.02, `${size} · ${game}: dragging the corner sideways grows the window in its own shape`, { before: [corner.w, corner.h], after: [after.w, after.h] });
+        const d = sameBoxes(first, await page.evaluate(boxes), skip);
+        check(d.n === 0, `${size} · ${game}: after a corner drag nothing moves, appears or disappears`, d);
+      }
       // (Text ≥ 13 px and 24 px targets at the smallest size: games-sweep's smallest-window pass.)
       await page.evaluate(() => document.querySelector('#game-stage .game-leave, #game-stage .game-minimize')?.click());
       await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .confirm-dialog .btn.primary')?.click());

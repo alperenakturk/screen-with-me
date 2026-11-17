@@ -1282,7 +1282,10 @@ export function mountSnackBar(root: HTMLElement, roomNow: () => SoloRoom): () =>
     // The window scales the game down when it overflows (stage.ts `refit`, `--fit`), which makes the game's own box
     // taller: count in the window's real pixels, or more rows would bring more scaling, round and round.
     const stage = root.closest<HTMLElement>('#game-stage');
-    const scale = Math.min(1, parseFloat(stage ? getComputedStyle(stage).getPropertyValue('--fit') : '') || 1);
+    // GW5: a free window is the game's design scaled as a whole (stage.ts `frameDesign`): there the rows are counted in
+    // the design's own pixels, so a smaller or bigger window never shows a different number of stands.
+    const designScaled = stage?.dataset.place === 'float' && !stage.classList.contains('in-tab');
+    const scale = designScaled ? 1 : Math.min(1, parseFloat(stage ? getComputedStyle(stage).getPropertyValue('--fit') : '') || 1);
     const height = root.clientHeight * scale;
     const first = rows.find((r) => !r.node.hidden)?.node;
     if (!height || !first) return;
