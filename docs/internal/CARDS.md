@@ -67,6 +67,22 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
 - Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
 
+### FC1. PRIORITY: the feed's country choice really gives that country's videos (owner, 17 Nov 2026; lane A, first)
+- Why: the owner picks Japan in the ♾ Shorts feed and keeps getting Indian videos; "the country options never work,
+  something is wrong in the logic; this is important".
+- Lead (Planner, not verified): the Shorts pool (`youtubePool`, `apps/server/src/youtube.ts`) is a `search.list` with
+  `regionCode` + `relevanceLanguage` = the UI language (`tr` / `en`). On `search.list`, `regionCode` only limits to
+  videos *viewable* in that country, not made there, and the language is never the country's (Japanese for Japan), so
+  globally popular Shorts win. The ▶ video chart uses `videos.list chart=mostPopular` with `regionCode`, which is
+  per-country: check whether it behaves correctly.
+- What: audit every place a country is used (Shorts pool, video chart, 🧭 "Same topic, another country", the
+  steering) and fix the logic so a chosen country yields that country's content: e.g. the country's main language
+  as `relevanceLanguage` (a small country → language map), the chart where the API offers one, and a test that
+  the chosen region reaches the request. Keep quota cost in mind (`EXPECTED_UNITS`) and the shared cache keys.
+- Done when: Japan, Turkey, US, Brazil and Germany each give mostly that country's Shorts and videos (a live
+  spot-check list in the PR); unit tests for the request parameters; Test Lab hook `feed.region`; owner's hand test.
+- Owner's pick: his message to the Planner (17 Nov 2026).
+
 ### DM1. Dailymotion links play in sync without the extension (owner, 17 Nov 2026; lane A, after CR2)
 - Why: Dailymotion is the most visited entertainment site in Turkey (research `docs/internal/research/video-sources.md`).
 - What: a `dailymotion` media kind like Vimeo's (`players/vimeo.ts` as the model): links `dailymotion.com/video/<id>`
