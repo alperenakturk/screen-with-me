@@ -580,7 +580,7 @@ jobs:
         run: mkdir -p .tested && echo "$TREE" > .tested/tree
       - name: Save the tested code's mark
         if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .tested
           key: tested-code-${{ needs.changes.outputs.tree }}
@@ -798,7 +798,7 @@ jobs:
         run: mkdir -p .released && echo "$VERSION $GITHUB_SHA" > .released/version
       - name: Save the released number's record
         if: needs.deploy.outputs.version != ''
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .released
           key: released-${{ needs.deploy.outputs.version }}
