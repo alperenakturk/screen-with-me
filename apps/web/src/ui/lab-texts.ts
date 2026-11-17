@@ -65,6 +65,14 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },
   },
+  'feed.start': {
+    title: { en: 'Feed: open the drawer and start ▶ Popular', tr: 'Akış: çekmeceyi aç ve ▶ Popüler başlat' },
+    help: { en: 'Opens the feed drawer on the right, picks ▶ Videos · 🔥 Popular (or "shorts music" etc. typed after the command) and starts it with the drawer\'s own "▶ Start feed" button, then writes what the drawer showed and whether the host rule locked it into the log.', tr: 'Sağdaki akış çekmecesini açar, ▶ Videolar · 🔥 Popüler seçer (ya da komuttan sonra yazılan "shorts music" gibi) ve çekmecenin kendi "▶ Akışı başlat" düğmesiyle başlatır; çekmecenin ne gösterdiğini ve yönetici kuralının kilitleyip kilitlemediğini kayda yazar.' },
+  },
+  'feed.drawer': {
+    title: { en: 'Feed: the drawer\'s state', tr: 'Akış: çekmecenin durumu' },
+    help: { en: 'Writes the open feed drawer\'s kind, pick, summary line, host lock, running feed and who started it, its box, whether it sits on the right edge and whether anything scrolls into the log.', tr: 'Açık akış çekmecesinin türünü, seçimini, özet satırını, yönetici kilidini, açık akışı ve kimin başlattığını, kutusunu, sağ kenarda durup durmadığını ve bir şeyin kayıp kaymadığını kayda yazar.' },
+  },
   'sources.state': {
     title: { en: 'Search sources: the chosen one and the last search', tr: 'Arama kaynakları: seçili olan ve son arama' },
     help: { en: 'Writes the ⠿ source (YouTube, Vimeo, podcasts or the web), whether Vimeo search is on at the server and the last search into the log.', tr: '⠿ kaynağını (YouTube, Vimeo, podcast ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.', },

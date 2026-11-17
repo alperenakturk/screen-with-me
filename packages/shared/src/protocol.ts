@@ -393,6 +393,8 @@ export interface RoomSettings {
   countdown?: boolean;
   /** R12: "Ask before letting people in": a newcomer waits until the host lets them in (default off). */
   knock?: boolean;
+  /** Card FD1: only the host starts, steers or stops the room's feed (pausing stays open to everyone; default off). */
+  feedHostOnly?: boolean;
 }
 
 /** R12: someone waiting at the door (to the host only). `id` is their connection's member id. */
@@ -476,7 +478,7 @@ export type ClientMessage =
   | { t: 'ready'; ready: boolean; ad?: boolean; primed?: string }
   /** (Sadece oda yöneticisi) oda ayarlarını değiştir. */
   /** Yalnızca gelen alanlar değişir; startsAt: null planı kaldırır. */
-  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; countdown?: boolean; knock?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
+  | { t: 'settings'; waitForAll?: boolean; hostOnly?: boolean; lockQueue?: boolean; autoNext?: boolean; loop?: boolean; saved?: boolean; noReactions?: boolean; liveHostOnly?: boolean; feedHostOnly?: boolean; countdown?: boolean; knock?: boolean; reactionGap?: ReactionGap; name?: string; startsAt?: number | null }
   /** Sıradaki bir videoya oy ver (up) ya da oyunu geri al. */
   | { t: 'vote'; id: string; up: boolean }
   | { t: 'ping'; c: number }
@@ -589,6 +591,8 @@ export type ErrorCode =
   /** Yayını sadece yönetici açabilir (`settings.liveHostOnly`) / yönetici yayınını durdurdu. */
   | 'live_host'
   | 'live_stopped'
+  /** Card FD1: only the host starts, steers or stops this room's feed (`settings.feedHostOnly`). */
+  | 'feed_host'
   /** Odada başka biri oyun açmış (önce o bitmeli; açan ya da yönetici değiştirebilir). */
   | 'game_busy'
   /** The room already has `MAX_TABLES` tables. */
@@ -690,7 +694,7 @@ export type ServerMessage =
   /** Card CH1: an older page of the chat (oldest first); `more`: the page before it, if any. */
   | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number }
   /** Card SH2: the room's feed changed (null: it stopped). */
-  | { t: 'feed'; feed: FeedInfo | null }
+  | { t: 'feed'; feed: FeedInfo | null; stopper?: string }
   /** Card SH2: the ids the room has played (only to the one who asked), oldest first. */
   | { t: 'feed-played'; ids: string[] };
 
@@ -1050,7 +1054,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return { t: 'ready', ready: m.ready, ...(typeof m.ad === 'boolean' ? { ad: m.ad } : {}), ...(isItemId(m.primed) ? { primed: m.primed } : {}) };
     case 'settings': {
       const out: Extract<ClientMessage, { t: 'settings' }> = { t: 'settings' };
-      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'countdown', 'knock'] as const) {
+      for (const key of ['waitForAll', 'hostOnly', 'lockQueue', 'autoNext', 'loop', 'saved', 'noReactions', 'liveHostOnly', 'feedHostOnly', 'countdown', 'knock'] as const) {
         if (typeof m[key] === 'boolean') out[key] = m[key] as boolean;
       }
       if ((REACTION_GAPS as readonly unknown[]).includes(m.reactionGap)) out.reactionGap = m.reactionGap as ReactionGap;

@@ -1,16 +1,57 @@
-/* Card SH2: the ♾ / ▶ feed window (lazy, with feed-window.ts). One card that fits the screen: the running feed on top,
-   four steering rows, then the starters. A phone gets a full-width sheet with 44 px targets. */
-.feed-window {
-  width: min(460px, 100%);
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
+/* Card FD1: the ♾ / ▶ feed drawer (lazy, with feed-window.ts). On the right edge below the top bar, no backdrop: the
+   video stays visible. An upright phone gets a half sheet (the top ~40 % keeps the video). Nothing scrolls at 1366 × 768
+   or on an iPhone 13: on short screens the tiles drop their second line. */
+.feed-drawer {
+  position: fixed;
+  z-index: 70;
+  top: 64px;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 100vw);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
+  padding: 12px 14px;
+  background: var(--surface);
+  color: var(--text);
+  border-left: 1px solid var(--border);
+  box-shadow: -18px 0 40px rgb(0 0 0 / 0.4);
+  overflow: hidden;
+  animation: feed-in 0.18s ease-out;
+}
+
+@keyframes feed-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-drawer {
+    animation: none;
+  }
+}
+
+.feed-body,
+.feed-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.feed-body {
+  flex: 1;
+}
+
+/* Nothing squeezes into its neighbour: what does not fit is cut at the bottom (the checks catch it). */
+.feed-body > *,
+.feed-picker > * {
+  flex-shrink: 0;
 }
 
 .feed-window p,
+.feed-window h3,
 .feed-window h4 {
   margin: 0;
 }
@@ -18,104 +59,81 @@
 .feed-head-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 
-.feed-tabs {
+.feed-title {
   flex: 1;
+  font-size: 18px;
+}
+
+.feed-sub {
   display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.feed-step {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.feed-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
 }
 
-.feed-tab {
-  flex: 1;
-  min-height: 36px;
+.feed-tab,
+.feed-pool {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  min-height: 44px;
   padding: 6px 10px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-2);
   color: var(--text);
   font: inherit;
-  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
   cursor: pointer;
 }
 
-.feed-tab[aria-checked='true'] {
-  border-color: var(--accent);
+.feed-tab[aria-checked='true'],
+.feed-pool[aria-checked='true'] {
+  border: 2px solid var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface-2));
 }
 
-.feed-now {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-  font-size: 14px;
-  font-weight: 600;
+.feed-pool[aria-checked='true'] b::after {
+  content: ' ✓';
 }
 
-.feed-now span {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@media (hover: hover) {
+  .feed-pool:hover,
+  .feed-tab:hover {
+    border-color: var(--accent);
+  }
 }
 
-.feed-tiktok {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-
-.feed-sub {
-  font-size: 14px;
-  font-weight: 700;
-  margin-top: 8px;
-}
-
-.feed-more > summary {
-  cursor: pointer;
-}
-
-.feed-more[open] {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.feed-row-line {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-bottom: 4px;
-}
-
-.feed-row-main {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
-.feed-act {
-  text-align: left;
-}
-
-.feed-words {
-  display: flex;
-  flex: 1;
-  min-width: 160px;
-  gap: 6px;
-}
-
-.feed-words input {
-  flex: 1;
-  min-width: 0;
+.feed-tile-line {
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--muted);
 }
 
 .feed-pools {
@@ -125,67 +143,187 @@
 }
 
 .feed-pool {
-  flex: 1 1 auto;
-  min-height: 32px;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: 99px;
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  white-space: nowrap;
-  cursor: pointer;
+  padding: 5px 8px;
 }
 
-.feed-pool:hover,
-.feed-tab:hover {
-  border-color: var(--accent);
-}
-
-.feed-region {
-  max-width: 100%;
-  padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-}
-
-.feed-start-form {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.feed-start-form .feed-topic-row {
+.feed-topic-row {
   display: flex;
   gap: 6px;
 }
 
-.feed-start-form input {
+.feed-topic-row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+}
+
+.feed-own-hint:empty {
+  display: none;
+}
+
+.feed-country-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.feed-region {
+  max-width: 60%;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.feed-summary {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.feed-start {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.feed-start[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.feed-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.feed-now span {
+  flex: 1 1 100%;
+}
+
+.feed-steer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.feed-steer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.feed-row-line {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.feed-row-line:nth-child(n + 3) {
+  grid-column: 1 / -1;
+}
+
+.feed-act {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline: 10px;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.feed-words {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+
+.feed-words input {
   flex: 1;
   min-width: 0;
 }
 
-html.phone .feed-backdrop {
-  place-items: end stretch;
-  padding: 0;
+.feed-tiktok {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-2);
 }
 
-html.phone .feed-window {
-  width: 100%;
-  max-height: 92dvh;
+.feed-window .yt-attrib {
+  margin-top: auto;
+  padding-top: 6px;
+}
+
+/* Short screens: the tiles' second line goes first. */
+@media (max-height: 820px) {
+  .feed-pool .feed-tile-line {
+    display: none;
+  }
+
+  .feed-pool {
+    min-height: 40px;
+  }
+}
+
+@media (max-height: 680px) {
+  .feed-tab .feed-tile-line {
+    display: none;
+  }
+}
+
+/* Upright phones: a half sheet over the bottom; the top keeps the video. 44 px targets. */
+html.phone:not(.sideways) .feed-drawer {
+  top: auto;
+  left: 0;
+  width: auto;
+  max-height: 72dvh;
+  padding: 8px 12px 8px;
+  border-left: 0;
+  border-top: 1px solid var(--border);
   border-radius: 18px 18px 0 0;
-  gap: 12px;
+  box-shadow: 0 -18px 40px rgb(0 0 0 / 0.4);
+  animation-name: feed-up;
+}
+
+@keyframes feed-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
 }
 
 html.phone .feed-window :is(.btn, .feed-pool, .feed-tab, select, input) {
   min-height: 44px;
 }
 
-html.phone .feed-pools {
-  gap: 8px;
+html.phone:not(.sideways) .feed-pool .feed-tile-line,
+html.phone:not(.sideways) .feed-tab .feed-tile-line {
+  display: none;
+}
+
+html.phone:not(.sideways) .feed-window .yt-attrib {
+  padding-top: 2px;
+  font-size: 11px;
+}
+
+html.phone:not(.sideways) :is(.feed-body, .feed-picker) {
+  gap: 6px;
+}
+
+html.phone:not(.sideways) .feed-sub {
+  font-size: 12px;
 }

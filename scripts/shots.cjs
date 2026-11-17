@@ -56,6 +56,7 @@ const startFeed = async (p) => {
   else await p.click('.tab[data-tab="queue"]');
   await p.click('#feed-open-videos');
   await p.click('#feed-pools .feed-pool[data-pool="music"]');
+  await p.click('#feed-start');
   await p.waitForSelector('#feed-row-steer');
   await wait(1500);
 };
@@ -147,8 +148,19 @@ const SCREENS = {
       await p.keyboard.press('Escape');
     },
   },
+  'feed-drawer': {
+    what: 'Card FD1: the feed drawer on the right (a half sheet on a phone) before starting: 1 What to watch, 2 Where they come from (🎵 Music picked, ✓), 3 Country, the "Will play" line and ▶ Start feed; no backdrop, the room stays visible',
+    room: true,
+    after: async (p) => {
+      if (await p.isVisible('#ph-tab-search')) await p.click('#ph-tab-search');
+      else await p.click('.tab[data-tab="queue"]');
+      await p.click('#feed-open-shorts');
+      await p.click('#feed-pools .feed-pool[data-pool="music"]');
+      await wait(400);
+    },
+  },
   'feed-window': {
-    what: 'The ▶ / ♾ feed window over the room while a feed runs: Pause / Stop, four ways to steer (each with its line), then the starters',
+    what: 'Card FD1: the feed drawer while a feed runs: who started it, ⏸ / ✕ for everyone, four ways to steer (described in tooltips), then the picker ("▶ Start this feed instead"; folded on a phone); the feed pill above the video',
     room: true,
     after: async (p) => {
       await startFeed(p);
@@ -225,6 +237,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/public\/extension|^apps\/extension\//, ['extension']],
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
   [/^apps\/web\/src\/ui\/end-card/, ['end-card']],
+  [/^apps\/web\/src\/ui\/(feed-window|feed-row|shorts-feed)/, ['feed-drawer', 'feed-window', 'feed-queue']],
   [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'sources-youtube', 'sources-music', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],

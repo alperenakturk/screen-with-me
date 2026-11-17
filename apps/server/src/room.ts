@@ -671,6 +671,10 @@ export class Room extends DurableObject<Env> {
         // Card SH2: a feed fills the queue, so a locked queue locks it too.
         if (this.settings.lockQueue && !this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
         const next = message.feed;
+        // Card FD1: "Only the host can start a feed" covers starting, steering and stopping; pausing or resuming the
+        // same feed stays open to everyone (ordinary playback).
+        const onlyPause = next !== null && this.feed !== null && sameFeed(this.feed, next);
+        if (this.settings.feedHostOnly && !this.isHost(ws) && !onlyPause) return this.sendTo(ws, { t: 'error', code: 'feed_host' });
         if (next === null) this.feed = null;
         else {
           // Same feed paused / resumed: the runner stays. Otherwise whoever starts or steers it runs it.
@@ -683,7 +687,8 @@ export class Room extends DurableObject<Env> {
         }
         if (this.feed) await this.ctx.storage.put('feed', this.feed);
         else await this.ctx.storage.delete('feed');
-        this.broadcast({ t: 'feed', feed: this.feed });
+        // Card FD1: a stop says who stopped it (member id), so everyone reads "Robin stopped Sam's feed".
+        this.broadcast(this.feed ? { t: 'feed', feed: this.feed } : { t: 'feed', feed: null, stopper: me.id });
         return;
       }
       case 'feed-played':
@@ -961,6 +966,7 @@ export class Room extends DurableObject<Env> {
         if (message.saved !== undefined) next.saved = message.saved;
         if (message.noReactions !== undefined) next.noReactions = message.noReactions;
         if (message.liveHostOnly !== undefined) next.liveHostOnly = message.liveHostOnly;
+        if (message.feedHostOnly !== undefined) next.feedHostOnly = message.feedHostOnly;
         if (message.countdown !== undefined) next.countdown = message.countdown;
         if (message.knock !== undefined) {
           next.knock = message.knock;

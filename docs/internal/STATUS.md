@@ -15,8 +15,10 @@ One handoff per lane or role; each session updates only its own lines and delete
     `v0.9.97.113` (8ce4385) still missing (a tag push from a session was refused: owner's Releases page or a session
     allowed to push tags).
   - [ ] Lane A (session 17 Nov, card group SRC2 → FD1 → RC1, all owner's pick A):
-    - [ ] SRC2 big source picker: branch `claude/src2-source-picker-grid`, PR open → merge, deploy, live e2e, Done.
-    - [ ] FD1 feed start drawer (+ host rule on the server, optional field, e2e).
+    - [x] SRC2 big source picker: #527 merged; deploy / live e2e / tag to check.
+    - [ ] FD1a feed drawer + pill + host rule (`claude/fd1-feed-drawer`, PR open).
+    - [ ] FD1b the Shorts view tidy (rail groups with labels, "12 left", toasts under the Short, phone bar, the pill
+      in the Shorts view): not built yet; a fresh session.
     - [ ] RC1 session recap.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
