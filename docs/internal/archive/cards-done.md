@@ -2955,5 +2955,5 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done when: games-sweep `tabup` Classics (xox, chess, backgammon) pass and run in CI; Test Lab hook `games.open.classics`
   opens the table; owner's hand test on an upright tablet.
 - Owner's pick: the Planner's approval (17 Nov 2026).
-- Done: PR (`claude/bg1-backgammon-upright`, Game Studio, 17 Nov 2026): backgammon's board 46 % of a short, wide box,
+- Done: #549 (`claude/bg1-backgammon-upright`, Game Studio, 17 Nov 2026): backgammon's board 46 % of a short, wide box,
   "0 watching" hidden there (`classics.css`); games-sweep hero check exception; CI tabup row adds xox, chess, backgammon.

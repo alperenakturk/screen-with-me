@@ -32,16 +32,10 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (17 Nov e): GMP2 live (v0.9.97.163). [ ] GW5 #537 → merge → live → Done. Then LH2. Owner pick
-  pending: Five Frames' home over Together's buttons at 1366.
-
-## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
-One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
-Every item's original wording, the older per-release blocks and the ones already ticked are in
-`archive/status-history.md` "Owner's hand tests" (search the ID in brackets). New releases add their lines at the end
-of "C. Recent releases" with an ID; the Planner folds them into the board Artifact.
-
-**A. One sitting with a friend** (a friend in Chrome on another computer, or your phone as the second person) [BH10]
+- [ ] Game Studio (17 Nov f, handoff; session ends): GMP2 #538, GW5 #537, LH2 #546, LH3 #547, XO1 #548 live
+  (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the
+  owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
+  remote; safe to delete). Notes: games-sweep size `tabup` (upright tablet); `stage.ts` grows an overflowing own box.
 - [ ] 1. YouTube together: join by the invite link; play, pause, seek, speed and ← / → from both sides stay in step.
 - [ ] 2. Fullscreen on YouTube: the rail comes at the right edge and goes; Enter opens the message box; the friend's
   messages come in on the right, never over YouTube's bar.
