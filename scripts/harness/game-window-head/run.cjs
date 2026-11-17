@@ -468,6 +468,8 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.goto(`${SITE}/r/gi${Math.random().toString(36).slice(2, 8)}?debug=1#back`);
     const introShown = await until(() => page.evaluate(() => !!document.querySelector('.player-wrap .swm-intro') && !!window.__swmLab), 10000);
     check(!!introShown, 'intro: a fresh room shows its intro over the video');
+    // The games' lab commands come with a lazy chunk (late on a slow runner): wait for the command, then run it.
+    await page.waitForFunction(() => window.__swmLab?.list?.().some((c) => c.id === 'games.open.sea'), null, { timeout: 15000 }).catch(() => {});
     await page.evaluate(() => window.__swmLab.run('games.open.sea'));
     await until(() => page.evaluate(() => document.getElementById('game-stage').dataset.place === 'stage' && !!document.querySelector('#game-stage .htp-open')), 8000);
     check(!(await page.evaluate(() => !!document.querySelector('.player-wrap .swm-intro'))), 'intro: opening a game ends it');
