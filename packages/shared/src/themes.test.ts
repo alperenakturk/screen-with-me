@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_THEME, REMOVED_THEMES, THEME_IDS, resolveTheme } from './themes.ts';
+import { DEFAULT_THEME, FALLBACK_THEME, REMOVED_THEMES, THEME_IDS, resolveTheme } from './themes.ts';
 
 describe('themes', () => {
   it('offers ten themes, Matinee in and Ocean Liner out (card NP1)', () => {
@@ -12,11 +12,16 @@ describe('themes', () => {
     for (const id of THEME_IDS) expect(resolveTheme(id)).toBe(id);
   });
 
-  it('falls back to Night for a removed or unknown theme', () => {
-    for (const id of REMOVED_THEMES) expect(resolveTheme(id)).toBe(DEFAULT_THEME);
-    expect(resolveTheme(null)).toBe('gece');
-    expect(resolveTheme(undefined)).toBe('gece');
-    expect(resolveTheme('')).toBe('gece');
+  it('gives a new visitor Drive-In (card UI4)', () => {
+    expect(DEFAULT_THEME).toBe('acikhava');
+    expect(resolveTheme(null)).toBe('acikhava');
+    expect(resolveTheme(undefined)).toBe('acikhava');
+    expect(resolveTheme('')).toBe('acikhava');
+  });
+
+  it('falls back to Night for a removed or unknown saved theme', () => {
+    for (const id of REMOVED_THEMES) expect(resolveTheme(id)).toBe(FALLBACK_THEME);
+    expect(FALLBACK_THEME).toBe('gece');
     expect(resolveTheme(42)).toBe('gece');
     expect(resolveTheme('GECE')).toBe('gece');
   });

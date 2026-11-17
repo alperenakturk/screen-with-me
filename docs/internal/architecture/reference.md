@@ -281,13 +281,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (＋ Add search results, the player-error card, the whole `ph-shorts` phone layout) and the tidy: the rail has three
   `.rail-head` headings (Talk · Watch · Room: 💬 😀 🎙 📷 · ＋ ♾ 🔁 · 🎮 ↩ ⋯) and, from 1200 px wide, a 132 px column of
   40 px buttons with names beside the icons (🎙 / 📷 names come from `data-label`, set in `voice.ts`); `#shorts-left`
-  reads "12 left" (`shorts.leftShort`, the full sentence in its title). The feed pill `#feed-pill` moves into `.stage`
-  above the Short while the view shows (`placeFeedPill`; the pill itself is `ui/feed-row.ts` `renderPill`; grid row 1, column 2; the Short gives up `--pill-h`), never
-  on the player; back in the room view it returns to the bar above the video. A `flashHint` from the rail / ▲▼ /
+  reads "12 left" (`shorts.leftShort`, the full sentence in its title). **UI4:** the FD1b feed pill (`#feed-pill`,
+  `placeFeedPill`, `ui/feed-row.ts` `renderPill`, `--pill-h`) is gone: the feed shows only in the Queue's row and the
+  feed drawer (Test Lab `ui.feedPill` reports none; `shorts.tidy` writes `pill: false`). A `flashHint` from the rail / ▲▼ /
   phone bar (`hint.ts` `shortsSpot`) sits under the Short when there is room, else at the Short's foot on its left,
   and over the bar on a phone: never on the rail, the chat panel or the player. The phone bar: 💬 Chat · 😀 React ·
   ♾ Feed `#ph-shorts-feed` (presses `#shorts-feed`, mirrors its `aria-pressed` as `.on`) · ▲ "N left" ▼ · ⋯ More, with
-  `.ph-cap` captions in `.ph-cell` columns (only "N left" when sideways); the pill is a slim row above the Short
+  `.ph-cap` captions in `.ph-cell` columns (only "N left" when sideways)
   (hidden on a phone held sideways, where ♾ shows the feed). Test Lab `shorts.tidy` (heads, named buttons, left,
   pill place, overlaps, the note's place, the phone captions) and `shorts.note` (a sample feed note); harness
   `scripts/harness/shorts-tidy/run.cjs` (`site` job); shots screen `shorts-feed`.
@@ -308,9 +308,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   buttons inside its windows (`.shorts-feed-pop *`, `.react-tray *`, `.game-menu *`); a window is capped to the screen
   and scrolls inside; `fitRailPops` also runs when results arrive (`childList`); ＋ Add = box + button on one row, with
   a title + ✕ as a phone sheet; the player's "can't be played here" note is a card in the empty bottom left.) The video is `100dvh − 103px` (cap
-  1100). Under 900 px tall the top bar folds (`position: fixed`, off screen) and the video is `100dvh − 40px`: ⋯
-  `#shorts-more` or the mouse at the very top edge adds `html.topbar-peek`; an outside click / Esc / leaving the view
-  folds it again. Under 760 px tall the rail is slimmer (40 px). ≤ 860 px (narrow windows) keep the bottom
+  1100). Under 900 px tall the top bar folds (`position: fixed`, off screen) and the video is `100dvh − 40px`: the
+  mouse at the very top edge adds `html.topbar-peek`; an outside click / Esc / leaving the view folds it again. **UI4
+  (owner: "Other does nothing"):** the rail's ⋯ More `#shorts-more` shows at every computer size and opens the room's
+  More menu beside the rail (`createRoomMoreMenu(…, 'beside')`: right of the rail, else left; bottom at the button's,
+  inside the window) with 🔗 Invite first and ⚙️ Settings last around `roomMoreItems`; Test Lab `shorts.more` presses
+  it (the phone's `#ph-shorts-more` on a phone) and writes the rows; `scripts/harness/shorts-tidy` checks it. Under 760 px tall the rail is slimmer (40 px). ≤ 860 px (narrow windows) keep the bottom
   bar; phones have their own slim bar (0.9.92.4, "Phone room as an app screen"). `besideShorts` measures from the rail's right edge. Probe sizes: 1366×768 → 410×728 (was 314×558). Test: `scripts/harness/shorts-rail/run.cjs` (22 checks).
   **0.9.91 endless Shorts feed (`ui/shorts-feed.ts`):** "♾ Shorts akışı" in the Shorts bar (topic box) or "📱 Shorts
   akışı" on a search's results starts it; when fewer than 3 are queued (and nothing but Shorts is playing) it asks
@@ -348,9 +351,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   shows "{kind}: {label} · by {name}" with ⏸ / ✕ (tooltip "for everyone"), then four steers whose lines are tooltips +
   `aria-describedby` (📺 more from this channel = `chanOf`, ✨ more like this one = `like`, 🌍 same, other country, 🔤
   new topic), then the picker ("▶ Start this feed instead"; folded behind "Start a different feed ▾" on an upright
-  phone or under 700 px tall). Esc / ✕ close with no change, focus back to the opener. **Pill:** `#feed-pill` in the
-  `.now-playing` bar (our frame, never over the player): "▶ Feed: 🎵 Music · 12 left · by Sam" (opens the drawer) +
-  ⏸ / ✕ (`ui/feed-row.ts`, `left` = queued `feed` items). **Host rule:** `RoomSettings.feedHostOnly` (Room rules
+  phone or under 700 px tall). Esc / ✕ close with no change, focus back to the opener. **No pill (UI4):** FD1's
+  `#feed-pill` above the video is removed; the Queue's feed row (`ui/feed-row.ts`) has ⏸ / 🧭 / ✕. **Host rule:** `RoomSettings.feedHostOnly` (Room rules
   switch `#opt-feedhost`, optional field, no `PROTOCOL_VERSION` bump): the server refuses start, steer and stop from a
   non-host with `feed_host`; pausing / resuming the same feed (`sameFeed`) stays open; guests see no ✕ and the
   drawer's button `aria-disabled` with "🔒 Only the host can start a feed in this room". A stop broadcasts
@@ -439,12 +441,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     (All · Videos · Shorts · Music · From a link, `aria-pressed`; the chip resets to All on each open; Games only
     under All), a `role=list` grid of 12 `.sources-tile` buttons (`data-source`: youtube, shorts, videos, tiktok,
     vimeo, podcasts, ytmusic, dailymotion, link, web, extension, games; our own glyph in an `--accent` ring + the
-    name + one line, never a brand logo), a status line and ✕ last in the Tab order. Arrow keys move in 2-D (columns
+    name + one line, never a brand logo), one dashed row `.srcp-subs` "🎬 Subscription services · Coming" (UI4: no
+    service named; a press writes how it will work in the status line), a status line and ✕ last in the Tab order.
+    UI4: the block is centred in its place (`justify-content: center`, head and rows ≤ 900 px wide; `sources.picker`
+    writes `balance` top / bottom) on an opaque `--surface` over `--bg`. Brand marks (UI4 check): YouTube / YouTube
+    Music need YouTube's brand-use approval and its minimum sizes, TikTok needs prior written permission, Vimeo allows
+    descriptive use under its API Addendum and media kit, Dailymotion publishes no rules: every tile keeps our glyph. Arrow keys move in 2-D (columns
     read from the grid), Esc / ✕ close and give the focus back to whatever opened it; a redraw keeps the focus.
   - **Placement** (`room.ts` `placement()`): a phone room (`html.ph-room`) → `sheet` (fixed bottom sheet standing on
     `.ph-tabs`, 3 a row, the name only; sideways 6 a row); a YouTube item, or any item inside the extension's shell →
     `side` (absolute over `.room > .side`, 3 a row; a hidden side panel is shown first with `#side-toggle`), so nothing
-    of ours covers the YouTube player or a film; else → `video` (over `#theater`, 4 a row, ≤ 118 px tall tiles).
+    of ours covers the YouTube player or a film; else → `video` (over `#theater`, 4 a row, ≤ 128 px tall tiles).
     The host gets `.srcp-host` (`position: relative`). Tiles shrink with `grid-auto-rows: minmax(…)`; a container
     query hides the line under the name, then shrinks the badge, so no size scrolls.
   - **Tiles:** source tiles (YouTube, Vimeo, 🎙 Podcasts, Search the web) set the search source, `aria-pressed` + a ✓
@@ -2277,8 +2284,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   and chat bubble); Night (`gece`, or no theme) keeps the brand gold; its soft text is `--hm-soft` (from `--text` and
   `--muted`); the home's thin edges and fills are `--text` mixed with transparent (not fixed white), so they show on a
   light theme too. **Themes (card NP1, owner's 2B):** ids in `@swm/shared/themes` (`THEME_IDS`, ten: gece, matinee,
-  okyanus, gunbatimi, neon, lokum, binbirgece, sinema, acikhava, tren; `resolveTheme` turns a removed one
-  (`REMOVED_THEMES`: uzay, siber, opera, gemi) or anything unknown into Night; unit test `themes.test.ts`); swatches
+  okyanus, gunbatimi, neon, lokum, binbirgece, sinema, acikhava, tren; `resolveTheme` gives nothing saved the
+  default, Drive-In (`DEFAULT_THEME = 'acikhava'`, card UI4; a phone shows Night for it as for any scene theme), and
+  turns a removed one (`REMOVED_THEMES`: uzay, siber, opera, gemi) or anything unknown into Night (`FALLBACK_THEME`);
+  a saved choice is never overwritten; Test Lab `theme.default`, home harness checks; unit test `themes.test.ts`); swatches
   and pictures in `themes.ts`. **Matinee** (`matinee`, Design's `docs/internal/design/themes-2/ready/themes.css`) is the
   only light theme (`color-scheme: light`, its own `--field-border` / `--danger` / `--ok` / `--warn`). **MATINEE2** (owner:
   "too bright", "the black video's place is a harsh jump"; Design's `themes-2/matinee2/`): calmer paper (no near-white
@@ -2659,7 +2668,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (Test Lab commands `settings.<section>`, `games.open.<kind>`; the lab's 🐞 is hidden before the shot); a video file
   from `--video` (default the film server's `http://localhost:5300/video.webm`). Run it against the built site on the
   local server with the lab flag. QA2 additions:
-  - `--themes gece,matinee,sinema` sets theme ids (Night is the default; any other theme is added to the file name).
+  - `--themes gece,matinee,sinema` sets theme ids (Night is the shots' default; any other theme is added to the file
+    name).
   - The sizes `tablet-land` (1180×820) and `phone-land` (iPhone 13 sideways) exist but are not in the default set.
   - New screens: `invite`, `games-hall` and `lab-drawer`.
   - A game screen opens over a playing video file.

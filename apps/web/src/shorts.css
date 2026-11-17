@@ -1,7 +1,7 @@
 /* Card FD1b: the Shorts view's own styles, a lazy stylesheet loaded with the view (room.ts `loadShortsCss`; the room
    switches to the Shorts view only once it is in). The room's CSS budget is full, so the Shorts-only blocks that were
    not needed before the first Short moved here from room.css, and the view's tidy (rail groups with labels, "12 left",
-   the feed pill above the Short, the phone bar's captions and ♾ Feed) is written here. */
+   the phone bar's captions and ♾ Feed) is written here. UI4: no feed pill above the Short any more. */
 
 /* ==== 0.9.91.12: Shorts search in the Shorts bar's "＋ Ekle" box (ui/shorts-search.ts) ==== */
 .shorts-add-pop {
@@ -426,29 +426,6 @@ html.sideways.ph-shorts .ph-toast {
     font-size: 11px;
     white-space: nowrap;
   }
-
-  /* The feed pill above the Short (in our frame, never on the player); the Short gives up that height. */
-  .room.shorts .stage > .feed-pill:not([hidden]) {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: center;
-    max-width: 100%;
-    margin-bottom: 6px;
-  }
-
-  .room.shorts:has(.stage > .feed-pill:not([hidden])) {
-    --pill-h: 46px;
-  }
-
-  .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
-    height: clamp(320px, calc(100dvh - 103px - var(--pill-h, 0px)), 1100px);
-  }
-}
-
-@media (min-width: 861px) and (max-height: 899px) {
-  .room.shorts .theater:not(:fullscreen, .fake-fs) .player-wrap {
-    height: clamp(320px, calc(100dvh - 40px - var(--pill-h, 0px)), 1100px);
-  }
 }
 
 /* Card FD1b fix: the group headings made the rail taller, and on screens up to 860 px tall (a 1024 × 768 tablet held
@@ -525,54 +502,7 @@ html.sideways.ph-shorts .ph-toast {
   }
 }
 
-/* A narrow window (the bottom bar): the pill above the Short, the whole width. */
-@media (max-width: 860px) {
-  html:not(.ph-shorts) .room.shorts .stage > .feed-pill:not([hidden]) {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    justify-self: center;
-  }
-
-  html:not(.ph-shorts) .room.shorts:has(.stage > .feed-pill:not([hidden])) .theater:not(:fullscreen, .fake-fs) .player-wrap {
-    height: clamp(300px, calc(100dvh - 376px), calc((100vw - 32px) * 16 / 9));
-  }
-}
-
-.room.shorts .stage > .feed-pill:not([hidden]) {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-.room.shorts .feed-pill-text {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* The phone: the pill is a slim row above the Short; the bar gets captions under 💬 😀 ♾ ⋯ and "12 left" under ▲. */
-html.ph-shorts .room.shorts .stage > .feed-pill:not([hidden]) {
-  display: flex !important;
-  flex: 0 0 auto;
-  justify-content: center;
-  padding: 6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left));
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
-
-html.sideways.ph-shorts .room.shorts .stage > .feed-pill {
-  display: none !important;
-}
-
-html.ph-shorts .room.shorts .theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
-  width: min(100%, calc((100dvh - 74px - var(--pill-h, 0px) - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 9 / 16));
-}
-
-html.ph-shorts:not(.sideways) .room.shorts:has(.stage > .feed-pill:not([hidden])) {
-  --pill-h: 49px;
-}
+/* The phone: the bar gets captions under 💬 😀 ♾ ⋯ and "12 left" under ▲. */
 
 .ph-cell {
   flex: 0 0 auto;
