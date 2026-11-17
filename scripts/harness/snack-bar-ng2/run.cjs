@@ -45,9 +45,16 @@ async function person(ctx, room, extra = {}) {
 }
 const openSnack = (page) =>
   page.evaluate(async () => {
-    document.getElementById('game-btn').click();
-    await new Promise((r) => setTimeout(r, 150));
-    document.querySelector('#game-menu [data-solo="snack"]')?.click();
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    // The games menu fills a moment after 🎮 (later on a slow CI phone): wait for Snack Bar's entry, not a fixed delay;
+    // press 🎮 again if the menu never opened.
+    let item = null;
+    for (let i = 0; i < 80 && !item; i++) {
+      if (i % 20 === 0) document.getElementById('game-btn').click();
+      await sleep(100);
+      item = document.querySelector('#game-menu [data-solo="snack"]');
+    }
+    item?.click();
     for (let i = 0; i < 50 && !document.querySelector('#game-stage .sb'); i++) await new Promise((r) => setTimeout(r, 100));
     return !!document.querySelector('#game-stage .sb');
   });
