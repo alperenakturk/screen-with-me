@@ -2780,6 +2780,6 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   `games.seats` (fills seats with bots).
 - Tests: a games e2e with 4 `GameSocket` players in each; live e2e green; a hand test for the owner (3+ people).
 - Owner's pick: his message to the Planner (17 Nov 2026).
-- Done: #PR (`claude/gmp2-six-seats`, Game Studio, 17 Nov 2026): the server seated six since GMP b (#483), only
+- Done: #538 (`claude/gmp2-six-seats`, Game Studio, 17 Nov 2026): the server seated six since GMP b (#483), only
   the hall's `GAME_CATALOG` (`max: 2`) and the two descriptions said 2. Test Lab `games.seats` (three 🤖 friends),
   harness `lab-table-friend` (hall label, four players at each); e2e `sea-many` / `duel-many` (3 and 6) unchanged.
