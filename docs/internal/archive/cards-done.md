@@ -2756,3 +2756,16 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Owner's pick: his message (Planner chat, 17 Nov 2026): "tam ekran olan şeyler sadece videolar".
 - Done: #525 (`claude/gw3-video-place`, Game Studio, 17 Nov 2026; check `scripts/check-games-fullscreen.mjs`, harness
   `games-shorts`, Test Lab `games.frame`); owner's hand test sent to the Planner.
+
+### SRC2. "What are we watching?" source picker: big grid (owner, 17 Nov 2026; lane A, first)
+- Why: the ⠿ popover (SRC1) is small and menu-like; the owner wants big tiles with category chips.
+- What: option A of `docs/internal/design/source-picker.md` (sketches `source-picker/a-computer.svg`,
+  `a-phone.svg`): the 12 tiles and chips in that note, source vs action tiles, Coming tiles that explain; in the
+  video's place on a computer, in the side panel's place while a YouTube video shows (nothing over the YouTube
+  player), a bottom sheet on a phone; opened by ⠿ and the empty room's "🔍 Search a video"; no brand logos; arrow keys,
+  Esc, focus return; no scroll inside the view.
+- Done when: it replaces SRC1's popover on computer + phone; Test Lab hook `sources.picker`; harness in the `site`
+  job (open, filter, pick a source, run an action, Esc); shots at 4 sizes; owner's hand test.
+- Owner's pick: A "Big grid" (picks page, 17 Nov 2026).
+- Done: #527 (`claude/src2-source-picker-grid`, lane A, 17 Nov 2026; live in v0.9.97.160; harness `sources`, Test Lab
+  `sources.picker` / `sources.open`, shots `sources`, `sources-youtube`, `sources-music`); owner's hand test 27ab.

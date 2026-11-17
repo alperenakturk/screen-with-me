@@ -79,17 +79,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
 
-### SRC2. "What are we watching?" source picker: big grid (owner, 17 Nov 2026; lane A, first)
-- Why: the ⠿ popover (SRC1) is small and menu-like; the owner wants big tiles with category chips.
-- What: option A of `docs/internal/design/source-picker.md` (sketches `source-picker/a-computer.svg`,
-  `a-phone.svg`): the 12 tiles and chips in that note, source vs action tiles, Coming tiles that explain; in the
-  video's place on a computer, in the side panel's place while a YouTube video shows (nothing over the YouTube
-  player), a bottom sheet on a phone; opened by ⠿ and the empty room's "🔍 Search a video"; no brand logos; arrow keys,
-  Esc, focus return; no scroll inside the view.
-- Done when: it replaces SRC1's popover on computer + phone; Test Lab hook `sources.picker`; harness in the `site`
-  job (open, filter, pick a source, run an action, Esc); shots at 4 sizes; owner's hand test.
-- Owner's pick: A "Big grid" (picks page, 17 Nov 2026).
-
 ### FD1. Feed start window and Shorts view: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
 - Why: SH2's "♾ Shorts feed / ▶ Video feed" window and the Shorts view are cramped and unclear; things overlap; a
   Discover chip (Popular, Music …) starts the feed at once, before he has chosen.

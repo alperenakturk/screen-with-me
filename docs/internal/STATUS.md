@@ -14,14 +14,20 @@ One handoff per lane or role; each session updates only its own lines and delete
     `claude/cr2-yt-playlists`, `claude/cr2-playlist-404` merged. Tags: `v0.9.97.141` back-filled by TAG_TOKEN;
     `v0.9.97.113` (8ce4385) still missing (a tag push from a session was refused: owner's Releases page or a session
     allowed to push tags).
-  - [ ] Lane A (session 17 Nov, card group SRC2 → FD1 → RC1, all owner's pick A):
-    - [x] SRC2 big source picker: #527 (`claude/src2-source-picker-grid`) merged; deploy / live e2e / tag to check.
+  - [ ] Lane A (handoff 17 Nov, 02:10; card group SRC2 → FD1 → RC1, all owner's pick A; the session stopped at its
+    context limit):
+    - [x] SRC2 big source picker: #527 (`claude/src2-source-picker-grid`), live in v0.9.97.160 (the first deploy's
+      live e2e failed only `quota.mjs` "13th HTTP-fallback session gets 429 (11 opened, 2 refused)": the live shards
+      seem to share an address; it passed in .160). Done line in `archive/cards-done.md`; hand test 27ab.
+    - [x] FD1a feed drawer + pill + host rule: #529 (`claude/fd1-feed-drawer`), live in v0.9.97.160; hand test 27ac.
+    - [ ] **Next: FD1b**, the Shorts view tidy of `design/feed-start.md` §5 (rail groups TALK / WATCH / ROOM with
+      labels beside the icons at 1366+, ♾ "on" while a feed runs, "12 left" under ▲, toasts under the Short instead of
+      over the rail, the phone Shorts bar 💬 · 😀 · ♾ · ▲ · ▼ · ⋯ with short labels, the feed pill above the Short with
+      its ✕) + the `shorts-feed` shots screen. The pill (`#feed-pill`, `ui/feed-row.ts` `renderPill`) and the host
+      rule exist; reuse them. Room CSS is at 38.0 / 38 kB: new Shorts-view styles need a lazy stylesheet or a trade.
+    - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
     - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
       CI, passed on re-run): make it deterministic when that harness is next touched.
-    - [ ] FD1a feed drawer + pill + host rule (`claude/fd1-feed-drawer`, PR open).
-    - [ ] FD1b the Shorts view tidy (rail groups with labels, "12 left", toasts under the Short, phone bar, the pill
-      in the Shorts view): not built yet; a fresh session.
-    - [ ] RC1 session recap.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
@@ -204,6 +210,14 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27aa. [GW3, 0.9.97.159] Open a table (Classics) with a YouTube video and with a video file: it fills the video's
   place, never the whole screen; chat, voice and the rail at the video's right edge still work; 🪟 makes it a frame you
   drag anywhere, ▣ / Esc back; 📱 Shorts view → a small frame beside the Short, "Room view" brings it back unchanged.
+- [ ] 27ab. [SRC2, 0.9.97.160] Press ⠿ beside the search box (or "🔍 Search a video" in an empty room): "What are we
+  watching?" shows big tiles and chips. Try a chip (Music), pick Podcasts and search words, open ▶ Video feed and 🎮
+  Games from it; with a YouTube video playing it opens in the side panel's place and never covers the video; on the
+  phone it slides up from the bottom; Esc closes it.
+- [ ] 27ac. [FD1a, 0.9.97.160] With a friend: ♾ / ▶ opens the feed drawer on the right (from the bottom on a phone),
+  the video stays visible; picking a tile only selects it, "▶ Start feed" starts it; you both see "Feed: … · N left ·
+  by …" above the video; in Room rules turn on "Only the host can start a feed": your friend can pause but not start
+  or stop; when someone stops a feed the chat says who.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
