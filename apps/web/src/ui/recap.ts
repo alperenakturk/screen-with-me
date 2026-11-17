@@ -346,10 +346,10 @@ export function playRecap(box: HTMLElement, options: StageOptions): Stage {
 
   const live = el('div', { class: 'rc-live', 'aria-live': 'polite' });
   const sceneBox = el('div', { class: 'rc-scenes' });
-  const head = el('div', { class: 'rc-head' }, createLogo(document, { animated: !reduced }), el('div', {}, el('b', {}, `Sidelit · ${tx().title}`), el('span', {}, `${dateText(show.recap.from)} – ${timeText(show.recap.to)}`)));
+  const head = el('div', { class: 'rc-head' }, createLogo(document, { animated: !reduced }), el('div', {}, el('b', {}, `Sidelit · ${tx().title}`), el('span', {}, timeText(show.recap.from) === timeText(show.recap.to) ? dateText(show.recap.from) : `${dateText(show.recap.from)} – ${timeText(show.recap.to)}`)));
   const strip = el('div', { class: 'rc-strip', role: 'group', 'aria-label': tx().title });
   const frames = facts.map((fact, i) => {
-    const b = el('button', { type: 'button', class: `rc-frame rc-bg-${sceneOf(fact)}`, title: fill(tx().frame, { n: i + 1 }), 'aria-label': fill(tx().frame, { n: i + 1 }) });
+    const b = el('button', { type: 'button', class: `rc-frame rc-bg-${sceneOf(fact)}`, title: fill(tx().frame, { n: i + 1 }), 'aria-label': fill(tx().frame, { n: i + 1 }) }, String(i + 1));
     b.addEventListener('click', () => jump(i));
     return b;
   });
@@ -366,11 +366,13 @@ export function playRecap(box: HTMLElement, options: StageOptions): Stage {
     music.setMuted(!music.muted);
     drawMute();
   });
-  const closeMe = el('button', { type: 'button', class: 'rc-btn rc-close' }, tx().closeMe);
+  const closeMe = el('button', { type: 'button', class: 'rc-btn rc-close', title: tx().closeMe.replace('✕ ', ''), 'aria-label': tx().closeMe.replace('✕ ', '') }, tx().closeMe);
+  // Where the filmstrip has no room (a phone): "2 / 6".
+  const step = el('span', { class: 'rc-step', 'aria-hidden': 'true' });
   closeMe.addEventListener('click', () => close());
   const back = el('button', { type: 'button', class: 'rc-btn rc-back', title: tx().backHint }, tx().back);
   back.addEventListener('click', () => options.onBack?.());
-  const controls = el('div', { class: 'rc-controls' }, prev, pause, next, strip, mute, back, closeMe);
+  const controls = el('div', { class: 'rc-controls' }, prev, pause, next, strip, step, mute, back, closeMe);
   const countdown = el('div', { class: 'rc-count', 'aria-hidden': 'true' });
   const stage = el('section', { class: 'rc-stage', role: 'region', 'aria-label': tx().region, tabindex: '-1' }, sceneBox, head, countdown, live, controls);
 
@@ -429,6 +431,7 @@ export function playRecap(box: HTMLElement, options: StageOptions): Stage {
     const node = el('div', { class: `rc-scene rc-bg-${scene}${reduced ? '' : ' rc-enter'}` }, el('div', { class: 'rc-cone', 'aria-hidden': 'true' }), decor(scene, fact, show.recap), body);
     sceneBox.replaceChildren(node);
     live.textContent = [text.big, text.title, text.sub].filter(Boolean).join('. ');
+    step.textContent = `${i + 1} / ${facts.length}`;
     frames.forEach((f, j) => {
       f.classList.toggle('on', j === i);
       f.classList.toggle('done', j < i);

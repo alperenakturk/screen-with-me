@@ -543,7 +543,7 @@ const en = {
   'recap.see': 'View',
   'recap.invite': '📊 {name} opened the session recap',
   'recap.past': 'Earlier recap',
-  'recap.time': 'This session you watched together',
+  'recap.time': 'Watched together this session',
   'recap.timeSub': '{videos} videos · {people} people',
   'recap.videos': 'different videos',
   'recap.fast': 'Your average speed',

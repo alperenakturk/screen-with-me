@@ -321,9 +321,13 @@
   flex: 1 1 0;
   min-width: 10px;
   height: 24px;
-  border: 1px solid rgb(255 243 214 / 0.25);
+  padding: 0;
+  border: 1px solid rgb(255 243 214 / 0.35);
   border-radius: 4px;
-  opacity: 0.45;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.55;
   cursor: pointer;
 }
 
@@ -368,7 +372,32 @@
   display: none;
 }
 
+.rc-step {
+  display: none;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 @container (max-width: 520px) {
+  .rc-step {
+    display: inline;
+  }
+
+  .rc-deco > svg,
+  .rc-prev {
+    display: none;
+  }
+
+  .rc-controls {
+    gap: 4px;
+    padding-inline: 6px;
+  }
+
+  .rc-btn {
+    padding: 0 8px;
+  }
+
   .rc-close {
     font-size: 0;
   }

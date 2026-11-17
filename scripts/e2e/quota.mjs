@@ -133,19 +133,34 @@ if (!unpaced) {
   const http = base.replace(/^ws/, 'http');
   const sids = [];
   try {
+    // Open until the address is full. The live shards run at the same time and can leave through one shared address,
+    // so a game's own fallback session elsewhere may hold a place: the cap is checked as "never more than 12, and
+    // full means refused", with at most 3 places allowed to be someone else's (the 16 Nov red run: 11 + 2 refused).
     let refused = 0;
-    for (let i = 0; i < 13; i++) {
+    for (let i = 0; i < 13 && !refused; i++) {
       const r = await fetch(`${http}/api/rooms/${room}x${i}/ws?http=open`, { method: 'POST' });
       if (r.status === 429) refused++;
       else if (r.ok) sids.push([`${room}x${i}`, (await r.json()).sid]);
     }
-    ok(sids.length === 12 && refused === 1, `the 13th HTTP-fallback session of one address, in another room, gets 429 (${sids.length} opened, ${refused} refused)`);
-    // Closing one gives its place back.
+    const elsewhere = 12 - sids.length;
+    if (elsewhere > 0) console.log(`  (${elsewhere} of the address's 12 places were held elsewhere, e.g. a parallel shard)`);
+    ok(refused === 1 && sids.length <= 12 && sids.length >= 9, `one address holds at most 12 HTTP-fallback sessions across rooms, then gets 429 (${sids.length} opened here, ${refused} refused)`);
+    const more = await fetch(`${http}/api/rooms/${room}z/ws?http=open`, { method: 'POST' });
+    if (more.ok) sids.push([`${room}z`, (await more.json()).sid]);
+    ok(more.status === 429 || (elsewhere > 0 && more.ok), 'a full address stays full (another try in another room is refused too)');
+    // Closing one gives its place back (a parallel shard may take a freed place first: a few tries).
     const [first, sid] = sids.shift();
     await fetch(`${http}/api/rooms/${first}/ws?http=close&sid=${sid}`, { method: 'POST' });
-    const again = await fetch(`${http}/api/rooms/${room}y/ws?http=open`, { method: 'POST' });
+    let again;
+    for (let i = 0; i < 3; i++) {
+      again = await fetch(`${http}/api/rooms/${room}y${i}/ws?http=open`, { method: 'POST' });
+      if (again.ok) {
+        sids.push([`${room}y${i}`, (await again.json()).sid]);
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
     ok(again.ok, 'a closed session gives its place back');
-    if (again.ok) sids.push([`${room}y`, (await again.json()).sid]);
   } finally {
     // Also on a failure: the leases go back at once instead of after 45 s (the retry would count them).
     for (const [r, s] of sids) await fetch(`${http}/api/rooms/${r}/ws?http=close&sid=${s}`, { method: 'POST' }).catch(() => {});
