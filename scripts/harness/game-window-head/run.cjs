@@ -1,10 +1,10 @@
 // The game window's head and free window (owner's bugs W1–W5, 10 Nov 2026): every head button does its job.
 // Checks, on a computer (1366 × 768 and 1920 × 1080) and a phone:
-//   W1  GW2 (owner, 15 Nov 2026): a table has ⛶ full screen and its 🪟 frame, switched from its head; a side game has
-//       neither (always its frame) and no key or double click puts it on the whole screen; in the video's fullscreen a
-//       side game stays a free window inside it and a table's ⛶ fills that view.
-//   W2  A table opens in ⛶ with no video, with a video file and with YouTube (the player off the screen); its 🪟 frame
-//       keeps beside a YouTube player until I drag it there myself (games-youtube).
+//   W1  GW3 (owner, 17 Nov 2026: "only videos ever go fullscreen"): a table has ▣ the video's place and its 🪟 frame,
+//       switched from its head; a side game has neither (always its frame); no key, button or double click puts any
+//       game in the browser's full screen; in the video's fullscreen a side game and a table are free windows inside it.
+//   W2  A table opens in the video's place with no video, with a video file and with YouTube (the video paused, the
+//       side panel beside it); its 🪟 frame keeps beside a YouTube player until I drag it there myself (games-youtube).
 //   W3  The head's 🎮 opens the games hall right under itself, visible, in the free window, in the video's place and in
 //       the video's fullscreen; pressed again it closes.
 //   112 A side game opens right of the video (over the side panel)
@@ -91,7 +91,7 @@ const box = (page) =>
     const hit = (a) => r.left < a.right - 1 && a.left < r.right - 1 && r.top < a.bottom - 1 && a.top < r.bottom - 1;
     return {
       x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height),
-      hidden: s.hidden, mode: ['float', 'stage', 'below', 'full', 'max'].find((m) => s.classList.contains(m)),
+      hidden: s.hidden, mode: ['float', 'stage', 'below', 'full'].find((m) => s.classList.contains(m)), fs: !!document.fullscreenElement,
       overPlayer: hit(t), overVideo: hit(v), onScreen: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
       inVideo: s.parentElement?.classList.contains('player-wrap') ?? false,
     };
@@ -167,18 +167,19 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     check(hallSide.left && hallSide.level, `${L} 112: the hall slides out of the free window's left side, level with its top`, hallSide);
     await page.click('#game-stage .game-hub-open');
     check(await page.evaluate(() => document.getElementById('game-menu').hidden), `${L} W3: 🎮 again closes the hall`);
-    // W2 (GW2): a table opens in ⛶ full screen (no video), and its 🎮 shows the hall there.
+    // W2 (GW3): a table opens in the video's place (no video), never the browser's full screen; its 🎮 shows the hall.
     await openGame(page, 'classics');
     let b = await box(page);
-    const full = (x) => x.mode === 'max' && x.x <= 0 && x.y <= 0 && x.w >= 1365;
-    check(full(b), `${L} W2: a table opens in ⛶, filling the screen (no video)`, b);
+    const placed = (x) => x.mode === 'stage' && x.inVideo && !x.fs && x.w < 1366 - 100;
+    check(placed(b), `${L} W2: a table opens in the video's place, not full screen (no video)`, b);
+    check(await page.evaluate(() => { const c = document.getElementById('chat-input') || document.querySelector('#chat-form input, #chat-form textarea'); const r = c?.getBoundingClientRect(); const s = document.getElementById('game-stage').getBoundingClientRect(); return !!r && r.width > 0 && (r.left >= s.right || r.top >= s.bottom || r.right <= s.left); }), `${L} W2: the chat box stays free beside the table`);
     await page.click('#game-stage .game-hub-open');
-    check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in ⛶ opens the hall, visible`);
+    check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the video's place opens the hall, visible`);
     await page.keyboard.press('Escape');
     // A video file: the table in the video's place; then Snack Bar's free window, dragged over the video.
     check(!!(await load(page, VIDEO)), `${L}: the room plays a video file`);
     b = await box(page);
-    check(full(b), `${L} W2: with a video file the table stays in ⛶`, b);
+    check(placed(b), `${L} W2: with a video file the table stays in the video's place`, b);
     await openGame(page, 'snack');
     await wait(300);
     const start = await box(page);
@@ -278,18 +279,27 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await page.evaluate(() => window.__swmLab.run('gameWindow.reset'));
     await wait(300);
     check(near(await box(page), home), `${L}: the Test Lab's "back to its own size and spot" works`, await box(page));
-    // W1 (GW2): a table has ⛶ / 🪟 in its head; a side game has none and nothing puts it on the whole screen.
+    // W1 (GW3): a table has ▣ / 🪟 in its head; a side game has none and nothing puts it on the whole screen.
     const modeShown = () => page.evaluate(() => !!document.querySelector('#game-stage .game-mode') && !document.querySelector('#game-stage .game-mode').hidden);
     await openGame(page, 'classics');
-    check(await modeShown(), `${L} W1: a table's head has ⛶ / 🪟`);
-    for (const kind of ['garden', 'word']) {
-      await openGame(page, kind);
-      check(!(await modeShown()), `${L} W1: ${kind} has no ⛶`);
+    check(await modeShown(), `${L} W1: a table's head has ▣ / 🪟`);
+    // GW3: no head button, key or double click puts a table in the browser's full screen.
+    for (let i = 0; i < 2; i++) {
+      await page.click('#game-stage .game-mode');
+      await wait(300);
     }
     await page.keyboard.press('f');
     await page.evaluate(() => document.querySelector('#game-stage .game-stage-title').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
     await wait(300);
-    check(!(await page.evaluate(() => document.fullscreenElement?.id === 'game-stage' || document.getElementById('game-stage').classList.contains('max'))), `${L} W1: no key or double click puts a side game on the whole screen`);
+    check(!(await page.evaluate(() => !!document.fullscreenElement)), `${L} W1: nothing puts a table in the browser's full screen`);
+    for (const kind of ['garden', 'word']) {
+      await openGame(page, kind);
+      check(!(await modeShown()), `${L} W1: ${kind} has no ▣ / 🪟`);
+    }
+    await page.keyboard.press('f');
+    await page.evaluate(() => document.querySelector('#game-stage .game-stage-title').dispatchEvent(new MouseEvent('dblclick', { bubbles: true })));
+    await wait(300);
+    check(!(await page.evaluate(() => !!document.fullscreenElement)), `${L} W1: no key or double click puts a side game on the whole screen`);
     // The video's own fullscreen: the game stays a free window inside it, and its 🎮 opens the hall there.
     await page.evaluate(() => document.getElementById('theater').requestFullscreen());
     await until(() => page.evaluate(() => document.fullscreenElement?.id === 'theater'));
@@ -299,16 +309,16 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       return { inside: document.fullscreenElement?.contains(s) ?? false, hidden: s.hidden, float: s.classList.contains('float'), w: Math.round(s.getBoundingClientRect().width) };
     });
     check(inFs.inside && !inFs.hidden && inFs.float && inFs.w < 1366, `${L}: in the video's fullscreen a side game stays a free window inside it`, inFs);
-    // GW2: a table brought up in the video's fullscreen: its ⛶ fills that view (inside it, not hidden behind it).
+    // GW3: a table brought up in the video's fullscreen is a free window inside that view (a game never fills the screen).
     await page.evaluate(() => window.__swmLab.run('games.open.classics'));
-    await until(() => page.evaluate(() => document.getElementById('game-stage').classList.contains('max')), 4000);
+    await until(() => page.evaluate(() => !!document.querySelector('#game-stage .xox-page, #game-stage .cl-pick, #game-stage .game-fit > *')), 4000);
     await wait(500);
     const tableFs = await page.evaluate(() => {
       const s = document.getElementById('game-stage');
       const r = s.getBoundingClientRect();
-      return { inside: document.fullscreenElement?.contains(s) ?? false, hidden: s.hidden, max: s.classList.contains('max'), w: Math.round(r.width), h: Math.round(r.height) };
+      return { inside: document.fullscreenElement?.contains(s) ?? false, theater: document.fullscreenElement?.id, hidden: s.hidden, float: s.classList.contains('float'), w: Math.round(r.width), h: Math.round(r.height) };
     });
-    check(tableFs.inside && !tableFs.hidden && tableFs.max && tableFs.w >= 1365, `${L}: in the video's fullscreen a table's ⛶ fills that view`, tableFs);
+    check(tableFs.inside && tableFs.theater === 'theater' && !tableFs.hidden && tableFs.float && tableFs.w < 1366, `${L}: in the video's fullscreen a table is a free window inside that view`, tableFs);
     await page.click('#game-stage .game-hub-open');
     check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} W3: 🎮 in the video's fullscreen opens the hall, visible`);
     await page.keyboard.press('Escape');
@@ -322,11 +332,11 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
   for (const [L, viewport] of [['1366 YouTube', { width: 1366, height: 768 }], ['1920 YouTube', { width: 1920, height: 1080 }]]) {
     const { ctx, page, errors } = await room(browser, viewport);
     check(!!(await load(page, YOUTUBE, true)), `${L}: the room plays a YouTube video`);
-    // GW2: a table opens in ⛶ (the player off the screen); a side game's frame opens beside the player and, dragged
-    // there by me, may cover it (owner, 15 Nov 2026; CLAUDE.md §7's one exception).
+    // GW3: a table opens in the video's place over YouTube too (the video paused), never the browser's full screen; a
+    // side game's frame opens beside the player and, dragged there by me, may cover it (CLAUDE.md §7's one exception).
     await openGame(page, 'classics');
     const tb = await box(page);
-    check(tb.mode === 'max' && tb.x <= 0 && tb.y <= 0 && tb.w >= viewport.width - 1, `${L} classics: a table opens in ⛶ over YouTube too (the player off the screen)`, tb);
+    check(tb.mode === 'stage' && tb.inVideo && !tb.fs && tb.w < viewport.width - 100, `${L} classics: a table opens in the video's place over YouTube too, not full screen`, tb);
     for (const kind of ['snack']) {
       await openGame(page, kind);
       const b = await box(page);
@@ -372,10 +382,10 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       } else {
         // Until card .113 turns stage.ts STAGE_READY on, a table keeps its free window and the switch; then it plays
         // in the video's place without one. Either way it opens whole on screen, and 🎮 shows the hall.
-        // GW2: a table opens in ⛶ (the first time, and in the mode used last after that).
-        check(b.onScreen && b.mode === 'max' && !switchShown, `${L} ${kind}: a table opens in ⛶, no placement switch`, { b, switchShown });
+        // GW3: a table opens in the video's place (the first time, and in the mode used last after that).
+        check(b.onScreen && b.mode === 'stage' && !b.fs && !switchShown, `${L} ${kind}: a table opens in the video's place, no placement switch`, { b, switchShown });
         await page.click('#game-stage .game-hub-open');
-        check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: 🎮 in ⛶ opens the hall, visible`);
+        check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: 🎮 in the video's place opens the hall, visible`);
         await page.keyboard.press('Escape');
       }
     }
@@ -429,12 +439,12 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       check((await playing(alex.page)) && (await playing(sam.page)), '114: opening a side game never pauses the video');
       await openGame(alex.page, 'classics');
       const paused = await until(async () => !(await playing(alex.page)) && !(await playing(sam.page)), 6000);
-      check(!!paused, '114 + GW2: opening a table in ⛶ pauses the video for everyone');
+      check(!!paused, '114 + GW3: opening a table in the video\'s place pauses the video for everyone');
       check(await alex.page.evaluate(() => [...document.querySelectorAll('.hint, [role="status"]')].some((e) => /paused for the game/i.test(e.textContent))), '114: a short note says "Video paused for the game"');
       await alex.page.evaluate(() => document.querySelector('#game-stage .game-minimize').click());
-      // GW2 (Planner's pick A): leaving ⛶ plays the video again, for everyone, when ⛶ paused it.
+      // GW2/GW3: leaving the video's place plays the video again, for everyone, when the table paused it.
       const again = await until(async () => (await playing(alex.page)) && (await playing(sam.page)), 6000);
-      check(!!again, '114 + GW2: putting the table away plays the video again for everyone');
+      check(!!again, '114 + GW3: putting the table away plays the video again for everyone');
     }
     await alex.ctx.close();
     await sam.ctx.close();

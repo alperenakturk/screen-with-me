@@ -1155,38 +1155,50 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   lobby is the same tinted card as Quiz / Draw & Guess (`games/lobby.css`, which the poker chunk imports too: the room page's CSS budget is full).
   **Game window head and free window (lane W, bugs W1–W5 + 0.9.97.112, owner 10 Nov 2026):** the head is (placement
   switch) · 🎮 · ↩ Leave (tables) · ⏹ End (tables, opener or host) · ✕ (minimize), plus the game's own
-  slot (`.game-head-slot`: "?" How to play, Classics' shelf), and for tables ⛶ / 🪟 (GW2, below). A side game's free
+  slot (`.game-head-slot`: "?" How to play, Classics' shelf), and for tables ▣ / 🪟 (GW2 + GW3, below). A side game's free
   window lives inside the video's fullscreen while there is one. **Where a game plays
   (`placeOf`, owner 10 Nov 2026):** the side games always play in the free window, without a switch on a computer
-  (narrow screens keep their below / large pick, `gamePlace:<kind>`). **GW2 (owner, 15 Nov 2026; Planner's pick A):** a
-  table on a computer or tablet plays in **⛶ full screen** (mode `max`: `#game-stage` asks for the browser's own full
-  screen, `requestFullscreen`; refused (an iframe, iOS Safari) `.game-stage.max` is fixed and `100dvh`, filling the
-  browser window) or in its **🪟 frame** (the free window), switched any time with the head's `.game-mode` button
-  (`setTableMode`); the mode used last is remembered for every table (`gameMode`: `full` | `frame`, `full` the first
-  time). ⛶ pauses the room's video (`autoPause`, with or without YouTube: the player is off the screen, so nothing of ours
-  sits over it) and leaving it (🪟, Esc, the browser's own exit, ✕, Leave) plays it again if it paused it (`pausedForFull`,
-  `room.ts` `playVideo`). In ⛶ the game keeps its shape and scales to the screen like it did in the video's place
-  (`refit`). A table's frame starts at the right edge at its own size grown with the screen (`SPOT_HOME`; `homeBox` is
-  the side games'), may cover part of a video file there, keeps beside a YouTube player (under it, `below`, when nothing
-  fits), and a frame smaller than the table's own size scales the table's own layout down. **A frame I moved or sized
-  myself goes anywhere, over a YouTube player too** (CLAUDE.md §7's one exception: `clearOfPlayer` and the strip-beside
-  size limit only apply to its home). Narrow screens and PH2's Games tab keep their placements (⛶ there is the tab).
-  Lab: `games.mode` (`full` / `frame` / flip; writes the mode, `realFullscreen`, `pausedForFull`, the box). Harnesses:
-  `state-matrix` (both modes in every state), `games-youtube`, `game-proportions` (⛶ rows = the old video's place).
+  (narrow screens keep their below / large pick, `gamePlace:<kind>`). **GW3 (owner, 17 Nov 2026: "only videos ever go
+  fullscreen"; it replaced GW2's ⛶ real full screen):** a table on a computer or tablet plays **in the video's place**
+  (mode `stage`: `#game-stage` inside `.player-wrap`, scaled to that box by `refit` from its own or wide shape; the
+  side panel, chat, voice and the top bar stay usable beside it; on a computer the rail stays out beside the table, `games/stage.css`, the window's own lazy stylesheet) or in its **🪟 frame** (the free window), switched any
+  time with the head's `.game-mode` button (▣ / 🪟, words "In the video's place" / "Frame"; `setTableMode`) or a bare
+  Esc (place → frame); the mode used last is remembered for every table (`gameMode`: `place` | `frame`; GW2's saved
+  `full` reads as `place`, the first time too). **No game ever calls `requestFullscreen`** (`scripts/check-games-fullscreen.mjs`
+  in CI over `apps/web/src/games` and the shared games; `game-window-head` W1 checks no button, key or double click
+  makes anything full screen). The video's place pauses the room's video (`autoPause`, YouTube too: I picked it or no
+  readable frame fits beside the player, CLAUDE.md §7's one exception) and leaving it (🪟, Esc, ✕, Leave, close)
+  plays it again if it paused it (`pausedForPlace`, `syncPlaced`, `room.ts` `playVideo`). In the video's own
+  fullscreen a table is a frame inside that view and ▣ / 🪟 hides (a game never fills the screen); entering it over
+  YouTube still tucks the game away (YTG). **Shorts view:** games are free frames only (`tableHere` is false there, no
+  ▣ / 🪟); the table's mode is kept and comes back in the room view (place → frame in Shorts → place again). The
+  window only moves between parents (`place`): the game's DOM, its socket and the room's socket stay as they are
+  (harness `games-shorts`, CI games-more: the same sockets, none closed, across two round trips in each mode at 1366
+  and 1920). In Shorts a table's frame may shrink below its smallest size to fit beside the Short and its bar
+  (`floatZoom` low = `MIN_ZOOM` there; at 1366 the strip is ≈ 420 px): over the bar it hid "↩ Room view". A table's
+  frame starts at the right edge at its own size grown with the screen (`SPOT_HOME`; `homeBox` is the side games'),
+  may cover part of a video file there, keeps beside a YouTube player (under it, `below`, when nothing fits), and a
+  frame smaller than the table's own size scales the table's own layout down. **A frame I moved or sized myself goes
+  anywhere, over a YouTube player too** (CLAUDE.md §7's one exception: `clearOfPlayer` and the strip-beside size limit
+  only apply to its home). Narrow screens and PH2's Games tab keep their placements. Lab: `games.frame` (`place` /
+  `frame`; writes the mode, `view` = place / frame / shorts / below, `gameFullscreen` (always false), `pausedForPlace`,
+  `forced`, the box). Harnesses: `state-matrix` (both modes in every state; the video's place is inside the player's
+  box, never full screen), `games-youtube`, `games-shorts`, `game-proportions` (the `stage` rows).
   **GP1 (owner, 15 Nov 2026: "Classics stutters while opening"):** opening the hall (`setHub(true)` → `warmSolo`) loads
   the side games' chunks and then the tables' chunks one after another (match, sea, duel, quiz, draw, poker), so a card
   picked from the hall draws at once; Snack Bar's art is inline SVG in its chunk (no late images). `markOpened` records
   the time from the click (`openTable` / `openSolo`) to the first frame with the game (Lab `games.openTime`). Measured on
   a laptop: every game 40–110 ms; at CPU 4× with 150 ms latency, Classics and Snack Bar 230–320 ms. The game window's
-  Lab commands (`gameWindow.*`, `games.mode`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
+  Lab commands (`gameWindow.*`, `games.frame`, `games.openTime`, `phoneGames.state`) live in `lab-tools.ts`
   (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
   "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game.
   **A table's frame never starts unreadable beside YouTube** (Planner, 16 Nov 2026: no frame with text under 11 px):
   without a spot of mine, a frame that would get less than `READ_ZOOM` (0.85) of the table's size in the strip beside
-  the player opens under the player when the screen has room for it there (`below`), else in ⛶ with no 🪟 in its head
-  (`frameForced`; on a computer's usual screens the strip is ≈ 350–430 px, so ⛶). A frame I placed before (its spot
-  saved) still opens there and may sit over the player; a double click forgets the spot (⛶ again). Side games keep their
-  own homes and, once dragged, may go over the video too. Lab `games.mode` also writes `forced`.
+  the player opens under the player when the screen has room for it there (`below`), else in the video's place
+  (`frameForced`; on a computer's usual screens the strip is ≈ 350–430 px, so the video's place; 🪟 then opens the frame
+  at a readable size over part of the player as my choice). A frame I placed before (its spot saved) still opens there
+  and may sit over the player; a double click forgets the spot (the video's place again). Side games keep their own
+  homes and, once dragged, may go over the video too. Lab `games.frame` also writes `forced`.
   Connect Four's column highlight follows a mouse only. Five Frames has a compact tier for windows under 430 px tall (a
   sideways tablet's side-game window, catalog `fit` 388 px), so it keeps 13 px text instead of being scaled down.
   Harness `game-open` (CI games-more): every game opens with one click, Classics and Snack Bar in ≤ 300 ms, and on a touch

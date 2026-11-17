@@ -1,0 +1,17 @@
+/* The game window's own rules, in its lazy chunk (the room page's CSS budget is full). */
+
+/* A game in the video's place: the dock is the video's, not the game's. GW3 (owner, 17 Nov 2026): except a table on a
+   computer, which keeps the rail usable beside it (its chat, voice and reactions). */
+.player-wrap:has(> #game-stage:not([hidden], .stage)) .fs-dock,
+:is(html.phone, .theater:not(.side-rail)) .player-wrap:has(> #game-stage:not([hidden])) .fs-dock {
+  display: none !important;
+}
+
+html:not(.phone) .side-rail.dock-mode :is(.player-wrap > #game-stage.stage, :has(> #game-stage.stage:not([hidden])) > :is(.player, .fs-catcher, .empty, .overlay)) {
+  right: var(--rail-w);
+}
+
+html:not(.phone) .side-rail.dock-mode:has(#game-stage.stage:not([hidden])) .fs-dock {
+  opacity: 1;
+  visibility: visible;
+}

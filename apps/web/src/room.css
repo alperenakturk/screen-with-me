@@ -5860,17 +5860,6 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   z-index: 1100;
 }
 
-/* GW2: a table in ⛶ full screen. In the browser's full screen it fills the monitor; where the browser refuses it (an
-   iframe, iOS Safari) it fills the browser window instead, over everything of the room. */
-.game-stage.max {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  z-index: 1200;
-  border-radius: 0;
-}
-
 /* ---- Game window placements (0.9.91.8): side / float / stage; narrow screens below / full ---- */
 .game-place {
   display: inline-flex;
@@ -8367,11 +8356,6 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
 .theater.dock-window .dock-btn .ico {
   width: 19px;
   height: 19px;
-}
-
-/* A game in the video's place: the dock is the video's, not the game's. */
-.player-wrap:has(> #game-stage:not([hidden])) .fs-dock {
-  display: none !important;
 }
 
 .dock-group {

@@ -290,7 +290,6 @@ export interface WindowLab {
   table: () => boolean;
   reset: () => void;
   autoPause: () => void;
-  modeShown: () => boolean;
   setMode: (arg?: string) => unknown;
   lastOpen: () => unknown;
   shown: () => boolean;
@@ -320,19 +319,20 @@ export function registerWindowLab(w: WindowLab): () => void {
         title: { en: 'Game window: pause as a table would', tr: 'Oyun penceresi: masa açılınca olduğu gibi durdur' },
         help: { en: 'Runs what opening a table in the video’s place does: if the video plays, it pauses for everyone and a short note says why.', tr: 'Bir masa videonun yerinde açılınca olanı yapar: video oynuyorsa herkes için durur ve kısa bir not nedenini söyler.' },
         tab: 'games',
-        available: () => (w.table() && (w.place() === 'stage' || w.place() === 'max') ? true : { en: 'no table open in the video’s place or full screen', tr: 'videonun yerinde ya da tam ekranda açık masa yok' }),
+        available: () => (w.table() && w.place() === 'stage' ? true : { en: 'no table open in the video’s place', tr: 'videonun yerinde açık masa yok' }),
         run: w.autoPause,
       },
       {
-        // GW2: the table's two modes, and what the window is doing (for the harnesses and a hand check).
-        id: 'games.mode',
-        title: { en: 'Table: ⛶ full screen or 🪟 frame', tr: 'Masa: ⛶ tam ekran ya da 🪟 çerçeve' },
+        // GW3: the table's two modes (the video's place / the frame), and what the window is doing (frame / video's place
+        // / Shorts), for the harnesses and a hand check.
+        id: 'games.frame',
+        title: { en: 'Table: in the video’s place or 🪟 frame', tr: 'Masa: videonun yerinde ya da 🪟 çerçeve' },
         help: {
-          en: 'With "full" or "frame" switches my open table to that mode (as its head’s button does), with nothing it flips it. Writes the mode, whether the browser’s real full screen took it (else the window fills the page), whether the video was paused for it, and where the frame stands.',
-          tr: '"full" ya da "frame" ile açık masamı o moda geçirir (başlığındaki düğme gibi), boş bırakılırsa değiştirir. Modu, tarayıcının gerçek tam ekranının olup olmadığını (yoksa pencere sayfayı doldurur), video bunun için durdu mu ve çerçevenin nerede durduğunu yazar.',
+          en: 'With "place" or "frame" switches my open table to that mode (as its head’s button does), with nothing it flips it. Writes the mode I picked, what the window is now (place, frame, shorts, below), whether anything of the game is in the browser’s full screen (it never should be), whether the video was paused for it, and where the window stands.',
+          tr: '"place" ya da "frame" ile açık masamı o moda geçirir (başlığındaki düğme gibi), boş bırakılırsa değiştirir. Seçtiğim modu, pencerenin şu an ne olduğunu (place, frame, shorts, below), oyunun bir parçasının tarayıcının tam ekranında olup olmadığını (hiç olmamalı), video bunun için durdu mu ve pencerenin nerede durduğunu yazar.',
         },
         tab: 'games',
-        available: () => (w.table() && w.modeShown() ? true : { en: 'no table open on a computer or tablet', tr: 'bilgisayar ya da tablette açık masa yok' }),
+        available: () => (w.table() ? true : { en: 'no table open', tr: 'açık masa yok' }),
         run: (arg?: string) => JSON.stringify(w.setMode(arg)),
       },
       {

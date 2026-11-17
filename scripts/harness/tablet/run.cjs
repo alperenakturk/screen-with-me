@@ -186,10 +186,10 @@ async function gameChecks(page, where, chatSel) {
     const r = s.getBoundingClientRect();
     const c = document.querySelector(sel)?.getBoundingClientRect();
     const apart = !c || r.right <= c.left + 1 || r.left >= c.right - 1 || r.bottom <= c.top + 1 || r.top >= c.bottom - 1;
-    return { place: s.dataset.place, inVideo: !!s.parentElement?.classList.contains('player-wrap'), apart, onScreen: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 };
+    return { place: s.dataset.place, inVideo: !!s.parentElement?.classList.contains('player-wrap'), apart, fs: !!document.fullscreenElement, onScreen: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 };
   }, chatSel);
-  // GW2: a table opens in ⛶ (the whole screen, so nothing of the room is beside it) or in its 🪟 frame clear of the chat.
-  check((t.place === 'max' || ((t.place === 'stage' ? t.inVideo : t.place === 'float') && t.apart)) && t.onScreen, `${where}, sea: a table opens in ⛶ or clear of the chat, whole on screen (${t.place})`, t);
+  // GW3: a table opens in the video's place or in its 🪟 frame, clear of the chat either way, never full screen.
+  check((t.place === 'stage' ? t.inVideo : t.place === 'float') && t.apart && t.onScreen && !t.fs, `${where}, sea: a table opens in the video's place or its frame, clear of the chat, whole on screen (${t.place})`, t);
   await page.evaluate(() => document.querySelector('#game-stage .game-end')?.click());
   await page.waitForTimeout(300);
   await page.evaluate(() => document.querySelector('.dialog-backdrop:not([hidden]) .btn.primary')?.click());

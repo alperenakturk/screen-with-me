@@ -110,7 +110,7 @@ export const tr: Record<I18nKey, string> = {
   'game.menuTitle': 'Odada oyun aç',
   'game.change': 'Başka oyun',
   'game.minimize': 'Videoya dön',
-  'game.toFull': 'Tam ekran',
+  'game.toPlace': 'Videonun yerinde',
   'game.toFrame': 'Çerçeve',
   'game.pausedForGame': 'Video oyun için durduruldu',
   'game.besideYoutube': 'YouTube videosunun üstüne bir şey konmasına izin vermiyor, oyun bu yüzden yanında durur. Bu çubuktan sürükle; geri koymak için çift tıkla.',

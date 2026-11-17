@@ -103,11 +103,13 @@ function measure() {
   const offScreen = box.left < -1 || box.top < -1 || box.right > innerWidth + 1 || box.bottom > innerHeight + 1;
   return {
     shown: true,
-    mode: stage.dataset.place || ['float', 'stage', 'below', 'full', 'max'].find((m) => stage.classList.contains(m)) || '?',
+    mode: stage.dataset.place || ['float', 'stage', 'below', 'full'].find((m) => stage.classList.contains(m)) || '?',
     youtube: !!theater?.classList.contains('yt-rail') || !!document.querySelector('#theater iframe[src*="youtube"]'),
     box: [box.left, box.top, box.width, box.height].map(Math.round),
     player: p ? [p.left, p.top, p.width, p.height].map(Math.round) : null,
     overPlayer: overlaps(box, p),
+    inPlayer: !!stage.parentElement?.classList.contains('player-wrap'),
+    fullscreen: !!document.fullscreenElement && document.fullscreenElement !== theater,
     vw: innerWidth,
     vh: innerHeight,
     offScreen,
@@ -197,11 +199,11 @@ async function setVideo(page, video) {
 }
 /** The placements this game offers here: the switch's enabled buttons, or the one it is in. */
 const SOLO = ['snack', 'garden', 'word'];
-/** GW2: a table switches between ⛶ full screen and the 🪟 frame with the head's button: both are tested. */
+/** GW3: a table switches between the video's place and the 🪟 frame with the head's button: both are tested. */
 const placesOf = (page) =>
   page.evaluate(() => {
     const mode = document.querySelector('#game-stage .game-mode');
-    if (mode && !mode.hidden) return ['mode-max', 'mode-float'];
+    if (mode && !mode.hidden) return ['mode-stage', 'mode-float'];
     const sw = document.querySelector('#game-stage .game-place');
     if (!sw || sw.hidden || sw.getBoundingClientRect().width === 0) return [];
     return [...sw.querySelectorAll('.game-place-btn')].filter((b) => !b.disabled && b.getBoundingClientRect().width > 0).map((b) => [...b.classList].find((c) => c.startsWith('place-')).slice(6));
@@ -250,9 +252,9 @@ async function runState(browser, kinds, size, video, side) {
           continue;
         }
         check(!m.offScreen && m.cut.length === 0, `${label}: nothing cut off`, m.offScreen ? { box: m.box } : m.cut);
-        // GW2 (Planner's pick A): in ⛶ the table fills the whole screen with the video paused, so the YouTube player is
-        // not on the screen at all (nothing of ours sits over a player you can see).
-        if (m.mode === 'max') check(m.box[0] <= 0 && m.box[1] <= 0 && m.box[2] >= m.vw - 1 && m.box[3] >= m.vh - 1, `${label}: ⛶ fills the screen`, { game: m.box, screen: [m.vw, m.vh] });
+        // GW3 (owner, 17 Nov 2026: "only videos ever go fullscreen"): a table in the video's place sits inside the
+        // player's box (the video paused; I picked it, CLAUDE.md §7's one exception), never in the browser's full screen.
+        if (m.mode === 'stage' && !SOLO.includes(kind)) check(!m.fullscreen && m.inPlayer, `${label}: the table is in the video's place, not full screen`, { game: m.box, player: m.player, fullscreen: m.fullscreen });
         // GP1 (owner via the Planner, 16 Nov 2026; CLAUDE.md §7): a table's 🪟 pressed over YouTube where no readable frame
         // fits beside the player opens at the right edge at a readable size, over part of the player: the user chose it.
         else if (m.youtube && place === 'mode-float' && !SOLO.includes(kind) && m.overPlayer) check(m.box[2] >= 380 && m.box[3] >= 380, `${label}: 🪟 over YouTube (my choice) opens at a readable size`, { game: m.box });
