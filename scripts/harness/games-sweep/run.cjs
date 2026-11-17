@@ -78,7 +78,7 @@ function catalogEntry(g) {
   return find(section('GAME_CATALOG'), g.table);
 }
 // Lists that grow without end and may scroll (the owner's rule allows them).
-const MAY_SCROLL = ['.draw-chat', '.draw-guesses', '.chat-list', '.quiz-players', '.sb-upgrades', '.wg-album-page', '.htp'];
+const MAY_SCROLL = ['.draw-chat', '.draw-guesses', '.chat-list', '.quiz-players', '.sb-upgrades', '.wg-album-page', '.wg-decor-list', '.htp'];
 
 let fails = 0;
 const problems = [];

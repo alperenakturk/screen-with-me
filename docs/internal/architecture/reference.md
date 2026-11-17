@@ -1271,7 +1271,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   design grew to 320 × 480 (size 400 × 600); its head is one line at every size (coins, income, ?): the room's pills
   (▶ / ⏸, 👥, 🫙) sit on the counter picture's top left (`.sb-scene-pills`), the 📋 menu mark on the stand's picture
   (`.sb-menu-mark`), and in the small design a stand's name and line keep one line, so three stands show even at the
-  busiest (games-sweep `snackBusy`); in a free window the "+N more" line points to the video's place (`moreFloat`). In the video's place a box smaller than the
+  busiest (games-sweep `snackBusy`); in a free window the "+N more" line points to the video's place (`moreFloat`). Window
+  Garden's 🎨 page keeps its title, petals line and ✕ in sight and scrolls its shop rows inside (`.wg-decor-list`, like
+  Snack Bar's Upgrades): they need ≈ 630 px of the 444 px design. In the video's place a box smaller than the
   table's own size lays the table out in the box at full size instead of scaling it under 13 px (a sideways tablet),
   unless that would shrink it more than the scaled design (Last Heart running keeps the design: its small print is
   still ≈ 10 px there, open point). Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of
