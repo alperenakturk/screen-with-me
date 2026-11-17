@@ -1,0 +1,1 @@
+- On a tablet held upright, backgammon's players and scores fit beside the board, every text readable.

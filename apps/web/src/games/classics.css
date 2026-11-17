@@ -486,3 +486,12 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
   }
   #game-stage[data-place='stage'] .xox-page.mt > .mt-table:has(.cl-ref-mascot.wait) .xox-actions { align-self: center; }
 }
+
+/* BG1: backgammon in a very short, wide video place (an upright tablet: ≈ 714 × 349). Its board took 54 % of the width
+   and the column beside it was too narrow: the players' "0/15 borne off · 167 to go" rows pushed the 🏆 pills off the
+   edge and the Stub row overflowed (the game was scaled to 0.97, text 12.6 px). The board takes 46 % there. */
+@container game (max-height: 420px) and (min-aspect-ratio: 16 / 10) {
+  #game-stage .xox-page.mt[data-board='backgammon'] > .mt-table { grid-template-columns: min((100cqh - 24px) * 1.45, 46cqw) minmax(0, 1fr); }
+  /* "0 watching" gives its line to the table there (as on a phone); with watchers it shows. */
+  #game-stage .mt .mt-watch-open[data-n='0'] { display: none; }
+}

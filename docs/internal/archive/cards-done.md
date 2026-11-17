@@ -2945,3 +2945,15 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Owner's pick: the Planner's approval (17 Nov 2026).
 - Done: #548 (`claude/xo1-classics-board`, Game Studio, 17 Nov 2026): waiting note and "Just watch" on one row in a
   not-wide video place (`classics.css`); CI tabland games-sweep row includes xox.
+
+### BG1. Backgammon fits an upright tablet's video place (Game Studio proposal, 17 Nov 2026; Game Studio)
+- Why: on an upright tablet (video place ≈ 714 × 349, side-by-side layout) backgammon's bar text showed 12.6 px and its
+  🏆 pills were clipped at the right; games-sweep's "board is the hero" check flagged the intended side-by-side layout
+  (found on LH3/XO1; also on main, not in CI).
+- What: the column beside the board has room for the players' rows and the Stub row at 13 px; the check accepts the
+  wide video place's side-by-side layout.
+- Done when: games-sweep `tabup` Classics (xox, chess, backgammon) pass and run in CI; Test Lab hook `games.open.classics`
+  opens the table; owner's hand test on an upright tablet.
+- Owner's pick: the Planner's approval (17 Nov 2026).
+- Done: #549 (`claude/bg1-backgammon-upright`, Game Studio, 17 Nov 2026): backgammon's board 46 % of a short, wide box,
+  "0 watching" hidden there (`classics.css`); games-sweep hero check exception; CI tabup row adds xox, chess, backgammon.
