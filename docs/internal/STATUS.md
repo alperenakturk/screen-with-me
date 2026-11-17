@@ -37,10 +37,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (17 Nov d): [x] GW4 #532 merged. [x] GW5 Snack Bar busy: one-line head (pills on the counter
-  picture), 📋 on the stand's icon, three stands in the design (EN + TR). [ ] GW5 #537 CI → merge → live → Done.
-  [ ] GMP2 #538 CI → merge → live → Done. Open (sent to the Planner): Five Frames' home covers Together's buttons at
-  1366 (an owner pick); Last Heart running on a sideways tablet ≈ 10 px (card proposed).
+- [ ] Game Studio (17 Nov e): GMP2 live (v0.9.97.163). [ ] GW5 #537 → merge → live → Done. Then LH2. Owner pick
+  pending: Five Frames' home over Together's buttons at 1366.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
