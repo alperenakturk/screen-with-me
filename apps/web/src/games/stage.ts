@@ -1024,7 +1024,14 @@ export function createGameStage(opts: StageOptions) {
           if (box.clientHeight > 0 && !box.hidden) over = Math.max(over, box.scrollHeight / box.clientHeight);
         }
         if (over <= 1.005 || scale <= MIN_FIT) break;
-        scale = Math.max(MIN_FIT, scale / over);
+        // LH2: a game laid out in a fixed box of its own (`own`) that overflows it does not shrink by scaling (the box stays
+        // the same, so the overflow did too and the scale fell to MIN_FIT: six at Last Heart showed at 0.4): the box
+        // grows to the content and the whole is scaled into the window.
+        const grow: [number, number] | null = own ? [Math.max(own[0], body.scrollWidth), Math.max(own[1], body.scrollHeight)] : null;
+        if (own && grow && (grow[0] > own[0] + 1 || grow[1] > own[1] + 1)) {
+          own = grow;
+          scale = Math.max(MIN_FIT, Math.min(W / own[0], H / own[1]));
+        } else scale = Math.max(MIN_FIT, scale / over);
       }
     };
     shrinkToFit();

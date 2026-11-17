@@ -1275,8 +1275,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   Garden's 🎨 page keeps its title, petals line and ✕ in sight and scrolls its shop rows inside (`.wg-decor-list`, like
   Snack Bar's Upgrades): they need ≈ 630 px of the 444 px design. In the video's place a box smaller than the
   table's own size lays the table out in the box at full size instead of scaling it under 13 px (a sideways tablet),
-  unless that would shrink it more than the scaled design (Last Heart running keeps the design: its small print is
-  still ≈ 10 px there, open point). Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of
+  unless that would shrink it more than the scaled design. **LH2:** Last Heart running in the video's place on a short,
+  narrowish box (a sideways tablet, ≈ 718 × 556; `poker.css` container query + `#game-stage[data-place='stage']`, never a
+  free window) has its own compact layout: opponents as rows (two per line), pot and board below them, my hand, one row of
+  Fold · Call · ± · Raise (amounts in the ± card, as in the Games tab) and the four moves 2 × 2, all at 13 px. In the wide
+  video's place (a computer) three or more opponents take the same compact rows. A game whose own fixed box (`own`)
+  overflows no longer shrinks by scale alone (it fell to `MIN_FIT` 0.4: six at Last Heart): `shrinkToFit` grows the box
+  to its content and scales the whole into the window. Lab `poker.compact` (five 🤖 friends sit, the hand starts);
+  games-sweep `pokerSix`. Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of
   the game's heights); harness `games-scale` (CI games-more, with a sideways-tablet sweep of Sea Battle, the Duel, Quiz,
   Draw & Guess and chess).
   **GW4 (owner, 17 Nov 2026): opening a game never moves the room.** The room's "fill the window's height" layout

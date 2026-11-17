@@ -643,6 +643,24 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     commands: [
       quiet.command('poker', { en: 'Last Heart', tr: 'Son Kalp' }),
       { id: 'poker.end', title: { en: 'Last Heart: end the game, I win', tr: 'Son Kalp: oyunu bitir, ben kazanayım' }, help: { en: 'Local lab server only: everyone else runs out of life and the result card shows.', tr: 'Sadece yerel test sunucusunda: diğer herkesin canı biter ve sonuç kartı çıkar.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => send({ t: 'lab', op: 'end' }) },
+      // LH2: a full table (me and five 🤖 friends) in play, to see the compact layout on a sideways tablet.
+      {
+        id: 'poker.compact',
+        title: { en: 'Last Heart: five 🤖 friends sit, the hand starts', tr: 'Son Kalp: beş 🤖 arkadaş otursun, el başlasın' },
+        help: { en: 'Five pretend players join this Last Heart table (six with me) and the first hand starts: the busiest table, for the compact layout in the video\'s place on a sideways tablet. Undo: they leave.', tr: 'Bu Son Kalp masasına beş sahte oyuncu oturur (benimle altı) ve ilk el başlar: en kalabalık masa, yan çevrilmiş tablette videonun yerindeki sıkı düzen için. Geri al: kalkarlar.' },
+        tab: 'games',
+        where: { en: 'at a Last Heart table, before it starts', tr: 'başlamadan önce Son Kalp masasında' },
+        available: () => (!!state && state.phase === 'lobby') || { en: 'only before the game starts', tr: 'sadece oyun başlamadan önce' },
+        run: async () => {
+          const m = await import('./lab-table-friend.ts');
+          const names: string[] = [];
+          for (let i = (state?.players.length ?? 1); i < 6; i++) names.push(m.sitFriend('poker', gameId));
+          for (let i = 0; i < 40 && (state?.players.length ?? 0) < 6; i++) await new Promise((r) => setTimeout(r, 200));
+          send({ t: 'start' });
+          return names.join(', ');
+        },
+        undo: async () => (await import('./lab-table-friend.ts')).leaveFriends(),
+      },
       { id: 'poker.referee', title: { en: 'Last Heart: Stub reacts', tr: 'Son Kalp: Stub tepki versin' }, help: { en: 'Stub says one of his showdown lines in the corner of the table.', tr: 'Stub masanın köşesinde el sonunda söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Last Heart table', tr: 'Son Kalp masasında' }, run: () => ref.say(t('poker.say.pot'), 'gasp') },
     ],
   }));
