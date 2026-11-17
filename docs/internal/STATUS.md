@@ -11,10 +11,13 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
   `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
   still missing (the owner's Releases page or a session allowed to push tags).
-  - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
-    `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
-    After merge: deploy, live e2e, tag; FD1's Done line + archive.
-  - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
+  - [x] FD1b the Shorts view tidy: #535 (`claude/fd1b-shorts-tidy`) merged (live e2e re-run after Cloudflare object drops; tag pending at writing).
+  - [ ] FC1 feed country (owner's priority): branch `claude/fc1-feed-country`, PR open; `feedSearchParams` with the
+    country's language, words + kind + country combined, chart fallback, Lab `feed.region`, hand test 27af. Live
+    spot-check of JP / TR / US / BR / DE: the cloud session's network can't reach the live site, so it is the owner's
+    hand test (and the Planner's, if a session with that host allowed runs it).
+  - [ ] Then RC1: PR #536 (`claude/rc1-session-recap`) is green and held until FC1 is live; merge it then (merge
+    main into it first).
   - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
     CI, passed on re-run): make it deterministic when that harness is next touched.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
@@ -211,6 +214,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", the feed pill sits above the Short (not on it), and
   a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
   shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More and the pill above the Short.
+- [ ] 27af. [FC1] Start a ♾ Shorts feed with Japan: the Shorts are Japanese. Then 🔥 Popular + type "hay" + Japan:
+  "Will play" says so, and the most watched Japanese Shorts about hay come. Try Turkey, US, Brazil, Germany the same
+  way. Paste a video link instead of words: the kinds and the country grey out with a one-line reason.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

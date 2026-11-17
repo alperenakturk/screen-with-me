@@ -73,6 +73,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Shorts view: show a feed note', tr: 'Shorts görünümü: bir akış notu göster' },
     help: { en: 'Shows the "Nothing new left … the feed stopped" note the way a feed shows it, to check it sits under the Short (or at its foot) and never over the rail, the chat or the video.', tr: '"… için yeni bir şey kalmadı, akış durdu" notunu bir akışın gösterdiği gibi gösterir; Short\'un altında (ya da dibinde) durduğunu, rayın, sohbetin ya da videonun üstüne binmediğini denemek için.' },
   },
+  'feed.region': {
+    title: { en: 'Feed: its country, language, kind and words', tr: 'Akış: ülkesi, dili, türü ve kelimeleri' },
+    help: { en: 'Writes the running feed\'s request and what it asks YouTube for: the country (regionCode), that country\'s language (relevanceLanguage), the kind\'s category, the words and the order. With "My country" the server picks the connection\'s country.', tr: 'Açık akışın isteğini ve YouTube\'dan ne istediğini kayda yazar: ülke (regionCode), o ülkenin dili (relevanceLanguage), türün kategorisi, kelimeler ve sıralama. "Benim ülkem" seçiliyse ülkeyi sunucu bağlantıdan seçer.' },
+  },
   'feed.start': {
     title: { en: 'Feed: open the drawer and start ▶ Popular', tr: 'Akış: çekmeceyi aç ve ▶ Popüler başlat' },
     help: { en: 'Opens the feed drawer on the right, picks ▶ Videos · 🔥 Popular (or "shorts music" etc. typed after the command) and starts it with the drawer\'s own "▶ Start feed" button, then writes what the drawer showed and whether the host rule locked it into the log.', tr: 'Sağdaki akış çekmecesini açar, ▶ Videolar · 🔥 Popüler seçer (ya da komuttan sonra yazılan "shorts music" gibi) ve çekmecenin kendi "▶ Akışı başlat" düğmesiyle başlatır; çekmecenin ne gösterdiğini ve yönetici kuralının kilitleyip kilitlemediğini kayda yazar.' },

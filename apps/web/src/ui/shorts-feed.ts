@@ -1,7 +1,8 @@
 import type { FeedIn, FeedInfo, FeedKind, FeedSource } from '@swm/shared/feed';
 import { freshIds } from '@swm/shared/feed';
 import type { ClientMessage, Media, QueueItem } from '@swm/shared/protocol';
-import { parseSearchAnswer, POOL_RESULTS, wordsRequest } from '@swm/shared/youtube-search';
+import { feedSearchParams, parseSearchAnswer, POOL_RESULTS, wordsRequest } from '@swm/shared/youtube-search';
+import { debugHooks } from '../debug-lab.ts';
 import { lang, t } from '../i18n.ts';
 
 /**
@@ -98,7 +99,8 @@ export function createShortsFeed(opts: FeedOptions) {
       case 'chanOf':
         return `/api/youtube/channel?of=${source.id}${videos ? '&videos=1' : ''}${source.order === 'popular' ? '&order=popular' : ''}`;
       case 'topic':
-        return `/api/youtube/search?${videos ? 'long=1' : 'short=1'}${source.region && source.region !== 'world' ? `&region=${source.region}` : ''}`;
+        // Card FC1: words + country + kind chip in one query.
+        return `/api/youtube/search?${videos ? 'long=1' : 'short=1'}${source.region && source.region !== 'world' ? `&region=${source.region}` : ''}${source.pool ? `&cat=${source.pool}` : ''}`;
     }
   }
 
@@ -194,6 +196,33 @@ export function createShortsFeed(opts: FeedOptions) {
     send({ kind, label: clean, source, paused: false });
     opts.note(t(info?.kind === kind ? 'feed.steered' : 'feed.started', { topic: clean }));
   }
+
+  // Card FC1: Test Lab `feed.region`: the running feed's request and the YouTube selection it stands for (country,
+  // its language, kind chip, words, order), so a "Japan gives Indian videos" report can be checked at a glance.
+  debugHooks.register('feedRegion', () => ({
+    commands: [
+      {
+        id: 'feed.region',
+        tab: 'status',
+        run: () => {
+          const feed = info;
+          if (!feed) return JSON.stringify({ feed: null });
+          const s = feed.source;
+          const region = s.kind === 'topic' || s.kind === 'pool' ? (s.region ?? (s.kind === 'pool' ? 'auto' : 'world')) : null;
+          const pageLang = lang() === 'en' ? 'en' : 'tr';
+          const youtube =
+            region === null || region === 'auto'
+              ? null
+              : s.kind === 'topic'
+                ? feedSearchParams({ shape: feed.kind === 'shorts' ? 'shorts' : 'videos', words: s.q, region, pageLang, pool: s.pool ?? null })
+                : s.kind === 'pool' && feed.kind === 'shorts'
+                  ? feedSearchParams({ shape: 'shorts', region, pageLang, pool: s.pool })
+                  : { chart: 'mostPopular', regionCode: region };
+          return JSON.stringify({ kind: feed.kind, source: s, path: path(s, feed.kind), youtube, note: region === 'auto' ? "auto: the server uses the connection's country" : undefined });
+        },
+      },
+    ],
+  }));
 
   return {
     get info(): FeedInfo | null {
