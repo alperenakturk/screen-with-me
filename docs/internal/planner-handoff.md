@@ -4,58 +4,46 @@ The Planner's working memory, so a fresh Planner session can continue without th
 "keep contexts small, everything needed must be in the repo"). The Planner rewrites this file at every handoff;
 rules stay in `CLAUDE.md`, cards in `CARDS.md` / `cards-games.md` / `cards-proposed.md`, the owner's lists in `STATUS.md`.
 
-## State on 17 Nov 2026, 02:20 Istanbul (handoff 4; previous Planner session_015Fyri4tNaodxWjvbDYpkqT)
+## State on 17 Nov 2026, 12:45 Istanbul (handoff 5; previous Planner session_015Fyri4om23mvzYMosodsyX)
 
-**Live:** v0.9.97.157 (MSG1). Tags complete except v0.9.97.113 (left missing on purpose: GitHub's release page can't
-reach the old commit; the owner's draft was deleted). TAG_TOKEN works (back-filled .141).
+**Live:** v0.9.97.171. Deploys use the rolled Cloudflare token (works). v0.9.97.113 tag still missing on purpose.
 
-**Sessions:**
-- Lane A "ScreenWithMe · 🔨 Developer" (session_015Fyri2uT2Xhd9RrdYztMEC): CR2 #512 (YouTube Music lists) merging; it
-  is the FIRST deploy with the rolled Cloudflare token: check its deploy + live e2e + tag. Then DM1 (needs the owner's
-  Dailymotion Player ID). Its context is large: open a fresh lane A when it hands off.
-- Game Studio "ScreenWithMe · 🎮 Game Studio" (session_015Fyri6VqZiy5iJ9AUoRvzv): card GW3 (only videos go fullscreen).
+**Sessions:** none building. Lane A and Game Studio finished their groups and were archived (handoffs in STATUS).
+Open a fresh session per card group (CLAUDE.md §4); the owner said on 17 Nov: "open them, don't hold back on usage,
+I'll reset; finish every job". The account's seven-day limit shows `allowed_warning` (resets 21 Nov ~06:00 Istanbul).
 
-**Owner decisions on 17 Nov (all in the repo):** secrets all in the `production` environment, repository secrets only
-TAG_TOKEN, every secret in KeePass (CLAUDE.md §5 KeePass fields rule); Dailymotion yes (DM1); Vimeo search yes
-(VIMEO_TOKEN, he adds it later); SoundCloud later; film page intro decided right before the store; TV plan (STATUS);
-**only videos go fullscreen** (CLAUDE.md §7, GW3: when he says "tam ekran" for a game he means the video's place; warn
-him if a request breaks it); no DRM tricks like screen-sharing paid services (already a rule).
+**Shipped 17 Nov (all on the owner's board as hand tests):** CR2 YouTube Music lists (.158), GW3 games never
+fullscreen (.159), SRC2 "What are we watching?" big grid + FD1a feed drawer (.160), FD1b Shorts view tidy (.161),
+GW4 layout never moves (.162), FC1 feed country + words + kind combined, GMP2 2–6 players (.163), RC1 session recap
+(.165), UI4 polish: no feed pill on top, Drive-In default theme, picker centred + generic "Subscription services ·
+Coming" row, Shorts ⋯ More works (.166), GW5 game windows scale in proportion (.167), LH2 / LH3 Last Heart on tablets
+(.168/.169), XO1 tic-tac-toe on sideways tablet (.170), BG1 backgammon on upright tablet (.171).
 
-**Owner away until ~19–20 Nov** (handoff 4 addendum): build only cards that need nothing from him; at most 2 building
-sessions (5-hour usage limit). On his return: ask the source picker pick, FD1 and RC1 design picks (Design session
-prepares options), and answer his question "what does the recap show and how often": today it is in the Profile menu,
-shows on request only (never by itself), covers the current session (a new session starts after 4 h without activity),
-picks up to 8 random fact cards (duration first; videos, speed, top talker, reactor, sad / laugh, top emoji, pins,
-pauser, seeker, crowd of 3+; summary + PNG last) and can be saved (5 or 20 per room, 90 days).
+**Owner decisions 17 Nov:** picks page (Artifact 5jN5FuuqcPpVW3nRMba65Z): all A (source picker grid, feed drawer,
+recap night stage / host shows / ✨ on rail / own music). Default theme Drive-In. Game windows: what shows at first
+size shows at every size, aspect ratio kept, else no resize. Brand logos: we keep our glyphs (YouTube needs approval,
+TikTok written permission). Usage: don't hold back. He asked for visual option pages this time (picks page): when
+asking design questions, give him visuals (a page or the SVGs), not only text.
 
-**Design options ready (PR #521):** FD1 `design/feed-start.md` (A right drawer, 3 steps on one screen, recommended /
-B one question per step / C ready-made feed cards) and RC1 `design/session-recap.md` (Q1 look: night stage
-recommended / filmstrip / postcards; Q2 who starts: host shows, guests ask recommended / anyone with 10 s cancel /
-everyone alone; Q3 where: ✨ on the rail when ready recommended / top-bar chip / Profile menu; Q4 music: our own Web
-Audio recommended / CC0 track / none). Tell him the defaults without asking: nudges N1, N2, N4 (one per person per
-session, "Don't remind me"), the session rule with Design's 4 improvements. Owner picked all A on 17 Nov (picks page Artifact
-5jN5FuuqcPpVW3nRMba65Z): now cards SRC2 → FD1 → RC1 for lane A.
+**Waiting on the owner:**
+- Five Frames' home at 1366: covers Together's "Join voice / Share". A = Together card one row shorter while a side
+  game is open (lane A card, recommended); B = leave as is (current). Ask again with clickable choices.
+- Netflix / Prime names in the picker: he asked to list them as "coming"; I applied the rule (no names, one generic
+  row) and told him; he hasn't objected. If he insists, it's his call (store risk explained).
+- Dailymotion Player ID (DM1, lane A), VIMEO_TOKEN, `sidelit.app` after the trademark check, the 0.9.98 gate.
 
-**Waiting on the owner (board "Kararların" tab):** Dailymotion Player ID, VIMEO_TOKEN, the source picker pick: design
-`docs/internal/design/source-picker.md` (#516), options A grid (recommended) / B shelves / C bigger ⠿ menu; ask him
-again with clickable choices, then write the lane A card replacing SRC1's popover (Test Lab `sources.picker`).
-Passed hand test: VC1's YouTube volume drag (tell lane A to move it to the archive). Also still open from before:
-`sidelit.app` after the trademark check, security guide (2FA), competitor names on alternative pages, CR1–CR8, the
-0.9.98 gate, Fable audit (only on his words).
+**Ideas from sessions (put in STATUS ideas when convenient):** upright-tablet Shorts bottom bar has no ⋯ More; the
+feed drawer cuts the room's text mid-word at its edge; live e2e quota.mjs flake (parallel shards share one address).
 
-**The owner's board** (Artifact `NWZG7GLH4JzAnZt1rNgrJo`) is current (version 67). Its source is not in the repo:
-`Artifact` read with `path: "index.html"`, keep from `<title>` to the last `</script>`, add TESTS items (`d` phone |
-pc | ext, group "🆕 Yeni (önce bunlar)"), republish to the same URL.
+**The owner's board** (Artifact NWZG7GLH4JzAnZt1rNgrJo, version 78) now has a 📲 Tablette device section; every item is
+one device. Source not in the repo: `Artifact` read (with and without `path`), keep from `<title>` to the last
+`</script>`, edit TESTS (`d`: phone | tablet | pc | ext), republish to the same URL.
 
-**Scheduled:** "Daily context check" (trig_01TajuA38ByAnD6Q72fjgSiR, 18:41 Istanbul) fires into the session it was
-made in; the new Planner re-creates it bound to itself and deletes the old one.
+**Scheduled:** "Daily context check" trig_01UurtiJTp8MAPYRK1Pc791w (18:41 Istanbul) is bound to the old Planner
+session: re-create it bound to yourself (same prompt, `get_trigger`) and delete the old one.
 
-**Room JS budget:** 145 kB guard, ~125 kB after the lazy games window (#493). Never raise it; move code into lazy chunks.
+**Leftover merged branches** the sessions couldn't delete (squash merges): claude/shorts-rail-short-screens,
+claude/rc1-session-recap, claude/ui4-polish, claude/lane-a-handoff-17nov, claude/gmp2-six-seats, claude/ng2-menu-wait,
+claude/gw5-proportional, claude/xo1-board-tablet (unmerged, superseded). Harmless.
 
-**Owner's decisions made 15–16 Nov (already in cards):** chat history kept (CH1); search click plays + ＋ Queue (SR2);
-TikTok tile A; YouTube logo 20 px drawing (YTQ1); video-ended card centered (EC1); speed picker, phone speed stays in
-the rail (UI2); home screens = sunset + balloon (TH3); tables ⛶ / 🪟, frames may cover YouTube when the user puts them
-there (GW2, `CLAUDE.md` §7); voice + VPN = warning only, no TURN yet (VC3); CI numbering option 1; fewer CI jobs.
-
-**PDFs given to the owner** (scratchpad, not in the repo): the official-tasks and security guide (15 Nov) and the
-general status (16 Nov). Their content lives in `STATUS.md` (to-dos, decisions) and this file.
+**Room JS budget:** 145 kB guard; room CSS budget full (38 kB): new room styles go into lazy stylesheets.
