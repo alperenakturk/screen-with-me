@@ -1710,6 +1710,9 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   Passed: the owner, 17 Nov 2026 (via the Planner).
 
 ## Lane A handoff lines, archived 17 Nov 2026 (verbatim)
+- (UI4 PR, 17 Nov 2026; done in #536: the playlist harness reads the queue once it stops changing)
+  - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
+    CI, passed on re-run): make it deterministic when that harness is next touched.
 
 - [ ] Lane A (handoff 17 Nov, 00:00; the session stopped: no lane A card is ready without the owner):
   - [x] SH3, VC1, VC3, MSG1 (#509, v0.9.97.157) and CR2 (#512 + #520, v0.9.97.158) live, Done lines in

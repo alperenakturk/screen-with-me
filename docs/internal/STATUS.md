@@ -11,12 +11,9 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
   `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
   still missing (the owner's Releases page or a session allowed to push tags).
-  - [x] FC1 feed country: #539 (`claude/fc1-feed-country`) merged; hand test 27af (live spot-check: owner).
-  - [ ] RC1 session recap: #536 (`claude/rc1-session-recap`), merged after FC1 is live; server `recap-show` /
-    `recap-end` / `recap-ask` + lab `recap-gap`, e2e `recap.mjs`, harness `recap`, Lab `recap.show` / `recap.state`,
-    privacy page updated (EN + TR), hand test 27ae. After merge: deploy, live e2e, tag; RC1's Done line + archive.
-  - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
-    CI, passed on re-run): make it deterministic when that harness is next touched.
+  - [x] FC1 live (#539, v0.9.97.163); RC1 merged (#536); both cards archived in UI4's PR. Hand tests 27ae, 27af.
+  - [ ] UI4 polish: `claude/ui4-polish` (rail ⋯ More menu, no feed pill, Drive-In default, picker centred +
+    "Subscription services · Coming"); hand test 27ag. After merge: deploy, live e2e, tag, Done + archive.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
@@ -205,12 +202,11 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   phone it slides up from the bottom; Esc closes it.
 - [ ] 27ac. [FD1a, 0.9.97.160] With a friend: ♾ / ▶ opens the feed drawer on the right (from the bottom on a phone),
   the video stays visible; picking a tile only selects it, "▶ Start feed" starts it; you both see "Feed: … · N left ·
-  by …" above the video; in Room rules turn on "Only the host can start a feed": your friend can pause but not start
+  by …" in the Queue's feed row; in Room rules turn on "Only the host can start a feed": your friend can pause but not start
   or stop; when someone stops a feed the chat says who.
 - [ ] 27ad. [FD1b] A Short with a ♾ Shorts feed running: on a laptop the buttons beside the Short sit in three
-  groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", the feed pill sits above the Short (not on it), and
-  a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
-  shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More and the pill above the Short.
+  groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", and a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
+  shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More.
 - [ ] 27ae. [RC1] With a friend, watch together for 30 minutes: a ✨ with a gold dot appears beside the video. Your
   friend's ✨ offers "🙋 Ask the host"; you get one toast. Press "✨ Show to everyone": after 3-2-1 you both see the same
   scenes in the video's place (the video pauses), with a soft tune (🔇 turns it off). "✕ Close for me" closes it only
@@ -218,6 +214,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27af. [FC1] Start a ♾ Shorts feed with Japan: the Shorts are Japanese. Then 🔥 Popular + type "hay" + Japan:
   "Will play" says so, and the most watched Japanese Shorts about hay come. Try Turkey, US, Brazil, Germany the same
   way. Paste a video link instead of words: the kinds and the country grey out with a one-line reason.
+- [ ] 27ag. [UI4] In a private window the site opens in Drive-In; your usual window keeps its theme. No feed strip
+  above the video or a Short. In the Shorts view press ⋯ More beside the Short: a menu with Invite … Settings opens
+  (laptop, big screen); on a phone ⋯ opens its sheet. "What are we watching?" sits in the middle with a
+  "Subscription services · Coming" row at the bottom.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
