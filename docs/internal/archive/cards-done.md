@@ -2713,3 +2713,18 @@ Cards from `security-review-2.md` (2 Nov 2026, `main` at 0.9.93.5), most severe 
 Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 - Done: #509 (`claude/msg1-delete-message`, `{t:'chat-delete'}` / `chat-deleted`, `ChatOwners`; Test Lab
   `chat.delete`; e2e `chat-delete.mjs`, harness `chat-delete`), live in v0.9.97.157 (live e2e green).
+
+### CR2. YouTube Music playlists and albums into the queue (Research, 15 Nov 2026; owner's pick 17 Nov: "add it if easy"; lane A, after MSG1)
+- Why: `music.youtube.com/watch?v=` already plays (`media.ts` accepts the host), but playlist / album links don't;
+  SyncUp lists YouTube Music as a no-extension source (`research/competitors/no-extension-sources.md`).
+- Done when: a `music.youtube.com/playlist?list=` (and `browse/` album link where it resolves to a playlist id) adds its
+  videos to the queue through the Data API calls we already make (quota counted in the usage book); an
+  embedding-disabled track shows the existing "can't play here" state and is skipped; help says YouTube Music links
+  work; a Test Lab scenario adds a fixture playlist.
+- Tests: unit (link parsing in `media.ts`), e2e with a mocked playlist answer, the owner's real check.
+- Owner's pick: "add it if easy" (Planner chat, 17 Nov 2026).
+- Test Lab hook: `queue.playlist` (three fixture tracks, no YouTube call).
+- Progress (lane A, 16 Nov 2026): built on `claude/cr2-yt-playlists` (`/api/youtube/playlist`, `parsePlaylist`, harness
+  `playlist`); album `browse/` links don't resolve to a playlist id without scraping, so help points to Share → Copy link.
+- Done: #512 (`claude/cr2-yt-playlists`, `/api/youtube/playlist`, `parsePlaylist`; Test Lab `queue.playlist`; harness
+  `playlist`) and #520 (`claude/cr2-playlist-404`, a private / unknown list = no items), live in v0.9.97.158 (live e2e green).

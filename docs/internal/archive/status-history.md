@@ -1697,3 +1697,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
     shorts-start (no drop). Fixed on `claude/live-e2e-races` (reference.md CI "16 Nov 2026"). Then: green + tag,
     lane A's VC3 #502 (update from main) deploy + live e2e.
     Done: #505 merged, v0.9.97.155 green on the first attempt (SH3 + VC1 live); #504 merged; VC3 #502 merged, v0.9.97.156 green.
+
+## Owner's hand tests passed (moved from STATUS C)
+- [x] 27w. [VC1] On a YouTube video drag YouTube's own volume slider: it follows the mouse (the cloud can't test real
+  YouTube).
+  Passed: the owner, 17 Nov 2026 (via the Planner).
