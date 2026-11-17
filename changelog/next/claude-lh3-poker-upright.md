@@ -1,0 +1,2 @@
+- Last Heart fits a tablet held upright too: the table under the video keeps every text readable.
+- On a phone, Last Heart's pot shows the latest move in full and the shared cards are bigger.

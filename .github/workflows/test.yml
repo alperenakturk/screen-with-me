@@ -461,6 +461,7 @@ jobs:
         run: |
           node scripts/harness/games-scale/run.cjs http://localhost:8787
           GAMES=sea,seaPlay,seaSix,duel,duelPlay,duelSix,quiz,draw,chess,pokerPlay,pokerSix SIZES=tabland GW_LANGS=none LANGS=en node scripts/harness/games-sweep/run.cjs http://localhost:8787
+          GAMES=pokerPlay,pokerSix SIZES=tabup GW_LANGS=none LANGS=en node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
       - name: Snack Bar and Five Frames whole on a laptop and a sideways tablet (EN + TR)
         # 0.9.97.134 (B2): no text ends in "…" and the SNACK BAR sign is whole, idle and at its busiest.
@@ -521,7 +522,7 @@ jobs:
 
       # Card PROP: every game well proportioned in the video's place and the free window (laptop, desktop, tablet).
       - name: Game proportions
-        run: SIZES=laptop,desktop,tablet node scripts/harness/game-proportions/run.cjs http://localhost:8787
+        run: SIZES=laptop,desktop,tablet,upright node scripts/harness/game-proportions/run.cjs http://localhost:8787
 
       # Card CI3: the state matrix runs here, after the proportions (one runner instead of two; ≈ 11 min together).
       - name: Game windows in every state

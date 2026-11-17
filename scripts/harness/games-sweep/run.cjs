@@ -26,6 +26,8 @@ const SIZES = {
   small: devices['Galaxy S5'],
   // A sideways tablet (an iPad Air, 1180 × 820): the game sits in the video's place, beside the side panel.
   tabland: { ...devices['iPad Pro 11 landscape'], viewport: { width: 1180, height: 820 } },
+  // LH3: an upright tablet (820 × 1180): a table in the video's place gets a very short, wide box (≈ 714 × 349).
+  tabup: { ...devices['iPad Pro 11'], viewport: { width: 820, height: 1180 } },
 };
 // A table kind and, for the Classics, the board to put on it.
 const GAMES = {
