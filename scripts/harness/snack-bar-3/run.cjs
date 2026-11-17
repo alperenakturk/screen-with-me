@@ -115,15 +115,21 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   // SIDE340: in the narrow column beside the video (1366 laptop) three rows fit: the newest ones.
   const narrowFirst = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
   // 0.9.97.117: the narrow window now runs down the side panel to the message box, so it may be tall enough for all four.
-  const wantRows = narrowFirst ? [['soda', 'nachos', 'candy'], ['popcorn', 'soda', 'nachos', 'candy']] : [['popcorn', 'soda', 'nachos', 'candy']];
-  // GW4 CI (17 Nov 2026): read once, a slow runner caught the rows before the migrated save's next locked stand showed
-  // (["popcorn","soda","nachos"]): read until they settle, at most 4 s.
+  // GW4 CI (17 Nov 2026): CI's fonts leave room for three rows where a local run fits four. With three, QA2 (5) gives the
+  // locked "next" stand way first (the open ones stay buyable), so the three are popcorn, soda, nachos, and the "+1 more"
+  // line says candy comes with a bigger window (a 1366×600 window shows the same locally).
+  const wantRows = narrowFirst ? [['popcorn', 'soda', 'nachos'], ['popcorn', 'soda', 'nachos', 'candy']] : [['popcorn', 'soda', 'nachos', 'candy']];
+  // Read until the rows settle (the window still sizes itself), at most 4 s.
   let shown1 = await shownRows(page);
   for (let i = 0; i < 20 && !wantRows.some((w) => JSON.stringify(w) === JSON.stringify(shown1)); i++) {
     await wait(200);
     shown1 = await shownRows(page);
   }
   check(wantRows.some((w) => JSON.stringify(w) === JSON.stringify(shown1)), 'rows: the open stands and the next locked one', JSON.stringify(shown1));
+  if (shown1.length === 3) {
+    const moreLine = await page.evaluate(() => { const m = document.querySelector('#game-stage .sb-more'); return m && !m.hidden ? m.textContent : ''; });
+    check(/\+1\b/.test(moreLine), 'three rows: the "+1 more" line stands for the locked stand', moreLine);
+  }
 
   // Buy ×10 and Max.
   await mode(page, 10);
