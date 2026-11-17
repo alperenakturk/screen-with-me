@@ -4,7 +4,8 @@ _The owner's request (17 Nov 2026, via the Planner): a bigger, clearer picker fo
 category chips. Another product has one; **nothing here copies its look**: the colours, glyphs, layout and mascot are
 Sidelit's own (themes in `apps/web/src/styles.css`, logo / Glowbeam in `logo-sidelit.md`). It replaces today's ⠿
 popover (card SRC1, `ui/sources.ts`); it adds no new source. Sketches: `source-picker/a-computer.svg`,
-`source-picker/a-phone.svg` (option A, Night theme)._
+`source-picker/a-phone.svg` (option A, Night theme); `b-computer.svg`, `c-computer.svg` (options B and C, made by
+`source-picker-sketches.mjs`)._
 
 ## What goes in (all options)
 
@@ -94,6 +95,7 @@ Sketches: `source-picker/a-computer.svg`, `source-picker/a-phone.svg`.
 ### B. "Shelves"
 No chips: four labelled rows (Videos, Shorts, Music, From a link), each a row of wider, shorter tiles; Games is a small
 link at the bottom. Computer: rows of up to 4; phone: rows of 2–3, the "From a link" shelf last.
+Sketch: `source-picker/b-computer.svg`.
 ```
 Videos       [⌕ YouTube] [▶ Video feed] [⌕ Vimeo] [▷ Dailymotion·Coming]
 Shorts       [♾ Shorts feed] [♪ TikTok]
@@ -108,6 +110,7 @@ From a link  [🔗 Paste a link] [🌐 Search the web] [🧩 Any film page]
 ### C. "Bigger ⠿ popover"
 Keep SRC1's popover under the box, widen it to ~460 px with a segmented chip bar and 2-column list rows (glyph, name,
 line). Phone: the same rows in the Search tab.
+Sketch: `source-picker/c-computer.svg`.
 ```
 [All|Videos|Shorts|Music|Link]
 ⌕ YouTube  · Search videos   ✓ │ ♾ Shorts feed · Endless Shorts
