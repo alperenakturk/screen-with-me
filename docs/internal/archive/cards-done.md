@@ -2943,5 +2943,5 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done when: games-sweep `tabland` xox passes and runs in CI's tabland row; Test Lab hook `games.open.xox` opens it;
   owner's hand test on a sideways tablet.
 - Owner's pick: the Planner's approval (17 Nov 2026).
-- Done: PR (`claude/xo1-classics-board`, Game Studio, 17 Nov 2026): waiting note and "Just watch" on one row in a
+- Done: #548 (`claude/xo1-classics-board`, Game Studio, 17 Nov 2026): waiting note and "Just watch" on one row in a
   not-wide video place (`classics.css`); CI tabland games-sweep row includes xox.
