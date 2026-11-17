@@ -67,7 +67,15 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   },
   'sources.state': {
     title: { en: 'Search sources: the chosen one and the last search', tr: 'Arama kaynakları: seçili olan ve son arama' },
-    help: { en: 'Writes the ⠿ source (YouTube, Vimeo or the web), whether Vimeo search is on at the server and the last search into the log.', tr: '⠿ kaynağını (YouTube, Vimeo ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.', },
+    help: { en: 'Writes the ⠿ source (YouTube, Vimeo, podcasts or the web), whether Vimeo search is on at the server and the last search into the log.', tr: '⠿ kaynağını (YouTube, Vimeo, podcast ya da web), Vimeo aramasının sunucuda açık olup olmadığını ve son aramayı kayda yazar.', },
+  },
+  'sources.picker': {
+    title: { en: '"What are we watching?": where it sits and what it shows', tr: '"Ne izliyoruz?": nerede duruyor, ne gösteriyor' },
+    help: { en: 'Writes whether the big source picker is open, its place (the video\'s, the side panel\'s or a phone sheet), the chip, the tiles shown, the source in use, its box, whether it fits on the screen without a scrollbar and the last tile pressed into the log.', tr: 'Büyük kaynak seçicinin açık olup olmadığını, yerini (videonun, yan panelin ya da telefonda alttan açılan pencere), çipi, görünen kutucukları, kullanılan kaynağı, kutusunu, kaydırma çubuğu olmadan ekrana sığıp sığmadığını ve son basılan kutucuğu kayda yazar.' },
+  },
+  'sources.open': {
+    title: { en: 'Open "What are we watching?"', tr: '"Ne izliyoruz?" penceresini aç' },
+    help: { en: 'Opens the big source picker where ⠿ would open it (the video\'s place, the side panel\'s place while YouTube plays, a sheet on a phone).', tr: 'Büyük kaynak seçiciyi ⠿ düğmesinin açacağı yerde açar (videonun yeri, YouTube oynarken yan panelin yeri, telefonda alttan açılan pencere).' },
   },
   'stream.view': {
     title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },

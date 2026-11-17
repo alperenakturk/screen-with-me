@@ -14,7 +14,11 @@ One handoff per lane or role; each session updates only its own lines and delete
     `claude/cr2-yt-playlists`, `claude/cr2-playlist-404` merged. Tags: `v0.9.97.141` back-filled by TAG_TOKEN;
     `v0.9.97.113` (8ce4385) still missing (a tag push from a session was refused: owner's Releases page or a session
     allowed to push tags).
-  - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID; FD1 / RC1 after Design's options and his pick.
+  - [ ] Lane A (session 17 Nov, card group SRC2 → FD1 → RC1, all owner's pick A):
+    - [ ] SRC2 big source picker: branch `claude/src2-source-picker-grid`, PR open → merge, deploy, live e2e, Done.
+    - [ ] FD1 feed start drawer (+ host rule on the server, optional field, e2e).
+    - [ ] RC1 session recap.
+  - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
     room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale

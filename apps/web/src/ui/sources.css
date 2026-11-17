@@ -1,72 +1,292 @@
-/* Card SRC1: the ⠿ Sources picker's tiles. Loaded with its lazy chunk (ui/sources-pop.ts) on the first open, so the
-   room page's CSS stays within its budget. */
-.sources-pop:not([hidden]) {
-  position: absolute;
-  z-index: 41;
-  top: 100%;
-  right: 0;
-  margin-top: 6px;
-  width: min(380px, calc(100vw - 32px));
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+/* Card SRC2: "What are we watching?", the big source picker (option A, design/source-picker.md). Loaded with its lazy
+   chunk (ui/sources-pop.ts) on the first open, so the room page's CSS stays within its budget. It covers the video's
+   place (#theater), or the side panel's place while a YouTube video shows (nothing of ours over the YouTube player),
+   or stands as a bottom sheet on a phone. Every size fits without a scrollbar: the tiles shrink, the line under the
+   name goes first. */
+/* (The room's own layout makes the side panel `position: static`; the picker needs it as its frame.) */
+.room:not(.shorts):not(.side-hidden) > .side.srcp-host,
+.srcp-host {
+  position: relative;
+  top: auto;
 }
 
-.sources-title {
-  grid-column: 1 / -1;
+.srcp:not([hidden]) {
+  position: absolute;
+  z-index: 41;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+  overflow: hidden;
+}
+
+/* In the side panel's place: as tall as the panel, at least as tall as its tiles need. */
+.srcp[data-place='side']:not([hidden]) {
+  bottom: auto;
+  min-height: 100%;
+}
+
+.srcp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding-right: 48px;
+}
+
+.srcp-mascot {
+  --mascot-size: 40px;
+  flex: none;
   margin: 0;
 }
 
+.srcp-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.srcp-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.srcp-chips {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: none;
+}
+
+.srcp-chip {
+  flex: none;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: 600 14px/1 inherit;
+  cursor: pointer;
+}
+
+.srcp-chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-2));
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.srcp-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Always the rows of "All", so a chip never changes the picker's size. */
+  grid-template-rows: repeat(3, minmax(56px, 118px));
+  align-content: start;
+  gap: 10px;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.srcp[data-place='side'] .srcp-chips {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.srcp[data-place='side'] .srcp-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(72px, 104px));
+  gap: 8px;
+}
+
+.srcp-cell {
+  display: flex;
+  min-height: 0;
+}
+
 .sources-tile {
+  position: relative;
+  container-type: size;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 88px;
-  padding: 8px 4px;
+  min-height: 44px;
+  padding: 6px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--surface-2);
   color: var(--text);
-  font: 600 14px/1.25 inherit;
+  font: inherit;
+  text-align: center;
   cursor: pointer;
+  overflow: hidden;
 }
 
-.sources-tile[aria-checked='true'] {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 20%, var(--surface-2));
+@media (hover: hover) {
+  .sources-tile:hover {
+    border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  }
 }
 
-.sources-icon {
-  font-size: 22px;
+.sources-tile[aria-pressed='true'] {
+  border: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
 }
 
-.sources-note {
-  font-weight: 400;
+.srcp-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  font-size: 19px;
+  line-height: 1;
 }
 
-.sources-tile.off > :not(.sources-note) {
+.srcp-name {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.srcp-line {
+  font-size: 12.5px;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+/* The search lens is a small character in most fonts: drawn bigger. */
+.srcp-badge[data-glyph='lens'] {
+  font-size: 30px;
+}
+
+/* The pick: a ✓ glyph (not colour alone). Coming: a word under the name. */
+.srcp-check {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+}
+
+.srcp-soon {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.sources-tile.off .srcp-badge,
+.sources-tile.off .srcp-name {
   opacity: 0.6;
 }
 
-/* The phone's 🔍 Search tab: the tiles sit in the panel's flow under the box. */
-.ph-panel #media-form .sources-pop {
-  position: static;
-  flex: 1 1 100%;
-  width: auto;
-  margin: 0;
-  box-shadow: none;
+/* Small tiles: the line goes, then the badge shrinks (the line stays in the tile's name for screen readers). */
+@container (max-height: 96px) {
+  .srcp-line {
+    display: none;
+  }
 }
 
-/* Card SR2: the ♪ TikTok tile is a door, not a pick; its note says so. */
-.sources-tiktok .sources-icon {
-  font-weight: 700;
+@container (max-height: 66px) {
+  .srcp-badge {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+    border-width: 1.5px;
+  }
+
+  .srcp-name {
+    font-size: 13px;
+  }
+}
+
+.srcp-note {
+  flex: none;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 1.2em;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.srcp-note:empty {
+  display: none;
+}
+
+/* Phones: a bottom sheet over the room, standing on the tab bar. 3 a row, the name only. */
+.srcp[data-place='sheet']:not([hidden]) {
+  position: fixed;
+  z-index: 60;
+  inset: auto 0 0;
+  max-height: calc(100dvh - 56px);
+  padding: 12px 12px 14px;
+  border-radius: 18px 18px 0 0;
+  border-bottom: 0;
+}
+
+.srcp[data-place='sheet'] .srcp-title {
+  font-size: 18px;
+}
+
+.srcp[data-place='sheet'] .srcp-chip {
+  flex: 1 1 auto;
+  min-height: 44px;
+  padding: 0 8px;
+}
+
+.srcp[data-place='sheet'] .srcp-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(64px, 104px));
+  gap: 8px;
+}
+
+.srcp[data-place='sheet'] .srcp-line {
+  display: none;
+}
+
+/* A sideways phone: 6 a row, two rows. */
+html.sideways .srcp[data-place='sheet'] .srcp-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(56px, 1fr));
+}
+
+html.sideways .srcp[data-place='sheet']:not([hidden]) {
+  top: 8px;
+}
+
+html.sideways .srcp[data-place='sheet'] .srcp-mascot {
+  display: none;
 }
 
 /* "📋 Paste and play" after coming back from TikTok: big and plain, under the link box. */
@@ -80,13 +300,13 @@
   font-size: 16px;
 }
 
-/* Card SR2: four tiles on a phone stay above the tab bar (shorter tiles, the note under the name). */
-.ph-panel #media-form .sources-tile {
-  min-height: 0;
-  padding: 6px 4px;
-  gap: 2px;
+/* The side panel is narrow: smaller names, long words may break. */
+.srcp[data-place='side'] .sources-tile {
+  padding: 4px 2px;
 }
 
-.ph-panel #media-form .sources-icon {
-  font-size: 18px;
+.srcp[data-place='side'] .srcp-name {
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
 }

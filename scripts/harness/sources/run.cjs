@@ -1,5 +1,6 @@
 // Card SRC1: the ⠿ Sources picker beside the link box, on a computer (English) and on a phone's 🔍 Search tab
-// (Turkish). Card SR2: a result row plays on a tap, its "＋ Queue" button queues without playing (the list stays open),
+// (Turkish). Card SRC2: ⠿ opens "What are we watching?" (12 big tiles, chips, Esc, arrow keys; the video's place, the
+// side panel's place while YouTube plays, a sheet on a phone), the empty room's "🔍 Search a video" opens it too. Card SR2: a result row plays on a tap, its "＋ Queue" button queues without playing (the list stays open),
 // and the ♪ TikTok tile opens TikTok, then "📋 Paste and play" plays the copied link. Vimeo's answers are stubbed in the browser (the real route needs the VIMEO_TOKEN secret; without it the
 // server says "off", which the last part checks), and the web search's tab never leaves this machine.
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
@@ -62,21 +63,62 @@ const VIMEO_ITEMS = [
       return b ? { name: b.getAttribute('aria-label'), w: r.width, h: r.height, near: Math.abs(r.top - box.top) < 4 || r.top >= box.bottom - 2, onScreen: r.left >= 0 && r.right <= innerWidth } : null;
     });
     check(!!button && button.w >= (phone ? 44 : 24) && button.h >= (phone ? 44 : 24) && button.near && button.onScreen, `${label}: ⠿ sits beside the search box, big enough`, JSON.stringify(button));
+    const picker = async () => JSON.parse((await page.evaluate(async () => (await window.__swmLab.run('sources.picker')).text)).replace(/^[^{]*/, ''));
+    const ALL = 'youtube,shorts,videos,tiktok,vimeo,podcasts,ytmusic,dailymotion,link,web,extension,games';
+    // The empty room's "🔍 Search a video" opens the picker (on a phone after the Search tab shows).
+    if (phone) await page.click('#ph-tab-room');
+    await page.click(phone ? '#empty-search' : '#empty-sources');
+    await page.waitForSelector('#sources-pop:not([hidden]) .sources-tile');
+    const fromEmpty = await picker();
+    check(fromEmpty.open && fromEmpty.placement === (phone ? 'sheet' : 'video'), `${label}: the empty room's "🔍 Search a video" opens the picker (${phone ? 'a sheet' : "the video's place"})`, JSON.stringify(fromEmpty));
+    await page.keyboard.press('Escape');
+    await showSearch();
     await page.click('#media-sources');
     await page.waitForSelector('#sources-pop:not([hidden]) .sources-tile');
-    const pop = await page.evaluate(() => {
+    const pop = await picker();
+    const extra = await page.evaluate(() => {
       const p = document.getElementById('sources-pop');
       const r = p.getBoundingClientRect();
-      const tiles = [...p.querySelectorAll('.sources-tile')].map((t) => ({ source: t.dataset.source, checked: t.getAttribute('aria-checked'), text: t.textContent, h: t.getBoundingClientRect().height }));
-      // Above the phone's tab bar (or the window's bottom).
       const bar = document.querySelector('.ph-tabs')?.getBoundingClientRect();
       const floor = bar && bar.height > 0 ? bar.top : innerHeight;
-      return { tiles, fits: r.left >= 0 && r.right <= innerWidth + 1 && r.top >= 0 && r.bottom <= floor + 1, bottom: Math.round(r.bottom), floor: Math.round(floor), sideways: document.documentElement.scrollWidth > innerWidth + 1, overflow: p.scrollHeight > p.clientHeight + 1 };
+      return { aboveBar: r.bottom <= floor + 1, sideways: document.documentElement.scrollWidth > innerWidth + 1, focused: document.activeElement?.dataset.source, pressed: [...p.querySelectorAll('[aria-pressed="true"]')].map((b) => b.dataset.source ?? b.dataset.chip), web: p.querySelector('[data-source="web"]').textContent, logos: p.querySelectorAll('img, svg').length };
     });
     await page.screenshot({ path: `${OUT}/sources-${label}-${lang}.png` });
-    check(pop.tiles.map((t) => t.source).join() === 'youtube,vimeo,web,tiktok' && pop.tiles[0].checked === 'true' && pop.tiles.every((t) => t.h >= 44) && pop.fits && !pop.sideways && !pop.overflow, `${label}: four tiles (YouTube picked, ♪ TikTok last), each ≥ 44 px, on screen`, JSON.stringify(pop));
+    check(pop.tiles.join() === ALL && pop.onScreen && !pop.scrolls && extra.aboveBar && !extra.sideways && pop.smallestTile >= (phone ? 56 : 72) && pop.cols === (phone ? 3 : 4), `${label}: "What are we watching?" shows 12 big tiles, ${phone ? 3 : 4} a row, on screen, no scrollbar`, JSON.stringify({ pop, extra }));
+    check(extra.focused === 'youtube' && extra.pressed.join() === 'all,youtube' && extra.logos === 0, `${label}: YouTube is the source in use (✓, focused), chip "All", no brand logos`, JSON.stringify(extra));
     const words = lang === 'tr' ? /Web’de ara/ : /Search the web/;
-    check(words.test(pop.tiles[2].text), `${label}: the tiles are in ${lang === 'tr' ? 'Turkish' : 'English'}`, pop.tiles[2].text);
+    check(words.test(extra.web), `${label}: the tiles are in ${lang === 'tr' ? 'Turkish' : 'English'}`, extra.web);
+    // Chips filter; Games shows under All only.
+    await page.click('.srcp-chip[data-chip="music"]');
+    const music = await picker();
+    await page.click('.srcp-chip[data-chip="shorts"]');
+    const shorts = await picker();
+    check(music.tiles.join() === 'podcasts,ytmusic' && shorts.tiles.join() === 'shorts,tiktok' && music.chip === 'music', `${label}: the chips filter the tiles (Music, Shorts)`, `${music.tiles} | ${shorts.tiles}`);
+    await page.click('.srcp-chip[data-chip="all"]');
+    // A Coming tile explains and keeps the picker open.
+    await page.click('.sources-tile[data-source="dailymotion"]');
+    const soon = await picker();
+    check(soon.open && /Dailymotion/.test(soon.note), `${label}: a Coming tile says so and the picker stays`, JSON.stringify(soon.note));
+    // Arrow keys move in 2-D; Esc closes and gives the focus back to ⠿.
+    await page.focus('.sources-tile[data-source="youtube"]');
+    await page.keyboard.press('ArrowDown');
+    const down = await page.evaluate(() => document.activeElement?.dataset.source);
+    await page.keyboard.press('ArrowRight');
+    const right = await page.evaluate(() => document.activeElement?.dataset.source);
+    await page.keyboard.press('Escape');
+    const esc = await page.evaluate(() => ({ hidden: document.getElementById('sources-pop').hidden, focus: document.activeElement?.id, expanded: document.getElementById('media-sources').getAttribute('aria-expanded') }));
+    check(down === (phone ? 'tiktok' : 'vimeo') && right === (phone ? 'vimeo' : 'podcasts') && esc.hidden && esc.focus === 'media-sources' && esc.expanded === 'false', `${label}: arrow keys move in 2-D, Esc closes and focus goes back to ⠿`, JSON.stringify({ down, right, esc }));
+    // An action tile: ▶ Video feed opens the feed window on its tab.
+    await page.click('#media-sources');
+    await page.click('.sources-tile[data-source="videos"]');
+    const feedOpen = await page.waitForSelector('#feed-window', { timeout: 5000 }).then(() => true).catch(() => false);
+    check(feedOpen && (await page.isHidden('#sources-pop')), `${label}: ▶ Video feed closes the picker and opens the feed window`);
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('#feed-window', { state: 'detached', timeout: 3000 }).catch(() => {});
+    if (await page.isVisible('#feed-close').catch(() => false)) await page.click('#feed-close');
+    await showSearch();
+    await page.click('#media-sources');
+    await page.waitForSelector('#sources-pop:not([hidden])');
 
     // 2. Vimeo: the pick sticks (also after a reload); words search Vimeo; a result plays in our Vimeo player.
     await page.click('.sources-tile[data-source="vimeo"]');
@@ -154,6 +196,7 @@ const VIMEO_ITEMS = [
     await showSearch();
     await page.click('#media-sources');
     await page.waitForFunction(() => document.querySelector('.sources-tile[data-source="vimeo"]')?.classList.contains('off'), null, { timeout: 5000 }).catch(() => {});
+    await page.screenshot({ path: `${OUT}/sources-${label}-${lang}-vimeo-off.png` });
     const off = await page.evaluate(() => document.querySelector('.sources-tile[data-source="vimeo"]')?.textContent ?? '');
     check(lang === 'tr' ? /Henüz kullanılamıyor/.test(off) : /Not available yet/.test(off), `${label}: no Vimeo secret → the tile says "not available yet"`, off);
     await page.click('.sources-tile[data-source="vimeo"]');
@@ -166,6 +209,31 @@ const VIMEO_ITEMS = [
     await page.click('#media-form button[value="load"]');
     const link = await page.waitForFunction(() => [...document.querySelectorAll('iframe')].some((f) => f.src.includes('player.vimeo.com/video/22439234')), null, { timeout: 10000 }).then(() => true).catch(() => false);
     check(link, `${label}: a pasted link still plays`);
+    // A Vimeo video plays: the picker may take the video's place (computer). A YouTube video: the side panel's place.
+    if (!phone) {
+      await page.click('#media-sources');
+      await page.waitForSelector('#sources-pop:not([hidden])');
+      const overVimeo = await picker();
+      await page.keyboard.press('Escape');
+      await page.fill('#media-input', 'https://www.youtube.com/watch?v=M7lc1UVf-VE');
+      await page.click('#media-form button[value="load"]');
+      await page.waitForFunction(() => document.getElementById('theater')?.classList.contains('yt-rail'), null, { timeout: 8000 }).catch(() => {});
+      await page.click('#media-sources');
+      await page.waitForSelector('#sources-pop:not([hidden])');
+      const yt = await picker();
+      const covers = await page.evaluate(() => {
+        const a = document.getElementById('sources-pop').getBoundingClientRect();
+        const b = document.getElementById('player').getBoundingClientRect();
+        return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      });
+      await page.screenshot({ path: `${OUT}/sources-${label}-${lang}-youtube.png` });
+      check(overVimeo.placement === 'video' && yt.placement === 'side' && !covers && yt.cols === 3 && !yt.scrolls && yt.onScreen, `${label}: over a Vimeo video in its place; with YouTube in the side panel's place, never over the player`, JSON.stringify({ over: overVimeo.placement, yt, covers }));
+      // 🎮 Games: closes and opens the games hall.
+      await page.click('.sources-tile[data-source="games"]');
+      const hall = await page.waitForSelector('#game-menu:not([hidden])', { timeout: 5000 }).then(() => true).catch(() => false);
+      check(hall && (await page.isHidden('#sources-pop')), `${label}: 🎮 Games opens the games hall`);
+      await page.keyboard.press('Escape');
+    }
     // 6. ♪ TikTok (last: the TikTok plays in the Shorts view, which hides the link box): one tab on TikTok's search for the words; back in the room "📋 Paste and play" plays the copied link.
     await showSearch();
     await page.fill('#media-input', 'dance');
@@ -206,6 +274,6 @@ const VIMEO_ITEMS = [
   await run('phone', { ...devices['Pixel 7'] }, 'tr', true);
 
   await browser.close();
-  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ The ⠿ Sources picker works');
+  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ The ⠿ Sources picker ("What are we watching?") works');
   process.exit(fails ? 1 : 0);
 })();

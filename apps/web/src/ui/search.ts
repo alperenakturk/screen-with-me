@@ -179,6 +179,29 @@ export function createSearch(
     );
   }
 
+  /** Card SRC2: the same words searched as podcasts when ⠿ points at 🎙 Podcasts (the list is P2's lazy chunk). */
+  async function podcasts(raw: string): Promise<void> {
+    const query = normalizeQuery(raw);
+    if (query === null || !podcast) return;
+    lastQuery = raw.trim();
+    const mine = ++current;
+    await styles();
+    const chunk = await loadChunk(() => import('./podcasts.ts'));
+    if (mine !== current || !chunk) return;
+    const x = el('button', { type: 'button', class: 'icon-btn search-close', title: t('searchClose'), 'aria-label': t('searchClose') }, '✕');
+    x.addEventListener('click', () => {
+      close();
+      input.focus();
+    });
+    chunk.showPodcasts(panel, query, x, (media, title, mode) => {
+      if (mode === 'load') {
+        close();
+        input.value = '';
+      }
+      podcast(media, title, mode);
+    });
+  }
+
   // Arrow keys move between the input and the results, Esc closes (the box keeps its words).
   function buttons(): HTMLButtonElement[] {
     return [...panel.querySelectorAll<HTMLButtonElement>('.search-main')];
@@ -213,5 +236,5 @@ export function createSearch(
     if (!panel.hidden && !form.contains(event.target as Node)) close();
   });
 
-  return { search, vimeo, close };
+  return { search, vimeo, podcasts, close };
 }
