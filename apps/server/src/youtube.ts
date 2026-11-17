@@ -21,6 +21,8 @@ import {
   shortsOnly,
   videosOnly,
   POOL_REGIONS,
+  feedSearchParams,
+  type PoolKind,
   type SearchAnswer,
   type SearchResult,
   WORDS_BODY_MAX,
@@ -118,12 +120,21 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
   if (rawPage !== null && page === null) return new Response('Bad page', { status: 400 });
   // Card SH2: "same topic, other country" (a Discover region), and the ▶ video feed (`long=1`: no Shorts).
   const rawRegion = url.searchParams.get('region');
-  const region = rawRegion !== null && (POOL_REGIONS as readonly string[]).includes(rawRegion) ? rawRegion : null;
+  // Card FC1: `auto` is the connection's country (never stored), as for the pools; the feed's words follow it.
+  const region =
+    rawRegion === 'auto'
+      ? poolRegion('auto', (request as Request & { cf?: { country?: unknown } }).cf?.country, lang)
+      : rawRegion !== null && (POOL_REGIONS as readonly string[]).includes(rawRegion)
+        ? rawRegion
+        : null;
+  // Card FC1: a kind chip with the words (Music + "hay"): its category, or Popular = those words by views.
+  const rawCat = url.searchParams.get('cat');
+  const cat = isPoolKind(rawCat) ? rawCat : null;
   const long = !short && url.searchParams.get('long') === '1';
   if (!env.YOUTUBE_API_KEY) return json({ error: 'off' });
 
   const cache = caches.default;
-  const resultKey = cacheKey(url.origin, `yt-search2?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${long ? '&long=1' : ''}${region ? `&region=${region}` : ''}${page ? `&page=${page}` : ''}`);
+  const resultKey = cacheKey(url.origin, `yt-search3?hl=${lang}&q=${encodeURIComponent(query)}${short ? '&short=1' : ''}${long ? '&long=1' : ''}${region ? `&region=${region}` : ''}${cat ? `&cat=${cat}` : ''}${page ? `&page=${page}` : ''}`);
   const quotaKey = cacheKey(url.origin, 'yt-quota');
   const cached = await cache.match(resultKey);
   if (cached) return markHit(cached);
@@ -136,13 +147,13 @@ export async function youtubeSearch(request: Request, url: URL, env: Env, ipKey:
 
   const api: ApiKey = { key: env.YOUTUBE_API_KEY, calls: {} };
   try {
-    return await searchWith(api, query, lang, short, page, cache, resultKey, quotaKey, region, long);
+    return await searchWith(api, query, lang, short, page, cache, resultKey, quotaKey, region, long, cat);
   } finally {
     await recordUsage(env, 'search', api.calls);
   }
 }
 
-async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: boolean, page: string | null, cache: Cache, resultKey: Request, quotaKey: Request, region: string | null = null, long = false): Promise<Response> {
+async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: boolean, page: string | null, cache: Cache, resultKey: Request, quotaKey: Request, region: string | null = null, long = false, cat: PoolKind | null = null): Promise<Response> {
   const search = await callYouTube(
     'search',
     {
@@ -152,10 +163,8 @@ async function searchWith(api: ApiKey, query: string, lang: 'tr' | 'en', short: 
       videoEmbeddable: 'true',
       safeSearch: 'moderate',
       maxResults: String(short || long ? FEED_RESULTS : SEARCH_RESULTS),
-      relevanceLanguage: lang,
-      q: short ? `${query} #shorts` : query,
-      ...(short ? { videoDuration: 'short' } : {}),
-      ...(region ? { regionCode: region } : {}),
+      // Card FC1: words, country (with its language) and a kind chip in one query.
+      ...feedSearchParams({ shape: short ? 'shorts' : long ? 'videos' : 'search', words: query, region: region ?? 'world', pageLang: lang, pool: cat }),
       ...(page ? { pageToken: page } : {}),
       fields: 'nextPageToken,items(id/videoId,snippet(title,channelTitle,liveBroadcastContent))',
     },
@@ -291,17 +300,12 @@ export async function youtubePool(request: Request, url: URL, env: Env, ipKey: (
   if (!isPoolRegionChoice(choice)) return new Response('Bad region', { status: 400 });
   const region = poolRegion(choice, (request as Request & { cf?: { country?: unknown } }).cf?.country, lang);
   const { day, publishedAfter } = poolWindow(Date.now());
-  const category = POOL_CATEGORY[kind];
-  return cached(request, url, env, ipKey, 'pool', EXPECTED_UNITS.pool, `yt-pool2?kind=${kind}&hl=${lang}&region=${region}&day=${day}${page ? `&page=${page}` : ''}`, (key) =>
+  return cached(request, url, env, ipKey, 'pool', EXPECTED_UNITS.pool, `yt-pool3?kind=${kind}&hl=${lang}&region=${region}&day=${day}${page ? `&page=${page}` : ''}`, (key) =>
     searchShorts(
       {
-        q: '#shorts',
-        order: 'viewCount',
-        publishedAfter,
-        ...(region === 'world' ? {} : { regionCode: region }),
-        relevanceLanguage: lang,
+        // Card FC1: the country's own language, not the page's (regionCode alone gave the world's top Shorts).
+        ...feedSearchParams({ shape: 'shorts', region, pageLang: lang, pool: kind, publishedAfter }),
         safeSearch: 'strict',
-        ...(category ? { videoCategoryId: category } : {}),
         ...(page ? { pageToken: page } : {}),
       },
       key,
@@ -523,7 +527,19 @@ export async function youtubeChart(request: Request, url: URL, env: Env, ipKey: 
       },
       key,
     );
-    if (!chart.ok) return chart;
+    if (!chart.ok) {
+      // Card FC1: YouTube has no "most popular" chart for some kinds in some countries (Comedy or Pets & Animals,
+      // answered with 400 / 404): that kind's most viewed videos of the last week in that country, by search instead
+      // (100 units, cached for the hour like the chart). Never a quota answer: that one is passed on.
+      if (chart.quota || !category) return chart;
+      const week = new Date(Date.now() - 7 * 86_400_000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+      return searchShorts(
+        { ...feedSearchParams({ shape: 'videos', region, pageLang: lang, pool: kind, publishedAfter: week }), videoDuration: 'medium', safeSearch: 'moderate', ...(page ? { pageToken: page } : {}) },
+        key,
+        FEED_RESULTS,
+        videosOnly,
+      );
+    }
     const items = videosOnly(parseVideoItems(chart.body));
     const next = cleanPageToken((chart.body as { nextPageToken?: unknown } | null)?.nextPageToken);
     return next ? { items, next } : { items };

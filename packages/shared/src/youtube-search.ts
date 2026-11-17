@@ -277,6 +277,58 @@ export function isPoolRegionChoice(value: unknown): value is PoolRegionChoice {
 }
 
 /**
+ * Card FC1: a country's main YouTube language. On `search.list`, `regionCode` only means "viewable in that country", so
+ * a Japan feed with the page's language (`tr` / `en`) as `relevanceLanguage` was the world's most watched Shorts (often
+ * Indian ones). The country's own language is what makes the answer that country's videos. Unknown countries (an
+ * `auto` country outside this list) keep the page's language.
+ */
+export const REGION_LANGUAGE: Record<string, string> = {
+  US: 'en', GB: 'en', CA: 'en', AU: 'en', NZ: 'en', IE: 'en', ZA: 'en', NG: 'en', KE: 'en', SG: 'en', PH: 'en',
+  IN: 'hi', PK: 'ur', BD: 'bn', DE: 'de', AT: 'de', CH: 'de', FR: 'fr', BE: 'fr', ES: 'es', MX: 'es', AR: 'es',
+  CO: 'es', CL: 'es', PE: 'es', BR: 'pt', PT: 'pt', IT: 'it', NL: 'nl', PL: 'pl', RU: 'ru', UA: 'uk', TR: 'tr',
+  JP: 'ja', KR: 'ko', TW: 'zh-Hant', HK: 'zh-Hant', CN: 'zh-Hans', VN: 'vi', TH: 'th', ID: 'id', MY: 'ms', SA: 'ar',
+  AE: 'ar', EG: 'ar', MA: 'ar', IL: 'he', IR: 'fa', GR: 'el', SE: 'sv', NO: 'no', DK: 'da', FI: 'fi', CZ: 'cs',
+  RO: 'ro', HU: 'hu', AZ: 'az',
+};
+
+export function regionLanguage(region: string, pageLang: 'en' | 'tr'): string {
+  return REGION_LANGUAGE[region] ?? pageLang;
+}
+
+/** What a feed asks YouTube for: kind, words, country (resolved: a code or `world`) and a kind chip, combined. */
+export interface FeedQuery {
+  /** `shorts` (under a minute), `videos` (any length, Shorts dropped later) or `search` (the link box: no filter). */
+  shape: 'shorts' | 'videos' | 'search';
+  words?: string | null;
+  region: string;
+  pageLang: 'en' | 'tr';
+  pool?: PoolKind | null;
+  /** Only the most watched of a recent window (the no-words pool). */
+  publishedAfter?: string;
+}
+
+/**
+ * Card FC1: the `search.list` selection for a feed, every pick combined in one query: words (`q`), the country
+ * (`regionCode` + its language as `relevanceLanguage`), a kind chip (`videoCategoryId`; Popular = no category, ordered
+ * by views) and the shape. Without words a kind is ordered by views (a chart of that kind); with words a category keeps
+ * YouTube's relevance order and Popular sorts those words' videos by views.
+ */
+export function feedSearchParams(query: FeedQuery): Record<string, string> {
+  const words = query.words?.trim() || null;
+  const out: Record<string, string> = {
+    q: query.shape === 'shorts' ? (words ? `${words} #shorts` : '#shorts') : (words ?? ''),
+    relevanceLanguage: query.region === 'world' ? query.pageLang : regionLanguage(query.region, query.pageLang),
+  };
+  if (query.region !== 'world') out.regionCode = query.region;
+  if (query.shape === 'shorts') out.videoDuration = 'short';
+  const category = query.pool ? POOL_CATEGORY[query.pool] : null;
+  if (category) out.videoCategoryId = category;
+  if (!words || query.pool === 'popular') out.order = 'viewCount';
+  if (query.publishedAfter) out.publishedAfter = query.publishedAfter;
+  return out;
+}
+
+/**
  * The region a pool is fetched for: an explicit choice, or for `auto` the connection's country when it is a plain
  * two-letter code (YouTube takes any ISO 3166-1 alpha-2 code), else the language's old default (en → US, tr → TR).
  * `world` means no `regionCode`.

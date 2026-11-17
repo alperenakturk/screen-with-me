@@ -34,6 +34,8 @@ const TEXT = {
     'pool.animals': 'Cats, dogs, more',
     'pool.sports': 'Goals, highlights',
     own: '🔤 Or your own: words, a video or @channel',
+    ownWith: '🔤 Add words (optional)',
+    noCombine: 'A video or a channel plays as it is: the kind and the country don\'t apply.',
     ownTopic: 'Topic: {x}',
     ownLike: 'Videos like this one',
     ownChannel: 'Channel: {x}',
@@ -91,6 +93,8 @@ const TEXT = {
     'pool.animals': 'Kediler, köpekler, daha fazlası',
     'pool.sports': 'Goller, özetler',
     own: '🔤 Ya da yaz: kelime, video ya da @kanal',
+    ownWith: '🔤 Kelime ekle (isteğe bağlı)',
+    noCombine: 'Bir video ya da kanal olduğu gibi oynar: tür ve ülke uygulanmaz.',
     ownTopic: 'Konu: {x}',
     ownLike: 'Bu videoya benzerler',
     ownChannel: 'Kanal: {x}',
@@ -149,7 +153,7 @@ export interface FeedWindowOptions {
 }
 
 /** What is picked in the drawer (nothing starts until "▶ Start feed"). */
-type Choice = { pool: PoolKind } | { own: string } | null;
+type Choice = { pool: PoolKind | null; own: string };
 
 let openNow: { close: () => void; render: () => void; state: () => Record<string, unknown>; pick: (kind: FeedKind, pool: PoolKind) => void; start: () => void } | null = null;
 
@@ -176,7 +180,8 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
   const tx = TEXT[lang() === 'tr' ? 'tr' : 'en'];
   const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   let kind = opts.kind;
-  let pick: Choice = null;
+  // Card FC1: a kind chip and the own words are picked independently and combine (Japan + "hay" + 🎵 Music).
+  let pick: Choice = { pool: null, own: '' };
   let own = '';
   let order: ChannelOrder = 'newest';
   let region = opts.region();
@@ -203,16 +208,22 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
   };
   const kindName = (k: FeedKind) => (k === 'shorts' ? tx.shorts : tx.videos);
 
+  /** The own words read as a video or a channel: no kind or country applies (greyed out with a reason). */
+  function ownIsFixed(): boolean {
+    const read = pick.own ? readInput(pick.own, kind, order, tx) : null;
+    return !!read && read.source.kind !== 'topic';
+  }
   /** The feed the picks describe, or null when nothing is picked yet. */
   function chosen(): { label: string; source: FeedSource } | null {
-    if (pick && 'pool' in pick) return { label: t(`pool.${pick.pool}`), source: { kind: 'pool', pool: pick.pool, region } };
-    if (pick && 'own' in pick) {
-      const read = readInput(pick.own, kind, order, tx);
-      if (!read) return null;
-      // Words follow a country too (Step 3); a video or a channel has none.
-      if (read.source.kind === 'topic' && isFeedRegion(region)) return { label: withFlag(read.label, region), source: { ...read.source, region } };
-      return read;
+    const read = pick.own.trim() ? readInput(pick.own, kind, order, tx) : null;
+    if (read && read.source.kind === 'topic') {
+      // Card FC1: words + country + kind chip, one query.
+      const label = pick.pool ? `${t(`pool.${pick.pool}`)} · ${read.label}` : read.label;
+      const flag = region === 'auto' ? '' : region === 'world' ? ' · 🌐' : ` · ${flagOf(region)}`;
+      return { label: `${label}${flag}`, source: { ...read.source, region, ...(pick.pool ? { pool: pick.pool } : {}) } };
     }
+    if (read) return read;
+    if (pick.pool) return { label: t(`pool.${pick.pool}`), source: { kind: 'pool', pool: pick.pool, region } };
     return null;
   }
   /** "Topic: cats" / "Videos like this one" / "Channel: @name" under the own box. */
@@ -282,7 +293,7 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
       'div',
       { class: 'feed-pools', id: 'feed-pools', role: 'radiogroup', 'aria-label': tx.step2 },
       ...POOL_KINDS.map((pool) => {
-        const on = pick !== null && 'pool' in pick && pick.pool === pool;
+        const on = pick.pool === pool;
         const tile = el(
           'button',
           { type: 'button', class: 'feed-pool', role: 'radio', 'aria-checked': String(on), 'data-pool': pool },
@@ -290,21 +301,22 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
           el('span', { class: 'feed-tile-line' }, tx[`pool.${pool}`]),
         );
         tile.addEventListener('click', () => {
-          pick = { pool };
+          // A second click takes the kind off again (words alone).
+          pick = { ...pick, pool: pick.pool === pool ? null : pool };
           render();
         });
         return tile;
       }),
     );
-    const input = el('input', { id: 'feed-topic', autocomplete: 'off', maxlength: '200', value: own, 'aria-label': tx.own, placeholder: tx.own });
+    const ownLabel = pick.pool ? tx.ownWith : tx.own;
+    const input = el('input', { id: 'feed-topic', autocomplete: 'off', maxlength: '200', value: own, 'aria-label': ownLabel, placeholder: ownLabel });
     const hint = el('span', { class: 'feed-own-hint muted small', id: 'feed-own-hint' }, ownHint(own));
     input.addEventListener('input', () => {
       own = input.value;
-      pick = own.trim() ? { own } : null;
+      pick = { ...pick, own };
       hint.textContent = ownHint(own);
+      greyOut();
       summary();
-      // The tiles lose their ✓ when the own box is used.
-      for (const tile of pools.querySelectorAll('.feed-pool')) tile.setAttribute('aria-checked', 'false');
     });
     // Enter selects "your own" and moves to the button; it never starts.
     input.addEventListener('keydown', (event) => {
@@ -312,7 +324,7 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
       event.preventDefault();
       startBtn.focus();
     });
-    const ownChannel = pick !== null && 'own' in pick && readInput(pick.own, kind, order, tx)?.source.kind === 'channel';
+    const ownChannel = !!pick.own && readInput(pick.own, kind, order, tx)?.source.kind === 'channel';
     const orderSelect = el('select', { id: 'feed-order', class: 'feed-region', 'aria-label': tx.order }, ...(['newest', 'popular', 'random'] as const).map((o) => el('option', { value: o }, tx[o])));
     orderSelect.value = order;
     orderSelect.addEventListener('change', () => {
@@ -328,16 +340,28 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
       summary();
     });
     const summaryLine = el('p', { class: 'feed-summary', id: 'feed-summary', role: 'status' });
+    // Card FC1: a video or a channel can't take a kind or a country: both grey out, with the reason in one line.
+    const noCombine = el('p', { class: 'feed-own-hint muted small', id: 'feed-no-combine', hidden: '' }, tx.noCombine);
+    function greyOut(): void {
+      const fixed = ownIsFixed();
+      noCombine.hidden = !fixed;
+      pools.classList.toggle('feed-greyed', fixed);
+      pools.setAttribute('aria-disabled', String(fixed));
+      for (const tile of pools.querySelectorAll<HTMLButtonElement>('.feed-pool')) tile.disabled = fixed;
+      regionPick.disabled = fixed;
+    }
     const startBtn = el('button', { type: 'button', class: 'btn primary feed-start', id: 'feed-start' }, info ? tx.startInstead : tx.startBtn);
     startBtn.addEventListener('click', start);
     function summary(): void {
       const feed = chosen();
       const flag = region === 'auto' ? `🌍 ${tx.regionAuto}` : region === 'world' ? '🌐' : flagOf(region);
-      const what = feed ? `${kindName(kind)} · ${feed.label}${feed.source.kind === 'pool' || feed.source.kind === 'topic' ? ` · ${flag}` : ''}` : '';
+      // The label carries the country's flag already for words; a kind chip alone gets it here.
+      const what = feed ? `${kindName(kind)} · ${feed.label}${feed.source.kind === 'pool' || (feed.source.kind === 'topic' && region === 'auto') ? ` · ${flag}` : ''}` : '';
       summaryLine.textContent = locked ? tx.locked : feed ? `${tx.willPlay.replace('{what}', what)}${info ? ` ${tx.replaces.replace('{name}', runnerName)}` : ''}` : tx.pickFirst;
       startBtn.setAttribute('aria-disabled', String(!feed || locked));
     }
     summary();
+    greyOut();
     const step = (n: number, title: string) => el('h4', { class: 'feed-sub' }, el('span', { class: 'feed-step', 'aria-hidden': 'true' }, String(n)), ' ', title);
     const picker = [
       step(1, tx.step1),
@@ -347,6 +371,7 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
       el('div', { class: 'feed-topic-row' }, input, kind === 'videos' && ownChannel ? orderSelect : ''),
       hint,
       el('div', { class: 'feed-country-row' }, step(3, tx.step3), regionPick),
+      noCombine,
       summaryLine,
       startBtn,
     ];
@@ -410,7 +435,8 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
           regional ? tx.countryText : tx.countryNone,
           () => {
             const value = country.value;
-            if (source.kind === 'topic') opts.feed.start(runKind, withFlag(label, value), isFeedRegion(value) ? { kind: 'topic', q: source.q, region: value } : { kind: 'topic', q: source.q });
+            // Card FC1: the kind chip stays with the words when the country changes.
+            if (source.kind === 'topic') opts.feed.start(runKind, withFlag(label, value), { kind: 'topic', q: source.q, ...(isFeedRegion(value) ? { region: value } : {}), ...(source.pool ? { pool: source.pool } : {}) });
             else if (source.kind === 'pool' && isPoolRegionChoice(value)) opts.feed.start(runKind, withFlag(label, value), { kind: 'pool', pool: source.pool, region: value });
           },
           country,
@@ -459,7 +485,7 @@ export function openFeedWindow(opts: FeedWindowOptions): void {
     start,
     pick(k, pool) {
       kind = k;
-      pick = { pool };
+      pick = { ...pick, pool };
       render();
     },
     state() {

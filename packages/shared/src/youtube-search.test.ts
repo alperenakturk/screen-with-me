@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  feedSearchParams,
   decodeEntities,
   formatDuration,
   isQuotaError,
@@ -179,5 +180,41 @@ describe('Discover pools and "more like this" (0.9.91.17)', () => {
     expect(titleWords('Funniest cat ever 😂 #shorts #cats @someone')).toBe('Funniest cat ever');
     expect(titleWords('Kediler çok komik! Bölüm 2', 3)).toBe('Kediler çok komik');
     expect(titleWords('#shorts 😂')).toBeNull();
+  });
+});
+
+// Card FC1: the country really reaches the request, with its own language, and words + kind + country combine.
+describe('feedSearchParams (FC1)', () => {
+  it('a Japan Shorts pool asks in Japanese, ordered by views (not the page language)', () => {
+    const p = feedSearchParams({ shape: 'shorts', region: 'JP', pageLang: 'tr', pool: 'popular', publishedAfter: '2026-11-03T00:00:00Z' });
+    expect(p).toEqual({ q: '#shorts', regionCode: 'JP', relevanceLanguage: 'ja', videoDuration: 'short', order: 'viewCount', publishedAfter: '2026-11-03T00:00:00Z' });
+  });
+  it('each spot-check country gets its language', () => {
+    const langOf = (region: string) => feedSearchParams({ shape: 'shorts', region, pageLang: 'en' }).relevanceLanguage;
+    expect(['JP', 'TR', 'US', 'BR', 'DE'].map(langOf)).toEqual(['ja', 'tr', 'en', 'pt', 'de']);
+    expect(langOf('IN')).toBe('hi');
+    expect(langOf('ZZ')).toBe('en');
+  });
+  it('the world has no regionCode and keeps the page language', () => {
+    const p = feedSearchParams({ shape: 'shorts', region: 'world', pageLang: 'tr' });
+    expect(p.regionCode).toBeUndefined();
+    expect(p.relevanceLanguage).toBe('tr');
+  });
+  it('Japan + "hay": Japanese Shorts about hay, by relevance', () => {
+    const p = feedSearchParams({ shape: 'shorts', words: 'hay', region: 'JP', pageLang: 'tr' });
+    expect(p).toEqual({ q: 'hay #shorts', regionCode: 'JP', relevanceLanguage: 'ja', videoDuration: 'short' });
+  });
+  it('Popular + Japan + "hay": the most viewed of those', () => {
+    const p = feedSearchParams({ shape: 'shorts', words: 'hay', region: 'JP', pageLang: 'en', pool: 'popular' });
+    expect(p.order).toBe('viewCount');
+    expect(p.videoCategoryId).toBeUndefined();
+    expect(p.q).toBe('hay #shorts');
+  });
+  it('Music + Brazil + words: the music category, relevance order; videos have no Shorts filter', () => {
+    const p = feedSearchParams({ shape: 'videos', words: 'samba', region: 'BR', pageLang: 'en', pool: 'music' });
+    expect(p).toEqual({ q: 'samba', regionCode: 'BR', relevanceLanguage: 'pt', videoCategoryId: '10' });
+  });
+  it('a kind without words is ordered by views (that kind\'s chart)', () => {
+    expect(feedSearchParams({ shape: 'shorts', region: 'DE', pageLang: 'en', pool: 'animals' })).toMatchObject({ videoCategoryId: '15', order: 'viewCount', relevanceLanguage: 'de' });
   });
 });
