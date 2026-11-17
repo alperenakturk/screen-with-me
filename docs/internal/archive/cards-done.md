@@ -2918,6 +2918,6 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   window (GW5 rule).
 - Done when: games-sweep `tabland` pokerPlay has no text under 13 px and nothing cut off (EN + TR, 2–6 players);
   games-scale unchanged; Test Lab hook `poker.compact`; shots at 4 sizes; owner's hand test on a sideways tablet.
-- Done: PR (`claude/lh2-poker-compact`, Game Studio, 17 Nov 2026): compact layout in the video's place on a short box
+- Done: #546 (`claude/lh2-poker-compact`, Game Studio, 17 Nov 2026): compact layout in the video's place on a short box
   (`poker.css`), three+ opponents as compact rows in the wide one, `shrinkToFit` grows an overflowing own box (six at
   Last Heart fell to 0.4); Lab `poker.compact`, games-sweep `pokerSix` (CI tabland row).
