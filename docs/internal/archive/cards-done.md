@@ -2935,3 +2935,13 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done: #547 (`claude/lh3-poker-upright`, Game Studio, 17 Nov 2026): the compact table's container query takes the
   short, wide box too (tighter rows, newest feed line); phone pot box (board ≤ 46 px, newest feed line); games-sweep
   `tabup`, CI game-proportions `upright` + games-sweep `tabup` Last Heart row.
+
+### XO1. Tic-tac-toe's board fills a sideways tablet's video place (Game Studio proposal, 17 Nov 2026; Game Studio)
+- Why: on a sideways tablet the board is only 256 × 256 in a 740 × 653 box (games-sweep "the board is a fair size"; also
+  on main, not in CI).
+- What: the board grows to the box's height there, like the other boards.
+- Done when: games-sweep `tabland` xox passes and runs in CI's tabland row; Test Lab hook `games.open.xox` opens it;
+  owner's hand test on a sideways tablet.
+- Owner's pick: the Planner's approval (17 Nov 2026).
+- Done: PR (`claude/xo1-board-tablet`, Game Studio, 17 Nov 2026): waiting note and "Just watch" on one row in a
+  not-wide video place (`classics.css`); CI tabland games-sweep row includes xox.

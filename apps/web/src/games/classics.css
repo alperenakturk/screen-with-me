@@ -474,3 +474,15 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 .bg-board .bg-point:disabled { pointer-events: none; }
 /* Four in a Row keeps a margin from the screen's edges (its board is narrower than an 8 × 8 one). */
 #game-stage.in-tab .mt .four-board { width: min(100cqw - 16px, (100cqh - 14px) * 7 / 6); }
+
+/* XO1: in the video's place on a box that is not wide (a sideways tablet, ≈ 740 × 595), a table still waiting for an
+   opponent puts its note and "Just watch" on one row (as the phone's Games tab does), so the board keeps the height:
+   tic-tac-toe's board was 256 px there. A free window keeps its one design (GW5). */
+@container game (max-aspect-ratio: 16 / 10) {
+  #game-stage[data-place='stage'] .xox-page.mt > .mt-table:has(.cl-ref-mascot.wait) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: 'bar bar' 'top top' 'board board' 'bottom bottom' 'tray tray' 'status actions';
+  }
+  #game-stage[data-place='stage'] .xox-page.mt > .mt-table:has(.cl-ref-mascot.wait) .xox-actions { align-self: center; }
+}

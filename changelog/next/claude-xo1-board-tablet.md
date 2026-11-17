@@ -1,0 +1,1 @@
+- On a tablet held sideways, the Classics boards are bigger while the table waits for an opponent.
