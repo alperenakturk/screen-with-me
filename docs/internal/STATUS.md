@@ -8,12 +8,10 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
-  `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
-  still missing (the owner's Releases page or a session allowed to push tags).
-  - [x] FC1 live (#539, v0.9.97.163); RC1 merged (#536); both cards archived in UI4's PR. Hand tests 27ae, 27af.
-  - [ ] UI4 polish: `claude/ui4-polish` (rail ⋯ More menu, no feed pill, Drive-In default, picker centred +
-    "Subscription services · Coming"); hand test 27ag. After merge: deploy, live e2e, tag, Done + archive.
+- [ ] Lane A (handoff 17 Nov, 05:50; no unmerged lane A branch; older lane A lines are in `archive/status-history.md`
+  "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is still missing (the owner's
+  Releases page or a session allowed to push tags). FC1 (v0.9.97.163), RC1 (v0.9.97.165), UI4 (v0.9.97.166) live and
+  archived; hand tests 27ae, 27af, 27ag.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the

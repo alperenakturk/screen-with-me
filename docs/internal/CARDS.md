@@ -67,29 +67,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Tests: the self-check list ticked with shots; QUOTA3 counters show daily use.
 - Owner's pick: "important and urgent" (Planner chat, 15 Nov 2026).
 
-### UI4. The owner's 17 Nov polish pass (owner, 17 Nov 2026; lane A, after FC1 and RC1)
-- Why: the owner's notes after trying SRC2 / FD1 live.
-- What:
-  1. **No feed pill on top.** Remove the "♾ Feed: … · N left · by …" pill from above the video / the "Now playing"
-     bar in the room view and the Shorts view. The feed shows only where the feed lives (the feed window / drawer and
-     the queue's feed row). Keep pause / stop there.
-  2. **Drive-In is the default theme.** Every new visitor and every room starts in the Drive-In theme
-     (`themes.ts` `acikhava`); anyone can change it and the choice stays saved in the browser as today. A saved
-     choice is never overwritten. (The owner: "I like it most right now; we may change it later.")
-  3. **"What are we watching?" picker polish (SRC2):** (a) the grid sits too high with empty space below: centre it
-     and balance the card in the space it gets; (b) service marks: show the official logo / icon of a service only
-     where that brand's published guidelines allow it at tile size (YouTube's rules forbid the logo under 100 px and
-     as the most prominent element, so YouTube and Shorts likely stay our glyph + the name; check TikTok, Vimeo,
-     Dailymotion, YouTube Music, Spotify-like podcast marks one by one and write the findings in the PR; never a
-     lookalike); (c) planned services: one tile "🎬 Subscription services · Coming" (everyone with their own
-     subscription, via the extension), **no service names** (CLAUDE.md §6: a name only if it really works; store
-     policy) unless the owner decides otherwise.
-  4. **Shorts view "Other" button does nothing.** The rail's groups (Talk · Watch · Room) are liked; its "Other" /
-     "More" entry doesn't work. Fix it (open its menu on laptop and phone) with a harness check.
-- Done when: all four live on computer + phone; Test Lab hooks `ui.feedPill` (gone), `theme.default`, `sources.picker`
-  layout check, `shorts.more`; shots at 4 sizes; owner's hand test.
-- Owner's pick: his message to the Planner (17 Nov 2026).
-
 ### DM1. Dailymotion links play in sync without the extension (owner, 17 Nov 2026; lane A, after CR2)
 - Why: Dailymotion is the most visited entertainment site in Turkey (research `docs/internal/research/video-sources.md`).
 - What: a `dailymotion` media kind like Vimeo's (`players/vimeo.ts` as the model): links `dailymotion.com/video/<id>`
@@ -101,34 +78,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   hook `player.dailymotion`; fake-player harness in the `site` job; the owner's real check.
 - Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
-
-### RC1. The session recap, redesigned: design options, then build (owner, 17 Nov 2026; Design first, then lane A)
-- Why: today's recap (Profile menu, `ui/recap.ts`) is hard to find, looks out of place, and its phone-like story screen
-  with side swipes is not what he wants. He wants something people love and use at the end of a session.
-- What (owner's asks; he is undecided on the flow, so give options):
-  - Findable but not screen-filling. Beautiful backgrounds with our logo, several cute designs; facts get their own
-    background (e.g. "most emojis").
-  - Ideas for getting people to see it at the end of a session although we can't know when they close the tab,
-    without nagging people who already know it.
-  - Flow he leans to: only the host can start it; others send "ask the host to show the recap"; on the host's yes it
-    plays for everyone in the video's place like a newly opened video (Shorts view switches to the normal view), the
-    queue unchanged: a horizontal, windowed, scrolling show (not a phone story), maybe with its own music. Content:
-    when you started, how long you watched, the most-used emoji and who sent it, who talked most, etc.
-  - Session rule: a "day" is a session, not a date. Proposal to check: a session starts after a gap of ≥ 4 h without
-    activity (today's `SESSION_GAP_MS`); the recap can be shown once per session after ≥ 30 min of watching; after it
-    is shown it cannot be shown again in that session; the next session resets it. The design note confirms or
-    improves this rule.
-- Design step: `docs/internal/design/session-recap.md` with 2–3 options for look, entry point and flow (recommended
-  first, short previews), sent to the Planner as text. Build only after the owner's pick.
-- **Owner's picks (17 Nov 2026, picks page):** look A night stage (one 16:9 scene per fact, own background each, logo,
-  filmstrip); who A host shows, guests ask ("🙋 Ask the host", one toast "Show to everyone / Not now"); where A ✨ on the
-  rail once ready (≥ 30 min, gold dot until opened); music A our own Web Audio pad, low, 🔇, off when sounds are muted.
-  Defaults he saw and did not object to: nudges N1 / N2 / N4 (max one per person per session, "Don't remind me"), the
-  session rule with Design's 4 improvements (`design/session-recap.md`).
-- Done when: the picked design is live; Test Lab hook `recap.show`; server rule (once per session) with an e2e;
-  privacy page checked (no new data unless stated); shots at 4 sizes; owner's hand test.
-
-Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`.
 
 ## Proposed
 

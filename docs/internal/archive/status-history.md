@@ -1710,6 +1710,13 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   Passed: the owner, 17 Nov 2026 (via the Planner).
 
 ## Lane A handoff lines, archived 17 Nov 2026 (verbatim)
+- (handoff PR, 17 Nov 2026: RC1 and UI4 live)
+- [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
+  `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
+  still missing (the owner's Releases page or a session allowed to push tags).
+  - [x] FC1 live (#539, v0.9.97.163); RC1 merged (#536); both cards archived in UI4's PR. Hand tests 27ae, 27af.
+  - [ ] UI4 polish: `claude/ui4-polish` (rail ⋯ More menu, no feed pill, Drive-In default, picker centred +
+    "Subscription services · Coming"); hand test 27ag. After merge: deploy, live e2e, tag, Done + archive.
 - (UI4 PR, 17 Nov 2026: FC1 live in v0.9.97.163, RC1 merged as #536)
   - [x] FC1 feed country: #539 (`claude/fc1-feed-country`) merged; hand test 27af (live spot-check: owner).
   - [ ] RC1 session recap: #536 (`claude/rc1-session-recap`), merged after FC1 is live; server `recap-show` /
