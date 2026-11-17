@@ -31,6 +31,8 @@ const lab = async (page, id) => (await page.evaluate(async (c) => (await window.
   const sizes = [
     ['laptop 1366×768', { viewport: { width: 1366, height: 768 } }, 'computer'],
     ['monitor 1920×1080', { viewport: { width: 1920, height: 1080 } }, 'computer'],
+    // The rail's foot ran into ▲▼ at 1024 × 768 (a tablet held sideways; GMP2's shorts-back run).
+    ['tablet sideways', { ...devices['iPad Mini landscape'] }, 'computer'],
     ['iPhone 13', { ...devices['iPhone 13'] }, 'phone'],
   ];
   for (const [name, options, kind] of sizes) {
@@ -68,8 +70,8 @@ const lab = async (page, id) => (await page.evaluate(async (c) => (await window.
     check(/^\d+ left$/.test(tidy.left ?? ''), `${name}: "N left" under ▲`, tidy.left);
     if (kind === 'computer') {
       check(tidy.heads.join(',') === 'Talk,Watch,Room', `${name}: the rail has three labelled groups`, tidy.heads);
-      check(tidy.labels >= 8, `${name}: the rail's buttons show their names`, tidy.labels);
-      check(!tidy.overlaps, `${name}: no rail button overlaps another or the video`);
+      if (!/tablet/.test(name)) check(tidy.labels >= 8, `${name}: the rail's buttons show their names`, tidy.labels);
+      check(!tidy.overlaps, `${name}: no rail button overlaps another, ▲▼ or the video`);
       check(await page.evaluate(() => document.querySelector('#shorts-feed')?.getAttribute('aria-pressed') === 'true'), `${name}: ♾ is marked on while the feed runs`);
     } else {
       check(tidy.phone?.feedOn, `${name}: ♾ Feed is in the bar, marked on`, tidy.phone);
