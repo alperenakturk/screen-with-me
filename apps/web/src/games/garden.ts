@@ -711,7 +711,9 @@ export function mountGarden(root: HTMLElement, room: () => SoloRoom): () => void
       close,
       el('h3', {}, `🎨 ${t('decor')}`),
       el('p', { class: 'wg-page-hint' }, t('decorLine', { n: garden.petals })),
-      el('ul', { class: 'wg-page-list' }, ...items),
+      // GW5: the free window is the small design (320 × 444): the shop's rows scroll inside their own list, the title,
+      // the petals line and ✕ stay in sight (like Snack Bar's Upgrades panel).
+      el('ul', { class: 'wg-page-list wg-decor-list' }, ...items),
       el('p', { class: 'wg-page-hint' }, `🌙 ${t('visitors')}: ${seen.length ? seen.join(', ') : t('visitorNone')}`),
     );
     page.hidden = false;

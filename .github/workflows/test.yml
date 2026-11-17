@@ -455,6 +455,13 @@ jobs:
         # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
         run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
 
+      # Card GW5: every game's free window looks the same at its smallest, a middle and its largest size (only scaled);
+      # the tables in a sideways tablet's video's place keep 13 px text (the GW3 handoff's Duel and Sea Battle six).
+      - name: Game frames scale in proportion
+        run: |
+          node scripts/harness/games-scale/run.cjs http://localhost:8787
+          GAMES=sea,seaPlay,seaSix,duel,duelPlay,duelSix,quiz,draw,chess SIZES=tabland GW_LANGS=none LANGS=en node scripts/harness/games-sweep/run.cjs http://localhost:8787
+
       - name: Snack Bar and Five Frames whole on a laptop and a sideways tablet (EN + TR)
         # 0.9.97.134 (B2): no text ends in "…" and the SNACK BAR sign is whole, idle and at its busiest.
         # GP1: Five Frames keeps its 13 px text in the sideways tablet's short window (its compact tier, not a scale-down).

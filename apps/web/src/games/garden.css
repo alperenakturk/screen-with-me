@@ -299,3 +299,7 @@ html.phone #game-stage .wg-seeds { flex: none; overflow: visible; }
 html.phone .wg-chip { min-height: 44px; }
 :root[data-theme='matinee'] .wg-chip { border-color: var(--accent); color: var(--text); }
 :root[data-theme='matinee'] .wg-chip.on { background: rgb(154 53 23 / 0.12); color: var(--accent); }
+
+/* GW5: the 🎨 page's shop rows scroll inside their own list in the small design (a free window is always it, scaled);
+   the title, the petals line, ✕ and the visitors line stay in sight. */
+.wg-page-list.wg-decor-list { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }

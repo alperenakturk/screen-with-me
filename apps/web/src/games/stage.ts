@@ -536,6 +536,14 @@ export function createGameStage(opts: StageOptions) {
     return zoomIn(best) >= MIN_ZOOM ? best : null;
   }
   /** Card GW: the free window's zoom range from the catalog's smallest and largest size (the game keeps its shape). */
+  /**
+   * GW5: the free window's design size (px, head and border included): the side games' smallest readable size (their
+   * layout is made for it, text ≥ 13 px there), a table's own size (GW2). The window is always this shape, scaled.
+   */
+  function frameDesign(kind: Kind): readonly [number, number] {
+    const info = sizeOf(kind);
+    return isSoloKind(kind) ? info.minSize : info.size;
+  }
   function zoomRange(kind: Kind): { low: number; high: number } {
     const { size, minSize, maxSize } = sizeOf(kind);
     return { low: Math.max(minSize[0] / size[0], minSize[1] / size[1]), high: Math.min(maxSize[0] / size[0], maxSize[1] / size[1]) };
@@ -673,6 +681,21 @@ export function createGameStage(opts: StageOptions) {
     // the column right of the video is for the small side games (a table squeezed there was unreadable).
     const home = !spot && zoom === undefined && isSoloKind(kind) ? homeBox(kind) : null;
     if (home) {
+      // GW5: the home keeps the game's shape too (no empty bands in a tall column): as wide as it gets, its height from
+      // that, down at the column's foot (just above the chat's message box), so the panel's top (Together, voice, the
+      // tabs) stays in view; or, when the column is the shorter side, as tall, right-aligned to the panel.
+      const [dw, dh] = sizeOf(kind).size;
+      const tall = Math.round((home.width * dh) / dw);
+      const beside = home.top < theater.getBoundingClientRect().bottom;
+      if (home.height > tall) {
+        // (Under the video, an upright tablet's column beside the chat, it stays at the column's top.)
+        if (beside) home.top += home.height - tall;
+        home.height = tall;
+      } else {
+        const width = Math.round((home.height * dw) / dh);
+        home.left += home.width - width;
+        home.width = width;
+      }
       stage.style.left = `${home.left}px`;
       stage.style.top = `${home.top}px`;
       stage.style.width = `${home.width}px`;
@@ -912,6 +935,8 @@ export function createGameStage(opts: StageOptions) {
 
   // ---- Fit the game to its box: no scrollbars, ever (owner's rule) ----
   let fitting = false;
+  /** GW5: a free window's head height in design pixels, per game and head shape (`refit`). */
+  const headHeights = new Map<string, number>();
   /** QA2 (B2's sweep): the head's buttons show their words whenever they fit beside the game's name, else icons only. */
   function fitHeadLabels(): void {
     stage.classList.add('head-labels');
@@ -926,6 +951,11 @@ export function createGameStage(opts: StageOptions) {
   function refit(): void {
     const kind = shownKind();
     if (fitting || stage.hidden || !kind) return;
+    // GW5 (owner, 17 Nov 2026: "every game looks the same at any size, only bigger or smaller"): a free window lays out
+    // once at its design size (`frameDesign`) and the whole of it, head included, is scaled to the window, so nothing
+    // wraps, collapses to icons or leaves empty bands as it is resized.
+    const win = !narrow.matches && mode === 'float' ? stage.offsetWidth / frameDesign(kind)[0] : 0;
+    head.style.zoom = win ? String(win) : '';
     fitHeadLabels();
     const W = frame.clientWidth;
     const H = frame.clientHeight;
@@ -938,17 +968,22 @@ export function createGameStage(opts: StageOptions) {
     // (in proportion, as at its own size) instead of stretching its layout: the scale grows with the window.
     // It keeps its own shape (the layout it was made for), centred in what is left over.
     let own: [number, number] | null = null;
-    if (!narrow.matches && mode === 'float') {
-      const [sw, sh] = sizeOf(kind).size;
-      const iw = sw - (stage.offsetWidth - W);
-      const ih = sh - (stage.offsetHeight - H);
-      const up = Math.min(W / iw, H / ih);
-      // GW2: a table's frame smaller than its own size scales its own layout down too (squeezing it cut the Classics
-      // picker's cards on an upright tablet); the side games keep their own small-window layouts.
-      if (up > 1.001 || (!isSoloKind(kind) && up < 0.999)) {
-        scale = up;
-        own = [iw, ih];
-      }
+    let designPick: { scale: number; own: [number, number] | null } | null = null;
+    if (win) {
+      // GW5: the game's own box is the frame in design pixels; the window keeps the design's shape, so this is the
+      // design's inside (a screen-limited window may differ by a few px: the box follows it, never a band).
+      // The chrome in design pixels: the head's own height (it is zoomed, so its offsetHeight is unscaled) and the border,
+      // so the game's own box is the same whole numbers at every size.
+      const [dw, dh] = frameDesign(kind);
+      const bx = stage.offsetWidth - stage.clientWidth;
+      const by = stage.offsetHeight - stage.clientHeight;
+      // (A zoomed head's text snaps to whole pixels, so its height can differ by a pixel or two between zooms: the first
+      // height seen for this game and head shape is kept.)
+      const headKey = `${kind}:${stage.classList.contains('head-wrap')}`;
+      const headH = headHeights.get(headKey) ?? head.offsetHeight;
+      headHeights.set(headKey, headH);
+      own = [dw - bx, dh - by - headH];
+      scale = Math.min(W / own[0], H / own[1]);
     } else if (stage.classList.contains('in-tab') && !TAB_LAYOUT.has(kind)) {
       // PH2: a game without its own Games-tab layout yet (Game Studio adds them, `TAB_LAYOUT`) lays out at the height it
       // had on the phone's whole screen and is scaled into the panel, so nothing in it is squeezed.
@@ -968,18 +1003,34 @@ export function createGameStage(opts: StageOptions) {
           own = [iw, ih];
         }
       }
-    }
-    for (let i = 0; i < 4; i++) {
-      body.style.width = `${own ? own[0] : W / scale}px`;
-      body.style.height = `${own ? own[1] : H / scale}px`;
-      body.style.transform = scale !== 1 ? `scale(${scale})` : '';
-      let over = Math.max(body.scrollHeight / body.clientHeight, body.scrollWidth / body.clientWidth);
-      // Boxes that clip their own content (the drawing's overlay, the quiz card) must fit too.
-      for (const box of body.querySelectorAll<HTMLElement>(FIT_INSIDE)) {
-        if (box.clientHeight > 0 && !box.hidden) over = Math.max(over, box.scrollHeight / box.clientHeight);
+      // GW5 (Game Studio's GW3 handoff): a box smaller than the game's own size (a sideways tablet's video's place,
+      // 740 × 650) no longer scales the game below its own size (its text went under 13 px): the game lays out in the box
+      // itself at full size, shrunk only if something still would not fit (the loop below). If it would have to shrink
+      // below the scaled design (Last Heart running: it needs ≈ 930 × 715), the scaled design stays.
+      if (scale < 1) {
+        designPick = { scale, own };
+        scale = 1;
+        own = null;
       }
-      if (over <= 1.005 || scale <= MIN_FIT) break;
-      scale = Math.max(MIN_FIT, scale / over);
+    }
+    const shrinkToFit = () => {
+      for (let i = 0; i < 4; i++) {
+        body.style.width = `${own ? own[0] : W / scale}px`;
+        body.style.height = `${own ? own[1] : H / scale}px`;
+        body.style.transform = scale !== 1 ? `scale(${scale})` : '';
+        let over = Math.max(body.scrollHeight / body.clientHeight, body.scrollWidth / body.clientWidth);
+        // Boxes that clip their own content (the drawing's overlay, the quiz card) must fit too.
+        for (const box of body.querySelectorAll<HTMLElement>(FIT_INSIDE)) {
+          if (box.clientHeight > 0 && !box.hidden) over = Math.max(over, box.scrollHeight / box.clientHeight);
+        }
+        if (over <= 1.005 || scale <= MIN_FIT) break;
+        scale = Math.max(MIN_FIT, scale / over);
+      }
+    };
+    shrinkToFit();
+    if (designPick && scale < designPick.scale - 0.005) {
+      ({ scale, own } = designPick);
+      shrinkToFit();
     }
     body.style.left = own ? `${Math.max(0, Math.round((W - own[0] * scale) / 2))}px` : '';
     body.style.top = own ? `${Math.max(0, Math.round((H - own[1] * scale) / 2))}px` : '';
@@ -1511,6 +1562,24 @@ export function createGameStage(opts: StageOptions) {
       return { mode: tableMode(), view, place: mode, forced: frameForced, gameFullscreen: !!document.fullscreenElement && stage.contains(document.fullscreenElement), pausedForPlace, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
     },
     lastOpen: () => lastOpen,
+    scaleTo: (arg) => {
+      // GW5: the free window at its smallest, a middle or its largest size (the screen allows), then what it looks like.
+      const kind = shownKind();
+      if (!kind || mode !== 'float') return null;
+      const { low, high } = zoomRange(kind);
+      const want = arg === 'min' ? low : arg === 'max' ? high : (low + high) / 2;
+      const zoom = floatZoom(want);
+      placeFloat(zoom);
+      refit();
+      const box = stage.getBoundingClientRect();
+      const [dw, dh] = frameDesign(kind);
+      // The game's layout in its own pixels (before the scale): the same numbers at every size = nothing reflowed.
+      // Heights only: a wrapped line changes a height; a ticking number only changes a width.
+      const layout = [...body.querySelectorAll<HTMLElement>('*')].filter((e) => e.offsetParent).map((e) => e.offsetHeight).join(',');
+      let hash = 0;
+      for (let i = 0; i < layout.length; i++) hash = (hash * 31 + layout.charCodeAt(i)) | 0;
+      return { kind, size: arg || 'mid', zoom: Math.round(zoom * 1000) / 1000, box: [Math.round(box.width), Math.round(box.height)], ratio: Math.round((box.width / box.height) * 1000) / 1000, design: Math.round((dw / dh) * 1000) / 1000, fit: Number(stage.style.getPropertyValue('--fit')), own: [body.offsetWidth, body.offsetHeight], labels: stage.classList.contains('head-labels'), layout: hash, head: Math.round(head.getBoundingClientRect().height) };
+    },
     shown: () => !stage.hidden,
     hall: () => hubButton.node.click(),
     moreShown: () => !moreButton.node.hidden,

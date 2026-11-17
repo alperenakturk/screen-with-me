@@ -82,7 +82,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     await wait(500);
     check(await page.evaluate(() => !!document.querySelector('#game-stage .wg-page:not([hidden]) .wg-chip-view-sea')), `${size}: the 🎨 page shows the window views`);
     const fits = await page.evaluate(() => { const p = document.querySelector('#game-stage .wg-page'); return p && p.scrollHeight <= p.clientHeight + 1; });
-    check(fits, `${size}: the 🎨 page fits without scrolling`);
+    // GW5: the page itself never scrolls; its shop rows may scroll inside their own list (the small design, like Snack
+    // Bar's Upgrades), with ✕ in sight.
+    check(fits, `${size}: the 🎨 page fits without scrolling (its shop list may scroll inside)`);
     await click('#game-stage .wg-chip-view-sea');
     await wait(300);
     await click('#game-stage .wg-swatch-sage');

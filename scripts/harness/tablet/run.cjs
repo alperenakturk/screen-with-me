@@ -138,7 +138,8 @@ async function gameChecks(page, where, chatSel) {
     check(clear(g.video), `${where}, ${kind}: the window never covers the video`, { stage: s, video: g.video });
     // 0.9.97.135: where the link row reaches over the panel's column, the window starts just right of "Play now" at the
     // game's smallest width (its right edge then up to 8 px past the panel's, never off the screen), or just under it.
-    const topOk = Math.abs(s.t - c.t) <= 2 || (!!g.link && g.link.r > s.l && s.t >= g.link.b - 1 && s.t <= g.link.b + 12);
+    // GW5: the window keeps its shape and sits at the panel's foot, so its top is at or under the panel's top.
+    const topOk = s.t >= c.t - 2 || (!!g.link && g.link.r > s.l && s.t >= g.link.b - 1 && s.t <= g.link.b + 12);
     const rightOk = s.r >= c.r - 2 && s.r <= Math.min(c.r + 8, g.vw - 8) + 1;
     if (sideways) check(clear(g.form) && clear(g.link?.r > s.l ? g.link : null) && rightOk && topOk, `${where}, ${kind}: the window lines up with the side panel (beside or under the link row where that reaches it) and leaves the message box free`, { stage: s, panel: c, form: g.form, link: g.link });
     else check(clear(c), `${where}, ${kind}: the window never covers the chat`, { stage: s, chat: c });
@@ -148,7 +149,8 @@ async function gameChecks(page, where, chatSel) {
     const room = !c ? null : [
       { w: g.vw, h: c.t - g.bar }, { w: g.vw, h: g.vh - c.b }, { w: c.l, h: g.vh - g.bar }, { w: g.vw - c.r, h: g.vh - g.bar },
     ].filter((b) => s.w <= b.w && s.h <= b.h).map((b) => Math.min(b.w - s.w, b.h - s.h));
-    if (!sideways) check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2, `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
+    // GW5: a side game keeps its shape, so in the column beside the chat it may be as tall as that column and narrower.
+    if (!sideways) check((room && room.length && Math.min(...room) <= 20) || s.w >= OWN_WIDTH[kind] - 2 || (!!c && Math.abs(s.h - c.h) <= 2), `${where}, ${kind}: the window is as big as the space beside the chat allows`, { stage: s, chat: c, spare: room });
     check(g.minText >= 11, `${where}, ${kind}: its text stays readable (≥ 11 px)`, g.minText >= 11 ? g.minText : { minText: g.minText, fit: g.fit, blocks: g.blocks });
     check(g.sh <= g.vh + 1, `${where}, ${kind}: the page never scrolls`, { sh: g.sh, vh: g.vh });
     if (kind === 'snack') {

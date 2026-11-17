@@ -264,7 +264,9 @@ async function placeIn(page, mode) {
           if (cut) check(cut.length === 0, `${label}: every "How to play" card fits the window`, cut.join(', '));
           check(m.used >= 28, `${label}: the game covers its box (${m.used}% of ${m.w}×${m.h}, ${m.usedW}% wide, ${m.usedH}% high)`);
           const free = rows.find((r) => r.label === `${size}/${game}/float`);
-          if (free?.median) check(m.median >= free.median * 0.85, `${label}: shown about as big as in the free window (${m.median} px vs ${free.median} px)`);
+          // GW5: the free window now shows the game's design scaled up (a tablet's chess frame: 30 px text); the video's place
+          // passes once its text is large in itself (≥ 20 px), not only next to that.
+          if (free?.median) check(m.median >= free.median * 0.85 || m.median >= 20, `${label}: shown about as big as in the free window (${m.median} px vs ${free.median} px)`);
         }
       }
     }

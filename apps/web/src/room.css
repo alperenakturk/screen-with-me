@@ -5429,7 +5429,10 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   display: none;
 }
 
+/* GW5: the head's own words and buttons ask the head's width (in its own pixels: a free window's head is zoomed with
+   the window, so it answers the design size at any size), not the stage's. */
 .game-stage-head {
+  container: ghead / inline-size;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -5787,19 +5790,18 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
   opacity: 1;
 }
 
-/* Card GP: a side game's narrow window keeps its full title ("🍿 Snack Bar · just you"): 36 px head buttons, 4 px apart. */
-@container gstage (max-width: 440px) {
-  .game-stage.float.solo-game .game-stage-head {
-    gap: 4px;
-    padding: 8px 10px;
-  }
+/* Card GP: a side game's narrow window keeps its full title ("🍿 Snack Bar · just you"): 36 px head buttons, 4 px apart.
+   GW5: a side game's free window is always laid out at its smallest size (320 px) and scaled, so always. */
+.game-stage.float.solo-game .game-stage-head {
+  gap: 4px;
+  padding: 8px 10px;
+}
 
-  .game-stage.float.solo-game .game-stage-head .btn {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    justify-content: center;
-  }
+.game-stage.float.solo-game .game-stage-head .btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
 }
 
 /* Narrow screens: under the video (the rest of the screen) */

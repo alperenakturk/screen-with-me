@@ -1260,6 +1260,25 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`registerWindowLab`), loaded with the lab only, so the room page doesn't carry their texts (size budget). On a phone the
   "video paused for the game" note shows in the head's title line (`.game-paused-note`, 2.8 s), never over the game;
   since GW4 on every device (under the head it covered Sea Battle's "My sea").
+  **GW5 (owner, 17 Nov 2026: "every game looks the same at any size, only bigger or smaller"):** a free window (side
+  games, a table's 🪟 frame) lays out once at its design size (`frameDesign`: a side game's `minSize`, a table's `size`;
+  catalog shapes are proportional) and is scaled as a whole: the game's box is the design's inside (the head's design
+  height kept per game, `headHeights`), `--fit` = window / design, and the head itself gets `zoom` = window width /
+  design width, so it shows the same words at every size (the head's own container `ghead` answers its queries:
+  `classics.css`, `how-to-play.css`; a side game's compact head is always on). The side games' home keeps their shape
+  too: as wide as the panel column, at its foot just above the message box (Together and voice stay in view), or as
+  tall as a short column, right-aligned; an upright tablet's column beside the chat keeps it at the top. Snack Bar's
+  design grew to 320 × 480 (size 400 × 600); its head is one line at every size (coins, income, ?): the room's pills
+  (▶ / ⏸, 👥, 🫙) sit on the counter picture's top left (`.sb-scene-pills`), the 📋 menu mark on the stand's picture
+  (`.sb-menu-mark`), and in the small design a stand's name and line keep one line, so three stands show even at the
+  busiest (games-sweep `snackBusy`); in a free window the "+N more" line points to the video's place (`moreFloat`). Window
+  Garden's 🎨 page keeps its title, petals line and ✕ in sight and scrolls its shop rows inside (`.wg-decor-list`, like
+  Snack Bar's Upgrades): they need ≈ 630 px of the 444 px design. In the video's place a box smaller than the
+  table's own size lays the table out in the box at full size instead of scaling it under 13 px (a sideways tablet),
+  unless that would shrink it more than the scaled design (Last Heart running keeps the design: its small print is
+  still ≈ 10 px there, open point). Lab `games.scaleCheck` (`min` / `mid` / `max`: size, shape, scale, a fingerprint of
+  the game's heights); harness `games-scale` (CI games-more, with a sideways-tablet sweep of Sea Battle, the Duel, Quiz,
+  Draw & Guess and chess).
   **GW4 (owner, 17 Nov 2026): opening a game never moves the room.** The room's "fill the window's height" layout
   (`room.css`, QA2-A #8, `--stage-over`) stays on while a game is open (it used to switch off, so the video shrank and
   the side panel moved 32 px); a table in the video's place scales to that box and a free window lies over the page.

@@ -361,6 +361,7 @@ export interface WindowLab {
   autoPause: () => void;
   setMode: (arg?: string) => unknown;
   lastOpen: () => unknown;
+  scaleTo: (arg?: string) => unknown;
   shown: () => boolean;
   hall: () => void;
   moreShown: () => boolean;
@@ -415,6 +416,18 @@ export function registerWindowLab(w: WindowLab): () => void {
         tab: 'games',
         available: () => (w.lastOpen() ? true : { en: 'open a game from the hall first', tr: 'önce salondan bir oyun aç' }),
         run: () => JSON.stringify(w.lastOpen()),
+      },
+      {
+        // GW5 (owner, 17 Nov 2026): every game looks the same at any size, only bigger or smaller.
+        id: 'games.scaleCheck',
+        title: { en: 'Game window: smallest / middle / largest', tr: 'Oyun penceresi: en küçük / orta / en büyük' },
+        help: {
+          en: 'With "min", "mid" or "max" sets the open game’s free window to that size (as far as the screen allows) and writes its size, its shape against the game’s own, the scale, and a fingerprint of the game’s layout that must be the same at every size.',
+          tr: '"min", "mid" ya da "max" ile açık oyunun serbest penceresini o boyuta getirir (ekranın izin verdiği kadar) ve boyutunu, oyunun kendi biçimine göre oranını, ölçeği ve her boyutta aynı kalması gereken yerleşim izini yazar.',
+        },
+        tab: 'games',
+        available: () => (w.kind() && w.place() === 'float' ? true : { en: 'no game in a free window', tr: 'serbest pencerede oyun yok' }),
+        run: (arg?: string) => JSON.stringify(w.scaleTo(arg?.trim())),
       },
       {
         id: 'gameWindow.hall',
