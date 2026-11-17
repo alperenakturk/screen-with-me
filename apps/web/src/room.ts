@@ -82,7 +82,7 @@ import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
 import { createSources } from './ui/sources.ts';
-import type { Recap } from '@swm/shared/recap';
+import { RECAP_READY_MS, type Recap, type RecapShow, type RecapStatus } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
 import { createTabs, isTabId } from './ui/tabs.ts';
@@ -419,6 +419,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-react" type="button" class="dock-btn" aria-expanded="false"></button>
                 <button id="dock-pin" type="button" class="dock-btn"></button>
                 <button id="dock-game" type="button" class="dock-btn" aria-haspopup="true" aria-expanded="false"></button>
+                <button id="dock-recap" type="button" class="dock-btn" aria-haspopup="dialog" data-i18n-title="recap.title" hidden>✨</button>
               </div>
               <div id="dock-voice" class="dock-group" hidden>
                 <button id="dock-mic" type="button" class="dock-btn"></button>
@@ -559,6 +560,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
           <span class="rail-head" data-i18n="shorts.groupRoom"></span>
+          <button id="shorts-recap" type="button" class="btn small-btn" aria-haspopup="dialog" data-i18n-title="recap.title" hidden>✨ <span data-i18n="recap.title"></span></button>
           <div class="game-menu-wrap shorts-game-wrap">
             <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false" data-i18n-title="tool.game">🎮 <span data-i18n="tool.game"></span></button>
           </div>
@@ -1382,6 +1384,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // (İstatistikler video sonunda değil, ayarlardaki oturum özetinde.)
       const item = roomState?.item;
       const loop = roomSettings.loop === true && isShortItem(item);
+      if (queue.length === 0) recapNudge('end');
       if (roomSettings.autoNext !== false || loop) send({ t: 'next', from: itemId, end: true });
       else if (item && item.id === itemId && queue.length > 0) {
         showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send({ t: 'next', from: itemId }));
@@ -1611,6 +1614,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         pins.set(message.pins ?? null);
         // Özel emojiler welcome'dan sonra tek tek gelir. Nothing of mine is uploaded automatically (security review 1).
         reactions.clearStickers();
+        recapStatus = message.recapStatus ?? null;
+        if (message.recapShow) startRecapShow(message.recapShow);
+        else endRecapShow();
         send({ t: 'recaps' });
         tvRoom?.reportState();
         // Opened from a TV's QR (or a code typed before the room was open): pair it now.
@@ -1751,16 +1757,25 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'sticker-removed':
         reactions.removeSticker(message.id);
         break;
-      case 'recap': {
-        // Bugünün özeti (oturumun başından şimdiye; sadece isteyene gelir). Son kartta "Kaydet".
-        const { recap } = message;
-        // The recap's code is loaded when it is first needed (0.9.92.5, speed).
-        void import('./ui/recap.ts').then(({ showRecap }) => showRecap(recap, { onSave: () => send({ t: 'recap-save' }) }));
+      case 'recap':
+        // This session's recap so far, for me alone (Profile → ✨ before it is ready for everyone), card RC1's stage.
+        playRecapAlone(message.recap);
         break;
-      }
       case 'recaps':
         recaps = message.recaps;
-        void import('./ui/recap.ts').then(({ renderRecapHistory }) => renderRecapHistory($('#recap-history'), recaps));
+        void recapChunk().then((m) => m?.renderRecapHistory($('#recap-history'), recaps, playRecapAlone));
+        lastTimeNudge();
+        break;
+      case 'recap-status':
+        recapStatus = message.status;
+        renderRecap();
+        break;
+      case 'recap-show':
+        if (message.show) startRecapShow(message.show);
+        else endRecapShow();
+        break;
+      case 'recap-ask':
+        if (amHost()) void recapChunk().then((m) => m?.askToast(message.name, () => send({ t: 'recap-show' })));
         break;
       case 'home':
         if (isShell && film !== null) askHome(message.by);
@@ -1893,8 +1908,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           tvRemote?.error(t(message.code === 'tv_code' ? 'error.tv_code' : 'error.rate_limited'));
           if (message.code === 'tv_code') break;
         }
-        if (message.code === 'recap_empty') {
-          showError(() => t('error.recap_empty'));
+        if (message.code === 'recap_empty' || message.code === 'recap_shown' || message.code === 'recap_not_ready') {
+          showError(() => t(`error.${message.code as 'recap_empty' | 'recap_shown' | 'recap_not_ready'}`));
           break;
         }
         if (message.code === 'others_watching') {
@@ -2870,7 +2885,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       void loadShortsCss();
     }
     feed.tick();
-    const want = short && !shortsOff;
+    // Card RC1: the recap plays in the normal view's video place; the Shorts view comes back after it.
+    const want = short && !shortsOff && !recapStage;
     $('#shorts-enter').hidden = !short || want;
     const left = queue.length;
     const leftEl = $('#shorts-left');
@@ -4295,7 +4311,133 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   $<HTMLInputElement>('#opt-hostonly').addEventListener('change', (event) => {
     send({ t: 'settings', hostOnly: (event.target as HTMLInputElement).checked });
   });
-  $('#recap-open').addEventListener('click', () => send({ t: 'recap' }));
+  // ---- Card RC1: the session recap (owner's picks A: night stage, host shows / guests ask, ✨ on the rail, our music) ----
+  let recapStatus: RecapStatus | null = null;
+  let recapStage: import('./ui/recap.ts').Stage | null = null;
+  let recapShowId: string | null = null;
+  /** The gold dot on ✨ until someone here opened it this session. */
+  let recapOpenedFor: number | null = null;
+  const recapChunk = () => loadChunk(() => import('./ui/recap.ts'));
+  /** Seconds watched together, with the time since the server's last word while the room plays with two or more. */
+  const recapSec = () => {
+    if (!recapStatus) return 0;
+    const s = roomState;
+    const extra = s?.item && !s.paused && members.length >= 2 ? Math.max(0, (clock.now() - recapStatus.at) / 1000) : 0;
+    return recapStatus.sec + extra;
+  };
+  const recapReady = () => !!recapStatus && !recapStatus.shown && !recapStage && recapSec() >= RECAP_READY_MS / 1000;
+  const nudgesOff = () => load('opt:recapNudges') === '0';
+  function renderRecap(): void {
+    const ready = recapReady();
+    const fresh = ready && recapOpenedFor !== recapStatus?.since;
+    for (const sel of ['#dock-recap', '#shorts-recap']) {
+      const b = $(sel);
+      b.hidden = !ready;
+      b.classList.toggle('rc-new', fresh);
+    }
+    // N2: late and long (≥ 90 min together after 23:00, or 3 h at any time), once per person per session.
+    const sec = recapSec();
+    const hour = new Date().getHours();
+    if (ready && (sec >= 3 * 3600 || (sec >= 90 * 60 && (hour >= 23 || hour < 4)))) recapNudge('late');
+  }
+  setInterval(renderRecap, 20_000);
+  /** A nudge under the video (never over it), at most one per person per session, never after "Don't remind me". */
+  function recapNudge(kind: 'late' | 'end'): void {
+    if (!recapReady() || nudgesOff() || shortsOn || !recapStatus) return;
+    const key = `recapNudge:${roomId}`;
+    if (load(key) === String(recapStatus.since)) return;
+    save(key, String(recapStatus.since));
+    void recapChunk().then((m) =>
+      m?.nudge($('#theater'), kind === 'late' ? { kind: 'late', sec: recapSec() } : { kind: 'end', host: amHost() }, {
+        open: () => (amHost() ? send({ t: 'recap-show' }) : send({ t: 'recap-ask' })),
+        never: () => save('opt:recapNudges', '0'),
+        ms: kind === 'late' ? 12_000 : 60_000,
+      }),
+    );
+  }
+  /** N4: the last session ended without a show: for 10 min into the next one, a chip replays it alone. */
+  let lastTimeChecked = false;
+  function lastTimeNudge(): void {
+    if (lastTimeChecked || !recapStatus || nudgesOff()) return;
+    lastTimeChecked = true;
+    const last = recaps.at(-1);
+    if (!last || last.shown || last.to > recapStatus.since || clock.now() - recapStatus.since > 10 * 60_000) return;
+    const key = `recapLast:${roomId}`;
+    if (load(key) === last.id) return;
+    save(key, last.id);
+    void recapChunk().then((m) => m?.nudge($('#theater'), { kind: 'last', recap: last }, { open: () => playRecapAlone(last), never: () => save('opt:recapNudges', '0'), ms: 10 * 60_000 }));
+  }
+  function openRecapFlow(anchor: HTMLElement): void {
+    recapOpenedFor = recapStatus?.since ?? null;
+    if (!recapReady()) {
+      // Not ready for everyone yet: this session so far, for me alone (as Profile → ✨ always did).
+      send({ t: 'recap' });
+      return;
+    }
+    const sec = recapSec();
+    renderRecap();
+    void recapChunk().then((m) => m?.recapCard(anchor, { host: amHost(), readySec: sec, ask: () => send({ t: 'recap-ask' }), show: () => send({ t: 'recap-show' }) }));
+  }
+  for (const sel of ['#dock-recap', '#shorts-recap', '#recap-open']) $(sel).addEventListener('click', (event) => openRecapFlow(event.currentTarget as HTMLElement));
+  function playRecapAlone(recap: Recap): void {
+    if (recapShowId) return;
+    void recapChunk().then((m) => {
+      if (!m || recapShowId) return;
+      recapStage = m.playAlone($('.player-wrap'), recap, () => {
+        recapStage = null;
+        renderShorts();
+      });
+      renderShorts();
+    });
+  }
+  function startRecapShow(show: RecapShow): void {
+    if (recapShowId === show.id) return;
+    recapShowId = show.id;
+    renderRecap();
+    void recapChunk().then((m) => {
+      if (!m || recapShowId !== show.id) return;
+      const by = members.find((x) => x.id === show.by);
+      recapStage = m.playRecap($('.player-wrap'), {
+        mode: 'room',
+        show,
+        now: () => clock.now(),
+        host: amHost,
+        byName: by ? displayName(by) : null,
+        onBack: () => send({ t: 'recap-end' }),
+        onClose: () => {
+          recapStage = null;
+          renderShorts();
+          renderRecap();
+        },
+      });
+      renderShorts();
+    });
+  }
+  function endRecapShow(): void {
+    if (!recapShowId) return;
+    recapShowId = null;
+    recapStage?.close();
+  }
+  // Card RC1: Test Lab `recap.show` (the host shows a recap now: the lab server skips the 30 min together and two
+  // people) and `recap.state` (status, readiness, the stage's scene).
+  debugHooks.register('recap', () => ({
+    commands: [
+      {
+        id: 'recap.show',
+        tab: 'screen',
+        run: () => {
+          if (!amHost()) return 'not host';
+          send({ t: 'recap-show', lab: true });
+          return 'asked';
+        },
+      },
+      {
+        id: 'recap.state',
+        tab: 'status',
+        run: () => JSON.stringify({ status: recapStatus, sec: Math.round(recapSec()), ready: recapReady(), show: recapShowId, stage: recapStage?.state() ?? null, button: !$('#dock-recap').hidden || !$('#shorts-recap').hidden }),
+      },
+    ],
+  }));
   $<HTMLInputElement>('#opt-countdown').addEventListener('change', (event) => {
     send({ t: 'settings', countdown: (event.target as HTMLInputElement).checked });
   });

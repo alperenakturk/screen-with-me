@@ -320,6 +320,10 @@ jobs:
       - name: Shorts view tidy
         run: node scripts/harness/shorts-tidy/run.cjs http://localhost:8787
 
+      # Card RC1: the session recap shown to everyone (in step, in the video's place, once per session).
+      - name: Session recap show
+        run: node scripts/harness/recap/run.cjs http://localhost:8787
+
       # Card CH1: a long chat stays (500 lab messages), pages back in on scroll-up, and room activity never pushes it out.
       - name: Chat kept until the room is deleted
         run: node scripts/harness/chat-history/run.cjs http://localhost:8787

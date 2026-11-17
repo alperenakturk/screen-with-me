@@ -1,4 +1,4 @@
-import type { Recap } from './recap.ts';
+import type { Recap, RecapShow, RecapStatus } from './recap.ts';
 import { cleanFeedIn, type FeedIn, type FeedInfo } from './feed.ts';
 
 // Sunucu ile istemciler (site ve ileride eklenti) arasındaki mesaj formatı.
@@ -488,6 +488,12 @@ export type ClientMessage =
   | { t: 'recap-save' }
   /** Bu odanın önceki özetleri. */
   | { t: 'recaps' }
+  /** Card RC1: the host shows this session's recap to everyone (once per session; `lab` skips the 30 min on a lab server). */
+  | { t: 'recap-show'; lab?: true }
+  /** Card RC1: the host ends the show for everyone (the paused video comes back). */
+  | { t: 'recap-end' }
+  /** Card RC1: a guest asks the host to show the recap (one per person per 10 min, never stored). */
+  | { t: 'recap-ask' }
   /** Card CH1: one older page of the room's chat (the number from `welcome.chatMore` or the last `chat-older`). */
   | { t: 'chat-older'; page: number }
   /** Card MSG1: delete a chat message for everyone (my own, or anyone's when I am the (acting) host). */
@@ -502,7 +508,8 @@ export type ClientMessage =
   | { t: 'feed-played' }
   /** Test Lab (DL3b): only a local lab server (`SWM_LAB_SERVER`) acts on it; elsewhere `bad_message`. */
   /** `age-images` (QUOTA1a / IMG2): the room's chat images run out now, as if their time had passed. */
-  | { t: 'lab'; op: 'tipjar' | 'age-images' | 'chat-fill' }
+  /** `recap-gap` (RC1): the session's last activity moves 4 h back, so the next activity starts a new session. */
+  | { t: 'lab'; op: 'tipjar' | 'age-images' | 'chat-fill' | 'recap-gap' }
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
@@ -603,6 +610,9 @@ export type ErrorCode =
   | 'others_watching'
   /** Özet için henüz yeterince şey olmadı. */
   | 'recap_empty'
+  /** Card RC1: this session's recap was already shown to everyone / is not ready (30 min together) yet. */
+  | 'recap_shown'
+  | 'recap_not_ready'
   /** No TV is waiting with that code (wrong, used or expired) / the TV's link token is no longer valid. */
   | 'tv_code'
   | 'tv_token'
@@ -638,6 +648,9 @@ export type ServerMessage =
       tables?: RoomGame[];
       /** Card SH2: the room's running feed (absent: none). */
       feed?: FeedInfo;
+      /** Card RC1: the recap showing now (absent: none) and how close this session is to its recap. */
+      recapShow?: RecapShow;
+      recapStatus?: RecapStatus;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
@@ -691,6 +704,11 @@ export type ServerMessage =
   | { t: 'tv'; op: TvOp | 'present' | 'linked'; value?: number | boolean }
   | { t: 'recap'; recap: Recap; by: Member }
   | { t: 'recaps'; recaps: Recap[] }
+  /** Card RC1: the show starts (`show`) or ends (`null`, `by` = who ended it). */
+  | { t: 'recap-show'; show: RecapShow | null; by?: string }
+  | { t: 'recap-status'; status: RecapStatus }
+  /** Card RC1: to the host's tabs only: someone asks to see the recap (display name only). */
+  | { t: 'recap-ask'; name: string }
   /** Card CH1: an older page of the chat (oldest first); `more`: the page before it, if any. */
   | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number }
   /** Card SH2: the room's feed changed (null: it stopped). */
@@ -1068,9 +1086,13 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return isItemId(m.id) && typeof m.up === 'boolean' ? { t: 'vote', id: m.id, up: m.up } : null;
     case 'chat-older':
       return Number.isInteger(m.page) && (m.page as number) >= 0 && (m.page as number) < 1e9 ? { t: 'chat-older', page: m.page as number } : null;
+    case 'recap-show':
+      return m.lab === true ? { t: 'recap-show', lab: true } : { t: 'recap-show' };
     case 'recap':
     case 'recap-save':
     case 'recaps':
+    case 'recap-end':
+    case 'recap-ask':
     case 'home':
     case 'tip':
       return { t: m.t };
@@ -1117,7 +1139,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'feed-played':
       return { t: 'feed-played' };
     case 'lab':
-      return m.op === 'tipjar' || m.op === 'age-images' || m.op === 'chat-fill' ? { t: 'lab', op: m.op } : null;
+      return m.op === 'tipjar' || m.op === 'age-images' || m.op === 'chat-fill' || m.op === 'recap-gap' ? { t: 'lab', op: m.op } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':

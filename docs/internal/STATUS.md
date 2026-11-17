@@ -14,7 +14,9 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
     `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
     After merge: deploy, live e2e, tag; FD1's Done line + archive.
-  - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
+  - [ ] RC1 session recap: branch `claude/rc1-session-recap` (on top of FD1b), PR open; server `recap-show` /
+    `recap-end` / `recap-ask` + lab `recap-gap`, e2e `recap.mjs`, harness `recap`, Lab `recap.show` / `recap.state`,
+    privacy page updated (EN + TR), hand test 27ae. After merge: deploy, live e2e, tag; RC1's Done line + archive.
   - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
     CI, passed on re-run): make it deterministic when that harness is next touched.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
@@ -211,6 +213,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", the feed pill sits above the Short (not on it), and
   a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
   shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More and the pill above the Short.
+- [ ] 27ae. [RC1] With a friend, watch together for 30 minutes: a ✨ with a gold dot appears beside the video. Your
+  friend's ✨ offers "🙋 Ask the host"; you get one toast. Press "✨ Show to everyone": after 3-2-1 you both see the same
+  scenes in the video's place (the video pauses), with a soft tune (🔇 turns it off). "✕ Close for me" closes it only
+  for one of you; "▶ Back to the video" ends it for both and the video plays on. ✨ is then gone for this session.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

@@ -50,7 +50,7 @@ import {
 import { readMemory, rememberPlayed, sameFeed, type FeedInfo, type FeedMemoryEntries } from '@swm/shared/feed';
 import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, TITLE_MAX_AGE_MS, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
-import { freshRecaps, RECAP_MAX_AGE_MS, RECAPS_KEEP, RECAPS_KEEP_SAVED, StatsTracker, type Recap, type StatsData } from '@swm/shared/recap';
+import { chooseFacts, freshRecaps, RECAP_ASK_GAP_MS, RECAP_COUNTDOWN_MS, RECAP_MAX_AGE_MS, recapShowEnd, RECAPS_KEEP, RECAPS_KEEP_SAVED, SESSION_GAP_MS, StatsTracker, type Recap, type RecapShow, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { labOnRequest, labRemembered } from './lab.ts';
@@ -294,6 +294,12 @@ export class Room extends DurableObject<Env> {
   private played: QueueItem[] = [];
   /** Card SH2: the room's running feed (shown to everyone in the Queue) and the YouTube ids it has played. */
   private feed: FeedInfo | null = null;
+  /** Card RC1: the recap showing for everyone now, and whether the video was playing when it started (resumes after). */
+  private recapShow: (RecapShow & { resume: boolean }) | null = null;
+  /** Card RC1: last "ask the host" per person key (in memory only, never stored). */
+  private recapAsks = new Map<string, number>();
+  /** Card RC1: the last together-seconds told to the room (`recap-status` goes out when it moves). */
+  private recapToldSec = -1;
   private feedMemory: FeedMemoryEntries = [];
   /** Odada açık oyun ve açanın kalıcı anahtarı (anahtar istemcilere gitmez). */
   /** Game tables, oldest first: the game, its opener's key (never sent) and since when nobody has it open. */
@@ -425,6 +431,7 @@ export class Room extends DurableObject<Env> {
       await this.pruneRecaps(Date.now());
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
       this.feed = (await ctx.storage.get<FeedInfo>('feed')) ?? null;
+      this.recapShow = (await ctx.storage.get<RecapShow & { resume: boolean }>('recapShow')) ?? null;
       this.feedMemory = readMemory(await ctx.storage.get('feedMemory'), Date.now());
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
       this.memberIds = (await ctx.storage.get<Record<string, { cid: string; at: number }>>('memberIds')) ?? {};
@@ -704,6 +711,14 @@ export class Room extends DurableObject<Env> {
           await this.scheduleAlarm();
           return;
         }
+        if (message.op === 'recap-gap') {
+          // RC1: the session's last activity moves 4 h back: the next activity starts a new session.
+          const d = this.stats.data;
+          d.last = (d.last ?? d.since) - SESSION_GAP_MS;
+          d.since -= SESSION_GAP_MS;
+          await this.saveStats(true);
+          return;
+        }
         if (message.op === 'chat-fill') {
           // CH1: 250 numbered messages at once (lab only), to check that a long chat stays and pages back in.
           const base = this.chatStore.count;
@@ -835,6 +850,51 @@ export class Room extends DurableObject<Env> {
         await this.savePins();
         return;
       }
+      case 'recap-show': {
+        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        this.statsTick();
+        const lab = message.lab === true && (this.lab ||= await labRemembered(this.ctx.storage, this.env));
+        if (this.stats.data.shownAt) return this.sendTo(ws, { t: 'error', code: 'recap_shown' });
+        if (!lab && !this.stats.ready()) return this.sendTo(ws, { t: 'error', code: 'recap_not_ready' });
+        const now = Date.now();
+        const recap = this.stats.recap(now, newId());
+        const state = this.room.state;
+        const playing = !state.paused && state.item !== null;
+        // Card RC1 (c): shown means played for everyone: the lock is set as the host's show starts.
+        this.stats.data.shownAt = now;
+        await this.saveStats(true);
+        this.recapShow = { id: recap.id, at: now + RECAP_COUNTDOWN_MS, facts: chooseFacts(recap, Math.random, 6), recap, by: me.id, resume: playing };
+        await this.ctx.storage.put('recapShow', this.recapShow);
+        // The video pauses and stays where it is (the queue does not change); "Back to the video" resumes it.
+        if (playing) {
+          this.room = { ...this.room, state: { ...state, paused: true, position: waitPausePosition(state, now), updatedAt: now } };
+          await this.ctx.storage.put('room', this.room);
+          this.broadcast({ t: 'state', state: this.room.state, action: 'pause', by: me });
+        }
+        this.broadcast({ t: 'recap-show', show: this.publicShow(this.recapShow) });
+        this.tellRecapStatus(true);
+        return;
+      }
+      case 'recap-end': {
+        if (!this.recapShow) return;
+        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        await this.endRecapShow(me.id);
+        return;
+      }
+      case 'recap-ask': {
+        const key = keyOf(attachment);
+        const now = Date.now();
+        const last = this.recapAsks.get(key) ?? 0;
+        if (now - last < RECAP_ASK_GAP_MS || this.recapShow) return;
+        this.recapAsks.set(key, now);
+        for (const [id, at] of this.recapAsks) if (now - at >= RECAP_ASK_GAP_MS) this.recapAsks.delete(id);
+        const hostId = this.hostId();
+        for (const socket of this.openSockets()) {
+          const a = socket.deserializeAttachment() as Attachment | null;
+          if (a?.name && hostId && this.isHost(socket)) this.sendTo(socket, { t: 'recap-ask', name: me.name });
+        }
+        return;
+      }
       case 'recap':
       case 'recap-save': {
         if (!this.commandLimit.allow(me.id)) return;
@@ -896,6 +956,8 @@ export class Room extends DurableObject<Env> {
         const id = newId();
         await this.chatOwners.add(id, { k: await this.ownerTag(attachment) });
         await this.addChat({ id, text: message.text, by: me, at: Date.now(), ...(image ? { image } : {}) });
+        // Card RC1 (d): a message after a ≥ 4 h gap ends the old session (its recap goes into the list now).
+        if (this.stats.ended) await this.saveStats();
         // IMG2: the alarm drops the image when its time is up.
         if (image) await this.scheduleAlarm();
         return;
@@ -1404,7 +1466,49 @@ export class Room extends DurableObject<Env> {
   /** Özet sayacına "şu ana kadar oynadı mı" bilgisini işler (oda durumu değişmeden önce çağrılır). */
   private statsTick(present = this.openSockets().length > 0): void {
     const s = this.room.state;
-    this.stats.tick(Date.now(), !s.paused && s.item !== null, s.rate, present);
+    const people = new Set(this.joined().map((a) => a.cid ?? a.id)).size;
+    this.stats.tick(Date.now(), !s.paused && s.item !== null, s.rate, present, people >= 2);
+    this.tellRecapStatus();
+  }
+
+  /** Card RC1: everyone learns how far this session is toward its recap (when it moved by a minute, or `force`). */
+  private tellRecapStatus(force = false): void {
+    const status = this.stats.status(Date.now());
+    const minute = status.shown ? -2 : Math.floor(status.sec / 60);
+    if (!force && minute === this.recapToldSec) return;
+    this.recapToldSec = minute;
+    this.broadcast({ t: 'recap-status', status });
+  }
+
+  /** The show without the server's own `resume` flag. */
+  private publicShow(show: RecapShow & { resume?: boolean }): RecapShow {
+    const { resume: _resume, ...rest } = show;
+    return rest;
+  }
+
+  /** Card RC1: the show still on screen (one past its last scene by a minute is dropped). */
+  private liveRecapShow(): RecapShow | null {
+    if (this.recapShow && Date.now() > recapShowEnd(this.recapShow)) {
+      this.recapShow = null;
+      void this.ctx.storage.delete('recapShow').catch((error: unknown) => logError('room: recap show', error));
+    }
+    return this.recapShow;
+  }
+
+  /** Card RC1: the host ended the show: everyone goes back, the paused video plays on if it was playing. */
+  private async endRecapShow(by: string): Promise<void> {
+    const resume = this.recapShow?.resume === true;
+    this.recapShow = null;
+    await this.ctx.storage.delete('recapShow');
+    this.broadcast({ t: 'recap-show', show: null, by });
+    const state = this.room.state;
+    if (resume && state.paused && state.item) {
+      this.statsTick();
+      const now = Date.now();
+      this.room = { ...this.room, state: { ...state, paused: false, updatedAt: now } };
+      await this.ctx.storage.put('room', this.room);
+      this.broadcast({ t: 'state', state: this.room.state, action: 'play', by: SYSTEM });
+    }
   }
 
   /** Counters changed since the last write (PERF1e), and when that write was. */
@@ -1414,6 +1518,17 @@ export class Room extends DurableObject<Env> {
   /** Writes the recap's counters now if the last write is `STATS_SAVE_MS` old (or `force`), else leaves it to the alarm. */
   private async saveStats(force = false): Promise<void> {
     const now = Date.now();
+    // Card RC1 (d): a session that ended goes into the room's recap list whole (a show earlier didn't cut it short).
+    const ended = this.stats.ended;
+    if (ended) {
+      this.stats.ended = null;
+      const keep = this.settings.saved ? RECAPS_KEEP_SAVED : RECAPS_KEEP;
+      this.recaps = [...freshRecaps(this.recaps, now).filter((r) => r.from !== ended.from), ended].slice(-keep);
+      await this.ctx.storage.put('recaps', this.recaps);
+      this.broadcast({ t: 'recaps', recaps: this.recaps });
+      this.tellRecapStatus(true);
+      force = true;
+    }
     if (force || now - this.statsSavedAt >= STATS_SAVE_MS) {
       await this.ctx.storage.put('stats', this.stats.data);
       this.statsSavedAt = now;
@@ -1572,6 +1687,8 @@ export class Room extends DurableObject<Env> {
       ...(this.tables.length ? { game: this.tables.at(-1)!.game } : {}),
       tables: this.tables.map((t) => t.game),
       ...(this.feed ? { feed: this.feed } : {}),
+      ...(this.liveRecapShow() ? { recapShow: this.publicShow(this.recapShow!) } : {}),
+      recapStatus: this.stats.status(Date.now()),
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
     // The person who added an emoji gets `mine` so they can remove it after a reload (the owner key itself never leaves).
@@ -2494,7 +2611,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'chat-older' | 'chat-delete' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'recap-show' | 'recap-end' | 'recap-ask' | 'chat-older' | 'chat-delete' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;
