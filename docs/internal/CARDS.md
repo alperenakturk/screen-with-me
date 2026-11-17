@@ -93,6 +93,29 @@ Two sessions never edit the same lines; the Planner splits work by files.
   spot-check list in the PR); unit tests for the request parameters; Test Lab hook `feed.region`; owner's hand test.
 - Owner's pick: his message to the Planner (17 Nov 2026).
 
+### UI4. The owner's 17 Nov polish pass (owner, 17 Nov 2026; lane A, after FC1 and RC1)
+- Why: the owner's notes after trying SRC2 / FD1 live.
+- What:
+  1. **No feed pill on top.** Remove the "♾ Feed: … · N left · by …" pill from above the video / the "Now playing"
+     bar in the room view and the Shorts view. The feed shows only where the feed lives (the feed window / drawer and
+     the queue's feed row). Keep pause / stop there.
+  2. **Drive-In is the default theme.** Every new visitor and every room starts in the Drive-In theme
+     (`themes.ts` `acikhava`); anyone can change it and the choice stays saved in the browser as today. A saved
+     choice is never overwritten. (The owner: "I like it most right now; we may change it later.")
+  3. **"What are we watching?" picker polish (SRC2):** (a) the grid sits too high with empty space below: centre it
+     and balance the card in the space it gets; (b) service marks: show the official logo / icon of a service only
+     where that brand's published guidelines allow it at tile size (YouTube's rules forbid the logo under 100 px and
+     as the most prominent element, so YouTube and Shorts likely stay our glyph + the name; check TikTok, Vimeo,
+     Dailymotion, YouTube Music, Spotify-like podcast marks one by one and write the findings in the PR; never a
+     lookalike); (c) planned services: one tile "🎬 Subscription services · Coming" (everyone with their own
+     subscription, via the extension), **no service names** (CLAUDE.md §6: a name only if it really works; store
+     policy) unless the owner decides otherwise.
+  4. **Shorts view "Other" button does nothing.** The rail's groups (Talk · Watch · Room) are liked; its "Other" /
+     "More" entry doesn't work. Fix it (open its menu on laptop and phone) with a harness check.
+- Done when: all four live on computer + phone; Test Lab hooks `ui.feedPill` (gone), `theme.default`, `sources.picker`
+  layout check, `shorts.more`; shots at 4 sizes; owner's hand test.
+- Owner's pick: his message to the Planner (17 Nov 2026).
+
 ### DM1. Dailymotion links play in sync without the extension (owner, 17 Nov 2026; lane A, after CR2)
 - Why: Dailymotion is the most visited entertainment site in Turkey (research `docs/internal/research/video-sources.md`).
 - What: a `dailymotion` media kind like Vimeo's (`players/vimeo.ts` as the model): links `dailymotion.com/video/<id>`
