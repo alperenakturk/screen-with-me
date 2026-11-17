@@ -3150,7 +3150,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const shown = (sel: string) => [...document.querySelectorAll<HTMLElement>(sel)].filter((n) => n.getBoundingClientRect().width > 0);
           const player = rect($('.player-wrap'));
           const pill = rect($('#feed-pill'));
-          const buttons = shown('#shorts-bar > :is(button, div, form) :is(.small-btn, .react-open, .cam-ctl):not(.shorts-feed-pop *, .react-tray *, .game-menu *), #shorts-bar > button');
+          const buttons = shown('#shorts-bar > :is(button, div, form) :is(.small-btn, .react-open, .cam-ctl):not(.shorts-feed-pop *, .react-tray *, .game-menu *), #shorts-bar > button, #shorts-nav .shorts-arrow');
           const boxes = buttons.map(rect);
           const hint = document.querySelector('.hint-bubble');
           const phoneBar = document.querySelector('.ph-shorts-bar');
