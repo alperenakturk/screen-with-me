@@ -2932,6 +2932,6 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done when: game-proportions `upright` pokerPlay passes and runs in CI; games-sweep Last Heart rows stay green; Test Lab
   hook `poker.compact` covers it (six players); owner's hand test on an upright tablet.
 - Owner's pick: the Planner's approval (17 Nov 2026).
-- Done: PR (`claude/lh3-poker-upright`, Game Studio, 17 Nov 2026): the compact table's container query takes the
+- Done: #547 (`claude/lh3-poker-upright`, Game Studio, 17 Nov 2026): the compact table's container query takes the
   short, wide box too (tighter rows, newest feed line); phone pot box (board ≤ 46 px, newest feed line); games-sweep
   `tabup`, CI game-proportions `upright` + games-sweep `tabup` Last Heart row.
