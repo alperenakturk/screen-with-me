@@ -180,6 +180,25 @@ const SCREENS = {
       await p.waitForSelector('#sources-paste:not([hidden])');
     },
   },
+  // Card FD1b: the Shorts view with a ♾ Shorts feed running: the rail in three labelled groups, "N left" under ▲, the
+  // feed pill above the Short (never on the player), the phone's bar with ♾ Feed.
+  'shorts-feed': {
+    what: 'Card FD1b: the Shorts view while a ♾ Shorts feed runs: the rail in three labelled groups (Talk · Watch · Room; labels beside the icons when there is room), ♾ Feed marked on, "N left" under ▲, the feed pill above the Short (never on the player); on a phone the bar 💬 Chat · 😀 React · ♾ Feed · ▲ N left ▼ · ⋯ More (the player may stay blank: YouTube is blocked in this test)',
+    room: true,
+    sizes: ['laptop', 'desktop', 'tablet', 'phone'],
+    after: async (p) => {
+      const shorts = ['9bZkp7q5F8I', 'aqz-KE-bpKQ', 'dQw4w9WgXcQ', 'M7lc1UVf-VE', 'jNQXAC9IVRw', 'kJQP7kiw5Fk'].map((id, i) => ({ id, title: `Short ${i + 1}`, channel: 'Alex', duration: 30 + i, live: false, short: true }));
+      await p.route('**/api/youtube/**', (route) => route.fulfill({ json: { items: shorts } }));
+      if (await p.isVisible('#ph-tab-search')) await p.click('#ph-tab-search');
+      else await p.click('.tab[data-tab="queue"]');
+      await p.click('#feed-open-shorts');
+      await p.click('#feed-pools .feed-pool[data-pool="music"]');
+      await p.click('#feed-start');
+      await p.waitForFunction(() => document.documentElement.classList.contains('shorts-view'));
+      await p.keyboard.press('Escape');
+      await wait(1500);
+    },
+  },
   'shorts-chat': {
     what: 'The Shorts view on a computer with 💬 open: the room\'s chat as a panel right of the rail and the seats (never over the video)',
     room: true,
@@ -237,7 +256,8 @@ const SCREEN_FOR = [
   [/^apps\/web\/public\/extension|^apps\/extension\//, ['extension']],
   [/^apps\/web\/src\/(home|app)\.|^apps\/web\/index\.html|^apps\/web\/src\/styles\.css|^apps\/web\/src\/themes/, ['home', 'join', 'room']],
   [/^apps\/web\/src\/ui\/end-card/, ['end-card']],
-  [/^apps\/web\/src\/ui\/(feed-window|feed-row|shorts-feed)/, ['feed-drawer', 'feed-window', 'feed-queue']],
+  [/^apps\/web\/src\/ui\/(feed-window|feed-row|shorts-feed)/, ['feed-drawer', 'feed-window', 'feed-queue', 'shorts-feed']],
+  [/^apps\/web\/src\/shorts\.css$/, ['shorts-feed', 'shorts-chat']],
   [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'sources-youtube', 'sources-music', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],

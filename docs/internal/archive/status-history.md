@@ -1708,3 +1708,18 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 - [x] 27w. [VC1] On a YouTube video drag YouTube's own volume slider: it follows the mouse (the cloud can't test real
   YouTube).
   Passed: the owner, 17 Nov 2026 (via the Planner).
+
+## Lane A handoff lines, archived 17 Nov 2026 (verbatim)
+
+- [ ] Lane A (handoff 17 Nov, 00:00; the session stopped: no lane A card is ready without the owner):
+  - [x] SH3, VC1, VC3, MSG1 (#509, v0.9.97.157) and CR2 (#512 + #520, v0.9.97.158) live, Done lines in
+    `archive/cards-done.md`; hand tests 27u–27y (+ CR2's 27z); 27w passed (archive). Branches `claude/msg1-delete-message`,
+    `claude/cr2-yt-playlists`, `claude/cr2-playlist-404` merged. Tags: `v0.9.97.141` back-filled by TAG_TOKEN;
+    `v0.9.97.113` (8ce4385) still missing (a tag push from a session was refused: owner's Releases page or a session
+    allowed to push tags).
+  - [ ] Lane A (handoff 17 Nov, 02:10; card group SRC2 → FD1 → RC1, all owner's pick A; the session stopped at its
+    context limit):
+    - [x] SRC2 big source picker: #527 (`claude/src2-source-picker-grid`), live in v0.9.97.160 (the first deploy's
+      live e2e failed only `quota.mjs` "13th HTTP-fallback session gets 429 (11 opened, 2 refused)": the live shards
+      seem to share an address; it passed in .160). Done line in `archive/cards-done.md`; hand test 27ab.
+    - [x] FD1a feed drawer + pill + host rule: #529 (`claude/fd1-feed-drawer`), live in v0.9.97.160; hand test 27ac.

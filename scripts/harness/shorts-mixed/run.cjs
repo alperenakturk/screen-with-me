@@ -114,7 +114,7 @@ const playing = (page) =>
     check(opened, `${label}: the pasted list opens the Shorts view`);
     // The list goes out one link at a time (300 ms apart, a share link after its lookup): swipe only once all four are
     // in the room (one playing, three waiting), or a quick ▼ meets an empty queue (CI run 43900178828).
-    const queued = await page.waitForFunction(() => document.getElementById('shorts-left')?.textContent === '3', null, { timeout: 15000 }).then(() => true).catch(() => false);
+    const queued = await page.waitForFunction(() => /^3\b/.test(document.getElementById('shorts-left')?.textContent ?? ''), null, { timeout: 15000 }).then(() => true).catch(() => false);
     check(queued, `${label}: all four links reached the room (three waiting)`, await page.evaluate(() => document.getElementById('shorts-left')?.textContent ?? ''));
     check(lookups === 1, `${label}: the short share link was looked up once`, String(lookups));
 

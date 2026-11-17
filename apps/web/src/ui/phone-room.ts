@@ -538,7 +538,10 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     button.addEventListener('click', action);
     return button;
   };
-  const count = el('span', { class: 'ph-left', 'aria-hidden': 'true' });
+  const count = el('span', { class: 'ph-left ph-cap', 'aria-hidden': 'true' });
+  /** Card FD1b: a bar button with a short caption under it (the button keeps its full name for screen readers). */
+  const cell = (button: HTMLElement, caption: string | HTMLElement) =>
+    el('span', { class: 'ph-cell' }, button, typeof caption === 'string' ? el('span', { class: 'ph-cap', 'aria-hidden': 'true' }, caption) : caption);
   // Messages that came in while the chat was out of sight: a count on each 💬.
   let unread = 0;
   const badges: HTMLElement[] = [];
@@ -555,13 +558,24 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
   }
   const shortsChat = barButton('💬', t('chat'), () => openShortsChat(), 'ph-shorts-chat');
   shortsChat.append(unreadBadge());
+  // Card FD1b: 💬 Chat · 😀 React · ♾ Feed · ▲ (n left) ▼ · ⋯ More; ♾ is "on" while a feed runs (the rail's ♾ says so).
+  const feedButton = barButton('♾', t('feed.short'), () => $<HTMLButtonElement>('#shorts-feed')?.click(), 'ph-shorts-feed');
+  const railFeed = $('#shorts-feed');
+  const mirrorFeed = () => {
+    const on = railFeed?.getAttribute('aria-pressed') === 'true';
+    feedButton.classList.toggle('on', on);
+    feedButton.setAttribute('aria-pressed', String(on));
+  };
+  if (railFeed) new MutationObserver(mirrorFeed).observe(railFeed, { attributes: true, attributeFilter: ['aria-pressed'] });
+  mirrorFeed();
   shortsBar.append(
     faces,
     toast,
-    shortsChat,
-    barButton('😀', t('reactTray.hint'), () => $<HTMLButtonElement>('#shorts-bar .react-open')?.click(), 'ph-shorts-react'),
-    el('span', { class: 'ph-nav' }, barButton('▲', t('shorts.prev'), () => $<HTMLButtonElement>('#shorts-prev')?.click(), 'ph-shorts-prev'), count, barButton('▼', t('shorts.next'), () => $<HTMLButtonElement>('#shorts-next')?.click(), 'ph-shorts-next')),
-    barButton('⋯', t('phone.more'), () => openShortsMore(), 'ph-shorts-more'),
+    cell(shortsChat, t('tab.chat')),
+    cell(barButton('😀', t('reactTray.hint'), () => $<HTMLButtonElement>('#shorts-bar .react-open')?.click(), 'ph-shorts-react'), t('reactTray')),
+    cell(feedButton, t('shorts.feed')),
+    el('span', { class: 'ph-nav' }, cell(barButton('▲', t('shorts.prev'), () => $<HTMLButtonElement>('#shorts-prev')?.click(), 'ph-shorts-prev'), count), cell(barButton('▼', t('shorts.next'), () => $<HTMLButtonElement>('#shorts-next')?.click(), 'ph-shorts-next'), '')),
+    cell(barButton('⋯', t('phone.more'), () => openShortsMore(), 'ph-shorts-more'), t('shorts.moreLabel')),
   );
   const seatsL = $('#seats-l');
   const seatsR = $('#seats-r');

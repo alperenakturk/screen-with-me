@@ -525,8 +525,9 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           <div class="shorts-chat-head"><b id="shorts-chat-title" data-i18n="tab.chat"></b><button id="shorts-chat-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
         </aside>
         <div id="shorts-bar" class="shorts-bar shorts-only">
+          <span class="rail-head" data-i18n="shorts.groupTalk"></span>
           <div class="shorts-chat-wrap">
-            <button id="shorts-chat-btn" type="button" class="btn small-btn rail-only" aria-expanded="false" aria-controls="shorts-chat-panel" data-i18n-title="shorts.chatHint">💬<span id="shorts-chat-badge" class="badge" hidden></span></button>
+            <button id="shorts-chat-btn" type="button" class="btn small-btn rail-only" aria-expanded="false" aria-controls="shorts-chat-panel" data-i18n-title="shorts.chatHint">💬<span data-i18n="tab.chat"></span><span id="shorts-chat-badge" class="badge" hidden></span></button>
             <form id="shorts-chat" class="shorts-chat">
               <input id="shorts-input" autocomplete="off" maxlength="300" data-i18n-placeholder="chatPlaceholder" data-i18n-title="chat" />
               <button class="btn primary" data-i18n="send"></button>
@@ -537,6 +538,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             <button id="shorts-mic" type="button" class="cam-ctl"></button>
             <button id="shorts-cam" type="button" class="cam-ctl"></button>
           </div>
+          <span class="rail-head" data-i18n="shorts.groupWatch"></span>
           <div class="shorts-add-wrap">
             <button id="shorts-add" type="button" class="btn small-btn shorts-add" aria-expanded="false" data-i18n-title="shorts.addHint">＋ <span data-i18n="shorts.add"></span></button>
             <form id="shorts-add-form" class="shorts-feed-pop shorts-add-pop card" hidden>
@@ -552,15 +554,16 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
               <p class="yt-attrib small">${ytLogoHtml()}<span><span data-i18n="yt.from"></span> · <a href="https://www.youtube.com/t/terms" target="_blank" rel="noopener" data-i18n="yt.terms"></a></span></p>
             </form>
           </div>
-          <div class="game-menu-wrap shorts-game-wrap">
-            <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false" data-i18n-title="tool.game">🎮 <span data-i18n="tool.game"></span></button>
-          </div>
           <div class="shorts-feed-wrap">
             <button id="shorts-feed" type="button" class="btn small-btn shorts-feed" aria-pressed="false" aria-haspopup="dialog" data-i18n-title="feed.short">♾ <span id="shorts-feed-label" data-i18n="feed.short"></span></button>
           </div>
           <button id="shorts-loop" type="button" class="btn small-btn shorts-loop" aria-pressed="false">🔁 <span data-i18n="shorts.loop"></span></button>
+          <span class="rail-head" data-i18n="shorts.groupRoom"></span>
+          <div class="game-menu-wrap shorts-game-wrap">
+            <button id="shorts-game" type="button" class="btn small-btn shorts-game" aria-haspopup="true" aria-expanded="false" data-i18n-title="tool.game">🎮 <span data-i18n="tool.game"></span></button>
+          </div>
           <button id="shorts-exit" type="button" class="btn small-btn" data-i18n-title="shorts.roomViewHint">↩ <span data-i18n="shorts.roomView"></span></button>
-          <button id="shorts-more" type="button" class="btn small-btn rail-more" aria-expanded="false" data-i18n-title="shorts.menu">⋯</button>
+          <button id="shorts-more" type="button" class="btn small-btn rail-more" aria-expanded="false" data-i18n-title="shorts.menu">⋯ <span data-i18n="shorts.moreLabel"></span></button>
         </div>
         <p id="player-error" class="error" hidden></p>
       </div>
@@ -2697,7 +2700,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     const shortsOnNow = info?.kind === 'shorts';
     feedButton.classList.toggle('on', shortsOnNow);
     feedButton.setAttribute('aria-pressed', String(shortsOnNow));
-    $('#shorts-feed-label').textContent = shortsOnNow ? info.label : t('feed.short');
+    // Card FD1b (first look): the rail's name says what the button is ("Feed"); what runs is in the pill and the title.
+    $('#shorts-feed-label').textContent = shortsOnNow ? t('shorts.feed') : t('feed.short');
     feedButton.title = shortsOnNow ? t('feed.stopHint', { topic: info.label }) : t('feed.hint');
     feedRow.render();
     feedWindowRefresh?.();
@@ -2845,26 +2849,52 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     new Image().src = `https://i.ytimg.com/vi/${encodeURIComponent(next.id)}/hqdefault.jpg`;
   }
 
+  let shortsCssReady = false;
+  let shortsCss: Promise<void> | null = null;
+  const loadShortsCss = () =>
+    (shortsCss ??= import('./shorts.css').then(
+      () => void (shortsCssReady = true),
+      () => void (shortsCssReady = true),
+    ));
+  /** Card FD1b: in the Shorts view the feed pill sits above the Short (our frame, never on the player); back in the
+   * room view it returns to the bar above the video. */
+  function placeFeedPill(): void {
+    const pill = $('#feed-pill');
+    if (shortsOn) $('.stage').insertBefore(pill, $('#theater'));
+    else $('#shorts-enter').before(pill);
+  }
   function renderShorts(): void {
     const short = isShortItem(roomState?.item);
-    if (short) warmNextShort();
+    if (short) {
+      warmNextShort();
+      void loadShortsCss();
+    }
     feed.tick();
     const want = short && !shortsOff;
     $('#shorts-enter').hidden = !short || want;
     const left = queue.length;
     const leftEl = $('#shorts-left');
-    leftEl.textContent = left > 0 ? String(left) : '';
+    // Card FD1b: "12 left" under ▲ instead of a bare number; the full sentence in the tooltip.
+    leftEl.textContent = left > 0 ? t('shorts.leftShort', { n: left }) : '';
     leftEl.title = t('shorts.left', { n: left });
     const loop = $('#shorts-loop');
     loop.setAttribute('aria-pressed', String(roomSettings.loop === true));
     loop.title = amHost() ? t('shorts.loopHint') : t('shorts.loopHost');
     if (want === shortsOn) return;
     shortsOn = want;
+    // Card FD1b: the Shorts view's own styles are a lazy stylesheet (the room's CSS budget is full): the view switches
+    // only once it is in, so nothing shows unstyled. A failed load still switches (the room's base styles hold).
+    if (shortsOn && !shortsCssReady) {
+      void loadShortsCss().then(renderShorts);
+      shortsOn = false;
+      return;
+    }
     // Owner (30 Oct 2026): someone opened a Short while I watched in fullscreen; the Short played in fullscreen and
     // I never noticed the Shorts view. Leave fullscreen so the view switches (the TV keeps its pinned fullscreen).
     if (shortsOn && fullscreen.isActive() && !document.documentElement.classList.contains('tv-mode')) fullscreen.toggle();
     // Sınıflar o anki değere göre: art arda iki değişiklikte geç kalan geçiş eski hâli geri getirmesin.
     const apply = () => {
+      placeFeedPill();
       roomEl.classList.toggle('shorts', shortsOn);
       document.documentElement.classList.toggle('shorts-view', shortsOn);
       if (!shortsOn) document.documentElement.classList.remove('topbar-peek');
@@ -3083,6 +3113,49 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             panel,
             overPlayer: !!panel && !!player && panel.x < player.x + player.w && panel.x + panel.w > player.x && panel.y < player.y + player.h && panel.y + panel.h > player.y,
           });
+        },
+      },
+    ],
+  }));
+  // Card FD1b: Test Lab `shorts.tidy` writes the Shorts view's layout (rail groups, labels, "N left", the pill's place,
+  // anything overlapping); `shorts.note` flashes a sample note from ♾ the way a feed's note shows.
+  debugHooks.register('shorts-tidy', () => ({
+    commands: [
+      {
+        id: 'shorts.tidy',
+        tab: 'status',
+        run: () => {
+          const rect = (node: Element | null) => {
+            const r = node?.getBoundingClientRect();
+            return r && r.width ? { x: Math.round(r.x), y: Math.round(r.y), r: Math.round(r.right), b: Math.round(r.bottom) } : null;
+          };
+          type Box = NonNullable<ReturnType<typeof rect>>;
+          const meets = (a: Box | null, b: Box | null) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
+          const shown = (sel: string) => [...document.querySelectorAll<HTMLElement>(sel)].filter((n) => n.getBoundingClientRect().width > 0);
+          const player = rect($('.player-wrap'));
+          const pill = rect($('#feed-pill'));
+          const buttons = shown('#shorts-bar > :is(button, div, form) :is(.small-btn, .react-open, .cam-ctl):not(.shorts-feed-pop *, .react-tray *, .game-menu *), #shorts-bar > button');
+          const boxes = buttons.map(rect);
+          const hint = document.querySelector('.hint-bubble');
+          const phoneBar = document.querySelector('.ph-shorts-bar');
+          return JSON.stringify({
+            on: shortsOn,
+            heads: shown('#shorts-bar > .rail-head').map((n) => n.textContent),
+            labels: shown('#shorts-bar .small-btn > span:not(.badge)').length + buttons.filter((b) => b.classList.contains('cam-ctl') && getComputedStyle(b, '::after').content.length > 2).length,
+            left: $('#shorts-left').textContent,
+            pill: pill && { box: pill, inStage: $('#feed-pill').parentElement?.classList.contains('stage') ?? false, abovePlayer: !!player && pill.b <= player.y + 1 },
+            overlaps: boxes.some((a, i) => boxes.some((b, j) => j > i && meets(a, b))) || boxes.some((b) => meets(b, player)),
+            hint: hint && { text: hint.textContent, overPlayer: meets(rect(hint), player), overRail: meets(rect(hint), rect($('#shorts-bar'))) },
+            phone: phoneBar && { feedOn: phoneBar.querySelector('#ph-shorts-feed')?.classList.contains('on') ?? false, captions: [...phoneBar.querySelectorAll('.ph-cap')].map((n) => n.textContent).filter(Boolean) },
+          });
+        },
+      },
+      {
+        id: 'shorts.note',
+        tab: 'screen',
+        run: () => {
+          flashHint(feedButton, t('feed.end', { topic: feed.info?.label ?? t('feed.short') }), 5000);
+          return 'shown';
         },
       },
     ],
