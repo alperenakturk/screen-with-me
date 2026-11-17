@@ -48,14 +48,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (session 17 Nov b, cards GW4 → GW5 → GMP2):
-  [ ] GW4 `claude/gw4-layout-stable`: the room's fill-height layout stays on with a game open (room.css), the paused
-  note in the head's title line, Lab `games.layoutStable`, harness `games-layout` (CI games). PR → green → merge →
-  deploy + live e2e → Done line + archive → hand test → Planner.
-  [ ] GW5: game frames scale in proportion (min / mid / max, `games.scaleCheck`); fold in: sideways-tablet tables in
-  the video's place have text under 13 px (Duel, Sea Battle six; add that size to the sweep); a side game's home frame
-  at 1366 covers the whole side panel (voice block and chat; GW5's smaller minimum).
-  [ ] GMP2: Sea Battle + Duel say "2–6 players", 4-player e2e, `games.seats`.
+- [ ] Game Studio (17 Nov b): [ ] GW4 #532 `claude/gw4-layout-stable` → merge → live → archive · [ ] GW5 (+ the
+  sideways-tablet tables' text < 13 px, the side game's home over the voice block) · [ ] GMP2.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
