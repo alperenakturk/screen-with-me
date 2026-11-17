@@ -11,7 +11,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
   `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
   still missing (the owner's Releases page or a session allowed to push tags).
-  - [x] FD1b the Shorts view tidy: #535 (`claude/fd1b-shorts-tidy`) merged (live e2e re-run after Cloudflare object drops; tag pending at writing).
+  - [x] FD1b the Shorts view tidy: #535 (`claude/fd1b-shorts-tidy`) live in v0.9.97.161 (live e2e green on its re-run after Cloudflare object drops); FD1's Done line in the archive.
   - [ ] FC1 feed country (owner's priority): branch `claude/fc1-feed-country`, PR open; `feedSearchParams` with the
     country's language, words + kind + country combined, chart fallback, Lab `feed.region`, hand test 27af. Live
     spot-check of JP / TR / US / BR / DE: the cloud session's network can't reach the live site, so it is the owner's
