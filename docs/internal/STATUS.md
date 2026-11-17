@@ -8,24 +8,15 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (handoff 17 Nov, 00:00; the session stopped: no lane A card is ready without the owner):
-  - [x] SH3, VC1, VC3, MSG1 (#509, v0.9.97.157) and CR2 (#512 + #520, v0.9.97.158) live, Done lines in
-    `archive/cards-done.md`; hand tests 27u–27y (+ CR2's 27z); 27w passed (archive). Branches `claude/msg1-delete-message`,
-    `claude/cr2-yt-playlists`, `claude/cr2-playlist-404` merged. Tags: `v0.9.97.141` back-filled by TAG_TOKEN;
-    `v0.9.97.113` (8ce4385) still missing (a tag push from a session was refused: owner's Releases page or a session
-    allowed to push tags).
-  - [ ] Lane A (handoff 17 Nov, 02:10; card group SRC2 → FD1 → RC1, all owner's pick A; the session stopped at its
-    context limit):
-    - [x] SRC2 big source picker: #527 (`claude/src2-source-picker-grid`), live in v0.9.97.160 (the first deploy's
-      live e2e failed only `quota.mjs` "13th HTTP-fallback session gets 429 (11 opened, 2 refused)": the live shards
-      seem to share an address; it passed in .160). Done line in `archive/cards-done.md`; hand test 27ab.
-    - [x] FD1a feed drawer + pill + host rule: #529 (`claude/fd1-feed-drawer`), live in v0.9.97.160; hand test 27ac.
-    - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
-      `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
-      After merge: deploy, live e2e, tag; FD1's Done line + archive.
-    - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
-    - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
-      CI, passed on re-run): make it deterministic when that harness is next touched.
+- [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
+  `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
+  still missing (the owner's Releases page or a session allowed to push tags).
+  - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
+    `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
+    After merge: deploy, live e2e, tag; FD1's Done line + archive.
+  - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
+  - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
+    CI, passed on re-run): make it deterministic when that harness is next touched.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the

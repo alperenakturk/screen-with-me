@@ -282,7 +282,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `.rail-head` headings (Talk · Watch · Room: 💬 😀 🎙 📷 · ＋ ♾ 🔁 · 🎮 ↩ ⋯) and, from 1200 px wide, a 132 px column of
   40 px buttons with names beside the icons (🎙 / 📷 names come from `data-label`, set in `voice.ts`); `#shorts-left`
   reads "12 left" (`shorts.leftShort`, the full sentence in its title). The feed pill `#feed-pill` moves into `.stage`
-  above the Short while the view shows (`placeFeedPill`; grid row 1, column 2; the Short gives up `--pill-h`), never
+  above the Short while the view shows (`placeFeedPill`; the pill itself is `ui/feed-row.ts` `renderPill`; grid row 1, column 2; the Short gives up `--pill-h`), never
   on the player; back in the room view it returns to the bar above the video. A `flashHint` from the rail / ▲▼ /
   phone bar (`hint.ts` `shortsSpot`) sits under the Short when there is room, else at the Short's foot on its left,
   and over the bar on a phone: never on the rail, the chat panel or the player. The phone bar: 💬 Chat · 😀 React ·
