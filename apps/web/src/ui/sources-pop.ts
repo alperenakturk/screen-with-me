@@ -67,6 +67,9 @@ const TEXT = {
     'extension.line': 'With the extension',
     'games.name': 'Games',
     'games.line': 'Opens the games hall',
+    'subs.name': 'Subscription services',
+    'subs.line': 'Everyone with their own subscription, through the extension',
+    'subs.note': 'Subscription services are coming: everyone watches with their own subscription, through the extension.',
     'source.hint': 'Type here: the search uses {name}.',
   },
   tr: {
@@ -108,6 +111,9 @@ const TEXT = {
     'extension.line': 'Eklentiyle',
     'games.name': 'Oyunlar',
     'games.line': 'Oyun salonunu açar',
+    'subs.name': 'Abonelik hizmetleri',
+    'subs.line': 'Herkes kendi aboneliğiyle, eklenti üzerinden',
+    'subs.note': 'Abonelik hizmetleri geliyor: herkes kendi aboneliğiyle, eklenti üzerinden izler.',
     'source.hint': 'Buraya yaz: arama {name} ile yapılır.',
   },
 };
@@ -175,8 +181,14 @@ export function createPicker(deps: PickerDeps): Picker {
   const chipRow = el('div', { class: 'srcp-chips', role: 'group' });
   const grid = el('div', { class: 'srcp-grid', role: 'list' });
   const status = el('p', { class: 'srcp-note', role: 'status' });
+  // Card UI4: planned services are one row, with no service named (a name shows only once it really works).
+  const subs = el('button', { type: 'button', class: 'srcp-subs', 'data-source': 'subs' });
+  subs.addEventListener('click', () => {
+    lastAction = 'subs';
+    status.textContent = tx('subs.note');
+  });
   const closeX = el('button', { type: 'button', class: 'icon-btn srcp-close', id: 'srcp-close' }, '✕');
-  const pop = el('div', { class: 'srcp', id: 'sources-pop', role: 'dialog', 'aria-labelledby': 'srcp-title', hidden: '' }, head, chipRow, grid, status, closeX);
+  const pop = el('div', { class: 'srcp', id: 'sources-pop', role: 'dialog', 'aria-labelledby': 'srcp-title', hidden: '' }, head, chipRow, grid, subs, status, closeX);
   closeX.addEventListener('click', () => close(true));
 
   // ---- Card SR2: ♪ TikTok is not a source (no search API): a door to TikTok, then "📋 Paste and play". ----
@@ -314,6 +326,13 @@ export function createPicker(deps: PickerDeps): Picker {
         return el('div', { role: 'listitem', class: 'srcp-cell' }, b);
       }),
     );
+    subs.replaceChildren(
+      el('span', { class: 'srcp-subs-glyph', 'aria-hidden': 'true' }, '🎬'),
+      el('span', { class: 'srcp-name' }, tx('subs.name')),
+      el('span', { class: 'srcp-soon', 'aria-hidden': 'true' }, tx('coming')),
+      el('span', { class: 'srcp-line' }, tx('subs.line')),
+    );
+    subs.setAttribute('aria-label', [tx('subs.name'), tx('coming'), tx('subs.line')].join(', '));
     pop.dataset.chip = chip;
     if (again) pop.querySelector<HTMLElement>(again)?.focus();
   }
@@ -410,6 +429,13 @@ export function createPicker(deps: PickerDeps): Picker {
         scrolls: pop.scrollHeight > pop.clientHeight + 1 || grid.scrollHeight > grid.clientHeight + 1,
         lastAction,
         note: status.textContent,
+        // Card UI4: the block (title to the last row) sits in the middle of its place, not at the top.
+        balance: (() => {
+          const top = head.getBoundingClientRect().top - r.top;
+          const bottom = r.bottom - Math.max(subs.getBoundingClientRect().bottom, status.getBoundingClientRect().bottom);
+          return { top: Math.round(top), bottom: Math.round(bottom) };
+        })(),
+        subs: subs.textContent,
       };
     },
   };

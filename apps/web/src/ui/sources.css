@@ -18,7 +18,10 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px 16px 16px;
-  background: var(--surface);
+  /* Card UI4: the block sits in the middle of its place (it sat at the top with empty space below), and the page
+     under it never shows through (a theme's surface may be see-through). */
+  justify-content: center;
+  background: linear-gradient(var(--surface), var(--surface)), var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: calc(var(--radius) + 4px);
@@ -36,7 +39,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
+  max-width: 900px;
   min-height: 44px;
+  margin: 0 auto;
   padding-right: 48px;
 }
 
@@ -90,12 +96,12 @@
 }
 
 .srcp-grid {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   /* Always the rows of "All", so a chip never changes the picker's size. */
-  grid-template-rows: repeat(3, minmax(56px, 118px));
+  grid-template-rows: repeat(3, minmax(56px, 128px));
   align-content: start;
   gap: 10px;
   width: 100%;
@@ -228,6 +234,38 @@
   .srcp-name {
     font-size: 13px;
   }
+}
+
+/* Card UI4: the planned services, one row under the grid with no service named. */
+.srcp-subs {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+  row-gap: 2px;
+  width: 100%;
+  max-width: 900px;
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 6px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.srcp-subs-glyph {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.srcp[data-place='sheet'] .srcp-subs .srcp-line,
+.srcp[data-place='side'] .srcp-subs .srcp-line {
+  display: none;
 }
 
 .srcp-note {

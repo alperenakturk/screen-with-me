@@ -99,6 +99,13 @@ const VIMEO_ITEMS = [
     await page.click('.sources-tile[data-source="dailymotion"]');
     const soon = await picker();
     check(soon.open && /Dailymotion/.test(soon.note), `${label}: a Coming tile says so and the picker stays`, JSON.stringify(soon.note));
+    // Card UI4: the block sits in the middle of its place (not at the top with space below); one "Subscription
+    // services · Coming" row names no service and explains itself.
+    check(Math.abs(soon.balance.top - soon.balance.bottom) <= 24, `${label}: the picker's block is centred in its place`, JSON.stringify(soon.balance));
+    await page.click('.srcp-subs');
+    const subs = await picker();
+    const named = /Netflix|Prime|Disney|HBO|Max|Hulu|Apple|Paramount|BluTV|Exxen|Gain|Tabii|MUBI/i;
+    check(subs.open && /Subscription services|Abonelik hizmetleri/.test(subs.subs) && !named.test(subs.subs + subs.note) && /extension|eklenti/.test(subs.note), `${label}: "Subscription services · Coming" names no service and says how it will work`, JSON.stringify({ subs: subs.subs, note: subs.note }));
     // Arrow keys move in 2-D; Esc closes and gives the focus back to ⠿.
     await page.focus('.sources-tile[data-source="youtube"]');
     await page.keyboard.press('ArrowDown');
