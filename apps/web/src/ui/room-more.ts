@@ -78,7 +78,10 @@ export function createRoomMoreMenu(button: HTMLButtonElement, items: () => MoreI
       // button's, kept inside the window.
       const w = pop.offsetWidth;
       const h = pop.offsetHeight;
-      const left = r.right + 8 + w <= innerWidth - 8 ? r.right + 8 : Math.max(8, r.left - 8 - w);
+      // Never over the video (nothing of ours over the YouTube player): with no room on the right it covers the rail.
+      const video = document.querySelector('.player-wrap')?.getBoundingClientRect();
+      const leftOf = r.left - 8 - w;
+      const left = r.right + 8 + w <= innerWidth - 8 ? r.right + 8 : video && leftOf < video.right ? Math.max(8, innerWidth - 8 - w) : Math.max(8, leftOf);
       pop.style.left = `${Math.round(left)}px`;
       pop.style.right = '';
       pop.style.top = `${Math.round(Math.min(Math.max(8, r.bottom - h), innerHeight - 8 - h))}px`;

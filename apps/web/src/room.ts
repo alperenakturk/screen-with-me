@@ -3177,6 +3177,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             open: !!menu,
             rows: menu ? [...menu.querySelectorAll('.room-more-item, .ph-row')].map((n) => n.textContent?.trim()) : [],
             inView: !!r && r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth,
+            // Nothing of ours over the YouTube player (the phone's sheet is the phone bar's own, below the Short).
+            overVideo: (() => {
+              const v = document.querySelector('.player-wrap')?.getBoundingClientRect();
+              return !!r && !!v && button.id === 'shorts-more' && r.left < v.right && v.left < r.right && r.top < v.bottom && v.top < r.bottom;
+            })(),
           });
         },
       },

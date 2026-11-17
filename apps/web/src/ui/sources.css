@@ -109,6 +109,18 @@
   margin: 0 auto;
 }
 
+/* A big screen: the block grows with its place instead of floating small in the middle (QA1 on UI4). */
+@media (min-width: 1600px) and (min-height: 960px) {
+  .srcp:not([data-place]) .srcp-grid,
+  .srcp[data-place='video'] .srcp-grid {
+    grid-template-rows: repeat(3, minmax(56px, 168px));
+  }
+
+  .srcp[data-place='video'] :is(.srcp-head, .srcp-chips, .srcp-grid, .srcp-subs, .srcp-note) {
+    max-width: 1120px;
+  }
+}
+
 .srcp[data-place='side'] .srcp-chips {
   flex-wrap: wrap;
   gap: 6px;

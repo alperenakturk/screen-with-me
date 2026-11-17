@@ -85,7 +85,7 @@ const lab = async (page, id) => (await page.evaluate(async (c) => (await window.
     // UI4 (owner: "Other does nothing"): ⋯ More opens a menu, inside the window, on every size.
     const more = JSON.parse(await lab(page, 'shorts.more'));
     const wantRow = kind === 'phone' ? /Room view/ : /Invite/;
-    check(more.open && more.inView && more.rows.some((r) => wantRow.test(r)), `${name}: ⋯ More opens its menu, whole`, more);
+    check(more.open && more.inView && !more.overVideo && more.rows.some((r) => wantRow.test(r)), `${name}: ⋯ More opens its menu, whole, never over the video`, more);
     check(errors.length === 0, `${name}: no page errors`, errors);
     await ctx.close();
   }
