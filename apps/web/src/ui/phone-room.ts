@@ -638,6 +638,8 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
     rows.push(
       row('＋', t('shorts.add'), press('#shorts-add')),
       row('🎮', t('tool.game'), press('#shorts-game')),
+      // Card RC1: the session recap (✨ on the computer's rail).
+      row('✨', t('recap.title'), press('#recap-open')),
       inviteRow,
       row('⚙️', t('tab.settings'), () => {
         closeSheet();

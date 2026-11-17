@@ -88,3 +88,45 @@ describe('freshRecaps', () => {
     expect(freshRecaps([old, edge, recent], now)).toEqual([recent]);
   });
 });
+
+// Card RC1: the session rule with Design's improvements (a: ≥ 4 h, b: 30 min together, c: shown locks, d: ended kept).
+describe('RC1 session rule', () => {
+  const H = 3600_000;
+  it('counts only watching together toward the 30 minutes', () => {
+    const s = new StatsTracker(null, 0, () => 0);
+    s.tick(0, true, 1, true, false);
+    s.tick(40 * 60_000, true, 1, true, false); // 40 min alone
+    expect(s.ready()).toBe(false);
+    s.tick(60 * 60_000, true, 1, true, true); // 20 min together
+    expect(s.ready()).toBe(false);
+    s.tick(70 * 60_000, true, 1, true, true); // 30 min together
+    expect(s.ready()).toBe(true);
+    expect(s.status(70 * 60_000)).toEqual({ sec: 1800, at: 70 * 60_000, shown: false, since: 0 });
+  });
+  it('locks once shown, and a gap of exactly 4 h starts a new session that keeps the old one whole', () => {
+    let now = 0;
+    const s = new StatsTracker(null, 0, () => now);
+    s.tick(0, true, 1, true, true);
+    now = 2 * H;
+    s.tick(now, true, 1, true, true);
+    s.chat('k', { name: 'Alex' });
+    s.data.shownAt = now;
+    expect(s.ready()).toBe(false);
+    expect(s.status(now).shown).toBe(true);
+    now += 4 * H; // exactly 4 h later
+    s.chat('k', { name: 'Alex' });
+    expect(s.ended?.shown).toBe(true);
+    expect(s.ended?.chat).toBe(1);
+    expect(s.data.shownAt).toBeUndefined();
+    expect(s.data.togetherMs).toBeUndefined();
+  });
+  it('a gap just under 4 h stays the same session', () => {
+    let now = 0;
+    const s = new StatsTracker(null, 0, () => now);
+    s.chat('k', { name: 'Alex' });
+    now = 4 * H - 1;
+    s.chat('k', { name: 'Alex' });
+    expect(s.ended).toBeNull();
+    expect(s.data.people.k?.chat).toBe(2);
+  });
+});

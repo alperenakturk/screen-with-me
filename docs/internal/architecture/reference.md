@@ -93,7 +93,7 @@ Each entry is a top-level bullet below; search for `- **<title>`.
 64. Feedback
 65. The site's address
 66. Saved rooms
-67. Today's recap
+67. Session recap
 68. Simpler room
 69. Tabs
 70. Room UI 0.9.80
@@ -2110,15 +2110,41 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   automatically (unless they removed it: `savedDismissed`). Each row shows how many people are inside:
   `GET /api/rooms/:id/info`. The host's ✕ also removes the room's saved status: `POST /api/rooms/:id/unsave {cid}`
   (host cid only). "My room" and recent rooms were removed.
-- **Today's recap (`packages/shared/src/recap.ts`, site `ui/recap.ts`, in the Profile menu):** the server's
+- **Session recap (`packages/shared/src/recap.ts`, site `ui/recap.ts` + `ui/recap.css`, a lazy chunk):** the server's
   `StatsTracker` counts play time (`statsTick` before the room state changes; not while the room is empty), rate,
   videos, per-person messages/reactions/pins/pauses/seeks and the busiest moment (storage `stats`; people by cid,
-  recaps only carry name/avatar). Session: the first action more than `SESSION_GAP_MS` (4 h) after the last starts a
-  new session and unsaved counters are cleared (watching past midnight stays one session). `{t:'recap'}` sends the
-  recap from session start to now only to the requester, counters are not reset; empty → `recap_empty`. "Kaydet" on
-  the last card → `{t:'recap-save'}` (replaces the same session's previous save; 20 in saved rooms, otherwise 5;
-  90 days), list broadcast with `{t:'recaps'}`. The client picks random cards each time with `chooseFacts` (more with
-  more data, at most 8); first the duration, last the summary + PNG. No stats card at the end of a video.
+  recaps only carry name/avatar). Session: the first action `SESSION_GAP_MS` (4 h) **or more** after the last starts a
+  new session (watching past midnight stays one session). `{t:'recap'}` sends the recap from session start to now only
+  to the requester (alone, nothing resets); empty → `recap_empty`. `{t:'recap-save'}` still saves the session (20 in
+  saved rooms, otherwise 5; 90 days), list broadcast with `{t:'recaps'}`.
+  **Card RC1 (17 Nov 2026, owner's picks all A, `design/session-recap.md`):** `togetherMs` counts only play time with
+  two or more people (`tick(…, together)`); `ready()` = 30 min together (`RECAP_READY_MS`) and not shown this session.
+  The room learns `recap-status` `{ sec, at, shown, since }` (welcome `recapStatus`, then whenever the together minute
+  or `shown` changes; the client adds the time since `at` while the room plays with two or more). The host (acting host
+  counts) sends `{t:'recap-show'}` → refused with `recap_shown` (once per session, the lock `shownAt` is set when the
+  show starts) or `recap_not_ready`; else the server picks the facts once (`chooseFacts`, 6) and broadcasts
+  `{t:'recap-show', show: { id, at: now + 3 s, facts, recap, by }}` (stored as `recapShow` with its own `resume` flag,
+  never sent; welcome `recapShow` for late joiners until `recapShowEnd`), pausing the video if it played. `recap-end`
+  (host only) → `{ show: null, by }` and the video plays on if it was playing. `recap-ask` (guests; one per person per
+  `RECAP_ASK_GAP_MS`, in memory only) → `{t:'recap-ask', name}` to the host's tabs only. When a session ends its full
+  recap goes into the list (`StatsTracker.ended`, written by `saveStats`, `shown: true` if it was shown). Lab
+  `{t:'lab', op:'recap-gap'}` moves the session 4 h back; `recap-show` `lab: true` skips the 30 min on a lab server.
+  Client (`room.ts` "Card RC1"): ✨ `#dock-recap` (room view rail) / `#shorts-recap` (Shorts rail, Room group) appear
+  when ready with a gold dot (`.rc-new`) until opened; Profile ✨ `#recap-open`, ⋯ More and the phone's Shorts ⋯ press
+  the same flow (`openRecapFlow`): not ready → my own recap alone; ready → `recapCard` (host: "✨ Show to everyone",
+  guest: "🙋 Ask the host"); the host gets one `askToast` (names merge). `playRecap` puts `.rc-stage` into
+  `.player-wrap` (`.rc-on` hides the player, never covers it): a 3-2-1 with Glowbeam, one scene per fact on its own
+  background (night sky, emoji rain, bubbles, film reel, front row, popcorn, poster) with the logo and its light cone,
+  a filmstrip (a click moves only me), ⏸ / ‹ › / ← → (only me), 🔊 / 🔇 (our own Web Audio pad in F major, low, off
+  with room sounds off), "✕ Close for me", host "▶ Back to the video" (`recap-end`); text scales with the box (`cqi`),
+  `aria-live` reads each scene, reduced motion = no motion. A Short playing: the room leaves the Shorts view during
+  the show (`renderShorts` `!recapStage`) and comes back. Earlier recaps (Profile list, N4) replay alone
+  (`playAlone`). Nudges (once per person per session, `recapNudge:<room>` = `since`; "Don't remind me" =
+  `opt:recapNudges`): N1 the queue ran out (`onEnded`, host "✨ Show…", guest "🙋 Ask…"), N2 late and long (≥ 90 min
+  together after 23:00, or 3 h), N4 the last session ended unshown (a chip for 10 min into the next, plays it alone,
+  `recapLast:<room>`); never in the Shorts view, never over the video (under it in `#theater`). Test Lab `recap.show`
+  / `recap.state`; e2e `scripts/e2e/recap.mjs` (RC1 part); harness `scripts/harness/recap/run.cjs` (`site` job);
+  shots `recap-show`, `recap-summary`.
 - **Simpler room (0.9.93.13, card 6, owner's picks C + D):** `ui/room-more.ts` `roomMoreItems` = the room's "⋯ More"
   list (games (phones), film time (host), save, recap, shortcuts (computer), sync test (dimmed while something plays),
   rules; R9, 0.9.97.16: nothing else, Help · Feedback · Privacy are one small line at the foot of the profile menu,

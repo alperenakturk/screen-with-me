@@ -102,4 +102,82 @@ p3.send({ t: 'recap' });
 const after = await p3.wait((m) => m.t === 'recap', 'recap after empty');
 ok(after.recap.people.find((p) => p.name === 'Robin')?.reactions === 6 && after.recap.chat === 4 && after.recap.from === burst.recap.from, 'After the room emptied and someone came back, the counts are all there');
 p3.ws.close();
+
+// Card RC1: the host shows the session's recap to everyone, once per session. A guest asks; the host's tabs hear it.
+// Live (no lab powers): it is not ready before 30 min together, and only the host may show it. On a local lab server
+// (`LAB_SERVER=1`) `lab: true` skips the 30 min: the show reaches everyone with the same scenes, pauses the video, a
+// second show in the same session is refused, and after a 4 h gap (lab `recap-gap`) the next session may show it again.
+{
+  const lab = process.env.LAB_SERVER === '1' && /^ws:\/\/(localhost|127\.0\.0\.1)/.test(base);
+  const room3 = 'recap' + Math.random().toString(36).slice(2, 8);
+  const at = (hello) => {
+    const c = client(hello);
+    c.ws.close();
+    const ws = new WebSocket(`${base}/api/rooms/${room3}/ws`);
+    c.inbox.length = 0;
+    ws.addEventListener('message', (e) => c.inbox.push(JSON.parse(e.data)));
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, ...hello })));
+    return { ...c, ws, send: (m) => ws.send(JSON.stringify(m)) };
+  };
+  const h = at({ name: 'Alex', cid: 'rc1Alex12345' });
+  const w = await h.wait((m) => m.t === 'welcome', 'welcome rc1 host');
+  ok(w.recapStatus && w.recapStatus.sec === 0 && w.recapStatus.shown === false && !w.recapShow, 'RC1: welcome carries the recap status (nothing shown yet)');
+  const g = at({ name: 'Sam', cid: 'rc1Sam123456' });
+  await g.wait((m) => m.t === 'welcome', 'welcome rc1 guest');
+  h.send({ t: 'load', media: { kind: 'youtube', id: 'dQw4w9WgXcQ' } });
+  await g.wait((m) => m.t === 'state' && m.state.item && !m.state.paused, 'rc1 playing');
+  g.send({ t: 'chat', text: 'what a scene' });
+  h.send({ t: 'recap-show' });
+  await h.wait((m) => m.t === 'error' && m.code === 'recap_not_ready', 'not ready');
+  ok(true, 'RC1: before 30 min together the recap is not ready');
+  g.send({ t: 'recap-show', lab: true });
+  await g.wait((m) => m.t === 'error' && m.code === 'not_host', 'guest show refused');
+  ok(true, 'RC1: a guest cannot show it');
+  g.send({ t: 'recap-ask' });
+  const ask = await h.wait((m) => m.t === 'recap-ask', 'ask reaches host');
+  ok(ask.name === 'Sam' && !JSON.stringify(ask).includes('rc1Sam'), 'RC1: "ask the host" reaches the host with the name only');
+  g.send({ t: 'recap-ask' });
+  await sleep(800);
+  ok(!h.inbox.some((m) => m.t === 'recap-ask'), 'RC1: a second ask within 10 min is dropped');
+  ok(!g.inbox.some((m) => m.t === 'recap-ask'), 'RC1: the asker\'s own tab does not get it');
+  if (lab) {
+    h.send({ t: 'recap-show', lab: true });
+    const shownH = await h.wait((m) => m.t === 'recap-show' && m.show, 'show host');
+    const shownG = await g.wait((m) => m.t === 'recap-show' && m.show, 'show guest');
+    ok(shownG.show.id === shownH.show.id && JSON.stringify(shownG.show.facts) === JSON.stringify(shownH.show.facts), 'RC1: everyone gets the same show, the same scenes');
+    ok(shownG.show.facts[0].kind === 'time' && shownG.show.facts.at(-1).kind === 'summary' && shownG.show.at > Date.now() - 5000, 'RC1: it starts with the time, ends with the summary, after a 3-2-1');
+    ok(!JSON.stringify(shownG).includes('rc1Alex') && !('resume' in shownG.show), 'RC1: the show carries no browser ids and no server flags');
+    await g.wait((m) => m.t === 'state' && m.state.paused, 'paused for the show');
+    ok(true, 'RC1: the video pauses for the show (the queue is kept)');
+    const late = at({ name: 'Kim', cid: 'rc1Kim123456' });
+    const lw = await late.wait((m) => m.t === 'welcome', 'welcome late');
+    ok(lw.recapShow?.id === shownH.show.id && lw.recapStatus.shown === true, 'RC1: a late joiner lands in the running show');
+    h.send({ t: 'recap-show', lab: true });
+    await h.wait((m) => m.t === 'error' && m.code === 'recap_shown', 'second show refused');
+    ok(true, 'RC1: a second show in the same session is refused');
+    g.send({ t: 'recap-end' });
+    await g.wait((m) => m.t === 'error' && m.code === 'not_host', 'guest end refused');
+    h.send({ t: 'recap-end' });
+    await g.wait((m) => m.t === 'recap-show' && m.show === null, 'show ended');
+    await g.wait((m) => m.t === 'state' && !m.state.paused, 'resumed');
+    ok(true, 'RC1: the host ends it for everyone and the video plays on');
+    // A 4 h gap: the next activity starts a new session; the old one goes into the list, marked shown.
+    h.send({ t: 'lab', op: 'recap-gap' });
+    await sleep(300);
+    g.send({ t: 'chat', text: 'next evening' });
+    const list = await g.wait((m) => m.t === 'recaps' && m.recaps.some((r) => r.shown), 'ended session listed');
+    ok(list.recaps.at(-1).shown === true && list.recaps.at(-1).chat >= 1, 'RC1: the finished session goes into the recap list whole, marked shown');
+    await h.wait((m) => m.t === 'recap-status' && m.status.shown === false, 'new session status');
+    h.send({ t: 'recap-show', lab: true });
+    const next = await g.wait((m) => m.t === 'recap-show' && m.show, 'show next session');
+    ok(next.show.id !== shownH.show.id, 'RC1: the next session may show its recap again');
+    late.ws.close();
+  } else {
+    h.send({ t: 'lab', op: 'recap-gap' });
+    await h.wait((m) => m.t === 'error' && m.code === 'bad_message', 'lab refused');
+    ok(true, 'RC1: without lab powers the 4 h jump is refused');
+  }
+  h.ws.close();
+  g.ws.close();
+}
 setTimeout(() => process.exit(0), 100);

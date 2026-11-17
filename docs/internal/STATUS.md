@@ -11,13 +11,10 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (session 17 Nov, 05:00; card group FD1b → RC1 → ops look; older lane A lines are in
   `archive/status-history.md` "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is
   still missing (the owner's Releases page or a session allowed to push tags).
-  - [x] FD1b the Shorts view tidy: #535 (`claude/fd1b-shorts-tidy`) live in v0.9.97.161 (live e2e green on its re-run after Cloudflare object drops); FD1's Done line in the archive.
-  - [ ] FC1 feed country (owner's priority): branch `claude/fc1-feed-country`, PR open; `feedSearchParams` with the
-    country's language, words + kind + country combined, chart fallback, Lab `feed.region`, hand test 27af. Live
-    spot-check of JP / TR / US / BR / DE: the cloud session's network can't reach the live site, so it is the owner's
-    hand test (and the Planner's, if a session with that host allowed runs it).
-  - [ ] Then RC1: PR #536 (`claude/rc1-session-recap`) is green and held until FC1 is live; merge it then (merge
-    main into it first).
+  - [x] FC1 feed country: #539 (`claude/fc1-feed-country`) merged; hand test 27af (live spot-check: owner).
+  - [ ] RC1 session recap: #536 (`claude/rc1-session-recap`), merged after FC1 is live; server `recap-show` /
+    `recap-end` / `recap-ask` + lab `recap-gap`, e2e `recap.mjs`, harness `recap`, Lab `recap.show` / `recap.state`,
+    privacy page updated (EN + TR), hand test 27ae. After merge: deploy, live e2e, tag; RC1's Done line + archive.
   - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
     CI, passed on re-run): make it deterministic when that harness is next touched.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
@@ -214,6 +211,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", the feed pill sits above the Short (not on it), and
   a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
   shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More and the pill above the Short.
+- [ ] 27ae. [RC1] With a friend, watch together for 30 minutes: a ✨ with a gold dot appears beside the video. Your
+  friend's ✨ offers "🙋 Ask the host"; you get one toast. Press "✨ Show to everyone": after 3-2-1 you both see the same
+  scenes in the video's place (the video pauses), with a soft tune (🔇 turns it off). "✕ Close for me" closes it only
+  for one of you; "▶ Back to the video" ends it for both and the video plays on. ✨ is then gone for this session.
 - [ ] 27af. [FC1] Start a ♾ Shorts feed with Japan: the Shorts are Japanese. Then 🔥 Popular + type "hay" + Japan:
   "Will play" says so, and the most watched Japanese Shorts about hay come. Try Turkey, US, Brazil, Germany the same
   way. Paste a video link instead of words: the kinds and the country grey out with a one-line reason.
