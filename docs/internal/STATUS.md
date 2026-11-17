@@ -48,8 +48,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (17 Nov b, handoff): [ ] GW4 #532: CI red only on snack-bar-3 "rows" (CI shows popcorn/soda/nachos,
-  local runs pass): find why, fix, merge, live, archive. [ ] GW5 #537 (draft, on #532; open points in its body).
+- [ ] Game Studio (17 Nov b, handoff): [x] GW4 #532 (snack-bar-3's red was the test: CI's narrow column fits
+  three rows, and QA2 drops the locked stand first; card archived): merge, live check. [ ] GW5 #537 (draft, on #532; open points in its body).
   [ ] GMP2.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
