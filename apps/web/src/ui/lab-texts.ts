@@ -65,6 +65,14 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },
   },
+  'shorts.tidy': {
+    title: { en: 'Shorts view: rail groups, labels, pill, overlaps', tr: 'Shorts görünümü: ray grupları, etiketler, şerit, çakışmalar' },
+    help: { en: 'Writes the Shorts view\'s layout into the log: the rail\'s group headings, how many buttons show a name, the "N left" line, where the feed pill sits (above the Short or not), whether any rail button overlaps another or the video, the last note\'s place and the phone bar\'s captions.', tr: 'Shorts görünümünün düzenini kayda yazar: rayın grup başlıkları, kaç düğmenin adı göründüğü, "N kaldı" satırı, akış şeridinin yeri (Short\'un üstünde mi), bir ray düğmesinin başka birinin ya da videonun üstüne binip binmediği, son notun yeri ve telefon çubuğunun yazıları.' },
+  },
+  'shorts.note': {
+    title: { en: 'Shorts view: show a feed note', tr: 'Shorts görünümü: bir akış notu göster' },
+    help: { en: 'Shows the "Nothing new left … the feed stopped" note the way a feed shows it, to check it sits under the Short (or at its foot) and never over the rail, the chat or the video.', tr: '"… için yeni bir şey kalmadı, akış durdu" notunu bir akışın gösterdiği gibi gösterir; Short\'un altında (ya da dibinde) durduğunu, rayın, sohbetin ya da videonun üstüne binmediğini denemek için.' },
+  },
   'feed.start': {
     title: { en: 'Feed: open the drawer and start ▶ Popular', tr: 'Akış: çekmeceyi aç ve ▶ Popüler başlat' },
     help: { en: 'Opens the feed drawer on the right, picks ▶ Videos · 🔥 Popular (or "shorts music" etc. typed after the command) and starts it with the drawer\'s own "▶ Start feed" button, then writes what the drawer showed and whether the host rule locked it into the log.', tr: 'Sağdaki akış çekmecesini açar, ▶ Videolar · 🔥 Popüler seçer (ya da komuttan sonra yazılan "shorts music" gibi) ve çekmecenin kendi "▶ Akışı başlat" düğmesiyle başlatır; çekmecenin ne gösterdiğini ve yönetici kuralının kilitleyip kilitlemediğini kayda yazar.' },

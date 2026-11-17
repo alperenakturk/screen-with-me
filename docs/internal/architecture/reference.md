@@ -274,6 +274,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   auto = `cf.country`, world, or `POOL_REGIONS`), the pool cache is per kind + region + language + day (`yt-pool2`). **Switch measurement:** `?measure=1` (the old `?olcum=1` too) once in a tab → `#shorts-measure` by
   ▲▼ shows how many ms after the room switched (server time, `state.updatedAt`) this Short started moving, and the
   average of the last 5 (`measureSwitch`; nothing is sent).
+  **Card FD1b (17 Nov 2026, `design/feed-start.md` §5), the tidy Shorts view:** the Shorts view's styles are a lazy
+  stylesheet `apps/web/src/shorts.css` (the room's CSS budget is full): `room.ts` `loadShortsCss` warms it when a Short is
+  the room's item and `renderShorts` switches the view only once it is in (`shortsCssReady`; a failed load still
+  switches), so nothing shows unstyled. It holds the Shorts-only blocks that were not needed before the first Short
+  (＋ Add search results, the player-error card, the whole `ph-shorts` phone layout) and the tidy: the rail has three
+  `.rail-head` headings (Talk · Watch · Room: 💬 😀 🎙 📷 · ＋ ♾ 🔁 · 🎮 ↩ ⋯) and, from 1200 px wide, a 132 px column of
+  40 px buttons with names beside the icons (🎙 / 📷 names come from `data-label`, set in `voice.ts`); `#shorts-left`
+  reads "12 left" (`shorts.leftShort`, the full sentence in its title). The feed pill `#feed-pill` moves into `.stage`
+  above the Short while the view shows (`placeFeedPill`; grid row 1, column 2; the Short gives up `--pill-h`), never
+  on the player; back in the room view it returns to the bar above the video. A `flashHint` from the rail / ▲▼ /
+  phone bar (`hint.ts` `shortsSpot`) sits under the Short when there is room, else at the Short's foot on its left,
+  and over the bar on a phone: never on the rail, the chat panel or the player. The phone bar: 💬 Chat · 😀 React ·
+  ♾ Feed `#ph-shorts-feed` (presses `#shorts-feed`, mirrors its `aria-pressed` as `.on`) · ▲ "N left" ▼ · ⋯ More, with
+  `.ph-cap` captions in `.ph-cell` columns (only "N left" when sideways); the pill is a slim row above the Short
+  (hidden on a phone held sideways, where ♾ shows the feed). Test Lab `shorts.tidy` (heads, named buttons, left,
+  pill place, overlaps, the note's place, the phone captions) and `shorts.note` (a sample feed note); harness
+  `scripts/harness/shorts-tidy/run.cjs` (`site` job); shots screen `shorts-feed`.
   **0.9.92.2 Shorts rail (owner chose C on https://claude.ai/artifact/FDEUP6Msgo6UbxYtAu9379: "too small on my
   laptop"):** above 860 px wide the `#shorts-bar` is a column of 48 px icon buttons right of the video (grid column 3,
   ▲▼ `#shorts-nav` at its foot; names in the titles): 💬 `#shorts-chat-btn` (or Enter) opens the chat panel (card SH3,

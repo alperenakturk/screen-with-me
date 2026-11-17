@@ -494,6 +494,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       cam.classList.toggle('off', active && !camOn);
       cam.title = camLabel;
       cam.setAttribute('aria-label', camLabel);
+      // Card FD1b: the Shorts rail shows a short name beside the icon where it has the width (shorts.css).
+      mic.dataset.label = t('shorts.voice');
+      cam.dataset.label = t('shorts.camera');
     }
     // CAM1: the phone's faces strip switches the camera (front / rear / another lens) with one press.
     if (flipButton) {

@@ -20,11 +20,9 @@ One handoff per lane or role; each session updates only its own lines and delete
       live e2e failed only `quota.mjs` "13th HTTP-fallback session gets 429 (11 opened, 2 refused)": the live shards
       seem to share an address; it passed in .160). Done line in `archive/cards-done.md`; hand test 27ab.
     - [x] FD1a feed drawer + pill + host rule: #529 (`claude/fd1-feed-drawer`), live in v0.9.97.160; hand test 27ac.
-    - [ ] **Next: FD1b**, the Shorts view tidy of `design/feed-start.md` §5 (rail groups TALK / WATCH / ROOM with
-      labels beside the icons at 1366+, ♾ "on" while a feed runs, "12 left" under ▲, toasts under the Short instead of
-      over the rail, the phone Shorts bar 💬 · 😀 · ♾ · ▲ · ▼ · ⋯ with short labels, the feed pill above the Short with
-      its ✕) + the `shorts-feed` shots screen. The pill (`#feed-pill`, `ui/feed-row.ts` `renderPill`) and the host
-      rule exist; reuse them. Room CSS is at 38.0 / 38 kB: new Shorts-view styles need a lazy stylesheet or a trade.
+    - [ ] FD1b the Shorts view tidy (session 17 Nov, 05:00): branch `claude/fd1b-shorts-tidy`, PR open; lazy
+      `shorts.css` (room CSS 37.1 / 38 kB), harness `shorts-tidy`, Lab `shorts.tidy` / `shorts.note`, hand test 27ad.
+      After merge: deploy, live e2e, tag; FD1's Done line + archive.
     - [ ] Then RC1 (session recap, `design/session-recap.md`, owner's picks all A).
     - Note: the CR2 "YouTube Music playlists" harness once found 2 of the album's 3 tracks on the phone (Game Studio's
       CI, passed on re-run): make it deterministic when that harness is next touched.
@@ -218,6 +216,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the video stays visible; picking a tile only selects it, "▶ Start feed" starts it; you both see "Feed: … · N left ·
   by …" above the video; in Room rules turn on "Only the host can start a feed": your friend can pause but not start
   or stop; when someone stops a feed the chat says who.
+- [ ] 27ad. [FD1b] A Short with a ♾ Shorts feed running: on a laptop the buttons beside the Short sit in three
+  groups (Talk · Watch · Room) with their names, ▲ ▼ say "12 left", the feed pill sits above the Short (not on it), and
+  a note like "the feed stopped" shows under or beside the Short, never over the buttons. On the phone the bottom bar
+  shows 💬 Chat · 😀 React · ♾ Feed (lit) · ▲ 12 left ▼ · ⋯ More and the pill above the Short.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
