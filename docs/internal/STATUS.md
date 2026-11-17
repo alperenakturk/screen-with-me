@@ -36,6 +36,14 @@ One handoff per lane or role; each session updates only its own lines and delete
   (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the
   owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
   remote; safe to delete). Notes: games-sweep size `tabup` (upright tablet); `stage.ts` grows an overflowing own box.
+
+## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
+One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
+Every item's original wording, the older per-release blocks and the ones already ticked are in
+`archive/status-history.md` "Owner's hand tests" (search the ID in brackets). New releases add their lines at the end
+of "C. Recent releases" with an ID; the Planner folds them into the board Artifact.
+
+**A. One sitting with a friend** (a friend in Chrome on another computer, or your phone as the second person) [BH10]
 - [ ] 1. YouTube together: join by the invite link; play, pause, seek, speed and ← / → from both sides stay in step.
 - [ ] 2. Fullscreen on YouTube: the rail comes at the right edge and goes; Enter opens the message box; the friend's
   messages come in on the right, never over YouTube's bar.
