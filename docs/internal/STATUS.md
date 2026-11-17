@@ -37,8 +37,9 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (17 Nov b, handoff): [x] GW4 #532 merged. [x] GW5 #537 (home under Together at 1366; card archived):
-  merge, live check. [ ] GMP2 #538 (hall 2–6, `games.seats`). Open: Last Heart running on a sideways tablet ≈ 10 px.
+- [ ] Game Studio (17 Nov c, handoff): [x] GW4 #532 merged. [ ] GW5 #537: Snack Bar with eight stands shows 2 rows in
+  its 320×480 design (busy head on 2 lines + hint): fit 3 in the design (not a taller one: text < 11 px at 1366), then
+  merge. [ ] GMP2 #538 (re-run of lane A's shorts-back). Open: Last Heart running on a sideways tablet ≈ 10 px.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
