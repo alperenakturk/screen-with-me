@@ -36,10 +36,10 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio (session 17 Nov, card GW3; handoff at the end of it):
   [x] GT1 done (#496): card moved to the archive.
-  [ ] `claude/gw3-video-place` (card GW3): a table's big mode = the video's place (no `requestFullscreen` in any game,
+  [ ] #525 `claude/gw3-video-place` (card GW3): a table's big mode = the video's place (no `requestFullscreen` in any game,
   `scripts/check-games-fullscreen.mjs`), the rail stays out beside it, Shorts keeps the mode and sockets (harness
   `games-shorts`), Lab `games.frame`. Green → merge → deploy + live e2e check → GW3 to the archive → report to the
-  Planner. Next for a fresh session: GW4, GW5, GMP2 (cards-games.md).
+  Planner (card already in the archive). Next for a fresh session: GW4, GW5, GMP2 (cards-games.md).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
