@@ -114,9 +114,15 @@ const mode = (page, m) => page.evaluate((x) => document.querySelector(`#game-sta
   // Soda has levels, so nachos is open too; candy is the next locked one; the hot dog grill is out of sight.
   // SIDE340: in the narrow column beside the video (1366 laptop) three rows fit: the newest ones.
   const narrowFirst = await page.evaluate(() => document.getElementById('game-stage').getBoundingClientRect().width < 380);
-  const shown1 = await shownRows(page);
   // 0.9.97.117: the narrow window now runs down the side panel to the message box, so it may be tall enough for all four.
   const wantRows = narrowFirst ? [['soda', 'nachos', 'candy'], ['popcorn', 'soda', 'nachos', 'candy']] : [['popcorn', 'soda', 'nachos', 'candy']];
+  // GW4 CI (17 Nov 2026): read once, a slow runner caught the rows before the migrated save's next locked stand showed
+  // (["popcorn","soda","nachos"]): read until they settle, at most 4 s.
+  let shown1 = await shownRows(page);
+  for (let i = 0; i < 20 && !wantRows.some((w) => JSON.stringify(w) === JSON.stringify(shown1)); i++) {
+    await wait(200);
+    shown1 = await shownRows(page);
+  }
   check(wantRows.some((w) => JSON.stringify(w) === JSON.stringify(shown1)), 'rows: the open stands and the next locked one', JSON.stringify(shown1));
 
   // Buy ×10 and Max.
