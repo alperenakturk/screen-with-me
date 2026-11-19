@@ -126,6 +126,14 @@ export const QUIZ_PICK_MS = 10_000;
  * length), Double (×2 points if right) and Second chance (a wrong answer may be tried once more, for half points). */
 export const QUIZ_JOKERS = ['fifty', 'double', 'second'] as const;
 export type QuizJoker = (typeof QUIZ_JOKERS)[number];
+/**
+ * QZ3 (owner, 19 Nov 2026): ×2 Double is meant to be played after answering ("double points for this one"), until the
+ * answer is shown: a right answer's points double, a wrong one stays 0 (no penalty). Pressed before answering it still
+ * doubles a right answer, but that answer gets no first-answer bonus (and the press costs answer time).
+ */
+export const doubledAfter = (answer: { gained: number; rank?: number }): number => (answer.rank ? answer.gained * 2 : 0);
+/** QZ3: after the last answer the reveal waits this long while someone who answered may still press ×2 on it. */
+export const QUIZ_DOUBLE_GRACE_MS = 2_500;
 /** `mix`: every category. */
 export type QuizTopic = QuizCategory | 'mix';
 /** QZ4: the host picks the questions' level; `mix` (the default) asks every level, easier ones first. */
@@ -170,7 +178,8 @@ export type QuizClientMessage =
   /** `n`: which question (a late answer must not count for the next). `pick` an option, or `text` a typed answer. */
   | { t: 'answer'; n: number; pick: number }
   | { t: 'answer'; n: number; text: string }
-  /** A joker on question `n` (before answering; each kind once per game, one per question). No `kind`: 50:50. */
+  /** A joker on question `n` (each kind once per game, one per question; before answering, but ×2 also after it until
+   * the reveal, QZ3). No `kind`: 50:50. */
   | { t: 'joker'; n: number; kind?: QuizJoker }
   /** Tournament: the round's picker chooses a category from the offer. */
   | { t: 'pick'; cat: QuizCategory }

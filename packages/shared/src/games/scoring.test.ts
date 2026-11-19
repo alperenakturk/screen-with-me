@@ -10,6 +10,8 @@ describe('Points', () => {
     expect(quizPoints(T, T, 2, 1)).toBe(175);
     expect(quizPoints(T, T, 3, 1)).toBe(160);
     expect(quizPoints(T, T, 4, 1)).toBe(150);
+    // QZ3: ×2 played before answering: no first-answer bonus.
+    expect(quizPoints(T, T, 1, 1, false)).toBe(150);
     expect(quizPoints(0, T, 8, 1)).toBe(50);
     expect(quizPoints(T, T, 1, 3)).toBe(220);
     expect(quizPoints(T, T, 1, 9)).toBe(230);

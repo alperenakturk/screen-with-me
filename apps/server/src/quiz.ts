@@ -18,6 +18,8 @@ import {
   typedHint,
   QUIZ_PICK_MS,
   QUIZ_ROUND_QUESTIONS,
+  QUIZ_DOUBLE_GRACE_MS,
+  doubledAfter,
   type QuizCategory,
   type QuizJoker,
   type QuizLaps,
@@ -46,7 +48,7 @@ import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 /** BHG: with fewer than two players online a running game waits this long before it goes back to the lobby, so one
  * player's reload or short drop no longer ends the game for both (as the room's host keeps the role for 20 s). */
-const FEW_GRACE_MS = 20_000;
+const FEW_GRACE_MS = 60_000;
 const MAX_SOCKETS = 40;
 
 interface Attachment {
@@ -383,8 +385,10 @@ export class Quiz extends DurableObject<Env> {
         return;
       case 'joker': {
         const kind = message.kind ?? 'fifty';
-        // Before answering, each kind once per game, one joker per question (QZ2).
-        if (d.phase !== 'question' || message.n !== this.qn() || d.answers[key] || d.armed[key]?.tried) return;
+        // Before answering, each kind once per game, one joker per question (QZ2); ×2 also after answering, until the
+        // reveal (QZ3): it doubles that answer's points if it is right.
+        const answered = d.answers[key];
+        if (d.phase !== 'question' || message.n !== this.qn() || (answered && kind !== 'double') || d.armed[key]?.tried) return;
         if ((d.used[key] ?? []).includes(kind) || (kind === 'fifty' && d.jokers.includes(key)) || d.jokerAt[key] === message.n) return;
         const q = d.questions[d.index]!;
         if (kind === 'fifty') {
@@ -396,7 +400,8 @@ export class Quiz extends DurableObject<Env> {
           d.jokers.push(key);
           d.fifty[key] = { n: message.n, hide, ...(hint ? { hint } : {}) };
           this.sendTo(ws, { t: 'fifty', n: message.n, hide, ...(hint ? { hint } : {}) });
-        } else d.armed[key] = { ...d.armed[key], [kind]: true };
+        } else if (answered) answered.gained = doubledAfter(answered);
+        else d.armed[key] = { ...d.armed[key], [kind]: true };
         d.used[key] = [...(d.used[key] ?? []), kind];
         d.jokerAt[key] = message.n;
         await this.save();
@@ -433,16 +438,23 @@ export class Quiz extends DurableObject<Env> {
         if (right) {
           const rank = Object.values(d.answers).filter((a) => a.rank).length + 1;
           const streak = (d.streak[key] ?? 0) + 1;
-          const base = quizPoints((d.endsAt ?? Date.now()) - Date.now(), quizAnswerMs(q.typed), rank, streak);
+          // QZ3: ×2 armed before answering costs the first-answer bonus.
+          const base = quizPoints((d.endsAt ?? Date.now()) - Date.now(), quizAnswerMs(q.typed), rank, streak, !armed?.double);
           // QZ2: a hard question (and a typed answer) is worth more; Double ×2, a second try half.
           let gained = Math.round(base * quizLevelBonus(q.level ?? QUIZ_BANK[q.id]?.d, q.typed));
           if (armed?.double) gained *= 2;
           if (armed?.tried) gained = Math.round(gained / 2);
           d.answers[key] = { pick, gained, rank, ...(said ? { said } : {}) };
         } else d.answers[key] = { pick, gained: 0, ...(said ? { said } : {}) };
-        // Herkes cevapladıysa beklemeden açıkla.
-        if (this.onlineKeys().every((k) => d.answers[k])) await this.reveal();
-        else {
+        // Everyone answered: reveal now, or (QZ3) after a short wait while someone who answered can still press ×2.
+        if (this.onlineKeys().every((k) => d.answers[k])) {
+          const doubleLeft = this.onlineKeys().some((k) => !(d.used[k] ?? []).includes('double') && d.jokerAt[k] !== message.n);
+          if (!doubleLeft) return this.reveal();
+          d.endsAt = Math.min(d.endsAt ?? Infinity, Date.now() + QUIZ_DOUBLE_GRACE_MS);
+          await this.save();
+          this.broadcastState();
+          await this.scheduleAlarm();
+        } else {
           await this.save();
           this.broadcastState();
         }

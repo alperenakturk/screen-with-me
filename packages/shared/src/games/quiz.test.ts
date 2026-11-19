@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, quizLevelBonus,  roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
+import { doubledAfter, QUIZ_DOUBLE_GRACE_MS, QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, quizLevelBonus,  roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
 import { pickQuestions, quizOffer, quizPool } from './quiz-pick.ts';
 
@@ -196,6 +196,15 @@ describe('quiz bank 2 and rotation (P9)', () => {
     expect(picked.every((q) => !avoid.includes(q.id))).toBe(true);
     const levels = picked.map((q) => QUIZ_BANK[q.id]!.d ?? 2);
     expect(levels).toEqual([...levels].sort((a, b) => a - b));
+  });
+});
+
+describe('Quiz ×2 after answering (QZ3)', () => {
+  it('doubles a right answer, a wrong one stays 0, and the reveal waits only briefly for it', () => {
+    expect(doubledAfter({ gained: 180, rank: 1 })).toBe(360);
+    expect(doubledAfter({ gained: 0 })).toBe(0);
+    expect(QUIZ_DOUBLE_GRACE_MS).toBeGreaterThanOrEqual(1500);
+    expect(QUIZ_DOUBLE_GRACE_MS).toBeLessThanOrEqual(3000);
   });
 });
 

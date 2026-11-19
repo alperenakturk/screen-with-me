@@ -36,6 +36,7 @@ import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
 import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
+import { watchLink } from './link-watch.ts';
 import { referee } from './referee.ts';
 import { lang } from '../i18n.ts';
 import quiz1Art from './art/tutorial/quiz-1-answer.svg?raw';
@@ -75,7 +76,7 @@ const TEXT = {
     how1: 'Answer fast',
     how1Line: 'Pick one of four answers before the time runs out; the faster, the more points.',
     how2: 'See who was right',
-    how2Line: 'The right answer lights up, with everyone’s picks.',
+    how2Line: 'Sure of your answer? Press ×2 before it shows: right doubles your points. Then the right answer lights up, with everyone’s picks.',
     how3: 'Top the podium',
     how3Line: 'After ten questions, the most points win.',
     endWin: 'The sharpest mind in the room!',
@@ -96,7 +97,7 @@ const TEXT = {
     'rulesTour': '{rounds} rounds of 3 questions; everyone picks a topic in turn. The best score wins a round, the most rounds win the tournament (a tie goes to points). Three jokers, each once a game.',
     'double': '×2 Double',
     'second': '↺ Second chance',
-    'doubleTitle': 'Joker: a right answer scores double (once per game)',
+    'doubleTitle': 'Joker: press it after you answer, until the answer shows: right = double points, wrong = 0. Pressed before answering, it costs the first-answer bonus. Once a game.',
     'secondTitle': 'Joker: if your answer is wrong, try once more for half points (once per game)',
     'doubleBy': '×2 {name} plays Double',
     'secondBy': '↺ {name} takes a Second chance',
@@ -114,7 +115,7 @@ const TEXT = {
     how1: 'Hızlı cevapla',
     how1Line: 'Süre bitmeden dört cevaptan birini seç; ne kadar hızlı, o kadar puan.',
     how2: 'Kim bildi, gör',
-    how2Line: 'Doğru cevap yanar, herkesin seçtiğiyle birlikte.',
+    how2Line: 'Cevabından emin misin? Görünmeden ×2’ye bas: doğruysa puanın iki katı. Sonra doğru cevap yanar, herkesin seçtiğiyle birlikte.',
     how3: 'Kürsüye çık',
     how3Line: 'On sorunun sonunda puanı en çok olan kazanır.',
     endWin: 'Odanın en keskin zekâsı!',
@@ -135,7 +136,7 @@ const TEXT = {
     'rulesTour': '3 soruluk {rounds} tur; herkes sırayla konu seçer. Turu en çok puanı alan, turnuvayı en çok tur kazanan alır (eşitlikte puan). Üç joker, her biri oyunda bir kez.',
     'double': '×2 Çift puan',
     'second': '↺ İkinci şans',
-    'doubleTitle': 'Joker: doğru cevap iki kat puan getirir (oyunda bir kez)',
+    'doubleTitle': 'Joker: cevapladıktan sonra, cevap görünene kadar bas: doğruysa iki kat puan, yanlışsa 0. Cevaplamadan basarsan ilk bilen bonusunu kaybedersin. Oyunda bir kez.',
     'secondTitle': 'Joker: cevabın yanlışsa bir kez daha dene, yarım puan (oyunda bir kez)',
     'doubleBy': '×2 {name} Çift puan oynadı',
     'secondBy': '↺ {name} İkinci şans aldı',
@@ -398,7 +399,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     const level = s.lv ?? 0;
     $('#quiz-cat').textContent =
       s.cat && (s.phase === 'question' || s.phase === 'reveal') ? `${t(`quiz.cat.${s.cat}`)}${level ? ` · ${'★'.repeat(level)}${'☆'.repeat(3 - level)}` : ''}` : '';
-    // QZ2 jokers: while I can still answer; each kind once a game, one per question (the server checks too). The row
+    // QZ2 jokers: while I can still answer; each kind once a game, one per question (the server checks too); ×2 also
+    // after my answer, until the reveal (QZ3: "double points for this one"). The row
     // keeps its place off a question (hidden, not removed), so nothing below it moves.
     const answeredNow = (myPick && myPick.n === s.n) || !!mine?.answered || (retry?.n === s.n);
     const asking = s.phase === 'question' && !!mine;
@@ -410,7 +412,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       b.setAttribute('aria-label', label);
       const onThis = myJoker?.n === s.n;
       const twoOptions = !s.typed && (s.options?.length ?? 0) < 4;
-      b.disabled = !asking || usedKinds.has(kind) || onThis || !!answeredNow || (kind === 'fifty' && twoOptions);
+      b.disabled = !asking || usedKinds.has(kind) || onThis || (!!answeredNow && (kind !== 'double' || retry?.n === s.n)) || (kind === 'fifty' && twoOptions);
+      // QZ3: once I answered, ×2 is the one joker left to press; it says so.
+      b.classList.toggle('ready', kind === 'double' && !b.disabled && !!answeredNow);
       b.setAttribute('aria-pressed', String(onThis && myJoker?.kind === kind));
       b.title = `${label}: ` + (usedKinds.has(kind) && !(onThis && myJoker?.kind === kind) ? t('quiz.jokerUsed') : (kind === 'fifty' ? t('quiz.jokerTitle') : tq(kind === 'double' ? 'doubleTitle' : 'secondTitle')));
     }
@@ -580,6 +584,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (stopped) return;
     const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/quiz/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
+    link.attach(socket);
     const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
     socket.addEventListener('open', () =>
       socket.send(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang, seen: encodeSeen(seenIds()) } satisfies QuizClientMessage)),
@@ -622,6 +627,13 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       setTimeout(connect, 1500);
     });
   }
+  // GD1: a line that died without a close event is found and replaced (`link-watch.ts`); the seat follows the browser id.
+  const link = watchLink('quiz', () => ws, quiet, () => {
+    const old = ws;
+    ws = null;
+    old?.close();
+    connect();
+  });
   connect();
   // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
   const ping = window.setInterval(
@@ -653,6 +665,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       { id: 'quiz.typed', title: { en: 'Quiz: next game only typed answers', tr: 'Bilgi yarışması: sonraki oyun sadece yazılı cevap' }, help: { en: 'Local lab server only: the next game this table starts asks only questions you answer by typing.', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki oyun yalnızca yazarak cevaplanan sorular sorar.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'typed' }) },
       // QZ4 (card hook): the host's level moves on (Mixed → Easy → Medium → Hard → Mixed); the stars on each question show it.
       { id: 'quiz.level', title: { en: 'Quiz: next level', tr: 'Bilgi yarışması: sonraki seviye' }, help: { en: 'Sets the table’s level to the next one (Mixed, Easy, Medium, Hard); the next game asks only that level, shown as stars beside the topic.', tr: 'Masanın seviyesini bir sonrakine geçirir (Karışık, Kolay, Orta, Zor); sonraki oyun yalnızca o seviyeden sorar, konunun yanında yıldızlarla görünür.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host sets the level', tr: 'seviyeyi sadece masanın yöneticisi seçer' } : true), run: () => { const now = QUIZ_LEVELS.indexOf(state?.level ?? 'mix'); send({ t: 'settings', level: QUIZ_LEVELS[(now + 1) % QUIZ_LEVELS.length]! }); } },
+      // QZ3 (card hook): ×2 on this question now (after my answer it doubles that answer's points if it is right).
+      { id: 'quiz.joker.double', title: { en: 'Quiz: press ×2 now', tr: 'Bilgi yarışması: şimdi ×2’ye bas' }, help: { en: 'Plays the ×2 Double joker on the current question, as the button does. Answer first: a right answer then scores double (the scoreboard shows it at the reveal), a wrong one 0.', tr: '×2 Çift puan jokerini şu anki soruda oynar, düğme gibi. Önce cevapla: doğruysa puan iki katına çıkar (cevap görününce tabloda), yanlışsa 0.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => { const b = jokerButtons.find((j) => j.kind === 'double')!.b; return !state || state.phase !== 'question' ? { en: 'only while a question is open', tr: 'sadece bir soru açıkken' } : b.disabled ? { en: '×2 is used up or not allowed on this question', tr: '×2 kullanıldı ya da bu soruda olmaz' } : true; }, run: () => jokerButtons.find((j) => j.kind === 'double')!.b.click() },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).
       { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel test sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
     ],
@@ -671,6 +685,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     close();
     clearInterval(ticker);
     clearInterval(ping);
+    link.stop();
     hint.hide();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
