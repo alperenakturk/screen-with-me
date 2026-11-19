@@ -294,6 +294,11 @@ jobs:
       - name: Phone cameras
         run: node scripts/harness/cam-phone/run.cjs http://localhost:8787
 
+      # Card PH3: the phone's Games tab (the short strip shows the empty room's two buttons whole; held sideways the
+      # page does not scroll).
+      - name: Phone Games tab strip
+        run: node scripts/harness/phone-games-tab/run.cjs http://localhost:8787
+
       # Card CAM2: cameras on a laptop at 1366 and 1920 (a window folded before opens with my picture, the friend gets
       # it, a refused camera says why and how next to the 📷 pressed, the Test Lab's camera.open).
       - name: Laptop cameras

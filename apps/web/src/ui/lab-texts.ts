@@ -113,6 +113,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },
     help: { en: 'Writes the stream viewer\'s mode (window or fullscreen), its box, whether it is on the screen and whether it covers a YouTube player (it never should) into the log.', tr: 'İzlediğim yayının hâlini (pencere ya da tam ekran), kutusunu, ekranda olup olmadığını ve bir YouTube oynatıcısını örtüp örtmediğini (hiç örtmemeli) kayda yazar.', },
   },
+  'phoneRoom.gamesTab': {
+    title: { en: 'Phone Games tab: no page scroll, the strip\'s buttons whole', tr: 'Telefon Oyunlar sekmesi: sayfa kaymaz, şeritteki düğmeler tam' },
+    help: { en: 'With a game open in the Games tab: writes whether the page scrolls (it must not, held sideways too) and whether the empty room\'s Search / Invite buttons are whole inside the video strip, above "Back to video".', tr: 'Oyunlar sekmesinde bir oyun açıkken: sayfanın kayıp kaymadığını (yan tutunca da kaymamalı) ve boş odanın Ara / Davet et düğmelerinin video şeridinde, "Videoya dön"ün üstünde tam görünüp görünmediğini yazar.' },
+  },
   'camera.open': {
     title: { en: 'Turn my camera on with a test picture', tr: 'Kameramı test görüntüsüyle aç' },
     help: { en: 'Presses 📷 with a drawn picture instead of the real camera: my camera window must open and show it. "fold" folds the window first (it must open again). "blocked", "system", "busy" or "none" makes the browser refuse instead: a message must say why and how to allow it.', tr: '📷 düğmesine gerçek kamera yerine çizilmiş bir görüntüyle basar: kamera pencerem açılıp onu göstermeli. "fold" önce pencereyi küçültür (yeniden açılmalı). "blocked", "system", "busy" ya da "none" tarayıcının reddetmesini sağlar: bir mesaj nedenini ve nasıl izin verileceğini söylemeli.' },

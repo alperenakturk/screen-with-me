@@ -848,6 +848,25 @@ export function createPhoneRoom(deps: PhoneRoomDeps) {
       tab: 'screen',
       available: () => html.classList.contains('ph-room') || { en: 'not the phone room', tr: 'telefon odası değil' },
       run: () => JSON.stringify(phoneState()),
+    }, {
+      // Card PH3: the Games tab's strip and a phone held sideways: the page never scrolls, the empty room's two buttons
+      // are whole inside the strip, above "Back to video".
+      id: 'phoneRoom.gamesTab',
+      tab: 'screen',
+      available: () => html.classList.contains('ph-game-tab') || { en: 'open a game in the Games tab first', tr: 'önce Oyunlar sekmesinde bir oyun aç' },
+      run: () => {
+        const strip = document.querySelector<HTMLElement>('.room .player-wrap')?.getBoundingClientRect();
+        const back = document.querySelector<HTMLElement>('.ph-strip-back')?.getBoundingClientRect();
+        const buttons = [...document.querySelectorAll<HTMLElement>('.room .ph-empty-actions .btn')].map((b) => b.getBoundingClientRect()).filter((r) => r.width > 0);
+        const title = document.querySelector<HTMLElement>('.room .empty h2')?.getBoundingClientRect();
+        return JSON.stringify({
+          turned: html.classList.contains('upright-turned'),
+          pageScrolls: document.documentElement.scrollHeight > innerHeight + 1 || document.documentElement.scrollWidth > innerWidth + 1,
+          emptyButtons: buttons.length,
+          buttonsWhole: !!strip && buttons.every((r) => r.top >= strip.top - 0.5 && r.bottom <= strip.bottom + 0.5 && (!back || r.bottom <= back.top + 0.5)),
+          titleShown: !!title && title.width > 0,
+        });
+      },
     }],
     status: () => html.classList.contains('ph-room') ? [[{ en: 'Phone tab', tr: 'Telefon sekmesi' }, tab]] : [],
   }));
