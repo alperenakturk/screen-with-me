@@ -368,7 +368,7 @@ const en = {
   'draw.correct': '✅ {name} guessed it! +{points}',
   'draw.close': '🔥 "{text}" is very close!',
   'games.quiz.title': 'Quiz',
-  'games.quiz.text': 'Almost 1800 questions in 14 topics, easy to hard, some typed. 2–8 players; first and fast scores more, three jokers (50:50, Double, Second chance), a tournament mode, and questions you have seen rarely come back.',
+  'games.quiz.text': 'Almost 5350 questions in 18 topics; pick easy, medium, hard or mixed. True / false, odd one out, which came first, guess the year, some typed. 2–8 players; first and fast scores more, three jokers (50:50, Double, Second chance), a tournament mode, and questions you have seen rarely come back.',
   'quiz.n': 'Question {n}/{total}',
   'quiz.rules': '{count} questions, 15 s each. Fast and first answers score more (+50 / +25 / +10), so do streaks and hard ones. Three jokers, each once a game.',
   'quiz.topic': 'Topic',

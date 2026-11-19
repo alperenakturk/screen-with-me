@@ -9,12 +9,12 @@
 
 // QZ2 (15 Nov 2026): `language`, `body` and `world` are new; the third bank (`quiz-questions-3.ts`) adds typed-answer
 // questions (`typed`: the player types the answer, `a` lists the accepted ones, the first is shown at the reveal).
-export const QUIZ_CATEGORIES = ['general', 'geography', 'science', 'space', 'nature', 'history', 'sports', 'food', 'arts', 'math', 'tech', 'language', 'body', 'world', 'music', 'myths', 'inventions', 'puzzles'] as const;
+import { QUIZ_CATEGORIES, type QuizCategory } from './quiz-categories.ts';
+export { QUIZ_CATEGORIES, type QuizCategory };
 import { QUIZ_BANK_2 } from './quiz-questions-2.ts';
 import { QUIZ_BANK_3 } from './quiz-questions-3.ts';
 import { QUIZ_BANK_4 } from './quiz-questions-4.ts';
 
-export type QuizCategory = (typeof QUIZ_CATEGORIES)[number];
 
 export type QuizOptions = readonly [correct: string, wrong1: string, wrong2: string, wrong3: string];
 

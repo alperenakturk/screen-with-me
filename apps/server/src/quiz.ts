@@ -14,7 +14,6 @@ import {
   parseQuizMessage,
   quizAnswerMs,
   quizLevelBonus,
-  quizOffer,
   roundWinners,
   typedHint,
   QUIZ_PICK_MS,
@@ -25,7 +24,6 @@ import {
   type QuizMode,
   QUIZ_SEEN_KEEP,
   decodeSeen,
-  pickQuestions,
   type QuizClientMessage,
   type QuizCount,
   type QuizLang,
@@ -38,6 +36,7 @@ import {
 } from '@swm/shared/games/quiz';
 import { quizPoints } from '@swm/shared/games/scoring';
 import { QUIZ_BANK } from '@swm/shared/games/quiz-questions';
+import { pickQuestions, quizOffer } from '@swm/shared/games/quiz-pick';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';

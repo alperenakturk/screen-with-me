@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, pickQuestions, quizLevelBonus, quizOffer, quizPool, roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
+import { QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, quizLevelBonus,  roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
+import { pickQuestions, quizOffer, quizPool } from './quiz-pick.ts';
 
 describe('Quiz', () => {
   it('question bank: lots of questions, every category, four different options, no duplicates', () => {
