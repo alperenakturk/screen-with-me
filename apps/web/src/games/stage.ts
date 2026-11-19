@@ -1609,6 +1609,13 @@ export function createGameStage(opts: StageOptions) {
   // look at the lab loads the chunk, which registers the real commands in place of this empty entry.
   if (labIsOn()) loadWindowLab();
   else debugHooks.register('gameWindow', () => (loadWindowLab(), { commands: [] }));
+  // GD1: how many people the room counts at my table (0 while I sit there = the room would close it as empty).
+  debugHooks.register('game.at', () => ({
+    status: () =>
+      current
+        ? [[{ en: 'At my table (room)', tr: 'Masamda (oda)' }, { en: String(peopleAt(current.id).length), tr: String(peopleAt(current.id).length) }]]
+        : [],
+  }));
 
   return {
     /**
@@ -1662,6 +1669,10 @@ export function createGameStage(opts: StageOptions) {
     },
     /** The room connection is back (after its welcome): a table asked for while it was down goes out now. */
     rejoined(): void {
+      // GD1: the new room connection doesn't know which table this tab has open (that mark lives on the old
+      // connection): say it again, or the room counts the table as empty and closes it after TABLE_EMPTY_MS, throwing
+      // everyone at it out (both players' rooms reconnect after a deploy or a phone wake).
+      if (current && tables.some((x) => x.id === current!.id)) send({ t: 'at', table: current.id });
       if (!wanted || Date.now() - wantedAt > WANTED_MS) return void (wanted = null);
       if (wantedUnsent || !tables.some((x) => x.kind === wanted && x.by.id === meId())) wantedUnsent = send({ t: 'table', open: wanted }) === false;
     },

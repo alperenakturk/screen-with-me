@@ -395,6 +395,8 @@ jobs:
       - name: Games resume, Sea Battle, How to play, result card
         run: |
           node scripts/harness/games-resume/run.cjs http://localhost:8787
+          # GD1: tables survive both rooms reconnecting; a dead table line is found and replaced.
+          node scripts/harness/games-drop/run.cjs http://localhost:8787
           node scripts/harness/sea/run.cjs http://localhost:8787
           # GP2: the tables' How to play cards (first time, the "?", per Classics board, Turkish).
           node scripts/harness/table-how/run.cjs http://localhost:8787

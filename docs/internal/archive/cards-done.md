@@ -2957,3 +2957,21 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Owner's pick: the Planner's approval (17 Nov 2026).
 - Done: #549 (`claude/bg1-backgammon-upright`, Game Studio, 17 Nov 2026): backgammon's board 46 % of a short, wide box,
   "0 watching" hidden there (`classics.css`); games-sweep hero check exception; CI tabup row adds xox, chess, backgammon.
+
+### GD1. BUG: games throw players out at random (owner, 19 Nov 2026, "important"; Game Studio, first)
+- Why: playing a table with a friend on different devices, one of them is thrown out of the game now and then with no
+  message.
+- What: find every path that drops a player from a table: the silent game connection (`GHOST_MS`, `ghost.ts`), the
+  15 s ping on a background tab / phone sleep / Wi-Fi switch, `openSocket`'s HTTP fallback, the table's seat recovery
+  after a reconnect, a table closed by its host, a stale-state reset. Log each drop reason (server and client, no
+  personal data) and reproduce with two real browsers on different networks (throttled, one backgrounded). Fix the
+  causes; a reconnect within the grace keeps the seat silently; a real removal always shows a plain message saying why.
+- Done when: a 20-minute two-browser game per table kind (Classics, Sea Battle, Quiz, Draw & Guess, Last Heart) with
+  a backgrounded tab, a 10 s network cut and a phone lock never drops a seat; every removal shows its reason;
+  Test Lab scenario `game.drop` (cut, background, ghost) shows the message; an e2e in the `games` job with `GameSocket`.
+- Tests: `ghost` unit tests, the new e2e, owner's hand test with a friend (B 10–14).
+- Owner's pick: none needed.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/553 (`claude/game-drops`, Game Studio, 19 Nov 2026): the room's "at this table" mark re-sent after every
+  room reconnect (both players reconnecting closed the table as empty after 2 min); game pages find a dead line
+  (`link-watch.ts`) and take their seat back; Draw's grace 60 s; drop reasons in the Worker log; Test Lab `game.drop`;
+  harness `games-drop`. Quiz's line watch waits for Game Studio 2.

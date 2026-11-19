@@ -19,7 +19,7 @@ import {
 } from '@swm/shared/games/poker';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
-import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
+import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, noteClose, touch, wasGhost } from './ghost.ts';
 import { FLOOD_CODE, floodGuard } from './limits.ts';
 import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
 import { labOnRequest, labRemembered } from './lab.ts';
@@ -144,6 +144,7 @@ export class Poker extends DurableObject<Env> {
   }
 
   override async webSocketClose(ws: WebSocket, code: number): Promise<void> {
+    noteClose('poker', code);
     try {
       ws.close(code === 1005 ? 1000 : code);
     } catch {
