@@ -2975,3 +2975,19 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   room reconnect (both players reconnecting closed the table as empty after 2 min); game pages find a dead line
   (`link-watch.ts`) and take their seat back; Draw's grace 60 s; drop reasons in the Worker log; Test Lab `game.drop`;
   harness `games-drop`. Quiz's line watch waits for Game Studio 2.
+
+### CAM2. BUG: the camera doesn't show on a laptop (owner, 19 Nov 2026; lane A, first)
+- Why: the owner turns the camera on in a room on his laptop and no camera picture appears ("kamera modu açılmıyor").
+- What: reproduce in Chromium with a fake camera (`--use-fake-device-for-media-stream`) at 1366 and 1920, with and
+  without voice joined, in each theme; find where the camera window fails to open or stays hidden (permission state,
+  the camera window's spot / size, a layout change since GW4–GW5, the 📷 button's state); fix it; if the browser
+  refuses the camera, show a plain message saying why and how to allow it.
+- Done when: 📷 on a laptop shows my camera window and the friend sees it, at 1366 and 1920; a refused permission
+  shows a message; Test Lab hook `camera.open` (fake stream); a harness check in the `site` or `e2e` job.
+- Tests: the new harness check; `scripts/shots.cjs` first look; owner's hand test on his laptop.
+- Owner's pick: none needed.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/555 (`claude/cam2-laptop-camera`, lane A, 19 Nov 2026): the
+  camera window's remembered "−" opens again when cameras come back and when my camera turns on; a refused camera says
+  why and how (browser / phone / computer / busy / none) next to the 📷 pressed; a left-and-rejoined person no longer
+  waits ~11 s for voice and camera (DTLS goodbye closes the dead connection); Test Lab `camera.open`; harness
+  `cam-laptop`; hand test 27ai.
