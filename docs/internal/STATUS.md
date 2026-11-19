@@ -33,7 +33,9 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (19 Nov): [x] GD1 (#553) → [ ] GPH1 (Quiz, Five Frames last, after Game Studio 2 merges).
+- [ ] Game Studio (19 Nov, handoff; session ends): [x] GD1 (#553, v0.9.97.172) · GPH1 [x] part 1 (`claude/games-phones`:
+  sweep check "nothing over a control", Duel phone overlap) → [ ] the rest from `design/games/phone-review-gph1.md`
+  (Last Heart six, banners over art, board gutters, …; Quiz and Five Frames last; sideways: ask the Planner).
   Open: `quiz.ts` (site) needs GD1's `watchLink` (Game Studio 2's file; as in `sea.ts`).
 - [ ] 1. YouTube together: join by the invite link; play, pause, seek, speed and ← / → from both sides stay in step.
 - [ ] 2. Fullscreen on YouTube: the rail comes at the right edge and goes; Enter opens the message box; the friend's
