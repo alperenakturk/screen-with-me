@@ -32,6 +32,8 @@
     "./games/draw-words": "./src/games/draw-words.ts",
     "./games/quiz": "./src/games/quiz.ts",
     "./games/quiz-questions": "./src/games/quiz-questions.ts",
+    "./games/quiz-pick": "./src/games/quiz-pick.ts",
+    "./games/quiz-categories": "./src/games/quiz-categories.ts",
     "./games/scoring": "./src/games/scoring.ts",
     "./games/catalog": "./src/games/catalog.ts",
     "./games/poker": "./src/games/poker.ts",

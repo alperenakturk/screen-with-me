@@ -1745,6 +1745,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
     hand test (and the Planner's, if a session with that host allowed runs it).
 
 ## Game Studio handoff line, archived 19 Nov 2026
+
+## Game Studio handoff line, archived 19 Nov 2026 (BG1 #549 merged 17 Nov; Game Studio 2, QZ4)
 - [ ] Game Studio (17 Nov f, handoff; session ends): GMP2 #538, GW5 #537, LH2 #546, LH3 #547, XO1 #548 live
   (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the
   owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
@@ -1766,6 +1768,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
     re-run and 4 local runs.
 
 ## B2 finished lines, archived 19 Nov 2026 (STATUS size limit)
+
+## Ticked task-queue lines, archived 19 Nov 2026 (Game Studio 2, QZ4: STATUS over its size limit)
   - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [x] Live e2e red 16 Nov (runs 43917089949, 43921749258; no tag after v0.9.97.151): not the code. Both runs show
     1006 drops on the test's own game object *and* on unrelated canary rooms at the same moments (an object restart on

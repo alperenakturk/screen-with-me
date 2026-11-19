@@ -54,9 +54,10 @@ await alex.wait((m) => m.t === 'state' && m.players.length === 2, 'two');
 ok(alex.state.host === wa.you && alex.state.count === 10 && alex.state.topic === 'mix' && alex.state.lang === 'tr', 'The first player is the host; defaults: 10 mixed questions in Turkish');
 sam.send({ t: 'settings', count: 5 });
 ok((await sam.wait((m) => m.t === 'error', 'not host')).code === 'not_host', 'Only the host changes the settings');
-alex.send({ t: 'settings', lang: 'en', topic: 'general', count: 5 });
-await sam.wait((m) => m.t === 'state' && m.count === 5 && m.lang === 'en' && m.topic === 'general', 'settings');
-ok(true, 'Host picked English, general knowledge, 5 questions; everyone sees it');
+ok(alex.state.level === 'mix', 'QZ4: the level is Mixed by default');
+alex.send({ t: 'settings', lang: 'en', topic: 'general', count: 5, level: 'hard' });
+await sam.wait((m) => m.t === 'state' && m.count === 5 && m.lang === 'en' && m.topic === 'general' && m.level === 'hard', 'settings');
+ok(true, 'Host picked English, general knowledge, 5 questions, Hard; everyone sees it');
 
 sam.send({ t: 'start' });
 ok((await sam.wait((m) => m.t === 'error', 'not host start')).code === 'not_host', 'Only the host starts the game');
@@ -66,6 +67,7 @@ alex.inbox.length = 0;
 alex.send({ t: 'start' });
 const q1 = await alex.wait((m) => m.t === 'state' && m.phase === 'question', 'q1');
 ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && (q1.options.length >= 2 || q1.typed) && !('correct' in q1), 'First question: general knowledge, right option hidden');
+ok(q1.lv === 3 && QUIZ_BANK[q1.qid]?.d === 3, 'QZ4: a Hard game asks a hard question, and says so (lv 3)');
 ok(/^[\x00-\x7F’…“”°×−]+$/.test(q1.question), 'The question is in English');
 
 // 50:50 (on a four-option question): only Alex gets the hidden options; a second use does nothing.

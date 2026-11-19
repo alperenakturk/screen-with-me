@@ -9,11 +9,12 @@
 
 // QZ2 (15 Nov 2026): `language`, `body` and `world` are new; the third bank (`quiz-questions-3.ts`) adds typed-answer
 // questions (`typed`: the player types the answer, `a` lists the accepted ones, the first is shown at the reveal).
-export const QUIZ_CATEGORIES = ['general', 'geography', 'science', 'space', 'nature', 'history', 'sports', 'food', 'arts', 'math', 'tech', 'language', 'body', 'world'] as const;
+import { QUIZ_CATEGORIES, type QuizCategory } from './quiz-categories.ts';
+export { QUIZ_CATEGORIES, type QuizCategory };
 import { QUIZ_BANK_2 } from './quiz-questions-2.ts';
 import { QUIZ_BANK_3 } from './quiz-questions-3.ts';
+import { QUIZ_BANK_4 } from './quiz-questions-4.ts';
 
-export type QuizCategory = (typeof QUIZ_CATEGORIES)[number];
 
 export type QuizOptions = readonly [correct: string, wrong1: string, wrong2: string, wrong3: string];
 
@@ -32,9 +33,14 @@ export interface QuizEntry {
   typed?: true;
   /** True / false statement: options are fixed (true first) and the correct index comes from `answer`. */
   tf?: boolean;
-  /** Difficulty: 1 easy, 2 medium, 3 hard (older entries have none: medium). */
+  /** Difficulty: 1 easy, 2 medium, 3 hard (the first bank's come from `QUIZ_LEVELS_1`). */
   d?: 1 | 2 | 3;
+  /** QZ4: the question's kind when it is not a plain four-option one (true / false is `tf`, typed is `typed`):
+   * `first` = which came first (two options), `odd` = odd one out, `year` = guess the year (four years). */
+  k?: QuizKind;
 }
+
+export type QuizKind = 'first' | 'odd' | 'year';
 
 type Opts = readonly [string, string, string, string];
 
@@ -501,4 +507,16 @@ const QUIZ_BANK_1: readonly QuizEntry[] = [
   tf.tech('Bilgisayarlar içeride ikili sayı sistemini kullanır.', 'Computers use binary numbers internally.', true),
 ];
 
-export const QUIZ_BANK: readonly QuizEntry[] = [...QUIZ_BANK_1, ...QUIZ_BANK_2, ...QUIZ_BANK_3];
+/** QZ4: the first bank's difficulties (1 easy, 2 medium, 3 hard), one digit per entry in bank order. */
+const QUIZ_LEVELS_1 =
+  '1111112111111122322212111132231211111231132121121311111211321232222121221123233122111121233322212223' +
+  '1221221121223121111211211323223332223211112212111111112221121121131332111222111112222233112211332333' +
+  '1221221111211233311332222121121211122211211122213211132232212221122232132111112112121211131231111221' +
+  '33122331222231221122111111331112212112111123122212311321111112312211122221221211221222311122112';
+
+export const QUIZ_BANK: readonly QuizEntry[] = [
+  ...QUIZ_BANK_1.map((entry, i): QuizEntry => ({ ...entry, d: entry.d ?? (Number(QUIZ_LEVELS_1[i] ?? 2) as 1 | 2 | 3) })),
+  ...QUIZ_BANK_2,
+  ...QUIZ_BANK_3,
+  ...QUIZ_BANK_4,
+];

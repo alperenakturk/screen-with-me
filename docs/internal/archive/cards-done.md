@@ -2992,6 +2992,20 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   waits ~11 s for voice and camera (DTLS goodbye closes the dead connection); Test Lab `camera.open`; harness
   `cam-laptop`; hand test 27ai.
 
+### QZ4. Quiz: many more questions, kinds and topics, with easy / medium / hard (owner, 19 Nov 2026; Game Studio 2)
+- Why: the owner wants a lot more variety.
+- What: more topics and question kinds (e.g. true / false, which came first, odd one out, picture-free "guess the
+  year"), every question tagged easy / medium / hard; a level choice in the lobby (Mixed by default); at least
+  ~3× today's question count, EN + TR, facts checked, nothing about specific films or series (public-text rule).
+  Keep the question data in a lazy chunk; mind `scripts/size-budget.mjs`.
+- Done when: the lobby offers the level; each topic has questions at every level; `check-game-text.mjs` passes;
+  Test Lab hook `quiz.level`; a unit test that every question has a level, a topic and both languages.
+- Tests: unit + `games` e2e; owner's hand test.
+- Owner's pick: none needed.
+- Done: #554 (`claude/quiz-more-questions`, Game Studio 2, 19 Nov 2026): 5329 questions (fourth bank, 18 topics, kinds
+  `first` / `odd` / `year`), every question levelled, the lobby's Level row, picking moved to `quiz-pick.ts` (the browser
+  no longer loads the bank), Test Lab `quiz.level`.
+
 ### TG1. The Together card gets one row shorter while a side game is open (owner, 19 Nov 2026; lane A, after CAM2)
 - Why: at 1366 Five Frames' window covers the Together card's "Join voice / Share" buttons.
 - What: while a side game's window is open beside the chat, the Together card shows one row (🎙 Join voice and 📤
@@ -3003,4 +3017,4 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done: https://github.com/alperenakturk/screen-with-me/pull/558 (`claude/tg1-together-compact`, lane A, 19 Nov 2026):
   while a game window lies over the side panel the Together card is compact (title, small faces, counts in one row;
   the buttons in one row, Share icon-only in voice), the share menu lifts over the game window; Test Lab
-  `together.compact`; harness `together-compact`; hand test 27aj.
+  `together.compact`; harness `together-compact`; hand test 27ak.

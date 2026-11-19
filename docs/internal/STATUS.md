@@ -10,7 +10,7 @@
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
 - [ ] Lane A (handoff 19 Nov; older lines in `archive/status-history.md` "Lane A handoff lines, archived 19 Nov
   2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. CAM2 live (#555, v0.9.97.173; 27ai).
-  - [ ] TG1 (`claude/tg1-together-compact`): PR → live; hand test 27aj. Then the GPH1 phone check (Planner, findings).
+  - [ ] TG1 (`claude/tg1-together-compact`): PR → live; hand test 27ak. Then the GPH1 phone check (Planner, findings).
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
     scenario.
@@ -21,6 +21,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
   `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
+- [ ] Game Studio 2 (19 Nov): QZ4 #554 → QZ3 (+ GD1's `watchLink`) → FW1.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -209,7 +210,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
   for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
   to it says the browser blocked it and how to allow it.
-- [ ] 27aj. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
+- [ ] 27aj. [QZ4] Quiz: the "Level" row (Hard: ★★★ each time); new topics and kinds. A wrong answer: tell the
+  Planner.
+- [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
   visible and work (in voice too). Put the game away (✕): the full card comes back.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
