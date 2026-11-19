@@ -3,7 +3,7 @@ import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
 import type { DeviceInfo, DevicePicks } from '@swm/shared/shell';
 import { confirmDialog } from './confirm.ts';
-import { CAM_KEY, CAM_NAME, MIC_KEY, MIC_NAME, SPEAKER_KEY, SPEAKER_NAME, canPickSpeaker, chosenName, devicePicks, openCam, openMic, permission } from './voice-devices.ts';
+import { CAM_KEY, CAM_NAME, MIC_KEY, MIC_NAME, SPEAKER_KEY, SPEAKER_NAME, camErrorKey, canPickSpeaker, chosenName, devicePicks, openCam, openMic, permission } from './voice-devices.ts';
 
 /**
  * Pre-join check (0.9.90.6, rest of camera layout 2): before joining voice a small window shows a camera preview, a
@@ -127,6 +127,7 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
     preview.srcObject = null;
     const want = opts.canCam && (join ? withCam.input.checked : true);
     camOff.hidden = want;
+    camOff.textContent = `📷 ${t('voiceCheck.camOff')}`;
     // Without a camera picture the preview is only a strip with my voice level.
     shown.classList.toggle('off', !want);
     if (!want) return;
@@ -136,9 +137,10 @@ export async function voiceCheck(opts: { mode: 'join' | 'settings'; canCam: bool
     }
     try {
       cam = await openCam(camSel.s.value || undefined);
-    } catch {
+    } catch (error) {
+      // CAM2: why, and how to allow it.
       camOff.hidden = false;
-      camOff.textContent = `📷 ${t('voice.camDenied')}`;
+      camOff.textContent = `📷 ${t(camErrorKey(error))}`;
       return;
     }
     if (closed) return stop(cam);

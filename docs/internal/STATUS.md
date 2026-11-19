@@ -12,6 +12,7 @@ One handoff per lane or role; each session updates only its own lines and delete
   "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is still missing (the owner's
   Releases page or a session allowed to push tags). FC1 (v0.9.97.163), RC1 (v0.9.97.165), UI4 (v0.9.97.166) live and
   archived; hand tests 27ae, 27af, 27ag.
+  - [ ] CAM2 (19 Nov, `claude/cam2-laptop-camera`): PR → merge → live e2e → archive the card; hand test 27ai.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
@@ -21,15 +22,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     column): stale. `feed` harness failed once on #499's CI (friend's `#feed-row-pause` not visible), passed on the
     re-run and 4 local runs.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
-  - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - [x] Live e2e red 16 Nov (runs 43917089949, 43921749258; no tag after v0.9.97.151): not the code. Both runs show
-    1006 drops on the test's own game object *and* on unrelated canary rooms at the same moments (an object restart on
-    Cloudflare's side; the HTTP-fallback quota and room counters were reset with it, hence "13 opened, 0 refused").
-    Run 43923095993 (105eadc, the same server code as 1caaf0e) went green on the first attempt with no drop in any
-    shard: tagged v0.9.97.153. Merges may resume. If it comes back, compare the canary drop times with the deploy's
-    "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio 2 (19 Nov): QZ4 #554 → QZ3 (+ GD1's `watchLink` in `quiz.ts`) → FW1.
@@ -216,7 +210,12 @@ releases add a line with an ID at the end of "C"; the Planner folds them into th
   "Subscription services · Coming" row at the bottom.
 - [ ] 27ah. [GD1] Play a table with a friend for 20 min: lock your phone 30 s, switch Wi-Fi, background the tab.
   You are never thrown out; a table that closes says why.
-- [ ] 27ai. [QZ4] Quiz: the "Level" row; Hard shows ★★★ each time; new topics and kinds (odd one out, which came
+- [ ] 27ai. [CAM2] On your laptop: join voice and press the camera button: your camera window opens with your picture
+  (even if you had made it small with "−" before) and your friend sees you. Leave voice and press the camera button on
+  the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
+  for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
+  to it says the browser blocked it and how to allow it.
+- [ ] 27aj. [QZ4] Quiz: the "Level" row; Hard shows ★★★ each time; new topics and kinds (odd one out, which came
   first, guess the year). A wrong answer: tell the Planner.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear

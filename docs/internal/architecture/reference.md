@@ -2043,6 +2043,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   has 🔄 `#strip-flip` (camera on, 2+ cameras; also "Switch camera" in my person menu) cycling the device's cameras.
   Test Lab: `voice.switchCam`, `voice.camPause` (🎬), "My camera" / "Camera pictures" (📊). Harness
   `scripts/harness/cam-phone/run.cjs` (computer + iPhone 13, in CI).
+- **Cameras on a laptop (card CAM2, the owner, 19 Nov 2026: "the camera doesn't show on my laptop"):** three causes,
+  all fixed. (1) The camera window's "−" (`opt:camFolded`) was remembered for good, so every later camera came as a bare
+  "📷 1" strip: `createCamWindow` opens the window whenever cameras come back after none (`update`), and `reveal()`
+  opens it when my own camera turns on (`camOpened` in `voice.ts`); "−" still folds while cameras stay. (2) A refused
+  camera said one vague line for 6 s, placed at the card's 📷, which was still hidden while a quick 📷 joined voice (so
+  it sat in the page's top-left corner): `camFailed` names the reason from the browser's error (`camErrorKey` in
+  `voice-devices.ts`: `voice.camBlocked` / `camBlockedPhone` / `camBlockedSystem` ("Permission denied by system") /
+  `camBusy` (`NotReadableError`) / `camNone`, else `camDenied`) for 12 s next to the 📷 pressed (`camFrom`; else the
+  card's, a quick 📷 on screen, the join button); the pre-join window's preview says the same. (3) Someone who left voice
+  and joined again waited ~11 s for the others' voice and camera when the other side made the offers: that side kept
+  the dead connection (`connectionState` says "connected" for seconds) until it failed and was retried. `P2pVoice.peer`
+  watches the DTLS transport: the other side's goodbye (`state` "closed") closes the connection at once (no call from
+  there: the goodbye comes before the room's voice list, and an offer to someone not in voice is never answered; the
+  next `sync` calls them). Test Lab `camera.open` (🎬; a drawn picture instead of the camera, `fold`, or a refusal
+  `blocked` / `system` / `busy` / `none`), 📊 "Camera refused" / "Camera window: folded". Harness
+  `scripts/harness/cam-laptop/run.cjs` (1366 and 1920, `site` job); `scripts/shots.cjs` screens `camera-on`,
+  `camera-refused` (the shots' browser has a fake microphone and camera).
 - **Streaming / screen share (0.9.64, `packages/shared/src/live-p2p.ts`, site `ui/live.ts`, plan + decisions
   `docs/internal/yayin.md`):** bottom part of the "Birlikte" card (`#live-card`): "🖥️ Ekranını paylaş"
   (`getDisplayMedia`, 720p/30, tab audio) / "📹 Kamerayla yayın" (720p); one stream per room (`live_busy`), at most
