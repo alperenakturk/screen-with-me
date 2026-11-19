@@ -1749,3 +1749,18 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the
   owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
   remote; safe to delete). Notes: games-sweep size `tabup` (upright tablet); `stage.ts` grows an overflowing own box.
+
+## Lane A handoff lines, archived 19 Nov 2026
+- [ ] Lane A (handoff 17 Nov, 05:50; no unmerged lane A branch; older lane A lines are in `archive/status-history.md`
+  "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is still missing (the owner's
+  Releases page or a session allowed to push tags). FC1 (v0.9.97.163), RC1 (v0.9.97.165), UI4 (v0.9.97.166) live and
+  archived; hand tests 27ae, 27af, 27ag.
+  - [x] CAM2 live (#555, v0.9.97.173; hand test 27ai). [ ] TG1 (`claude/tg1-together-compact`): PR → live; 27aj.
+  - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
+  - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
+    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
+    room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
+    state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
+  - Notes: `scripts/harness/phone/run.cjs` (not in CI) already fails on main (strip tools, games tab, sideways
+    column): stale. `feed` harness failed once on #499's CI (friend's `#feed-row-pause` not visible), passed on the
+    re-run and 4 local runs.

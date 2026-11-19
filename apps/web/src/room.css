@@ -12244,3 +12244,86 @@ html.upright-turned body {
 /* MSG1: a deleted message's line; the ⋯ stays out of sight until ui/chat-menu.css (lazy) styles it. */
 .chat-deleted{margin:2px 0;font-size:12.5px;font-style:italic;color:var(--muted);text-align:center}
 .chat-more{opacity:0}
+
+/* Card TG1 (owner, 19 Nov 2026): while a game window lies over the side panel (a side game lines up with it down to the
+   message box), the Together card is compact so "Join voice" and "Share" stay clear above the window: the title, small
+   faces and the counts share one row, the voice buttons and Share one more (push-to-talk's switch waits in Settings). */
+html:not(.phone) .together-card.compact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 8px;
+  padding: 10px 12px;
+}
+
+html:not(.phone) .together-card.compact > :is(.together-head, .together-strip) {
+  display: contents;
+}
+
+html:not(.phone) .together-card.compact .together-title {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+html:not(.phone) .together-card.compact .voice-people {
+  grid-column: 2;
+  grid-row: 1;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 3px;
+}
+
+html:not(.phone) .together-card.compact .voice-limit {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+html:not(.phone) .together-card.compact > .together-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .voice-hint) {
+  display: none;
+}
+
+html:not(.phone) .together-card.compact .together-person {
+  width: auto;
+}
+
+html:not(.phone) .together-card.compact :is(.voice-avatar, .together-more) {
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+}
+
+html:not(.phone) .together-card.compact .together-more {
+  font-size: 11px;
+}
+
+html:not(.phone) .together-card.compact .voice-on {
+  gap: 6px;
+}
+
+/* In voice the compact card's one row is the voice buttons and Share: Share shows its icon only (its name is kept for
+   screen readers and as its tooltip). */
+html:not(.phone) .together-card.compact:has(#voice-on:not([hidden])) .live-share > span[data-i18n] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The share menu opened from the compact card drops over the game window (z-index 950): the panel is lifted over it
+   while the menu is open. */
+.side:has(.together-card.compact .live-menu:not([hidden])) {
+  z-index: 960;
+}

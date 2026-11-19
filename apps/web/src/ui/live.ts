@@ -64,6 +64,10 @@ export function createLive(
   const shareWrap = root.querySelector<HTMLElement>('#live-share-wrap')!;
   const shareButton = root.querySelector<HTMLButtonElement>('#live-share')!;
   setIcon(shareButton, 'screen');
+  // Card TG1: the compact Together card shows Share as its icon only; the name stays as its tooltip.
+  const shareTitle = () => (shareButton.title = t('live.share'));
+  shareTitle();
+  addEventListener('langchange', shareTitle);
   const menu = root.querySelector<HTMLElement>('#live-menu')!;
   const menuNote = root.querySelector<HTMLElement>('#live-menu-note')!;
   const row = root.querySelector<HTMLElement>('#live-row')!;

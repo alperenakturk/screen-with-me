@@ -292,6 +292,30 @@ const SCREENS = {
       await wait(300);
     },
   },
+  // Card TG1: a side game's window over the side panel (Five Frames, the tallest), in voice: the compact Together card.
+  'together-compact': {
+    what: 'Card TG1: in voice with Five Frames open beside the chat: the Together card is compact (title, small faces and counts in one row; mic, deafen, camera, Leave and Share in one row), clear above the game window',
+    room: true,
+    sizes: ['laptop', 'desktop'],
+    after: async (p) => {
+      await p.evaluate(() => {
+        localStorage.setItem('opt:voiceCheck', 'skip');
+        localStorage.setItem('opt:ipNotice:voice', '1');
+      });
+      await p.evaluate(() => document.getElementById('voice-join').click());
+      await p.waitForFunction(() => !document.getElementById('voice-on').hidden, null, { timeout: 15000 });
+      await p.evaluate(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        document.getElementById('game-btn').click();
+        await sleep(200);
+        document.querySelector('#game-menu [data-tab="side"]')?.click();
+        await sleep(100);
+        document.querySelector('#game-menu [data-solo="word"]')?.click();
+        for (let i = 0; i < 60 && !document.querySelector('#game-stage .ff .ff-key'); i++) await sleep(100);
+      });
+      await wait(900);
+    },
+  },
   // Card CAM2: my camera on (the Test Lab's drawn picture, the window folded before), and a refused camera's message.
   'camera-on': { what: 'Card CAM2: in voice with my camera on (a drawn test picture): my camera window shows it, even though it had been folded with "−" before', room: true, after: (p) => camera(p, 'fold') },
   'camera-refused': { what: 'Card CAM2: 📷 pressed and the browser refused the camera: a message next to the 📷 says why and how to allow it', room: true, after: (p) => camera(p, 'blocked') },
@@ -307,6 +331,7 @@ const SCREEN_FOR = [
   [/^docs\/|\.md$|^\.github\/|^scripts\/(?!shots)/, []],
   [/^apps\/web\/src\/ui\/chat\.ts$/, ['chat-delete', 'room']],
   [/^apps\/web\/src\/ui\/(voice|cam-)/, ['camera-on', 'camera-refused', 'room']],
+  [/^apps\/web\/src\/ui\/together-compact/, ['together-compact', 'room']],
   [/^apps\/web\/public\/help/, ['help']],
   [/^apps\/web\/public\/privacy/, ['privacy']],
   [/^apps\/web\/public\/terms/, ['terms']],
