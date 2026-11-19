@@ -960,7 +960,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   sweep counts a `.bg-point` ≥ 88 px tall and ≥ 22 px wide (Planner, 13 Nov), and with a checker picked a tap within
   12 px of a legal point goes to it (match.ts `SNAP_PX`; a disabled point lets taps through to the board). Games have
   no sideways-phone rules any more. Checks: games-sweep at `iphone` and `small` (360 × 640) with the running tables
-  (`quizPlay`, `drawPlay`, `pokerPlay`, `chessPlay`, `backgammonPlay`). **Me:** `meHead`
+  (`quizPlay`, `drawPlay`, `pokerPlay`, `chessPlay`, `backgammonPlay`). GPH1: on a phone ≤ 760 px tall the Duel's other
+  board is one line (name and count) and its rows share the height left. **Me:** `meHead`
   (avatar + name, a tap opens the profile menu: name, picture, colour theme, language) and the settings sections
   `me`, `room`, `sound`, `about` lent by `settings-dialog.ts` `setInPage(true)` (`.ph-me` CSS hides "move to another
   device", the volume and devices rows, and the extension / thanks / licences links), then 🐞 Test Lab when unlocked.
@@ -1207,10 +1208,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   back to the home page. Test: `scripts/e2e/roomgame.mjs`.
   **Games quality (card BHG):** a tab remembers the table or side game it has open and whether it is minimized
   (`sessionStorage` `swm:table:<path>`, `rememberAt` in `stage.ts`) and reopens it from the entry list after a reload;
-  Quiz and Draw & Guess wait `FEW_GRACE_MS` (20 s, `fewSince`) with fewer than two players online before a running game
+  Quiz and Draw & Guess wait `FEW_GRACE_MS` (Quiz 20 s, Draw 60 s since GD1; `fewSince`) with fewer than two players online before a running game
   goes back to the lobby (one player's reload used to end it for both). Harnesses `games-sweep` (every game × 4 sizes ×
   EN / TR: no inner scrollbar, text ≥ 13 px on screen (the fit scale counted), nothing cut off, a fair-sized board, no
-  page scroll; `FRIENDS=n` adds fake friends) and `games-resume` (move + sound, named buttons, axe, minimize / restore,
+  page scroll, GPH1: nothing drawn over a control (`elementFromPoint` at its middle is the control); sizes `iphoneSide`
+  / `smallSide` run only when named; `FRIENDS=n` adds fake friends) and `games-resume` (move + sound, named buttons, axe, minimize / restore,
   reload for every Classics board, the side games, Quiz and Draw), both in CI's "Games quality" step (the sweep on
   laptop + iPhone there). Run the sweep after every game layout change. **GPRO (`docs/internal/design/games/games-pro.md`):**
   sweep size `side` (iPhone 13 landscape; local runs, `SIZES=side`) with a board check against the window's smaller

@@ -200,6 +200,17 @@ function measure({ mayScroll, minTarget, whole }) {
     if (el.matches('.bg-point') && r.height >= 2 * minTarget - 0.5 && r.width >= 22) continue;
     if (side < minTarget - 0.5) tiny.push(`${name(el)} ${Math.round(r.width)}×${Math.round(r.height)}`);
   }
+  // GPH1: every control can be hit: the middle of each one is the control itself, never something drawn over it (the
+  // owner's "blocks overlap, taps go wrong": the Duel's other board lay over the letter keys on a phone).
+  const covered = [];
+  for (const el of stage.querySelectorAll('button, [role="button"], input, select, a[href]')) {
+    if (!visible(el) || el.disabled || el.closest('[aria-hidden="true"], [hidden]')) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2 || r.bottom < 0 || r.right < 0 || r.top > innerHeight || r.left > innerWidth) continue;
+    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    if (!hit || hit === el || el.contains(hit) || hit.contains(el)) continue;
+    covered.push(`${name(el)} under ${name(hit)}`);
+  }
   // 0.9.97.134: a game marked `whole` shows every text whole: nothing clipped into "…" or under its own box's edge.
   const trunc = [];
   let sign = '';
@@ -225,6 +236,7 @@ function measure({ mayScroll, minTarget, whole }) {
     sign,
     tiny: [...new Set(tiny)],
     tinyCount: tiny.length,
+    covered: [...new Set(covered)].slice(0, 6),
     stage: [Math.round(box.width), Math.round(box.height)],
     scrollers: [...new Set(scrollers)].slice(0, 6),
     small: [...new Set(small)].slice(0, 6),
@@ -285,7 +297,8 @@ async function windowPasses(page, label, g, phone) {
 
 (async () => {
   const browser = await chromium.launch();
-  for (const size of pick('SIZES', Object.keys(SIZES))) {
+  // GPH1: the sideways phones run only when named (SIZES=iphoneSide,smallSide): open, see STATUS.
+  for (const size of pick('SIZES', Object.keys(SIZES).filter((k) => !k.endsWith('Side')))) {
     for (const lang of pick('LANGS', ['en', 'tr'])) {
       const ctx = await browser.newContext({ ...SIZES[size] });
       await ctx.addInitScript((lang) => {
@@ -523,6 +536,7 @@ async function windowPasses(page, label, g, phone) {
         for (const s of extraSockets) s.close();
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
+        check(m.covered.length === 0, `${label}: nothing lies over a control (every tap lands)`, m.covered.join(' | '));
         // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
         if (!phone && !g.busy && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
       }

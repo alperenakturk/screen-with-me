@@ -1,0 +1,1 @@
+- Five Frames Duel on a phone: the other player's board no longer lies over your letter keys; on smaller phones it shows as one line with their name and guesses, and your rows fit the screen.
