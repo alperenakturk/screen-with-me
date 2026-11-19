@@ -12,6 +12,7 @@
 export const QUIZ_CATEGORIES = ['general', 'geography', 'science', 'space', 'nature', 'history', 'sports', 'food', 'arts', 'math', 'tech', 'language', 'body', 'world', 'music', 'myths', 'inventions', 'puzzles'] as const;
 import { QUIZ_BANK_2 } from './quiz-questions-2.ts';
 import { QUIZ_BANK_3 } from './quiz-questions-3.ts';
+import { QUIZ_BANK_4 } from './quiz-questions-4.ts';
 
 export type QuizCategory = (typeof QUIZ_CATEGORIES)[number];
 
@@ -517,4 +518,5 @@ export const QUIZ_BANK: readonly QuizEntry[] = [
   ...QUIZ_BANK_1.map((entry, i): QuizEntry => ({ ...entry, d: entry.d ?? (Number(QUIZ_LEVELS_1[i] ?? 2) as 1 | 2 | 3) })),
   ...QUIZ_BANK_2,
   ...QUIZ_BANK_3,
+  ...QUIZ_BANK_4,
 ];
