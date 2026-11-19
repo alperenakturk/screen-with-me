@@ -8,7 +8,8 @@
 import { CLIENT_ID, cleanName, cleanText, isAvatar, type Avatar } from '../protocol.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES, type QuizCategory, type QuizEntry } from './quiz-questions.ts';
 
-/** 2: host settings (language, category, length), the 50:50 joker, rank / streak points. 3 (QZ2): typed answers. */
+/** 2: host settings (language, category, length), the 50:50 joker, rank / streak points. 3 (QZ2): typed answers.
+ * QZ4 added only optional fields (the host's `level`, a question's `lv`): no bump. */
 export const QUIZ_PROTOCOL_VERSION = 3;
 export const QUIZ_MAX_PLAYERS = 8;
 export const QUIZ_QUESTIONS = 10;
@@ -80,8 +81,10 @@ export function matchTyped(input: string, accepted: readonly string[]): boolean 
 export const QUIZ_RECENT = 150;
 /** A browser remembers this many questions it has seen and sends them as a bitmap (base64) in its hello. */
 export const QUIZ_SEEN_KEEP = 600;
-/** Room for a bitmap of 4800 bank ids. */
-export const SEEN_CHARS = 800;
+/** Room for a bitmap of 7200 bank ids (QZ4: the bank passed 4800). */
+export const SEEN_CHARS = 1200;
+/** The longest client message: a hello with a full `seen` bitmap, a name and an avatar. */
+const MAX_MESSAGE = 1600;
 
 /** Bank ids → a base64 bitmap (bit `id` set): compact enough for the hello's 1000 characters. */
 export function encodeSeen(ids: readonly number[]): string {
@@ -124,6 +127,12 @@ export const QUIZ_JOKERS = ['fifty', 'double', 'second'] as const;
 export type QuizJoker = (typeof QUIZ_JOKERS)[number];
 /** `mix`: every category. */
 export type QuizTopic = QuizCategory | 'mix';
+/** QZ4: the host picks the questions' level; `mix` (the default) asks every level, easier ones first. */
+export const QUIZ_LEVELS = ['mix', 'easy', 'medium', 'hard'] as const;
+export type QuizLevel = (typeof QUIZ_LEVELS)[number];
+/** The bank's `d` of a level (none for `mix`). */
+export const levelDifficulty = (level: QuizLevel | undefined): 1 | 2 | 3 | undefined =>
+  level === 'easy' ? 1 : level === 'medium' ? 2 : level === 'hard' ? 3 : undefined;
 export { QUIZ_CATEGORIES, type QuizCategory };
 
 export interface QuizPlayer {
@@ -155,7 +164,7 @@ export interface QuizPlayer {
 export type QuizClientMessage =
   | { t: 'hello'; v: number; name: string; avatar?: Avatar; cid?: string; lang?: QuizLang; seen?: string }
   /** Host only, in the lobby or on the podium. */
-  | { t: 'settings'; lang?: QuizLang; topic?: QuizTopic; count?: QuizCount; mode?: QuizMode; laps?: QuizLaps }
+  | { t: 'settings'; lang?: QuizLang; topic?: QuizTopic; count?: QuizCount; mode?: QuizMode; laps?: QuizLaps; level?: QuizLevel }
   | { t: 'start' }
   /** `n`: which question (a late answer must not count for the next). `pick` an option, or `text` a typed answer. */
   | { t: 'answer'; n: number; pick: number }
@@ -184,6 +193,8 @@ export type QuizServerMessage =
       cat?: QuizCategory;
       /** The question's bank id (the browser remembers what it has seen, `encodeSeen`). */
       qid?: number;
+      /** QZ4: the question's difficulty (1 easy, 2 medium, 3 hard), shown as stars. */
+      lv?: 1 | 2 | 3;
       /** Only in the reveal. On a typed question 0, and a player's `pick` is 0 (right) or 1 (wrong). */
       correct?: number;
       /** A typed-answer question (no options; QZ2). */
@@ -203,6 +214,8 @@ export type QuizServerMessage =
       lang: QuizLang;
       topic: QuizTopic;
       count: QuizCount;
+      /** QZ4: the host's level (absent from an older server: `mix`). */
+      level?: QuizLevel;
       /** Who sets the language / topic / length (the first player still here). */
       host: string | null;
     }
@@ -220,7 +233,7 @@ const isInt = (x: unknown, min: number, max: number): x is number => Number.isIn
 const maxQuestions: number = Math.max(...QUIZ_COUNTS, QUIZ_MAX_PLAYERS * Math.max(...QUIZ_LAPS) * QUIZ_ROUND_QUESTIONS);
 
 export function parseQuizMessage(raw: string): QuizClientMessage | null {
-  if (raw.length > 1000) return null;
+  if (raw.length > MAX_MESSAGE) return null;
   let m: Record<string, unknown>;
   try {
     m = JSON.parse(raw) as Record<string, unknown>;
@@ -246,6 +259,7 @@ export function parseQuizMessage(raw: string): QuizClientMessage | null {
       if ((QUIZ_COUNTS as readonly unknown[]).includes(m.count)) out.count = m.count as QuizCount;
       if (m.mode === 'classic' || m.mode === 'tournament') out.mode = m.mode;
       if ((QUIZ_LAPS as readonly unknown[]).includes(m.laps)) out.laps = m.laps as QuizLaps;
+      if ((QUIZ_LEVELS as readonly unknown[]).includes(m.level)) out.level = m.level as QuizLevel;
       return Object.keys(out).length > 1 ? out : null;
     }
     case 'answer': {
@@ -276,6 +290,8 @@ export interface QuizQuestion {
   /** Position in `QUIZ_BANK` (for "don't ask again"). */
   id: number;
   cat: QuizCategory;
+  /** Difficulty: 1 easy, 2 medium, 3 hard. */
+  level: 1 | 2 | 3;
   question: string;
   options: string[];
   correct: number;
@@ -284,11 +300,12 @@ export interface QuizQuestion {
   accept?: string[];
 }
 
-/** Questions of a language (and topic), as bank ids. */
-export function quizPool(lang: QuizLang, topic: QuizTopic = 'mix', only?: (entry: QuizEntry) => boolean): number[] {
+/** Questions of a language (and topic, and level), as bank ids. */
+export function quizPool(lang: QuizLang, topic: QuizTopic = 'mix', only?: (entry: QuizEntry) => boolean, level: QuizLevel = 'mix'): number[] {
+  const d = levelDifficulty(level);
   const ids: number[] = [];
   QUIZ_BANK.forEach((entry, id) => {
-    if (entry[lang] && (topic === 'mix' || entry.c === topic) && (!only || only(entry))) ids.push(id);
+    if (entry[lang] && (topic === 'mix' || entry.c === topic) && (!d || (entry.d ?? 2) === d) && (!only || only(entry))) ids.push(id);
   });
   return ids;
 }
@@ -304,22 +321,27 @@ export function pickQuestions(
   topic: QuizTopic = 'mix',
   avoid: readonly number[] = [],
   only?: (entry: QuizEntry) => boolean,
+  level: QuizLevel = 'mix',
 ): QuizQuestion[] {
-  const all = quizPool(lang, topic, only);
-  const fresh = all.filter((id) => !avoid.includes(id));
+  const avoided = new Set(avoid);
+  // A level with too few questions left (a small topic, a lab filter) tops up from the topic's other levels.
+  let all = quizPool(lang, topic, only, level);
+  if (level !== 'mix' && all.length < count) all = [...all, ...quizPool(lang, topic, only).filter((id) => !all.includes(id))];
+  const fresh = all.filter((id) => !avoided.has(id));
   const pool = fresh.length >= count ? fresh : all;
   const out: QuizQuestion[] = [];
   while (out.length < count && pool.length) {
     const id = pool.splice(Math.floor(random() * pool.length), 1)[0]!;
     const entry = QUIZ_BANK[id]!;
     const text = entry[lang]!;
+    const level = entry.d ?? 2;
     if (entry.typed) {
-      out.push({ id, cat: entry.c, question: text.q, options: [], correct: 0, typed: true, accept: [...(text.a ?? [])] });
+      out.push({ id, cat: entry.c, level, question: text.q, options: [], correct: 0, typed: true, accept: [...(text.a ?? [])] });
       continue;
     }
     const given = text.o ?? [];
     if (entry.tf !== undefined) {
-      out.push({ id, cat: entry.c, question: text.q, options: [...given], correct: entry.tf ? 0 : 1 });
+      out.push({ id, cat: entry.c, level, question: text.q, options: [...given], correct: entry.tf ? 0 : 1 });
       continue;
     }
     const right = given[0]!;
@@ -328,11 +350,10 @@ export function pickQuestions(
       const j = Math.floor(random() * (i + 1));
       [options[i], options[j]] = [options[j]!, options[i]!];
     }
-    out.push({ id, cat: entry.c, question: text.q, options, correct: options.indexOf(right) });
+    out.push({ id, cat: entry.c, level, question: text.q, options, correct: options.indexOf(right) });
   }
-  // A game warms up: easier questions first, harder towards the end (unknown difficulty counts as medium).
-  const level = (q: QuizQuestion) => QUIZ_BANK[q.id]!.d ?? 2;
-  return out.map((q, i) => ({ q, i })).sort((a, b) => level(a.q) - level(b.q) || a.i - b.i).map(({ q }) => q);
+  // A game warms up: easier questions first, harder towards the end.
+  return out.map((q, i) => ({ q, i })).sort((a, b) => a.q.level - b.q.level || a.i - b.i).map(({ q }) => q);
 }
 
 /** 50:50 on a typed question (QZ2): the first letter, then a dot per further letter or digit (spaces kept). */
@@ -342,8 +363,8 @@ export function typedHint(answer: string): string {
 }
 
 /** The categories a tournament picker is offered: `QUIZ_OFFER` different ones with questions in the language. */
-export function quizOffer(lang: QuizLang, random: () => number = Math.random): QuizCategory[] {
-  const cats = QUIZ_CATEGORIES.filter((c) => quizPool(lang, c).length >= QUIZ_ROUND_QUESTIONS * 4);
+export function quizOffer(lang: QuizLang, random: () => number = Math.random, level: QuizLevel = 'mix'): QuizCategory[] {
+  const cats = QUIZ_CATEGORIES.filter((c) => quizPool(lang, c, undefined, level).length >= QUIZ_ROUND_QUESTIONS * 4);
   const out: QuizCategory[] = [];
   while (out.length < QUIZ_OFFER && cats.length) out.push(cats.splice(Math.floor(random() * cats.length), 1)[0]!);
   return out;

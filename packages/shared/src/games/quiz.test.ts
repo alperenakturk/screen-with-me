@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, pickQuestions, quizLevelBonus, quizOffer, quizPool, roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
+import { QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, pickQuestions, quizLevelBonus, quizOffer, quizPool, roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
 import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
 
 describe('Quiz', () => {
@@ -22,9 +22,49 @@ describe('Quiz', () => {
           continue;
         }
         expect(new Set(text.o).size).toBe(text.o!.length);
-        expect(text.o!.length).toBe(entry.tf === undefined ? 4 : 2);
+        expect(text.o!.length).toBe(entry.tf === undefined && entry.k !== 'first' ? 4 : 2);
       }
     }
+  });
+
+  it('QZ4: every question has a level, a topic and both languages; every topic has every level', () => {
+    expect(QUIZ_BANK.length).toBeGreaterThanOrEqual(5000);
+    const bilingual = QUIZ_BANK.filter((e) => e.en && e.tr).length;
+    expect(bilingual / QUIZ_BANK.length).toBeGreaterThan(0.97);
+    for (const entry of QUIZ_BANK) {
+      expect([1, 2, 3]).toContain(entry.d);
+      expect(QUIZ_CATEGORIES).toContain(entry.c);
+      if (entry.k === 'year') for (const o of entry.en?.o ?? []) expect(o).toMatch(/^\d{1,4}( BCE?)?$/);
+    }
+    // The new categories ask the four new kinds too.
+    for (const kind of ['first', 'odd', 'year'] as const) expect(QUIZ_BANK.filter((e) => e.k === kind).length).toBeGreaterThan(80);
+    for (const lang of ['tr', 'en'] as const)
+      for (const category of QUIZ_CATEGORIES)
+        for (const level of ['easy', 'medium', 'hard'] as const) expect(quizPool(lang, category, undefined, level).length, `${lang} ${category} ${level}`).toBeGreaterThanOrEqual(15);
+  });
+
+  it('QZ4: a level picks only that level (Mixed: every level, easier first) and is a valid setting', () => {
+    for (const level of ['easy', 'medium', 'hard'] as const) {
+      const qs = pickQuestions('en', 15, Math.random, 'mix', [], undefined, level);
+      expect(qs).toHaveLength(15);
+      expect(qs.every((q) => q.level === levelDifficulty(level) && QUIZ_BANK[q.id]!.d === q.level)).toBe(true);
+    }
+    const mixed = pickQuestions('tr', 15, Math.random, 'history');
+    expect(mixed.map((q) => q.level)).toEqual([...mixed.map((q) => q.level)].sort());
+    // A level too small for the game tops up from the topic's other levels.
+    const typedHard = pickQuestions('en', 15, Math.random, 'general', [], (e) => !!e.typed, 'hard');
+    expect(typedHard).toHaveLength(15);
+    for (const level of QUIZ_LEVELS) expect(parseQuizMessage(JSON.stringify({ t: 'settings', level }))).toEqual({ t: 'settings', level });
+    expect(parseQuizMessage(JSON.stringify({ t: 'settings', level: 'expert' }))).toBeNull();
+    expect(quizOffer('en', Math.random, 'hard')).toHaveLength(QUIZ_OFFER);
+  });
+
+  it('QZ4: a full seen bitmap of the grown bank fits in a hello', () => {
+    const ids = Array.from({ length: 600 }, (_, i) => QUIZ_BANK.length - 1 - i * 3);
+    const seen = encodeSeen(ids);
+    expect(seen.length).toBeLessThanOrEqual(SEEN_CHARS);
+    const hello = parseQuizMessage(JSON.stringify({ t: 'hello', v: QUIZ_PROTOCOL_VERSION, name: 'Alex', seen }));
+    expect(hello && 'seen' in hello && decodeSeen(hello.seen!).sort((a, b) => a - b)).toEqual([...ids].sort((a, b) => a - b));
   });
 
   it('picked questions: different, options shuffled, the right option in the right place', () => {
@@ -65,7 +105,7 @@ describe('Quiz', () => {
       expect(hide).toHaveLength(2);
       expect(hide).not.toContain(q!.correct);
     }
-    expect(fiftyFifty({ id: 0, cat: 'general', question: '?', options: ['Doğru', 'Yanlış'], correct: 0 })).toEqual([]);
+    expect(fiftyFifty({ id: 0, cat: 'general', level: 1, question: '?', options: ['Doğru', 'Yanlış'], correct: 0 })).toEqual([]);
   });
 
   it('message validation', () => {
@@ -132,7 +172,7 @@ describe('quiz bank 2 and rotation (P9)', () => {
         expect(text.q.length).toBeLessThanOrEqual(160);
         if (entry.typed) continue;
         expect(new Set(text.o).size).toBe(text.o!.length);
-        expect(text.o!.length).toBe(entry.tf === undefined ? 4 : 2);
+        expect(text.o!.length).toBe(entry.tf === undefined && entry.k !== 'first' ? 4 : 2);
       }
     }
     expect(QUIZ_BANK.slice(-700).every((e) => e.d === 1 || e.d === 2 || e.d === 3)).toBe(true);

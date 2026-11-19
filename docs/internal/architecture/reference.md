@@ -1546,6 +1546,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   tournament; the 🤖 friend picks on its turn). e2e `quiz-tournament.mjs` (3 players, no lab powers). Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
+  **QZ4 levels, kinds and topics (19 Nov 2026):** the fourth bank `quiz-questions-4.ts` (`QUIZ_BANK_4`, one file per
+  category in `quiz-bank-4/`, written by subagents to a spec, checked for shape and duplicates) brings the bank to about
+  3× its QZ2 size, adds the categories `music`, `myths`, `inventions`, `puzzles` (TR / EN names in `i18n.ts` /
+  `i18n-tr.ts`, `quiz.cat.*`) and the kinds `k`: `first` (which came first / bigger, two options, shuffled), `odd`
+  (odd one out), `year` (four years); true / false and typed as before. Every entry has a level `d`: the first bank's
+  come from `QUIZ_LEVELS_1` (one digit per entry). The host's `level` (`QUIZ_LEVELS`: `mix` default, `easy`, `medium`,
+  `hard`; `{t:'settings', level}`, saved as `Saved.level`) filters `quizPool` / `pickQuestions` / `quizOffer` (a level
+  short of questions tops up from the topic's others); a picked question carries `level`, sent as the state's `lv`
+  (the stars beside the topic), so the client no longer imports the bank. `SEEN_CHARS` 1200 (7200 ids) and the
+  message cap 1600 for the bigger seen bitmap. Optional fields only: `QUIZ_PROTOCOL_VERSION` stays 3. Lobby: a
+  "Level" select under the topic / length rows (both modes). Test Lab `quiz.level` (the host's level moves on). Tests:
+  `quiz.test.ts` (every entry has a level, a topic, both languages for ≥ 97 %; every topic × level ≥ 15 per language),
+  e2e `quiz.mjs` (a Hard game asks `lv` 3).
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their
   window is open (or minimized) in a room page and the room's video plays; nothing is paid, grown or dried for the time
   away (owner, 0.9.97.31). Their window has no close (✕ minimizes, ↺ "Start over" in the game is the only reset,
