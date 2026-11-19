@@ -18,17 +18,6 @@ Game Studio 2: QZ3 → QZ4 → FW1. GPH1 leaves `quiz.ts` / `five-frames.ts` unt
 - Tests: unit + e2e; owner's hand test.
 - Owner's pick: "Cevaptan sonra" (Planner chat, 19 Nov 2026).
 
-### QZ4. Quiz: many more questions, kinds and topics, with easy / medium / hard (owner, 19 Nov 2026; Game Studio 2)
-- Why: the owner wants a lot more variety.
-- What: more topics and question kinds (e.g. true / false, which came first, odd one out, picture-free "guess the
-  year"), every question tagged easy / medium / hard; a level choice in the lobby (Mixed by default); at least
-  ~3× today's question count, EN + TR, facts checked, nothing about specific films or series (public-text rule).
-  Keep the question data in a lazy chunk; mind `scripts/size-budget.mjs`.
-- Done when: the lobby offers the level; each topic has questions at every level; `check-game-text.mjs` passes;
-  Test Lab hook `quiz.level`; a unit test that every question has a level, a topic and both languages.
-- Tests: unit + `games` e2e; owner's hand test.
-- Owner's pick: none needed.
-
 ### FW1. Five Frames: real words only, plus the missing categories (owner, 19 Nov 2026; Game Studio 2, after QZ4)
 - Why: Five Frames accepts odd non-words, and categories such as country and city names are missing.
 - What: clean the answer and accepted-guess lists (EN and TR) to common real words; add categories (countries,

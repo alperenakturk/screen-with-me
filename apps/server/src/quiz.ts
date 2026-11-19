@@ -14,7 +14,6 @@ import {
   parseQuizMessage,
   quizAnswerMs,
   quizLevelBonus,
-  quizOffer,
   roundWinners,
   typedHint,
   QUIZ_PICK_MS,
@@ -25,10 +24,10 @@ import {
   type QuizMode,
   QUIZ_SEEN_KEEP,
   decodeSeen,
-  pickQuestions,
   type QuizClientMessage,
   type QuizCount,
   type QuizLang,
+  type QuizLevel,
   type QuizPhase,
   type QuizPlayer,
   type QuizQuestion,
@@ -37,6 +36,7 @@ import {
 } from '@swm/shared/games/quiz';
 import { quizPoints } from '@swm/shared/games/scoring';
 import { QUIZ_BANK } from '@swm/shared/games/quiz-questions';
+import { pickQuestions, quizOffer } from '@swm/shared/games/quiz-pick';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
 import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
@@ -84,6 +84,8 @@ interface Saved {
   fewSince?: number | null;
   topic: QuizTopic;
   count: QuizCount;
+  /** QZ4: the host's level (older saved tables have none: `mix`). */
+  level?: QuizLevel;
   /** Recently asked bank ids (a rematch asks new ones). */
   recent: number[];
   /** Keys that used their 50:50 this game, and what it hid (re-sent after a reconnect). */
@@ -339,6 +341,7 @@ export class Quiz extends DurableObject<Env> {
         if (message.lang) d.lang = message.lang;
         if (message.topic) d.topic = message.topic;
         if (message.count) d.count = message.count;
+        if (message.level) d.level = message.level;
         if (message.mode) d.mode = message.mode;
         if (message.laps) d.laps = message.laps;
         await this.save();
@@ -432,7 +435,7 @@ export class Quiz extends DurableObject<Env> {
           const streak = (d.streak[key] ?? 0) + 1;
           const base = quizPoints((d.endsAt ?? Date.now()) - Date.now(), quizAnswerMs(q.typed), rank, streak);
           // QZ2: a hard question (and a typed answer) is worth more; Double ×2, a second try half.
-          let gained = Math.round(base * quizLevelBonus(QUIZ_BANK[q.id]?.d, q.typed));
+          let gained = Math.round(base * quizLevelBonus(q.level ?? QUIZ_BANK[q.id]?.d, q.typed));
           if (armed?.double) gained *= 2;
           if (armed?.tried) gained = Math.round(gained / 2);
           d.answers[key] = { pick, gained, rank, ...(said ? { said } : {}) };
@@ -466,7 +469,7 @@ export class Quiz extends DurableObject<Env> {
   private choose(count: number, topic: QuizTopic): QuizQuestion[] {
     const d = this.data;
     const seen = this.onlineKeys().flatMap((k) => d.people[k]?.seen ?? []);
-    const questions = pickQuestions(d.lang, count, Math.random, topic, [...new Set([...d.recent, ...seen])], d.labTyped ? (e) => !!e.typed : undefined);
+    const questions = pickQuestions(d.lang, count, Math.random, topic, [...new Set([...d.recent, ...seen])], d.labTyped ? (e) => !!e.typed : undefined, d.level ?? 'mix');
     d.recent = [...questions.map((q) => q.id), ...d.recent.filter((id) => !questions.some((q) => q.id === id))].slice(0, QUIZ_RECENT);
     return questions;
   }
@@ -485,7 +488,7 @@ export class Quiz extends DurableObject<Env> {
       await this.scheduleAlarm();
       return;
     }
-    d.offer = quizOffer(d.lang);
+    d.offer = quizOffer(d.lang, Math.random, d.level ?? 'mix');
     d.phase = 'pick';
     d.questions = [];
     d.index = -1;
@@ -654,7 +657,7 @@ export class Quiz extends DurableObject<Env> {
       players,
       n: d.phase === 'lobby' ? 0 : this.base() + Math.min(d.index + 1, d.questions.length),
       total: d.rounds > 0 ? d.rounds * QUIZ_ROUND_QUESTIONS : d.questions.length || d.count,
-      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id, ...(q.typed ? { typed: true } : {}) } : {}),
+      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id, lv: q.level ?? QUIZ_BANK[q.id]?.d ?? 2, ...(q.typed ? { typed: true } : {}) } : {}),
       // The accepted answers stay here; the reveal shows the first one.
       ...(q && reveal ? { correct: q.correct, ...(q.typed ? { answer: q.accept?.[0] ?? '' } : {}) } : {}),
       endsAt: d.endsAt,
@@ -672,6 +675,7 @@ export class Quiz extends DurableObject<Env> {
       lang: d.lang,
       topic: d.topic,
       count: d.count,
+      level: d.level ?? 'mix',
       host: (() => {
         const hk = this.hostKey(except);
         return hk ? d.people[hk]!.pid : null;

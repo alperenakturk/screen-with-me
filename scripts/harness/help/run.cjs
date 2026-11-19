@@ -452,8 +452,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     // The games hall's quiz line ("Almost 400 questions in 11 topics") against the question bank (it once said "over
     // 400" with 395).
     const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');
-    const bank = fs.readFileSync(path.join(ROOT, 'packages/shared/src/games/quiz-questions.ts'), 'utf8');
-    const topics = (/QUIZ_CATEGORIES = \[([^\]]+)\]/.exec(bank)?.[1] ?? '').split(',').length;
+    const topics = (/QUIZ_CATEGORIES = \[([^\]]+)\]/.exec(fs.readFileSync(path.join(ROOT, 'packages/shared/src/games/quiz-categories.ts'), 'utf8'))?.[1] ?? '').split(',').length;
     // The real bank, loaded the way the server does (Node strips the types).
     const entries = Number(
       require('child_process')
@@ -461,7 +460,7 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
         .stdout.trim(),
     );
     const quizLines = [...i18n.matchAll(/'games\.quiz\.text': '([^']+)'/g)].map((m) => m[1]);
-    const claims = quizLines.map((line) => ({ line, almost: /Almost (\d+)|(\d+)’e yakın/.exec(line), topics: /(\d+) (?:topics|konu)/.exec(line)?.[1] }));
+    const claims = quizLines.map((line) => ({ line, almost: /Almost (\d+)|(\d+)’y?[ae] yakın/.exec(line), topics: /(\d+) (?:topics|konu)/.exec(line)?.[1] }));
     const honest = claims.every((c) => c.almost && Number(c.almost[1] ?? c.almost[2]) > entries && entries >= Number(c.almost[1] ?? c.almost[2]) - 50 && Number(c.topics) === topics);
     check(honest, `the quiz line matches the bank (${entries} questions, ${topics} topics)`, claims.map((c) => c.line));
   }

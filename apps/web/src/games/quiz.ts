@@ -16,6 +16,7 @@ import {
   QUIZ_REVEAL_MS,
   QUIZ_TYPED_MAX,
   QUIZ_LAPS,
+  QUIZ_LEVELS,
   QUIZ_PICK_MS,
   QUIZ_ROUND_QUESTIONS,
   tournamentOrder,
@@ -23,9 +24,9 @@ import {
   type QuizJoker,
   type QuizClientMessage,
   type QuizServerMessage,
+  type QuizLevel,
   type QuizTopic,
 } from '@swm/shared/games/quiz';
-import { QUIZ_BANK } from '@swm/shared/games/quiz-questions';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, translate } from '../i18n.ts';
@@ -87,6 +88,11 @@ const TEXT = {
     'mode.classic': 'Classic',
     'mode.tournament': 'Tournament',
     'laps': 'Picks each',
+    'level': 'Level',
+    'level.mix': '🎲 Mixed',
+    'level.easy': '★ Easy',
+    'level.medium': '★★ Medium',
+    'level.hard': '★★★ Hard',
     'rulesTour': '{rounds} rounds of 3 questions; everyone picks a topic in turn. The best score wins a round, the most rounds win the tournament (a tie goes to points). Three jokers, each once a game.',
     'double': '×2 Double',
     'second': '↺ Second chance',
@@ -121,6 +127,11 @@ const TEXT = {
     'mode.classic': 'Klasik',
     'mode.tournament': 'Turnuva',
     'laps': 'Kişi başı seçim',
+    'level': 'Seviye',
+    'level.mix': '🎲 Karışık',
+    'level.easy': '★ Kolay',
+    'level.medium': '★★ Orta',
+    'level.hard': '★★★ Zor',
     'rulesTour': '3 soruluk {rounds} tur; herkes sırayla konu seçer. Turu en çok puanı alan, turnuvayı en çok tur kazanan alır (eşitlikte puan). Üç joker, her biri oyunda bir kez.',
     'double': '×2 Çift puan',
     'second': '↺ İkinci şans',
@@ -383,8 +394,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
           : s.rounds
             ? `${tq('roundN', { round: s.round ?? 1, rounds: s.rounds })}${s.phase === 'pick' ? '' : ` · ${inRound}/${QUIZ_ROUND_QUESTIONS}`}`
             : t('quiz.n', { n: s.n, total: s.total });
-    // The topic, and the question's difficulty as stars (P9: the bank's `d`, easy questions first).
-    const level = typeof s.qid === 'number' ? (QUIZ_BANK[s.qid]?.d ?? 2) : 0;
+    // The topic, and the question's difficulty as stars (QZ4: the server sends it; easy questions first in Mixed).
+    const level = s.lv ?? 0;
     $('#quiz-cat').textContent =
       s.cat && (s.phase === 'question' || s.phase === 'reveal') ? `${t(`quiz.cat.${s.cat}`)}${level ? ` · ${'★'.repeat(level)}${'☆'.repeat(3 - level)}` : ''}` : '';
     // QZ2 jokers: while I can still answer; each kind once a game, one per question (the server checks too). The row
@@ -442,6 +453,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
                   { label: t('quiz.topic'), value: s.topic, select: true, choices: topics.map((topic) => ({ value: topic, label: t(`quiz.cat.${topic}`) })), pick: (topic: string | number) => send({ t: 'settings', topic: topic as QuizTopic }) },
                   { label: t('quiz.count'), value: s.count, choices: [...QUIZ_COUNTS.map((n) => ({ value: n as string | number, label: String(n) })), { value: 'tournament', label: '🏆' }], pick: (v: string | number) => send(v === 'tournament' ? { t: 'settings', mode: 'tournament' } : { t: 'settings', count: v as 5 | 10 | 15 }) },
                 ]),
+            // QZ4: the questions' level (Mixed by default: every level, easier ones first).
+            { label: tq('level'), value: s.level ?? 'mix', select: true, choices: QUIZ_LEVELS.map((level) => ({ value: level, label: tq(`level.${level}`) })), pick: (level: string | number) => send({ t: 'settings', level: level as QuizLevel }) },
           ],
           s.host === me || !host ? null : host.name,
         ),
@@ -638,6 +651,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       { id: 'quiz.tournament', title: { en: 'Quiz: start a tournament', tr: 'Bilgi yarışması: turnuva başlat' }, help: { en: 'Sets Tournament, one pick each, and starts: everyone picks a round’s topic in turn. Add a 🤖 friend first if you are alone.', tr: 'Turnuvayı seçer (kişi başı bir seçim) ve başlatır: herkes sırayla bir turun konusunu seçer. Yalnızsan önce bir 🤖 arkadaş ekle.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host can start', tr: 'sadece masanın yöneticisi başlatabilir' } : state.players.filter((p) => p.online).length < 2 ? { en: 'needs two players: add a 🤖 friend', tr: 'iki oyuncu gerekir: bir 🤖 arkadaş ekle' } : true), run: () => { send({ t: 'settings', mode: 'tournament', laps: 1 }); send({ t: 'start' }); } },
       // QZ2: the next game asks only typed-answer questions (to try the field and the forgiving match).
       { id: 'quiz.typed', title: { en: 'Quiz: next game only typed answers', tr: 'Bilgi yarışması: sonraki oyun sadece yazılı cevap' }, help: { en: 'Local lab server only: the next game this table starts asks only questions you answer by typing.', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki oyun yalnızca yazarak cevaplanan sorular sorar.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'typed' }) },
+      // QZ4 (card hook): the host's level moves on (Mixed → Easy → Medium → Hard → Mixed); the stars on each question show it.
+      { id: 'quiz.level', title: { en: 'Quiz: next level', tr: 'Bilgi yarışması: sonraki seviye' }, help: { en: 'Sets the table’s level to the next one (Mixed, Easy, Medium, Hard); the next game asks only that level, shown as stars beside the topic.', tr: 'Masanın seviyesini bir sonrakine geçirir (Karışık, Kolay, Orta, Zor); sonraki oyun yalnızca o seviyeden sorar, konunun yanında yıldızlarla görünür.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host sets the level', tr: 'seviyeyi sadece masanın yöneticisi seçer' } : true), run: () => { const now = QUIZ_LEVELS.indexOf(state?.level ?? 'mix'); send({ t: 'settings', level: QUIZ_LEVELS[(now + 1) % QUIZ_LEVELS.length]! }); } },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).
       { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel test sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
     ],
