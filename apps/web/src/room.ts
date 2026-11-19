@@ -103,6 +103,7 @@ import type { createPhoneRoom } from './ui/phone-room.ts';
 import { loadChunk } from './ui/lazy.ts';
 import { createWakeLock } from './ui/wake-lock.ts';
 import { createBlocks } from './ui/blocks.ts';
+import { watchTogetherCompact } from './ui/together-compact.ts';
 import { REPORT_LINES } from '@swm/shared/feedback';
 import type { createTvRoom } from './ui/tv-room.ts';
 /** "Send feedback" (card 9): its own lazy chunk (texts, styles), so the room page stays within its size budget. */
@@ -3345,6 +3346,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     onRate: requestRate,
   });
   const toasts = createToasts($('#toasts'), $('#fs-chat'), $('#fs-dock'));
+  // Card TG1: the Together card gets compact while a game window lies over the side panel.
+  watchTogetherCompact($('#together'));
   /**
    * B2 on .132: on a computer an open game window can sit over the side panel's chat (a side game's free window lines
    * up with it), so a new message would show nowhere. While it covers most of the visible chat lines, messages also

@@ -2045,6 +2045,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   has 🔄 `#strip-flip` (camera on, 2+ cameras; also "Switch camera" in my person menu) cycling the device's cameras.
   Test Lab: `voice.switchCam`, `voice.camPause` (🎬), "My camera" / "Camera pictures" (📊). Harness
   `scripts/harness/cam-phone/run.cjs` (computer + iPhone 13, in CI).
+- **Compact Together card beside a game (card TG1, owner, 19 Nov 2026):** a side game's free window lines up with the
+  side panel down to the message box, so at 1366 a tall one (Five Frames) covered "Join voice" and "Share".
+  `ui/together-compact.ts` (`watchTogetherCompact`, from `room.ts`) watches `#game-stage` (its `hidden`, `style`,
+  `data-place`; the stage arrives with the games chunk, so `body`'s children are watched too) and window resizes: while
+  the window lies over at least half the side panel's width (not on a phone), `#together` gets `.compact` (room.css): a
+  grid with the title, small faces (28 px, no names) and the counts in one row, the actions in one row (push-to-talk's
+  switch and the headphones hint hidden; in voice Share shows its icon only, its name kept as `title` and for screen
+  readers). The share menu lifts the side panel over the game window (`z-index` 960) while open. Test Lab
+  `together.compact` (🎬; `on` / `off` / `auto`, reports compact, game over panel, Join / Share clear). Harness
+  `scripts/harness/together-compact/run.cjs` (`site` job), shots screen `together-compact`.
 - **Cameras on a laptop (card CAM2, the owner, 19 Nov 2026: "the camera doesn't show on my laptop"):** three causes,
   all fixed. (1) The camera window's "−" (`opt:camFolded`) was remembered for good, so every later camera came as a bare
   "📷 1" strip: `createCamWindow` opens the window whenever cameras come back after none (`update`), and `reveal()`
