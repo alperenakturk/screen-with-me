@@ -8,19 +8,12 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (handoff 17 Nov, 05:50; no unmerged lane A branch; older lane A lines are in `archive/status-history.md`
-  "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is still missing (the owner's
-  Releases page or a session allowed to push tags). FC1 (v0.9.97.163), RC1 (v0.9.97.165), UI4 (v0.9.97.166) live and
-  archived; hand tests 27ae, 27af, 27ag.
-  - [ ] CAM2 (19 Nov, `claude/cam2-laptop-camera`): PR → merge → live e2e → archive the card; hand test 27ai.
+- [ ] Lane A (handoff 19 Nov; older lines in `archive/status-history.md` "Lane A handoff lines, archived 19 Nov
+  2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. CAM2 live (#555, v0.9.97.173; 27ai).
+  - [ ] TG1 (`claude/tg1-together-compact`): PR → live; hand test 27ak. Then the GPH1 phone check (Planner, findings).
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
-  - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
-    `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
-    room's rate itself goes back to 1.5 after a quick 1.5 → 1.55 (suspect a late `ratechange` or a `rate` from stale
-    state in `sync-engine.ts`): find it and add a `sync-engine.test.ts` scenario.
-  - Notes: `scripts/harness/phone/run.cjs` (not in CI) already fails on main (strip tools, games tab, sideways
-    column): stale. `feed` harness failed once on #499's CI (friend's `#feed-row-pause` not visible), passed on the
-    re-run and 4 local runs.
+  - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
+    scenario.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -218,6 +211,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
   to it says the browser blocked it and how to allow it.
 - [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
+- [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
+  visible and work (in voice too). Put the game away (✕): the full card comes back.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

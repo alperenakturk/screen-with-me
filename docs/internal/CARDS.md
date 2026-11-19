@@ -78,15 +78,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
 
-### TG1. The Together card gets one row shorter while a side game is open (owner, 19 Nov 2026; lane A, after CAM2)
-- Why: at 1366 Five Frames' window covers the Together card's "Join voice / Share" buttons.
-- What: while a side game's window is open beside the chat, the Together card shows one row (🎙 Join voice and 📤
-  Share side by side), so the buttons stay visible and clickable; back to full when the game closes.
-- Done when: at 1366 and 1920 with Five Frames, Snack Bar and Window Garden open, Join voice and Share are visible and
-  work; Test Lab hook `together.compact`; a harness check in the `site` job; first look shots.
-- Tests: harness; owner's hand test.
-- Owner's pick: A "Kart kısalsın" (Planner chat, 19 Nov 2026).
-
 ## Proposed
 
 Security and Research suggestions: `docs/internal/cards-proposed.md`.
