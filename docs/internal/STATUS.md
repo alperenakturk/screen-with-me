@@ -32,7 +32,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (19 Nov): [x] GD1 table drops (PR_LINK, `claude/game-drops`) → [ ] GPH1 games on phones (Quiz and
+- [ ] Game Studio (19 Nov): [x] GD1 table drops (https://github.com/alperenakturk/screen-with-me/pull/553, `claude/game-drops`) → [ ] GPH1 games on phones (Quiz and
   Five Frames last, after Game Studio 2's QZ3 / QZ4 / FW1 merge). Older Game Studio lines are in
   `archive/status-history.md`. Open: `quiz.ts` (site) needs the `watchLink` line watch the other tables got in GD1
   (Game Studio 2 owns the file; one line in `connect` + the watch, as in `sea.ts`).

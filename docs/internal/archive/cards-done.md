@@ -2971,7 +2971,7 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   Test Lab scenario `game.drop` (cut, background, ghost) shows the message; an e2e in the `games` job with `GameSocket`.
 - Tests: `ghost` unit tests, the new e2e, owner's hand test with a friend (B 10–14).
 - Owner's pick: none needed.
-- Done: PR_LINK (`claude/game-drops`, Game Studio, 19 Nov 2026): the room's "at this table" mark re-sent after every
+- Done: https://github.com/alperenakturk/screen-with-me/pull/553 (`claude/game-drops`, Game Studio, 19 Nov 2026): the room's "at this table" mark re-sent after every
   room reconnect (both players reconnecting closed the table as empty after 2 min); game pages find a dead line
   (`link-watch.ts`) and take their seat back; Draw's grace 60 s; drop reasons in the Worker log; Test Lab `game.drop`;
   harness `games-drop`. Quiz's line watch waits for Game Studio 2.
