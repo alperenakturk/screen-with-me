@@ -75,13 +75,13 @@ html.phone .duel.watching .duel-mark.near { outline-width: 2px; outline-style: d
 html.phone .duel .ff-key, html.phone .duel-actions .btn { min-height: 44px; }
 /* GPH1: seven rows, their strip and the tray didn't fit a phone: the rows ran out of the board's box over the status
    and the letter keys (taps landed on the other board). The rows now share the height that is left (31 px at most,
-   18 at least) and the strip never shrinks; nothing spills out of the main area. */
+   16 at least) and the strip never shrinks; nothing spills out of the main area. */
 html.phone .duel-main { overflow: hidden; }
-html.phone .duel-board { flex: 0 1 auto; min-height: min-content; }
+html.phone .duel-board { flex: 0 1 auto; min-height: 0; }
 html.phone .duel-side { flex: none; }
-html.phone .duel .duel-board .ff-row { height: auto; flex: 0 1 31px; min-height: 18px; }
+html.phone .duel .duel-board .ff-row { height: auto; flex: 0 1 31px; min-height: 16px; }
 html.phone .duel .duel-board .ff-cells { height: 100%; grid-auto-rows: minmax(0, 1fr); padding-block: 1px; }
-html.phone .duel .duel-board .ff-cell { min-height: 0; font-size: 17px; }
+html.phone .duel .duel-board .ff-cell { min-height: 0; font-size: 15px; }
 /* A short phone (≤ 760 px tall, a 360 × 640 or an iPhone SE): the other player's strip is one line (name and
    guesses), as with many players, so the seven rows keep a size a letter can be read at. */
 @media (max-height: 760px) {
