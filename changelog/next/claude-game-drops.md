@@ -1,0 +1,1 @@
+- Games: players are no longer thrown out of a table at random. A table stays open when everyone's connection comes back after an update or a phone wake, a game page notices a dead connection within seconds and quietly takes its seat back, and Draw & Guess now waits a full minute for a player whose phone locked before going back to the lobby.

@@ -1546,6 +1546,25 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   tournament; the 🤖 friend picks on its turn). e2e `quiz-tournament.mjs` (3 players, no lab powers). Test:
   `scripts/e2e/quiz.mjs`. Plan for more games:
   `docs/internal/oyun-fikirleri.md`.
+- **Players thrown out of tables (card GD1, 19 Nov 2026):** three causes found and fixed. (1) **The room's "at
+  this table" mark** lives on the room connection's attachment (`{t:'at', table}`, `setAt`); a new room connection
+  (a deploy, a phone wake, a Wi-Fi switch) started without it, and the client re-sent it only when it reopened the
+  table, never when the table was still open. With both players reconnected the room counted the table empty and
+  closed it after `TABLE_EMPTY_MS` (2 min), throwing both out. `stage.ts` `rejoined()` now says `at` again after every
+  room welcome. (2) **A table line that died without a close event:** game pages had no dead-line check (the room's
+  `RoomConnection` had one), so a half-open WebSocket stayed "open", the page froze, and the object closed it as a
+  ghost after `GHOST_MS`. `games/link-watch.ts` `watchLink` (in `match.ts`, `sea.ts`, `duel.ts`, `draw.ts`,
+  `poker.ts`; `quiz.ts` to follow with Game Studio 2's cards): nothing heard for `QUIET_MS` 20 s, the tab coming back
+  into view, or the browser back online → one free keepalive; no answer within `DEAD_MS` 8 s → the page drops that
+  socket (ignoring its late close) and connects again; the seat is tied to the browser id, so the player is back in it
+  silently. WebSockets only (the HTTP fallback finds its own failed requests); the lab's "go silent" is left alone.
+  (3) **Draw & Guess's "too few players" grace** `FEW_GRACE_MS` 20 → 60 s (a phone locked for half a minute ended the
+  game for both). **Logs:** `ghost.ts` logs `[game drop] ghost: silent N s` and `noteClose(kind, code)`
+  `[game drop] <kind>: closed <code>` for closes other than 1000 / 1001 / 1005 (no personal data). **Test Lab:**
+  `game.drop` (`game.drop.cut`: answers stop counting for 15 s, the page reconnects; `game.drop.background`; status
+  "Table line drops"); the "ghost" case stays `<game>.silent`; `game.at` status "At my table (room)". **Tests:** unit
+  `packages/shared/src/ghost.test.ts`; harness `scripts/harness/games-drop/run.cjs` (`games` job; fails without (1));
+  e2e `ghost.mjs` (Draw's grace 60 s).
 - **Solo side games ("Play on the side", 🎮 Game Studio since 4 Nov 2026):** they move only in a room: while their
   window is open (or minimized) in a room page and the room's video plays; nothing is paid, grown or dried for the time
   away (owner, 0.9.97.31). Their window has no close (✕ minimizes, ↺ "Start over" in the game is the only reset,

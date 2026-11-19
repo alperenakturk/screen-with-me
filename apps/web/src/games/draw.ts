@@ -43,6 +43,7 @@ import { langChoices, lobbyPlayers, lobbySplit, podium, settingsPanel } from './
 import { DRAW_CATEGORIES } from '@swm/shared/games/draw-words';
 import type { DrawTopic } from '@swm/shared/games/draw';
 import { silence } from './silent.ts';
+import { watchLink } from './link-watch.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 type State = Extract<DrawServerMessage, { t: 'state' }>;
@@ -557,6 +558,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     const url = `${location.origin.replace(/^http/, 'ws')}/api/draw/${encodeURIComponent(gameId)}/ws`;
     const socket = openSocket(url);
     ws = socket;
+    link.attach(socket);
     const lang = document.documentElement.lang === 'en' ? 'en' : 'tr';
     socket.addEventListener('open', () =>
       socket.send(JSON.stringify({ t: 'hello', v: DRAW_PROTOCOL_VERSION, name, avatar, cid: clientId(), lang } satisfies DrawClientMessage)),
@@ -628,6 +630,13 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
       setTimeout(connect, 1500);
     });
   }
+  // GD1: a line that died without a close event is found and replaced (`link-watch.ts`).
+  const link = watchLink('draw', () => ws, quiet, () => {
+    const old = ws;
+    ws = null;
+    old?.close();
+    connect();
+  });
   connect();
   // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
   const ping = window.setInterval(
@@ -670,6 +679,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     setGameLive(false);
     close();
     for (const timer of [flusher, ticker, ping]) clearInterval(timer);
+    link.stop();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
     removeEventListener('keydown', onKey);

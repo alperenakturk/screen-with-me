@@ -31,6 +31,7 @@ import { tableHowTo } from './how-to-play.ts';
 import { isPhoneLayout } from '../device.ts';
 import { resultCard } from './result.ts';
 import { silence } from './silent.ts';
+import { watchLink } from './link-watch.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 type State = Extract<SeaServerMessage, { t: 'state' }>;
@@ -777,6 +778,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     if (stopped) return;
     const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/sea/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
+    link.attach(socket);
     socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: SEA_PROTOCOL_VERSION, name, avatar, cid: clientId() } satisfies SeaClientMessage)));
     socket.addEventListener('message', (event) => {
       if (event.data === KEEPALIVE_ACK) return;
@@ -818,6 +820,13 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       setTimeout(connect, 1500);
     });
   }
+  // GD1: a line that died without a close event is found and replaced (`link-watch.ts`).
+  const link = watchLink('sea', () => ws, quiet, () => {
+    const old = ws;
+    ws = null;
+    old?.close();
+    connect();
+  });
   connect();
   // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
   const ping = window.setInterval(
@@ -861,6 +870,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     setGameLive(false);
     close();
     clearInterval(ping);
+    link.stop();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
   };

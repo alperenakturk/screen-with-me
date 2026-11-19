@@ -41,6 +41,7 @@ import reversi2Art from './art/tutorial/reversi-2-count.svg?raw';
 import { tableHowTo, type HowToPlay } from './how-to-play.ts';
 import { resultCard } from './result.ts';
 import { silence } from './silent.ts';
+import { watchLink } from './link-watch.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 
 const MARKS: readonly [Mark, Mark] = ['X', 'O'];
@@ -895,6 +896,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     const url = `${location.origin.replace(/^http/, 'ws')}/api/games/${encodeURIComponent(gameId)}/ws`;
     const socket = openSocket(url);
     ws = socket;
+    link.attach(socket);
     socket.addEventListener('open', () =>
       socket.send(JSON.stringify({ t: 'hello', v: GAME_PROTOCOL_VERSION, game: kind, name, avatar, cid: clientId(), ...(classics ? { classics: true } : {}) } satisfies GameClientMessage)),
     );
@@ -927,6 +929,13 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       setTimeout(connect, 1500);
     });
   }
+  // GD1: a line that died without a close event is found and replaced (`link-watch.ts`).
+  const link = watchLink('classics', () => ws, quiet, () => {
+    const old = ws;
+    ws = null;
+    old?.close();
+    connect();
+  });
   build();
   connect();
   // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute.
@@ -987,6 +996,7 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
     setGameLive(false);
     close();
     clearInterval(ping);
+    link.stop();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
   };
