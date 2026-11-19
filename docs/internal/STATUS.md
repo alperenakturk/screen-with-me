@@ -33,10 +33,6 @@ One handoff per lane or role; each session updates only its own lines and delete
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio 2 (19 Nov): QZ4 #554 (`claude/quiz-more-questions`; CI → merge → live) → QZ3 → FW1.
-- [ ] Game Studio (17 Nov f, handoff; session ends): GMP2 #538, GW5 #537, LH2 #546, LH3 #547, XO1 #548 live
-  (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the
-  owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
-  remote; safe to delete). Notes: games-sweep size `tabup` (upright tablet); `stage.ts` grows an overflowing own box.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -218,10 +214,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   above the video or a Short. In the Shorts view press ⋯ More beside the Short: a menu with Invite … Settings opens
   (laptop, big screen); on a phone ⋯ opens its sheet. "What are we watching?" sits in the middle with a
   "Subscription services · Coming" row at the bottom.
-- [ ] 27ah. [QZ4] Quiz with a friend, in English and in Turkish: the lobby has a "Level" row (Mixed, Easy, Medium,
-  Hard). Play a Hard game: every question shows ★★★; Mixed starts easy and gets harder. Try the new topics (Music,
-  Myths and tales, Inventions, Puzzles and riddles) and spot the new kinds (which came first, odd one out, guess the
-  year). Any answer you think is wrong: tell the Planner the question.
+- [ ] 27ah. [QZ4] Quiz, EN and TR: the lobby's "Level" row; a Hard game shows ★★★ on every question; the new topics
+  (Music, Myths, Inventions, Puzzles) and kinds (which came first, odd one out, guess the year). A wrong answer: tell
+  the Planner the question.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
