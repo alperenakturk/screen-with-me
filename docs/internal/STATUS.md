@@ -32,18 +32,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (19 Nov): [x] GD1 table drops (https://github.com/alperenakturk/screen-with-me/pull/553, `claude/game-drops`) → [ ] GPH1 games on phones (Quiz and
-  Five Frames last, after Game Studio 2's QZ3 / QZ4 / FW1 merge). Older Game Studio lines are in
-  `archive/status-history.md`. Open: `quiz.ts` (site) needs the `watchLink` line watch the other tables got in GD1
-  (Game Studio 2 owns the file; one line in `connect` + the watch, as in `sea.ts`).
-
-## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
-One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
-Every item's original wording, the older per-release blocks and the ones already ticked are in
-`archive/status-history.md` "Owner's hand tests" (search the ID in brackets). New releases add their lines at the end
-of "C. Recent releases" with an ID; the Planner folds them into the board Artifact.
-
-**A. One sitting with a friend** (a friend in Chrome on another computer, or your phone as the second person) [BH10]
+- [ ] Game Studio (19 Nov): [x] GD1 (#553) → [ ] GPH1 (Quiz, Five Frames last, after Game Studio 2 merges).
+  Open: `quiz.ts` (site) needs GD1's `watchLink` (Game Studio 2's file; as in `sea.ts`).
 - [ ] 1. YouTube together: join by the invite link; play, pause, seek, speed and ← / → from both sides stay in step.
 - [ ] 2. Fullscreen on YouTube: the rail comes at the right edge and goes; Enter opens the message box; the friend's
   messages come in on the right, never over YouTube's bar.
@@ -217,9 +207,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   above the video or a Short. In the Shorts view press ⋯ More beside the Short: a menu with Invite … Settings opens
   (laptop, big screen); on a phone ⋯ opens its sheet. "What are we watching?" sits in the middle with a
   "Subscription services · Coming" row at the bottom.
-- [ ] 27ah. [GD1] With a friend on another device, play a table (any) for 20 minutes: lock your phone for 30 s,
-  switch Wi-Fi, put the tab in the background for a few minutes. You are never thrown out: you come back in your seat
-  by yourself. If a table does close, a line says why.
+- [ ] 27ah. [GD1] Play a table with a friend for 20 min: lock your phone 30 s, switch Wi-Fi, background the tab.
+  You are never thrown out; a table that closes says why.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
