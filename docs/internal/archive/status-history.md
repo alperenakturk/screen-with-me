@@ -1764,3 +1764,12 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   - Notes: `scripts/harness/phone/run.cjs` (not in CI) already fails on main (strip tools, games tab, sideways
     column): stale. `feed` harness failed once on #499's CI (friend's `#feed-row-pause` not visible), passed on the
     re-run and 4 local runs.
+
+## B2 finished lines, archived 19 Nov 2026 (STATUS size limit)
+  - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
+  - [x] Live e2e red 16 Nov (runs 43917089949, 43921749258; no tag after v0.9.97.151): not the code. Both runs show
+    1006 drops on the test's own game object *and* on unrelated canary rooms at the same moments (an object restart on
+    Cloudflare's side; the HTTP-fallback quota and room counters were reset with it, hence "13 opened, 0 refused").
+    Run 43923095993 (105eadc, the same server code as 1caaf0e) went green on the first attempt with no drop in any
+    shard: tagged v0.9.97.153. Merges may resume. If it comes back, compare the canary drop times with the deploy's
+    "Wait for the new version" end before blaming a PR.

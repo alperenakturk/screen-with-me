@@ -15,21 +15,20 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
     scenario.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
-  - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - [x] Live e2e red 16 Nov (runs 43917089949, 43921749258; no tag after v0.9.97.151): not the code. Both runs show
-    1006 drops on the test's own game object *and* on unrelated canary rooms at the same moments (an object restart on
-    Cloudflare's side; the HTTP-fallback quota and room counters were reset with it, hence "13 opened, 0 refused").
-    Run 43923095993 (105eadc, the same server code as 1caaf0e) went green on the first attempt with no drop in any
-    shard: tagged v0.9.97.153. Merges may resume. If it comes back, compare the canary drop times with the deploy's
-    "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (19 Nov, handoff; session ends): [x] GD1 (#553, v0.9.97.172) · GPH1 [x] part 1 (`claude/games-phones`:
-  sweep check "nothing over a control", Duel phone overlap) → [ ] the rest from `design/games/phone-review-gph1.md`
-  (Last Heart six, banners over art, board gutters, …; Quiz and Five Frames last; sideways: ask the Planner).
-  Open: `quiz.ts` (site) needs GD1's `watchLink` (Game Studio 2's file; as in `sea.ts`).
+- [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
+  `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
+
+## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
+One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
+Every item's original wording, the older per-release blocks and the ones already ticked are in
+`archive/status-history.md` "Owner's hand tests" (search the ID in brackets). New releases add their lines at the end
+of "C. Recent releases" with an ID; the Planner folds them into the board Artifact.
+
+**A. One sitting with a friend** (a friend in Chrome on another computer, or your phone as the second person) [BH10]
 - [ ] 1. YouTube together: join by the invite link; play, pause, seek, speed and ← / → from both sides stay in step.
 - [ ] 2. Fullscreen on YouTube: the rail comes at the right edge and goes; Enter opens the message box; the friend's
   messages come in on the right, never over YouTube's bar.
