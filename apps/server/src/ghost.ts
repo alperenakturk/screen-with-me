@@ -22,7 +22,8 @@ interface Seen {
   ghost?: boolean;
 }
 
-type Socket = Pick<WebSocket, 'serializeAttachment' | 'deserializeAttachment' | 'close'>;
+/** The part of a Durable Object's WebSocket used here (spelled out so the shared unit tests type-check it too). */
+type Socket = { serializeAttachment(value: unknown): void; deserializeAttachment(): unknown; close(code?: number, reason?: string): void };
 /**
  * QUOTA1a: when a socket was last heard, given its stored `seen` (the object passes the later of it and the runtime's
  * last free-keepalive answer, `keepalive.ts` `heardAt`). Without it, `seen` alone.
