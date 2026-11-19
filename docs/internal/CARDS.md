@@ -38,6 +38,17 @@ Two sessions never edit the same lines; the Planner splits work by files.
 (see `STATUS.md` "Task queue")
 
 ## Ready
+### CAM2. BUG: the camera doesn't show on a laptop (owner, 19 Nov 2026; lane A, first)
+- Why: the owner turns the camera on in a room on his laptop and no camera picture appears ("kamera modu açılmıyor").
+- What: reproduce in Chromium with a fake camera (`--use-fake-device-for-media-stream`) at 1366 and 1920, with and
+  without voice joined, in each theme; find where the camera window fails to open or stays hidden (permission state,
+  the camera window's spot / size, a layout change since GW4–GW5, the 📷 button's state); fix it; if the browser
+  refuses the camera, show a plain message saying why and how to allow it.
+- Done when: 📷 on a laptop shows my camera window and the friend sees it, at 1366 and 1920; a refused permission
+  shows a message; Test Lab hook `camera.open` (fake stream); a harness check in the `site` or `e2e` job.
+- Tests: the new harness check; `scripts/shots.cjs` first look; owner's hand test on his laptop.
+- Owner's pick: none needed.
+
 
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
