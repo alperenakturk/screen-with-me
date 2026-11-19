@@ -24,6 +24,9 @@ const SIZES = {
   pixel: devices['Pixel 7'],
   // PH2: the smallest phone the Games tab is built for, 360 × 640 (the game gets about 360 × 254 under the video).
   small: devices['Galaxy S5'],
+  // GPH1: the same phones sideways (a game on a phone is played upright and sideways).
+  iphoneSide: devices['iPhone 13 landscape'],
+  smallSide: devices['Galaxy S5 landscape'],
   // A sideways tablet (an iPad Air, 1180 × 820): the game sits in the video's place, beside the side panel.
   tabland: { ...devices['iPad Pro 11 landscape'], viewport: { width: 1180, height: 820 } },
   // LH3: an upright tablet (820 × 1180): a table in the video's place gets a very short, wide box (≈ 714 × 349).
@@ -501,7 +504,7 @@ async function windowPasses(page, label, g, phone) {
           await run('snackBar.coins', '5000000000');
           await wait(3000);
         }
-        const phone = size === 'iphone' || size === 'pixel' || size === 'small';
+        const phone = /^(iphone|pixel|small)/.test(size);
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24, whole: !!g.whole });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
         if (m.missing) {
