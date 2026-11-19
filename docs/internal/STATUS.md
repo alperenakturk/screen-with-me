@@ -28,7 +28,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
   `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
-- [ ] Game Studio 2 (19 Nov): QZ3 → FW1.
+- [ ] Game Studio 2 (handoff 19 Nov): QZ3 #559 → FW1 (+ 1366: cells off centre, stray line per row).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -217,8 +217,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
   for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
   to it says the browser blocked it and how to allow it.
-- [ ] 27aj. [QZ4, QZ3] Quiz: the "Level" row (Hard: ★★★); new topics and kinds; answer, then ×2 (it glows):
-  right doubles, wrong 0. A wrong fact: tell the Planner.
+- [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
