@@ -217,8 +217,8 @@ with an ID at the end of "C"; the Planner folds them into the board.
   the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
   for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
   to it says the browser blocked it and how to allow it.
-- [ ] 27aj. [QZ4] Quiz: the "Level" row; Hard shows ★★★ each time; new topics and kinds (odd one out, which came
-  first, guess the year). A wrong answer: tell the Planner.
+- [ ] 27aj. [QZ4] Quiz: the "Level" row (Hard: ★★★ each time); new topics and kinds. A wrong answer: tell the
+  Planner.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
