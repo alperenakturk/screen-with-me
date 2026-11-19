@@ -12,7 +12,7 @@ import { load, postToExtension, save } from '../storage.ts';
 import { avatarNode } from './avatar.ts';
 import { createCamWindow } from './cam-float.ts';
 import { flashHint } from './hint.ts';
-import { CAM_KEY, CAM_NAME, applySpeaker, devicePicks, openCam, openMic, rememberDeviceNames } from './voice-devices.ts';
+import { CAM_KEY, CAM_NAME, applySpeaker, camErrorKey, devicePicks, openCam, openMic, rememberDeviceNames } from './voice-devices.ts';
 import { camStates, markSwitching, switchNote, watchCamVideo } from './cam-watch.ts';
 import { setIcon } from './icons.ts';
 import type { ExtVoice } from './voice-ext.ts';
@@ -115,6 +115,51 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   flipButton?.addEventListener('click', () => void switchCamera());
   /** The next join comes from a quick 📷 button: join with the camera on. */
   let joinWithCam = false;
+  /** CAM2 Test Lab (`camera.open`): what the next camera open gives instead of the real camera. */
+  let labCam: (() => Promise<MediaStream>) | null = null;
+  /** CAM2 Test Lab: a moving drawn picture, like a camera (stops drawing once the track is stopped). */
+  function labPicture(): MediaStream {
+    const canvas = el('canvas', { width: '320', height: '240' }) as HTMLCanvasElement;
+    const g = canvas.getContext('2d')!;
+    const stream = canvas.captureStream(15);
+    const track = stream.getVideoTracks()[0];
+    let n = 0;
+    const draw = () => {
+      if (track?.readyState !== 'live') return clearInterval(timer);
+      g.fillStyle = `hsl(${(n * 6) % 360} 55% 35%)`;
+      g.fillRect(0, 0, 320, 240);
+      g.fillStyle = '#fff';
+      g.font = 'bold 36px sans-serif';
+      g.fillText(`LAB ${n++ % 100}`, 80, 132);
+    };
+    const timer = window.setInterval(draw, 66);
+    draw();
+    return stream;
+  }
+  /** CAM2: the quick 📷 pressed last (the rail's, the strip's, the Shorts bar's): the message goes next to it. */
+  let camFrom: HTMLElement | null = null;
+  /** CAM2: why my camera last failed to open (Test Lab status). */
+  let camError = '';
+  const shownOnScreen = (e: HTMLElement | null): e is HTMLElement => !!e && e.isConnected && e.getBoundingClientRect().width > 0;
+  /**
+   * CAM2 (owner: "the camera doesn't show on my laptop"): the camera didn't open. Says why and how to allow it, for
+   * long enough to read, next to the 📷 that was pressed (the card's 📷 is still hidden while a quick 📷 joins voice,
+   * which put the old note in the page's top-left corner).
+   */
+  function camFailed(error: unknown): void {
+    const key = camErrorKey(error);
+    camError = `${error instanceof Error ? error.name : 'error'} → ${key}`;
+    // The 📷 pressed, else the card's, else a quick 📷 on screen (a phone's strip), else the join button.
+    const anchor = [camFrom, camButton, ...quick.map((q) => q.cam), joinButton].find(shownOnScreen) ?? camsBox;
+    camFrom = null;
+    flashHint(anchor, t(key), 12000);
+  }
+  /** CAM2: my camera is on: the camera window opens if it was folded to its "📷 1" strip, so I see my picture. */
+  function camOpened(): void {
+    camFrom = null;
+    camError = '';
+    camWindow.reveal();
+  }
   const quick = (['shorts', 'dock', 'strip'] as const).flatMap((id) => {
     const box = root.querySelector<HTMLElement>(`#${id}-voice`);
     const mic = root.querySelector<HTMLButtonElement>(`#${id}-mic`);
@@ -123,6 +168,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     mic.addEventListener('click', () => (client.active ? micButton : joinButton).click());
     // The 📷 shows before joining too (owner: both from the start); pressed outside voice it joins with the camera on.
     cam.addEventListener('click', () => {
+      camFrom = cam;
       if (client.active) camButton.click();
       else {
         joinWithCam = true;
@@ -269,6 +315,41 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   debugHooks.register('voice', () => ({
     commands: [
       {
+        // CAM2: 📷 with a drawn picture instead of the real camera (or a refusal: `blocked`, `system`, `busy`, `none`);
+        // `fold` folds the camera window first (the owner's case: "−" was remembered and the picture never showed).
+        id: 'camera.open',
+        tab: 'video',
+        where: { en: 'in voice', tr: 'sesteyken' },
+        available: () => (p2p && client === p2p && client.active ? true : { en: 'join voice first', tr: 'önce sese katıl' }),
+        run: async (arg?: string) => {
+          const how = arg?.trim() ?? '';
+          const refusals: Record<string, [string, string]> = {
+            blocked: ['NotAllowedError', 'Permission denied'],
+            system: ['NotAllowedError', 'Permission denied by system'],
+            busy: ['NotReadableError', 'Could not start video source'],
+            none: ['NotFoundError', 'Requested device not found'],
+          };
+          const refusal = refusals[how];
+          if (how && how !== 'fold' && !refusal) throw labFail({ en: 'use: (nothing), fold, blocked, system, busy, none', tr: 'kullanım: (boş), fold, blocked, system, busy, none' });
+          if (client.camEnabled) await client.setCam?.(false);
+          if (how === 'fold') camWindow.fold();
+          labCam = refusal ? () => Promise.reject(new DOMException(refusal[1], refusal[0])) : async () => labPicture();
+          await pressCam();
+          if (refusal) {
+            if (client.camEnabled) throw labFail({ en: 'the camera opened anyway', tr: 'kamera yine de açıldı' });
+            return { en: `refused: ${camError}`, tr: `reddedildi: ${camError}` };
+          }
+          if (!client.camEnabled) throw labFail({ en: 'my camera did not come on', tr: 'kameram açılmadı' });
+          // My tile comes with the room's answer to my camera state.
+          let video: HTMLVideoElement | null = null;
+          for (let i = 0; i < 25 && !(video = camsBox.querySelector<HTMLVideoElement>('.cam-tile.mine video'))?.videoWidth; i++) await new Promise((r) => setTimeout(r, 200));
+          if (!video) throw labFail({ en: 'my camera did not come on', tr: 'kameram açılmadı' });
+          const r = video.getBoundingClientRect();
+          if (camWindow.isFolded() || r.width < 40) throw labFail({ en: 'my camera is on but its picture is not shown', tr: 'kameram açık ama görüntüsü görünmüyor' });
+          return { en: `camera on, picture ${Math.round(r.width)}×${Math.round(r.height)} shown`, tr: `kamera açık, görüntü ${Math.round(r.width)}×${Math.round(r.height)} görünüyor` };
+        },
+      },
+      {
         id: 'voice.switchCam',
         tab: 'video',
         where: CAM_ON,
@@ -316,6 +397,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
             : ext ? { en: 'on the film page (the extension holds them)', tr: 'film sayfasında (eklentide)' } : { en: 'none', tr: 'yok' },
         ],
       ];
+      if (camError) rows.push([{ en: 'Camera refused', tr: 'Kamera reddedildi' }, { en: camError, tr: camError }]);
+      if (camWindow.isFolded()) rows.push([{ en: 'Camera window', tr: 'Kamera penceresi' }, { en: 'folded (−)', tr: 'küçültülmüş (−)' }]);
       if (p2p?.camEnabled) rows.push([{ en: 'My camera', tr: 'Kameram' }, p2p.camSwitching ? { en: `🟡 ${facing.en} · changing`, tr: `🟡 ${facing.tr} · değişiyor` } : { en: `🟢 ${facing.en}`, tr: `🟢 ${facing.tr}` }]);
       const pic = (c: { label: string; state: string; ms: number }, l: 'en' | 'tr') => {
         const stuck = c.ms > 1500;
@@ -361,7 +444,12 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (mode === 'sfu') return new VoiceClient({ rpc, announce, onRemote, getMic: () => openMic() });
     p2p = new P2pVoice({
       getMic: () => openMic(),
-      getCam: () => openCam(),
+      getCam: () => {
+        // CAM2 Test Lab: the next open gives the lab's picture or refusal instead of the real camera.
+        const lab = labCam;
+        labCam = null;
+        return lab ? lab() : openCam();
+      },
       signal: (to, data) => send({ t: 'signal', to, data }),
       announce,
       onRemote,
@@ -857,8 +945,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     const chosen = next.deviceId;
     try {
       await p2p.switchCam(() => openCam(chosen));
-    } catch {
-      flashHint(camButton, t('voice.camDenied'), 6000);
+    } catch (error) {
+      camFailed(error);
     }
     render();
   }
@@ -935,7 +1023,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       save(micKey, choice.mic ? '1' : '0');
       if (choice.cam && client.setCam) {
         if (members.filter((m) => m.voice?.cam).length >= CAM_MAX) flashHint(camButton, t('voice.camFullHint', { n: CAM_MAX, max: CAM_MAX }), 7000);
-        else await client.setCam(true).catch(() => flashHint(camButton, t('voice.camDenied'), 6000));
+        else await client.setCam(true).then(camOpened, camFailed);
       }
       // İlk katılışta kulaklık ipucu (film sesi hoparlörden karşıya gitmesin).
       hint.hidden = false;
@@ -1012,7 +1100,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (client.active) client.setMic(!ptt);
     render();
   });
-  camButton.addEventListener('click', async () => {
+  camButton.addEventListener('click', () => void pressCam());
+  async function pressCam(): Promise<void> {
     if (!client.setCam) return;
     const cams = members.filter((m) => m.voice?.cam).length;
     if (!client.camEnabled && cams >= CAM_MAX) {
@@ -1021,14 +1110,16 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     }
     camButton.disabled = true;
     try {
-      await client.setCam(!client.camEnabled);
-    } catch {
-      flashHint(camButton, t('voice.camDenied'), 6000);
+      const on = !client.camEnabled;
+      await client.setCam(on);
+      if (on) camOpened();
+    } catch (error) {
+      camFailed(error);
     } finally {
       camButton.disabled = false;
       render();
     }
-  });
+  }
   leaveButton.addEventListener('click', () => {
     if (client.active) playSound('meLeave');
     client.leave();

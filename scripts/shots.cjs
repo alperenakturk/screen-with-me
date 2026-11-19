@@ -66,6 +66,19 @@ const SEARCH_ITEMS = [
   { id: '9bZkp7q5F8I', title: 'Walking at night, a short', channel: 'Alex', duration: 41, live: false, short: true },
 ];
 
+/** Card CAM2: join voice (no pre-join window), then the Test Lab's `camera.open` with `how`. */
+const camera = async (p, how) => {
+  await p.evaluate(() => {
+    localStorage.setItem('opt:voiceCheck', 'skip');
+    localStorage.setItem('opt:ipNotice:voice', '1');
+  });
+  await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
+  await p.evaluate(() => document.getElementById('voice-join').click());
+  await p.waitForFunction(() => !document.getElementById('voice-on').hidden, null, { timeout: 15000 });
+  await p.evaluate((how) => window.__swmLab.run('camera.open', how), how);
+  await wait(800);
+};
+
 /** The screens, each a way to get there from a fresh page. `room` = a fresh room as its first person (the host). */
 const SCREENS = {
   // TH3: the home art freezes at its middle (the Test Lab's `home.art` class), so every shot is the same frame.
@@ -279,6 +292,9 @@ const SCREENS = {
       await wait(300);
     },
   },
+  // Card CAM2: my camera on (the Test Lab's drawn picture, the window folded before), and a refused camera's message.
+  'camera-on': { what: 'Card CAM2: in voice with my camera on (a drawn test picture): my camera window shows it, even though it had been folded with "−" before', room: true, after: (p) => camera(p, 'fold') },
+  'camera-refused': { what: 'Card CAM2: 📷 pressed and the browser refused the camera: a message next to the 📷 says why and how to allow it', room: true, after: (p) => camera(p, 'blocked') },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
       `settings-${sec}`,
@@ -290,6 +306,7 @@ const SCREENS = {
 const SCREEN_FOR = [
   [/^docs\/|\.md$|^\.github\/|^scripts\/(?!shots)/, []],
   [/^apps\/web\/src\/ui\/chat\.ts$/, ['chat-delete', 'room']],
+  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['camera-on', 'camera-refused', 'room']],
   [/^apps\/web\/public\/help/, ['help']],
   [/^apps\/web\/public\/privacy/, ['privacy']],
   [/^apps\/web\/public\/terms/, ['terms']],
@@ -364,7 +381,8 @@ async function lab(page, id) {
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
-  const browser = await chromium.launch();
+  // A fake microphone and camera, so the voice screens can join (CAM2).
+  const browser = await chromium.launch({ args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
   // The game kinds the lab can open (no list to keep in step by hand).
   const probe = await browser.newPage();
   await enterRoom(probe, {});
