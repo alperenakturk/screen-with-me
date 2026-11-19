@@ -4825,6 +4825,30 @@ html[data-swm-cam-facing='environment'] :is(.cam-tile.mine video, .seat-cam.mine
 }
 
 /* ---- Quiz extras: topic, joker, streaks, true / false ---- */
+/* QZ4: on a phone the Quiz lobby after a game (podium + four settings rows, the Level row new) keeps its full size:
+   a lower podium there (the result card shows the full one). */
+html.phone #game-stage .quiz-page.draw-lobby .quiz-intro .game-podium-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+html.phone #game-stage .quiz-page.draw-lobby .quiz-intro .place-1 .game-podium-avatar {
+  width: 44px;
+  height: 44px;
+}
+
+html.phone #game-stage .quiz-page.draw-lobby .quiz-intro .game-podium-step {
+  height: 18px;
+}
+
+html.phone #game-stage .quiz-page.draw-lobby .quiz-intro .place-1 .game-podium-step {
+  height: 32px;
+}
+
+html.phone #game-stage .quiz-page.draw-lobby .quiz-intro .place-2 .game-podium-step {
+  height: 24px;
+}
+
 .quiz-cat {
   justify-self: center;
   padding: 2px 10px;
