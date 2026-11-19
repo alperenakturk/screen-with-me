@@ -1566,8 +1566,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   sets that answer's `gained` with `doubledAfter` (right ×2, wrong stays 0). Played before answering it still doubles a
   right answer, but `quizPoints(…, rankBonus = false)` drops the first-answer bonus. When everyone answered and someone
   could still press ×2, the reveal waits `QUIZ_DOUBLE_GRACE_MS` (2.5 s) instead of coming at once. Client: ×2 stays
-  enabled after my answer and glows (`.quiz-joker.ready`, `room.css`); its tooltip, How to play card 2 and the rules
-  line say when to press it. Test Lab `quiz.joker.double`. Tests: `quiz.test.ts` / `scoring.test.ts`, e2e `quiz.mjs`
+  enabled after my answer and glows (`.quiz-joker.ready`, `room.css`); its tooltip and How to play card 2
+  say when to press it (the lobby's rules line stays short so the small phone's lobby fits at 13 px). Test Lab `quiz.joker.double`. Tests: `quiz.test.ts` / `scoring.test.ts`, e2e `quiz.mjs`
   QZ3 block (×2 after a right answer doubles, after a wrong one 0, once a game).
 - **Players thrown out of tables (card GD1, 19 Nov 2026):** three causes found and fixed. (1) **The room's "at
   this table" mark** lives on the room connection's attachment (`{t:'at', table}`, `setAt`); a new room connection
