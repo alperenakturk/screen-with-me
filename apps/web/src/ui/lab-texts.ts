@@ -113,6 +113,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },
     help: { en: 'Writes the stream viewer\'s mode (window or fullscreen), its box, whether it is on the screen and whether it covers a YouTube player (it never should) into the log.', tr: 'İzlediğim yayının hâlini (pencere ya da tam ekran), kutusunu, ekranda olup olmadığını ve bir YouTube oynatıcısını örtüp örtmediğini (hiç örtmemeli) kayda yazar.', },
   },
+  'camera.open': {
+    title: { en: 'Turn my camera on with a test picture', tr: 'Kameramı test görüntüsüyle aç' },
+    help: { en: 'Presses 📷 with a drawn picture instead of the real camera: my camera window must open and show it. "fold" folds the window first (it must open again). "blocked", "system", "busy" or "none" makes the browser refuse instead: a message must say why and how to allow it.', tr: '📷 düğmesine gerçek kamera yerine çizilmiş bir görüntüyle basar: kamera pencerem açılıp onu göstermeli. "fold" önce pencereyi küçültür (yeniden açılmalı). "blocked", "system", "busy" ya da "none" tarayıcının reddetmesini sağlar: bir mesaj nedenini ve nasıl izin verileceğini söylemeli.' },
+  },
   'voice.camPause': {
     title: { en: 'My camera freezes for the others for 6 s', tr: 'Kameram diğerlerinde 6 sn donsun' },
     help: { en: 'My picture stops reaching the others, as when a phone stalls: their tile must say "waiting for the picture…" and come back by itself. A number sets the seconds (1–30).', tr: 'Görüntüm diğerlerine gitmez, telefon takılınca olduğu gibi: onların ekranında "görüntü bekleniyor…" yazmalı ve kendiliğinden geri gelmeli. Bir sayı yazarsan saniye olur (1–30).' },

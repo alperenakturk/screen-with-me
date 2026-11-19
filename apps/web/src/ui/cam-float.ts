@@ -551,11 +551,12 @@ export function createCamWindow(opts: {
     save('camPill:scale', '');
   }
 
-  foldButton.addEventListener('click', () => {
-    folded = !folded;
-    save('opt:camFolded', folded ? '1' : '0');
+  function setFolded(on: boolean): void {
+    folded = on;
+    save('opt:camFolded', on ? '1' : '0');
     place();
-  });
+  }
+  foldButton.addEventListener('click', () => setFolded(!folded));
   hiddenButton.addEventListener('click', () => opts.onShowHidden?.());
   // "⊞": line them up again (each keeps its width; places and set heights go).
   lineUpButton.addEventListener('click', () => {
@@ -599,9 +600,20 @@ export function createCamWindow(opts: {
       markTiles();
       labels();
       box.hidden = count === 0 && hiddenCount === 0;
-      if (wasHidden !== box.hidden) opts.onMove();
+      // CAM2 (owner: "the camera doesn't show on my laptop"): "−" was remembered for good, so every later camera came
+      // as a bare "📷 1" strip with no picture. The window opens again whenever cameras come back after none.
+      if (wasHidden && !box.hidden && folded) setFolded(false);
+      else if (wasHidden !== box.hidden) opts.onMove();
       if (mode() !== 'card') requestAnimationFrame(apply);
     },
+    /** CAM2: my own camera was just turned on: open the window if it was folded, so I see my picture. */
+    reveal(): void {
+      if (folded) setFolded(false);
+    },
+    /** Test Lab: fold the window to its title strip, as "−" does. */
+    fold: () => setFolded(true),
+    /** Is the window folded to its title strip (Test Lab)? */
+    isFolded: () => folded && mode() !== 'card',
     /** Does every camera have its own window right now (person menu: size presets instead of "show big")? */
     isFree,
     /** Person menu: small / medium / large for that person's tile (its place stays). */

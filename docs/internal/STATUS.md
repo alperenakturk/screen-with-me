@@ -12,6 +12,7 @@ One handoff per lane or role; each session updates only its own lines and delete
   "Lane A handoff lines, archived 17 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) is still missing (the owner's
   Releases page or a session allowed to push tags). FC1 (v0.9.97.163), RC1 (v0.9.97.165), UI4 (v0.9.97.166) live and
   archived; hand tests 27ae, 27af, 27ag.
+  - [ ] CAM2 (19 Nov, `claude/cam2-laptop-camera`): PR → merge → live e2e → archive the card; hand test 27ai.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): "the row and the picker show 1.55×" read 1.5× right after both people's
     `rail.speed` said 1.55 (CI on #486 and #489; 1 in 13 local runs). #491 made the check wait; if it still fails, the
@@ -209,6 +210,11 @@ One handoff per lane or role; each session updates only its own lines and delete
   "Subscription services · Coming" row at the bottom.
 - [ ] 27ah. [GD1] Play a table with a friend for 20 min: lock your phone 30 s, switch Wi-Fi, background the tab.
   You are never thrown out; a table that closes says why.
+- [ ] 27ai. [CAM2] On your laptop: join voice and press the camera button: your camera window opens with your picture
+  (even if you had made it small with "−" before) and your friend sees you. Leave voice and press the camera button on
+  the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
+  for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
+  to it says the browser blocked it and how to allow it.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

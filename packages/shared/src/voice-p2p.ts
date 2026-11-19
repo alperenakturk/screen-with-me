@@ -389,8 +389,24 @@ export class P2pVoice implements Voice {
       if (event.track.kind === 'video') this.options.onRemoteVideo?.(memberId, new MediaStream([event.track]));
       else this.options.onRemote(memberId, new MediaStream([event.track]));
     };
+    // CAM2: the other side closed its end (pressed "Leave", reloaded): its DTLS goodbye closes our transport at once,
+    // while `connectionState` still says "connected" for seconds. Keeping that dead connection made someone who left
+    // and joined again wait ~11 s for my voice and camera (we offer: we waited for it to fail, then retried). Close it
+    // now. No call from here: the goodbye comes before the room says they left voice, and an offer to someone not in
+    // voice is never answered; the room's next voice list (`sync`) calls them once they are back.
+    let watched: RTCDtlsTransport | null = null;
+    const watchTransport = () => {
+      const transport = pc.getSenders()[0]?.transport ?? null;
+      if (!transport || transport === watched) return;
+      watched = transport;
+      transport.addEventListener('statechange', () => {
+        if (transport.state !== 'closed' || this.peers.get(memberId) !== peer) return;
+        this.close(memberId);
+      });
+    };
     let lost: ReturnType<typeof setTimeout> | null = null;
     pc.onconnectionstatechange = () => {
+      watchTransport();
       if (this.peers.get(memberId) !== peer) return;
       const state = pc.connectionState;
       if (state === 'connected') {

@@ -1,6 +1,8 @@
 import { CAM_CONSTRAINTS } from '@swm/shared/voice-p2p';
 import { load, save } from '../storage.ts';
 import type { DevicePicks } from '@swm/shared/shell';
+import type { I18nKey } from '../i18n.ts';
+import { isPhone } from '../device.ts';
 
 /**
  * The chosen microphone / camera / speaker (card SZ: the small helpers the room needs from its first paint; the
@@ -65,6 +67,22 @@ async function open(kind: 'audio' | 'video', base: MediaTrackConstraints, key: s
     }
   }
   return navigator.mediaDevices.getUserMedia({ [kind]: base, [other]: false });
+}
+
+/**
+ * CAM2: why the camera didn't open, in plain words with what to do (the browser's own error names, never shown).
+ * Chrome says "Permission denied by system" when the computer's privacy setting blocks the browser.
+ */
+export function camErrorKey(error: unknown): I18nKey {
+  const name = error instanceof DOMException || error instanceof Error ? error.name : '';
+  const message = error instanceof Error ? error.message : '';
+  if (name === 'NotAllowedError' || name === 'SecurityError') {
+    if (/system/i.test(message)) return 'voice.camBlockedSystem';
+    return isPhone() ? 'voice.camBlockedPhone' : 'voice.camBlocked';
+  }
+  if (name === 'NotReadableError' || name === 'TrackStartError' || name === 'AbortError') return 'voice.camBusy';
+  if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'DevicesNotFoundError') return 'voice.camNone';
+  return 'voice.camDenied';
 }
 
 export const openMic = (id?: string) => open('audio', AUDIO, MIC_KEY, id);
