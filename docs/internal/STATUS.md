@@ -32,7 +32,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     "Wait for the new version" end before blaming a PR.
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio 2 (19 Nov): QZ4 (this PR, `claude/quiz-more-questions`) → QZ3 → FW1.
+- [ ] Game Studio 2 (19 Nov): QZ4 #554 (`claude/quiz-more-questions`; CI → merge → live) → QZ3 → FW1.
 - [ ] Game Studio (17 Nov f, handoff; session ends): GMP2 #538, GW5 #537, LH2 #546, LH3 #547, XO1 #548 live
   (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the
   owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
