@@ -38,6 +38,17 @@ Two sessions never edit the same lines; the Planner splits work by files.
 (see `STATUS.md` "Task queue")
 
 ## Ready
+### CAM2. BUG: the camera doesn't show on a laptop (owner, 19 Nov 2026; lane A, first)
+- Why: the owner turns the camera on in a room on his laptop and no camera picture appears ("kamera modu açılmıyor").
+- What: reproduce in Chromium with a fake camera (`--use-fake-device-for-media-stream`) at 1366 and 1920, with and
+  without voice joined, in each theme; find where the camera window fails to open or stays hidden (permission state,
+  the camera window's spot / size, a layout change since GW4–GW5, the 📷 button's state); fix it; if the browser
+  refuses the camera, show a plain message saying why and how to allow it.
+- Done when: 📷 on a laptop shows my camera window and the friend sees it, at 1366 and 1920; a refused permission
+  shows a message; Test Lab hook `camera.open` (fake stream); a harness check in the `site` or `e2e` job.
+- Tests: the new harness check; `scripts/shots.cjs` first look; owner's hand test on his laptop.
+- Owner's pick: none needed.
+
 
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
@@ -78,6 +89,15 @@ Two sessions never edit the same lines; the Planner splits work by files.
   hook `player.dailymotion`; fake-player harness in the `site` job; the owner's real check.
 - Owner step: a free Dailymotion account and a player (Player ID), given to the Planner (not a secret).
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
+
+### TG1. The Together card gets one row shorter while a side game is open (owner, 19 Nov 2026; lane A, after CAM2)
+- Why: at 1366 Five Frames' window covers the Together card's "Join voice / Share" buttons.
+- What: while a side game's window is open beside the chat, the Together card shows one row (🎙 Join voice and 📤
+  Share side by side), so the buttons stay visible and clickable; back to full when the game closes.
+- Done when: at 1366 and 1920 with Five Frames, Snack Bar and Window Garden open, Join voice and Share are visible and
+  work; Test Lab hook `together.compact`; a harness check in the `site` job; first look shots.
+- Tests: harness; owner's hand test.
+- Owner's pick: A "Kart kısalsın" (Planner chat, 19 Nov 2026).
 
 ## Proposed
 
