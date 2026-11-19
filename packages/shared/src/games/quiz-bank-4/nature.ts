@@ -116,7 +116,6 @@ export const Q4_NATURE: readonly QuizEntry[] = [
   {"c":"nature","d":1,"tf":true,"en":{"q":"Sharks are fish.","o":["True","False"]},"tr":{"q":"Köpekbalıkları balıktır.","o":["Doğru","Yanlış"]}},
   {"c":"nature","d":1,"tf":true,"en":{"q":"Fog is a cloud that touches the ground.","o":["True","False"]},"tr":{"q":"Sis, yere değen bir buluttur.","o":["Doğru","Yanlış"]}},
   {"c":"nature","d":1,"tf":false,"en":{"q":"Whales are fish.","o":["True","False"]},"tr":{"q":"Balinalar balıktır.","o":["Doğru","Yanlış"]}},
-  {"c":"nature","d":1,"tf":false,"en":{"q":"Ostriches bury their heads in the sand when they are scared.","o":["True","False"]},"tr":{"q":"Devekuşları korkunca başlarını kuma gömer.","o":["Doğru","Yanlış"]}},
   {"c":"nature","d":1,"tf":false,"en":{"q":"All deserts are hot.","o":["True","False"]},"tr":{"q":"Bütün çöller sıcaktır.","o":["Doğru","Yanlış"]}},
   {"c":"nature","d":1,"tf":false,"en":{"q":"The continents have never moved.","o":["True","False"]},"tr":{"q":"Kıtalar hiç yer değiştirmemiştir.","o":["Doğru","Yanlış"]}},
   {"c":"nature","d":1,"tf":false,"en":{"q":"Most of Earth's water is fresh water.","o":["True","False"]},"tr":{"q":"Dünya'daki suyun çoğu tatlı sudur.","o":["Doğru","Yanlış"]}},
