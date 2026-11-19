@@ -27,7 +27,9 @@ One handoff per lane or role; each session updates only its own lines and delete
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio 2 (19 Nov): QZ4 #554 → QZ3 (+ GD1's `watchLink` in `quiz.ts`) → FW1.
-- [ ] Game Studio (19 Nov): [x] GD1 (#553) → [ ] GPH1 (Quiz, Five Frames last, after Game Studio 2 merges).
+- [ ] Game Studio (19 Nov, handoff; session ends): [x] GD1 (#553, v0.9.97.172) · GPH1 [x] part 1 (`claude/games-phones`:
+  sweep check "nothing over a control", Duel phone overlap) → [ ] the rest from `design/games/phone-review-gph1.md`
+  (Last Heart six, banners over art, board gutters, …; Quiz and Five Frames last; sideways: ask the Planner).
   Open: `quiz.ts` (site) needs GD1's `watchLink` (Game Studio 2's file; as in `sea.ts`).
 
 ## Owner's hand tests (ask Claude "what should I test?"; tick here or tell the Planner)
