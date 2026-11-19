@@ -26,15 +26,15 @@ One handoff per lane or role; each session updates only its own lines and delete
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
+- [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
+  `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
 - [ ] Game Studio 2 (19 Nov): QZ4 #554 → QZ3 (+ GD1's `watchLink`) → FW1.
-- [ ] Game Studio (19 Nov, handoff; session ends): [x] GD1 (#553, v0.9.97.172) · GPH1 [x] part 1 (`claude/games-phones`:
-  sweep check "nothing over a control", Duel phone overlap) → [ ] the rest from `design/games/phone-review-gph1.md`
-  (Last Heart six, banners over art, board gutters, …; Quiz and Five Frames last; sideways: ask the Planner).
-  Open: `quiz.ts` (site) needs GD1's `watchLink` (Game Studio 2's file; as in `sea.ts`).
 
-## Owner's hand tests (ask Claude "what should I test?"; tick here or tell the Planner)
-Most useful first; a ticked item moves to `archive/status-history.md` (search its ID). New releases add a line
-with an ID at the end of "C"; the Planner folds them into the board.
+## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
+One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
+Every item's original wording, the older per-release blocks and the ones already ticked are in
+`archive/status-history.md` "Owner's hand tests" (search the ID in brackets). New releases add their lines at the end
+of "C. Recent releases" with an ID; the Planner folds them into the board Artifact.
 
 **A. One sitting with a friend** (a friend in Chrome on another computer, or your phone as the second person) [BH10]
 - [ ] 1. YouTube together: join by the invite link; play, pause, seek, speed and ← / → from both sides stay in step.

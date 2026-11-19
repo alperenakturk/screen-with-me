@@ -1752,6 +1752,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
   owner's pick on Five Frames' home at 1366 (kept as is); stale branch `claude/xo1-board-tablet` (delete refused by the
   remote; safe to delete). Notes: games-sweep size `tabup` (upright tablet); `stage.ts` grows an overflowing own box.
 
+## B2 finished lines, archived 19 Nov 2026 (STATUS size limit)
+
 ## Ticked task-queue lines, archived 19 Nov 2026 (Game Studio 2, QZ4: STATUS over its size limit)
   - [x] CI3 closed (#490); SH2 live (#488, v0.9.97.151); both cards in `archive/cards-done.md`.
   - [x] Live e2e red 16 Nov (runs 43917089949, 43921749258; no tag after v0.9.97.151): not the code. Both runs show
