@@ -1744,6 +1744,8 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
     spot-check of JP / TR / US / BR / DE: the cloud session's network can't reach the live site, so it is the owner's
     hand test (and the Planner's, if a session with that host allowed runs it).
 
+## Game Studio handoff line, archived 19 Nov 2026
+
 ## Game Studio handoff line, archived 19 Nov 2026 (BG1 #549 merged 17 Nov; Game Studio 2, QZ4)
 - [ ] Game Studio (17 Nov f, handoff; session ends): GMP2 #538, GW5 #537, LH2 #546, LH3 #547, XO1 #548 live
   (v0.9.97.163–170); [ ] BG1 #549 (CI → merge → live → hand-test line; whoever picks it up). Ready is empty. Open: the

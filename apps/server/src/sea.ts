@@ -30,7 +30,7 @@ import {
   type ShipPlace,
   type ShotResult,
 } from '@swm/shared/games/sea';
-import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
+import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, noteClose, touch, wasGhost } from './ghost.ts';
 import { FLOOD_CODE, floodGuard } from './limits.ts';
 import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
 
@@ -165,6 +165,7 @@ export class Sea extends DurableObject<Env> {
   }
 
   override async webSocketClose(ws: WebSocket, code: number): Promise<void> {
+    noteClose('sea', code);
     try {
       ws.close(code === 1005 ? 1000 : code);
     } catch {

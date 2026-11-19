@@ -82,7 +82,7 @@ function client(path, hello, pinging) {
 }
 
 const OFFLINE_MS = 130_000; // 90 s + room for a live alarm that runs late right after a deploy
-const GRACE_MS = 30_000;
+const GRACE_MS = 75_000; // draw.ts FEW_GRACE_MS (60 s since GD1) + room for the alarm
 
 async function draw() {
   const path = `/api/draw/gh${tag}/ws`;

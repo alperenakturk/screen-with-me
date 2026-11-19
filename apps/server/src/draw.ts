@@ -28,15 +28,16 @@ import { DRAW_WORDS, DRAW_WORD_SETS } from '@swm/shared/games/draw-words';
 import { drawGuessPoints, drawerPoints } from '@swm/shared/games/scoring';
 import type { Avatar } from '@swm/shared/protocol';
 import { RateLimiter } from './rate-limit.ts';
-import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, touch, wasGhost } from './ghost.ts';
+import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, noteClose, touch, wasGhost } from './ghost.ts';
 import { FLOOD_CODE, floodGuard } from './limits.ts';
 import { answerKeepalive, heardAt, startKeepalive } from './keepalive.ts';
 
 /** Oda boş kaldıktan bu kadar sonra silinir. */
 const EMPTY_TTL_MS = 24 * 60 * 60 * 1000;
 /** BHG: with fewer than two players online a running game waits this long before it goes back to the lobby, so one
- * player's reload or short drop no longer ends the game for both (as the room's host keeps the role for 20 s). */
-const FEW_GRACE_MS = 20_000;
+ * player's reload or short drop no longer ends the game for both. GD1: 60 s, not 20: a phone that locks for half a
+ * minute, or a Wi-Fi switch with the page's reconnect on top, threw the game back to the lobby for both. */
+const FEW_GRACE_MS = 60_000;
 /** Odada en fazla bağlantı (aynı kişinin birkaç sekmesi dahil). */
 const MAX_SOCKETS = 40;
 /** Bir turdaki çizimin üst sınırı (nokta sayısı): geç gelen hepsini tek mesajda alır. */
@@ -212,6 +213,7 @@ export class Draw extends DurableObject<Env> {
   }
 
   override async webSocketClose(ws: WebSocket, code: number): Promise<void> {
+    noteClose('draw', code);
     try {
       ws.close(code === 1005 ? 1000 : code);
     } catch {

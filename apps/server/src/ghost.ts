@@ -22,7 +22,8 @@ interface Seen {
   ghost?: boolean;
 }
 
-type Socket = Pick<WebSocket, 'serializeAttachment' | 'deserializeAttachment' | 'close'>;
+/** The part of a Durable Object's WebSocket used here (spelled out so the shared unit tests type-check it too). */
+type Socket = { serializeAttachment(value: unknown): void; deserializeAttachment(): unknown; close(code?: number, reason?: string): void };
 /**
  * QUOTA1a: when a socket was last heard, given its stored `seen` (the object passes the later of it and the runtime's
  * last free-keepalive answer, `keepalive.ts` `heardAt`). Without it, `seen` alone.
@@ -58,6 +59,8 @@ export function closeGhosts<S extends Socket>(sockets: S[], now = Date.now(), li
     if (!a || a.seen === undefined || a.ghost || now - (heard(ws, a.seen) ?? a.seen) <= limit) continue;
     a.ghost = true;
     ws.serializeAttachment(a);
+    // GD1: why a player left a table, in the Worker's log (a reason and a number, nothing about the person).
+    console.log(`[game drop] ghost: silent ${Math.round((now - (heard(ws, a.seen) ?? a.seen)) / 1000)} s`);
     try {
       ws.close(GHOST_CODE, 'stale');
     } catch {
@@ -87,4 +90,13 @@ export function closeAsGone(ws: Socket & { send(data: string): void }, code: num
   } catch {
     // Already closed.
   }
+}
+
+/**
+ * GD1: notes in the Worker's log a table connection that ended without a normal close (1000 page closed, 1001 going
+ * away, 1005 no code): a network drop (1006) or one of our own codes. Only the table kind and the code, nothing personal.
+ */
+export function noteClose(kind: string, code: number): void {
+  if (code === 1000 || code === 1001 || code === 1005) return;
+  console.log(`[game drop] ${kind}: closed ${code}`);
 }

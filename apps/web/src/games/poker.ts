@@ -34,6 +34,7 @@ import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { lobbyPlayers, lobbySplit, settingsPanel } from './ui.ts';
 import { silence } from './silent.ts';
+import { watchLink } from './link-watch.ts';
 import { GAME_CLOCK_EVERY, GAME_KEEPALIVE_MS, KEEPALIVE, KEEPALIVE_ACK, keepaliveTicks } from '@swm/shared/keepalive';
 import { tableHowTo } from './how-to-play.ts';
 import { resultCard, resultStub, showPointsResult } from './result.ts';
@@ -576,6 +577,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     if (stopped) return;
     const socket = openSocket(`${location.origin.replace(/^http/, 'ws')}/api/poker/${encodeURIComponent(gameId)}/ws`);
     ws = socket;
+    link.attach(socket);
     socket.addEventListener('open', () => socket.send(JSON.stringify({ t: 'hello', v: POKER_PROTOCOL_VERSION, name, avatar, cid: clientId() } satisfies PokerClientMessage)));
     socket.addEventListener('message', (event) => {
       if (event.data === KEEPALIVE_ACK) return;
@@ -622,6 +624,13 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       setTimeout(connect, 1500);
     });
   }
+  // GD1: a line that died without a close event is found and replaced (`link-watch.ts`).
+  const link = watchLink('poker', () => ws, quiet, () => {
+    const old = ws;
+    ws = null;
+    old?.close();
+    connect();
+  });
   connect();
   // QUOTA1a: the free keepalive (answered without waking the table), a real ping once a minute (the clock offset).
   const ping = window.setInterval(
@@ -678,6 +687,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     close();
     clearInterval(ticker);
     clearInterval(ping);
+    link.stop();
     hint.hide();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
