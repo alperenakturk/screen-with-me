@@ -855,7 +855,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   video, ⛶ Watch fullscreen, 💬, 🎙) and the video's fullscreen stay; the Games / Search / Me tabs, any game, dialogs,
   sheets, the room before its first video, joining and the home page get the note "📱↻ Turn your phone upright" /
   "Telefonu dik tut" (`phone.turnNote`, `phone.turnNote.why`). While it shows every other child of `<body>` is `inert`
-  (no tap, no key reaches them); it asks `device.ts` `lockPortrait()` once per showing (works on Android in fullscreen or
+  (no tap, no key reaches them, and the focus leaves the page; the note itself is not focused, so no ring); it asks `device.ts` `lockPortrait()` once per showing (works on Android in fullscreen or
   an installed app: the page turns and the note goes by itself) and lets go of that lock (`screen.orientation.unlock`)
   as soon as only the video is on screen. It watches `<body>` for dialogs, tabs and games only while a phone is
   sideways (or held upright by it). Tablets and computers never see it. Test Lab: `phone.turnNote` (shown, phone,

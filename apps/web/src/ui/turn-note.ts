@@ -34,7 +34,7 @@ export function startTurnNote(): void {
   const icon = el('div', { class: 'turn-note-ico', 'aria-hidden': 'true' }, '📱↻');
   const title = el('p', { class: 'turn-note-t', id: 'turn-note-t' });
   const why = el('p', { class: 'turn-note-why muted' });
-  const note = el('div', { class: 'turn-note', id: 'turn-note', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'turn-note-t', tabindex: '-1', hidden: '' }, icon, title, why);
+  const note = el('div', { class: 'turn-note', id: 'turn-note', role: 'alertdialog', 'aria-modal': 'true', 'aria-labelledby': 'turn-note-t', hidden: '' }, icon, title, why);
   const label = () => {
     title.textContent = t('phone.turnNote');
     why.textContent = t('phone.turnNote.why');
@@ -57,9 +57,9 @@ export function startTurnNote(): void {
     if (note.hidden === on) {
       note.hidden = !on;
       html.classList.toggle('turn-noted', on);
-      if (on) note.focus({ preventScroll: true });
     }
     if (on) {
+      // Inert also takes the focus out of the page (the note is not focused itself: no ring round a calm screen).
       for (const child of document.body.children) {
         if (child === note || child.hasAttribute('inert')) continue;
         child.setAttribute('inert', '');
