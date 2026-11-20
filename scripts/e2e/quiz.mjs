@@ -4,7 +4,7 @@
 import { dropFor } from './drop.mjs';
 import { GameSocket } from './game-socket.mjs';
 import { QUIZ_BANK } from '../../packages/shared/src/games/quiz-questions.ts';
-import { foldAnswer } from '../../packages/shared/src/games/quiz.ts';
+import { foldAnswer, quizLevelBonus } from '../../packages/shared/src/games/quiz.ts';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'quiz' + Math.random().toString(36).slice(2, 8);
 
@@ -174,5 +174,53 @@ for (const c of [alex, sam2]) c.ws.close();
   }
   carl.ws.close();
   dana.ws.close();
+}
+// QZ3: ×2 after answering. Alex answers right, then plays ×2 (the reveal waits a moment so it can be pressed): double
+// points. Sam answers wrong, then plays ×2: still 0. A second ×2 in the same game does nothing.
+{
+  const dGame = game + 'd';
+  const eve = client('Alex', 'quizDblAlex001', dGame);
+  const we = await eve.wait((m) => m.t === 'welcome', 'double welcome');
+  const fay = client('Sam', 'quizDblSam0001', dGame);
+  const wf = await fay.wait((m) => m.t === 'welcome', 'double welcome 2');
+  await eve.wait((m) => m.t === 'state' && m.players.length === 2, 'double two');
+  eve.send({ t: 'settings', lang: 'en', count: 5 });
+  await eve.wait((m) => m.t === 'state' && m.count === 5 && m.lang === 'en', 'double settings');
+  eve.inbox.length = 0;
+  eve.send({ t: 'start' });
+  const q = await eve.wait((m) => m.t === 'state' && m.phase === 'question' && m.n === 1, 'double q1');
+  const entry = QUIZ_BANK[q.qid];
+  // The right answer from the bank: typed → the first accepted text; true / false → its fixed place; else the right text.
+  const rightPick = entry.tf !== undefined ? (entry.tf ? 0 : 1) : q.options.indexOf(entry.en.o?.[0]);
+  const wrongPick = q.options.length ? (rightPick + 1) % q.options.length : 0;
+  eve.send(q.typed ? { t: 'answer', n: 1, text: entry.en.a[0] } : { t: 'answer', n: 1, pick: rightPick });
+  await eve.wait((m) => m.t === 'state' && m.players.some((p) => p.id === we.you && p.answered), 'double answered');
+  eve.send({ t: 'joker', n: 1, kind: 'double' });
+  await eve.wait((m) => m.t === 'state' && m.players.some((p) => p.id === we.you && p.jokers?.includes('double')), 'double played');
+  fay.send(q.typed ? { t: 'answer', n: 1, text: 'zzzz' } : { t: 'answer', n: 1, pick: wrongPick });
+  const lastAt = Date.now();
+  const mid = await eve.wait((m) => m.t === 'state' && m.players.every((p) => p.answered), 'all answered');
+  ok(mid.phase === 'question' && mid.endsAt - lastAt <= 3000, 'Everyone answered: the reveal waits a moment for a ×2 (≤ 3 s)');
+  fay.send({ t: 'joker', n: 1, kind: 'double' });
+  const r = await eve.wait((m) => m.t === 'state' && m.phase === 'reveal', 'double reveal', 6000);
+  const a = r.players.find((p) => p.id === we.you);
+  const b = r.players.find((p) => p.id === wf.you);
+  // A fast first right answer is about 200 points × the level bonus; doubled it is about twice that.
+  const plain = 200 * quizLevelBonus(entry.d, q.typed);
+  ok(a.pick === 0 || a.pick === rightPick, 'Alex answered right');
+  ok(a.gained >= Math.round(plain * 2 * 0.9), `×2 after a right answer doubles it (${a.gained} ≥ ${Math.round(plain * 1.8)})`);
+  ok(b.gained === 0 && b.jokers?.includes('double'), '×2 after a wrong answer: still 0, no penalty');
+  // A second ×2 in the game is refused: Alex answers the next question right and presses again.
+  const q2 = await eve.wait((m) => m.t === 'state' && m.phase === 'question' && m.n === 2, 'double q2', 8000);
+  const e2 = QUIZ_BANK[q2.qid];
+  const r2pick = e2.tf !== undefined ? (e2.tf ? 0 : 1) : q2.options.indexOf(e2.en.o?.[0]);
+  eve.send(q2.typed ? { t: 'answer', n: 2, text: e2.en.a[0] } : { t: 'answer', n: 2, pick: r2pick });
+  eve.send({ t: 'joker', n: 2, kind: 'double' });
+  fay.send(q2.typed ? { t: 'answer', n: 2, text: 'zzzz' } : { t: 'answer', n: 2, pick: (r2pick + 1) % Math.max(1, q2.options.length) });
+  const r2 = await eve.wait((m) => m.t === 'state' && m.phase === 'reveal' && m.n === 2, 'double reveal 2', 6000);
+  const a2 = r2.players.find((p) => p.id === we.you);
+  ok(a2.gained > 0 && a2.gained < Math.round(400 * quizLevelBonus(e2.d, q2.typed)) && a2.jokers.filter((k) => k === 'double').length === 1, '×2 works once a game');
+  eve.ws.close();
+  fay.ws.close();
 }
 setTimeout(() => process.exit(0), 100);

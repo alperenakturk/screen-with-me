@@ -1,7 +1,7 @@
 // GHOST: a game connection that dies without a close frame (a phone losing its network: 1006, no goodbye) must not stay
 // "online" for ever. In Draw & Guess, Quiz, Classics and Sea Battle a second player goes silent (their socket stays
 // open, nothing is sent); the game object's alarm closes it after about 90 s (`GHOST_MS`), the player shows offline soon after,
-// and the game handles it like a real leave (Draw / Quiz: back to the lobby after the 20 s grace). The four games run
+// and the game handles it like a real leave (Draw / Quiz: back to the lobby after the 60 s grace). The four games run
 // side by side, so the file takes about 2 minutes (live, after every deploy: the Quiz only).
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const tag = Math.random().toString(36).slice(2, 8);

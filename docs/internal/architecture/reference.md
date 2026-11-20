@@ -1208,7 +1208,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   back to the home page. Test: `scripts/e2e/roomgame.mjs`.
   **Games quality (card BHG):** a tab remembers the table or side game it has open and whether it is minimized
   (`sessionStorage` `swm:table:<path>`, `rememberAt` in `stage.ts`) and reopens it from the entry list after a reload;
-  Quiz and Draw & Guess wait `FEW_GRACE_MS` (Quiz 20 s, Draw 60 s since GD1; `fewSince`) with fewer than two players online before a running game
+  Quiz and Draw & Guess wait `FEW_GRACE_MS` (60 s, both since GD1 / QZ3; `fewSince`) with fewer than two players online before a running game
   goes back to the lobby (one player's reload used to end it for both). Harnesses `games-sweep` (every game × 4 sizes ×
   EN / TR: no inner scrollbar, text ≥ 13 px on screen (the fit scale counted), nothing cut off, a fair-sized board, no
   page scroll, GPH1: nothing drawn over a control (`elementFromPoint` at its middle is the control); sizes `iphoneSide`
@@ -1561,6 +1561,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   "Level" select under the topic / length rows (both modes). Test Lab `quiz.level` (the host's level moves on). Tests:
   `quiz.test.ts` (every entry has a level, a topic, both languages for ≥ 97 %; every topic × level ≥ 15 per language),
   e2e `quiz.mjs` (a Hard game asks `lv` 3).
+  **QZ3 ×2 after answering (19 Nov 2026, the owner's rule):** Double can be played after answering, until the reveal
+  ("double points for this one"): the server's `joker` case lets `double` through when the player already answered and
+  sets that answer's `gained` with `doubledAfter` (right ×2, wrong stays 0). Played before answering it still doubles a
+  right answer, but `quizPoints(…, rankBonus = false)` drops the first-answer bonus. When everyone answered and someone
+  could still press ×2, the reveal waits `QUIZ_DOUBLE_GRACE_MS` (2.5 s) instead of coming at once. Client: ×2 stays
+  enabled after my answer and glows (`.quiz-joker.ready`, `room.css`); its tooltip and How to play card 2
+  say when to press it (the lobby's rules line stays short so the small phone's lobby fits at 13 px). Test Lab `quiz.joker.double`. Tests: `quiz.test.ts` / `scoring.test.ts`, e2e `quiz.mjs`
+  QZ3 block (×2 after a right answer doubles, after a wrong one 0, once a game).
 - **Players thrown out of tables (card GD1, 19 Nov 2026):** three causes found and fixed. (1) **The room's "at
   this table" mark** lives on the room connection's attachment (`{t:'at', table}`, `setAt`); a new room connection
   (a deploy, a phone wake, a Wi-Fi switch) started without it, and the client re-sent it only when it reopened the
@@ -1569,7 +1577,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   room welcome. (2) **A table line that died without a close event:** game pages had no dead-line check (the room's
   `RoomConnection` had one), so a half-open WebSocket stayed "open", the page froze, and the object closed it as a
   ghost after `GHOST_MS`. `games/link-watch.ts` `watchLink` (in `match.ts`, `sea.ts`, `duel.ts`, `draw.ts`,
-  `poker.ts`; `quiz.ts` to follow with Game Studio 2's cards): nothing heard for `QUIET_MS` 20 s, the tab coming back
+  `poker.ts`, `quiz.ts` (QZ3)): nothing heard for `QUIET_MS` 20 s, the tab coming back
   into view, or the browser back online → one free keepalive; no answer within `DEAD_MS` 8 s → the page drops that
   socket (ignoring its late close) and connects again; the seat is tied to the browser id, so the player is back in it
   silently. WebSockets only (the HTTP fallback finds its own failed requests); the lab's "go silent" is left alone.
