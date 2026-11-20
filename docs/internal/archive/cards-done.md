@@ -3033,3 +3033,18 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done: QZ3 PR (`claude/quiz-double-joker`, Game Studio 2, 19 Nov 2026): ×2 after answering until the reveal (right ×2,
   wrong 0; before answering no first-answer bonus), the reveal waits 2.5 s for it, Test Lab `quiz.joker.double`; with
   GD1's follow-ups for Quiz (`watchLink`, 60 s grace).
+
+### FW1. Five Frames: real words only, plus the missing categories (owner, 19 Nov 2026; Game Studio 2, after QZ4)
+- Why: Five Frames accepts odd non-words, and categories such as country and city names are missing.
+- What: clean the answer and accepted-guess lists (EN and TR) to common real words; add categories (countries,
+  cities, and others a player would expect: animals, food, …) as word lists by category, with the category shown
+  as a hint; a guess must be a real word of the language (or of the category's list).
+- Done when: no non-word in the answer lists (a check script over the lists); each new category has enough answers
+  for weeks of play in both languages; Test Lab hook `fiveFrames.category`; unit tests.
+- Tests: unit + list check; owner's hand test.
+- Owner's pick: none needed.
+- Done: FW1 PR (`claude/fw1-five-frames-words`, Game Studio 2, 20 Nov 2026): guesses must be seen ≥ 5 times and answers
+  ≥ 20 times in OpenSubtitles (offline filter, `<lang>-keep.txt` exceptions): EN 7,716 / 2,036, TR 7,657 / 2,056;
+  seven categories per language (`<lang>-cat-<id>.txt`, 22–44 words) with the category select as the hint, its own
+  daily word, save and share line; `build-words.py --check`; Test Lab `fiveFrames.category`; harnesses `five-frames`
+  and `lab-games`; tickets centred on the whole row, stub without the tear line; hand test 27al.
