@@ -3034,6 +3034,35 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   wrong 0; before answering no first-answer bonus), the reveal waits 2.5 s for it, Test Lab `quiz.joker.double`; with
   GD1's follow-ups for Quiz (`watchLink`, 60 s grace).
 
+### PH4. A phone is used upright, except to watch the video (owner, 19 Nov 2026; lane A)
+- Why: owner's pick "Her şey dik, video izleme hariç; dönmeyi kontrol edemiyorsak not çıksın" (Planner chat, 19 Nov
+  2026, "important"): games, settings and dialogs held sideways were cramped or scaled down (PH2's `upright-turned`).
+- What: a sideways phone keeps today's sideways video watching (the video, ⛶ Watch fullscreen, 💬 / 🎙 beside it, the
+  video's fullscreen). Anything else held sideways (the Games / Search / Me tabs, any game, settings, dialogs, the home
+  page, joining) shows one calm full-screen note "📱↻ Turn your phone upright" / "Telefonu dik tut" in the theme's
+  colours, and nothing under it can be tapped. Where the browser allows it (`screen.orientation.lock('portrait')`,
+  Android in fullscreen) the screen is locked upright instead. `device.ts` only (`isPhone`, `isSideways`). Replaces
+  PH2's `html.upright-turned` scaled column for phones (removed); tablets unchanged.
+- Done when: the note shows and blocks taps in each of those places on a Galaxy S5, an iPhone SE and an iPhone 13
+  held sideways (EN + TR) and never while watching, on a tablet or a computer; Test Lab hook `phone.turnNote`; harness
+  `phone-sideways` in the `site` job; first look; reference section, `changelog/next`, STATUS hand test.
+- Tests: harness `phone-sideways` (+ `game-window-head`, `safety`); owner's hand test 27al.
+- Owner's pick: "Her şey dik, video izleme hariç" (Planner chat, 19 Nov 2026).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/561 (`claude/ph4-phone-upright`, lane A, 20 Nov 2026):
+  `ui/turn-note.ts` with `device.ts` `lockPortrait()`, PH2's `upright-turned` removed, Test Lab `phone.turnNote`,
+  harness `phone-sideways` rewritten (S5 / SE / 13, EN + TR); hand test 27al.
+
+### PH3. The phone's Games tab: the empty room's buttons whole in the video strip (GPH1 review, 19 Nov 2026; lane A)
+- Why: in the Games tab's short video strip (52–152 px) the empty room's title and its two 44 px buttons were cut at
+  the top and under "Back to video" on 568–640 px phones.
+- Done when: on an iPhone SE, a Galaxy S5 and an iPhone 13 with a game in the Games tab and no video, the strip shows
+  only Search / Invite, whole, above "Back to video"; the Room tab keeps the full card; the page never scrolls; Test
+  Lab hook `phoneRoom.gamesTab`; harness `phone-games-tab` in the `site` job.
+- Tests: harness; owner's hand test 27am.
+- Owner's pick: none needed (a bug from the GPH1 review). Its second fix (no page scroll held sideways in PH2's scaled
+  column) was dropped: PH4 removed that column.
+- Done: PH3 PR (`claude/ph3-phone-games-tab-v2`, lane A, 20 Nov 2026; first built on `claude/ph3-phone-games-tab`).
+
 ### FW1. Five Frames: real words only, plus the missing categories (owner, 19 Nov 2026; Game Studio 2, after QZ4)
 - Why: Five Frames accepts odd non-words, and categories such as country and city names are missing.
 - What: clean the answer and accepted-guess lists (EN and TR) to common real words; add categories (countries,
@@ -3047,4 +3076,4 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   ≥ 20 times in OpenSubtitles (offline filter, `<lang>-keep.txt` exceptions): EN 7,716 / 2,036, TR 7,657 / 2,056;
   seven categories per language (`<lang>-cat-<id>.txt`, 22–44 words) with the category select as the hint, its own
   daily word, save and share line; `build-words.py --check`; Test Lab `fiveFrames.category`; harnesses `five-frames`
-  and `lab-games`; tickets centred on the whole row, stub without the tear line; hand test 27am.
+  and `lab-games`; tickets centred on the whole row, stub without the tear line; hand test 27an.

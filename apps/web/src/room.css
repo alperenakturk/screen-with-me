@@ -12265,6 +12265,24 @@ html.ph-game-tab[data-ph-tab='games'] .ph-strip-back {
   font: 600 13px/1.2 inherit;
   text-align: left;
 }
+/* PH3 (GPH1 review): in the Games tab's short strip (52–152 px) the empty room's title and two 44 px buttons were cut
+   at the top and under "Back to video" on 568–640 px phones. The strip shows only the two buttons, smaller, centred
+   (a tap on the strip goes back to the Room tab, where the full card is). */
+html.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .empty {
+  justify-content: center;
+  padding: 4px 10px;
+  gap: 0;
+}
+html.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .empty :is(h2, .theme-mascot) {
+  display: none;
+}
+html.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .ph-empty-actions .btn {
+  min-height: 0;
+  height: clamp(30px, calc(100% - 4px), 40px);
+  padding: 0 12px;
+  font-size: 13px;
+}
+
 /* MSG1: a deleted message's line; the ⋯ stays out of sight until ui/chat-menu.css (lazy) styles it. */
 .chat-deleted{margin:2px 0;font-size:12.5px;font-style:italic;color:var(--muted);text-align:center}
 .chat-more{opacity:0}
