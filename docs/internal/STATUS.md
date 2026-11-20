@@ -21,7 +21,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
   `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
-- [ ] Game Studio 2 (20 Nov): FW1 on `claude/fw1-five-frames-words` → PR → merge → live e2e → card archived; hand test 27al.
+- [ ] Game Studio 2 (20 Nov): FW1 #563 → merge → live e2e; hand test 27al.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -213,9 +213,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
 - [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
   visible and work (in voice too). Put the game away (✕): the full card comes back.
-- [ ] 27al. [FW1] Five Frames: odd words are refused now, everyday ones still work (EN and TR). Pick 🌍 Countries:
-  the picked category stays gold as the hint, a country name is accepted, Copy names the category. At 1366 the letter
-  boxes sit in the middle of each ticket, no line after the number.
+- [ ] 27al. [FW1] Five Frames: odd words refused, everyday ones work (EN, TR). 🌍 Countries: the gold hint stays, a
+  country name is accepted, Copy names it. At 1366 the boxes sit centred, no line after the number.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
