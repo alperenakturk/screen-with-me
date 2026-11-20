@@ -32,24 +32,34 @@
 .ff-head { display: flex; align-items: center; gap: 8px; min-height: 28px; }
 .ff-title { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
 .ff-day { color: var(--ff-muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.ff-streak { font-size: 13px; font-weight: 700; color: var(--ff-gold); }
+.ff-streak { font-size: 13px; font-weight: 700; color: var(--ff-gold); white-space: nowrap; }
+.ff-streak[hidden] { display: none; }
 .ff-gap { flex: 1; }
 .ff-langs { display: inline-flex; gap: 4px; }
 .ff-lang { min-height: 28px; padding: 3px 10px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 800; background: rgba(255, 255, 255, 0.08); color: var(--ff-muted); }
 .ff-lang.on { background: var(--ff-gold); color: var(--ff-ink); }
+/* FW1: the daily word or a category, on its own slim line under the head; the picked category is the hint, so it stays
+   in view (gold once picked). */
+.ff-cat-row { display: flex; justify-content: center; min-height: 0; }
+.ff-cat {
+  flex: 0 1 auto; min-width: 0; max-width: 100%; min-height: 26px; padding: 1px 8px; border: 0; border-radius: 999px;
+  font: inherit; font-size: 13px; font-weight: 700; text-overflow: ellipsis; cursor: pointer;
+  background: rgba(255, 255, 255, 0.08); color: var(--ff-cream);
+}
+.ff-cat.hinted { box-shadow: inset 0 0 0 1.5px var(--ff-gold); color: var(--ff-gold); }
+.ff-cat option { background: var(--ff-panel); color: var(--ff-cream); }
 
 .ff-board { display: flex; flex-direction: column; gap: 4px; padding: 3px; border-radius: 10px; outline: none; }
 .ff-board:focus-visible, .ff-board:focus { box-shadow: 0 0 0 1.5px rgba(255, 198, 90, 0.55); }
-/* One guess = one ticket: a stub, a dashed tear line with two notches, five letter cells. */
+/* One guess = one ticket: a numbered stub and five letter cells. FW1 (lane A's first look at 1366): the cells sit in the
+   middle of the whole ticket (an empty column the stub's width mirrors it on the right; they sat right of centre), and
+   the stub is a darker end of the ticket instead of a dashed tear line with two notches (it read as a stray line after
+   each number, and the notches showed as dark marks on the focus ring). */
 .ff-row {
-  position: relative; display: grid; grid-template-columns: 30px 1fr; height: 43px; border-radius: 8px;
+  position: relative; display: grid; grid-template-columns: 30px minmax(0, 1fr); height: 43px; border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
 }
-.ff-row::before, .ff-row::after {
-  content: ''; position: absolute; left: 26px; width: 8px; height: 8px; border-radius: 50%; background: var(--ff-panel);
-}
-.ff-row::before { top: -4px; }
-.ff-row::after { bottom: -4px; }
+.ff:not(.duel) .ff-row { grid-template-columns: 30px minmax(0, 1fr) 30px; }
 .ff-row.current { box-shadow: inset 0 0 0 1.5px rgba(255, 243, 214, 0.45); }
 .ff-row.future { opacity: 0.4; }
 .ff-row.shake { animation: ff-shake 0.3s; }
@@ -57,7 +67,7 @@
 .ff-row.bad { box-shadow: inset 0 0 0 2px #ff6b6b; }
 .ff-stub {
   display: grid; place-items: center; font-size: 13px; font-weight: 800; color: var(--ff-muted);
-  border-right: 1.5px dashed rgba(255, 243, 214, 0.3);
+  border-radius: 8px 0 0 8px; background: rgba(0, 0, 0, 0.16);
 }
 /* QA2 (8): the five cells sit in the middle of the space after the stub (they hugged its left side). */
 .ff-cells { display: grid; grid-template-columns: repeat(5, 37px); justify-content: center; justify-self: stretch; width: 100%; box-sizing: border-box; gap: 6px; padding: 3px 4px; }
@@ -231,7 +241,9 @@ html:not(.phone) #game-stage .ff:not(.duel) .ff-title { display: none; }
 :root[data-theme='matinee'] .ff .ff-cell.near { background: transparent; box-shadow: none; }
 :root[data-theme='matinee'] .ff :is(.ff-cell.miss, .ff-key.miss) { background: transparent; box-shadow: none; }
 :root[data-theme='matinee'] .ff .ff-row.current { box-shadow: inset 0 0 0 1.5px var(--muted); }
-:root[data-theme='matinee'] .ff .ff-stub { border-right-color: var(--ff-line); }
+:root[data-theme='matinee'] .ff .ff-stub { background: var(--ff-fill); }
+:root[data-theme='matinee'] .ff .ff-cat { background: var(--ff-fill); color: var(--text); }
+:root[data-theme='matinee'] .ff .ff-cat.hinted { color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
 :root[data-theme='matinee'] .ff .ff-key.enter { background: var(--accent-btn, var(--accent)); color: var(--on-accent); }
 :root[data-theme='matinee'] .ff .ff-lang.on, :root[data-theme='matinee'] .ff .ff-lang[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
 :root[data-theme='matinee'] .ff .ff-board:focus-visible,

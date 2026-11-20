@@ -2,7 +2,8 @@
 // Checks: it opens with seven ticket rows and an alphabetical tray, fits without scrollbars (own size, a small window,
 // a phone), a wrong guess typed with the tray gets the right ✓ / • marks, an unknown word is refused, the physical
 // keyboard types only while the board has the focus (the room's keys stay the room's), solving shows the result and a
-// spoiler-free share line, the result survives a reload, Turkish has its own alphabet.
+// spoiler-free share line, the result survives a reload, Turkish has its own alphabet; FW1: a category (countries) with
+// its hint, a country name as a guess, its own share line.
 //
 //   npm run dev, then: node scripts/harness/five-frames/run.cjs [site]
 const { chromium, devices } = require('playwright');
@@ -213,6 +214,45 @@ async function checkResult(page, label, unit) {
   await alex.setViewportSize({ width: 900, height: 560 });
   await alex.waitForTimeout(600);
   check((await fits(alex)).length === 0, 'fits a 900×560 window', (await fits(alex)).join('; '));
+
+  // FW1: a category. Today's country, worked out with the game's rules; a country name is a guess only in the category.
+  const country = await alex.evaluate(async ([root]) => {
+    const rules = await import(`/@fs${root}/packages/shared/src/games/five-frames.ts`);
+    const { CATEGORIES } = await import(`/@fs${root}/packages/shared/src/games/words/en.ts`);
+    const list = rules.decodeCategories(CATEGORIES).countries;
+    const answer = rules.categoryAnswer(rules.dayNumber(), list, 'en', 'countries');
+    return { answer, other: list.find((w) => w !== answer && !['spain', 'italy', 'india', 'egypt', 'chile', 'nepal'].includes(w)) };
+  }, [ROOT]);
+  await alex.evaluate(() => { localStorage.setItem('fiveFrames:lang', 'en'); localStorage.setItem('lang', 'en'); });
+  await alex.reload();
+  await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
+  await alex.waitForTimeout(1200);
+  await open(alex);
+  await alex.selectOption('#game-stage .ff-cat', 'countries');
+  await alex.waitForTimeout(300);
+  const catShape = await alex.evaluate(() => ({
+    hinted: document.querySelector('#game-stage .ff-cat').classList.contains('hinted'),
+    label: document.querySelector('#game-stage .ff-cat').selectedOptions[0].textContent,
+    streak: document.querySelector('#game-stage .ff-streak').hidden,
+    empty: !document.querySelector('#game-stage .ff-row.done'),
+  }));
+  check(catShape.hinted && catShape.label === '🌍 Countries' && catShape.streak && catShape.empty, 'category: the hint shows, the streak hides, an empty board', JSON.stringify(catShape));
+  check((await fits(alex)).length === 0, 'category: fits a 900×560 window', (await fits(alex)).join('; '));
+  await tap(alex, country.other);
+  const countryRow = await until(() => alex.evaluate(() => document.querySelectorAll('#game-stage .ff-row.done').length === 1), 3000);
+  check(!!countryRow, `category: a country name (${country.other}) is a guess`);
+  await alex.waitForTimeout(700);
+  await tap(alex, country.answer);
+  const catSolved = await until(() => alex.evaluate(() => /Solved in 2\/7/.test(document.querySelector('#game-stage .ff-message').textContent)), 4000);
+  check(!!catSolved, `category: today's country (${country.answer}) solves it`);
+  await alex.evaluate(() => document.querySelector('#game-stage .ff-share').click());
+  const catShared = await alex.evaluate(() => navigator.clipboard.readText());
+  check(/^🍿 Five Frames #\d+ · 🌍 Countries · 2\/7$/u.test(catShared), 'category: the share line names the category, no letters', catShared);
+  await alex.screenshot({ path: __dirname + '/frames-category.png' });
+  await alex.selectOption('#game-stage .ff-cat', 'daily');
+  await alex.waitForTimeout(300);
+  // (The streak check above cleared today's daily game, so the daily board is empty again.)
+  check(await alex.evaluate(() => !document.querySelector('#game-stage .ff-row.done') && !document.querySelector('#game-stage .ff-streak').hidden), 'back to the daily word: its own board (not the category\'s) and the streak');
 
   const phone = await browser.newContext({ ...devices['iPhone 13'], permissions: ['clipboard-read', 'clipboard-write'] });
   const pam = await person(phone, 'Pam', 'elf');

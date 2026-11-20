@@ -14,6 +14,17 @@ Sources and licences (also in apps/web/public/third-party-notices.txt and docs/i
   marks; the guesses are the five-letter lemmas and the five-letter forms we make from them below (plural, cases,
   possessives, a few verb forms), the answer candidates are the lemmas only.
 - LDNOOBW (CC BY 4.0, Shutterstock): the bad-word filter for answers.
+- FrequencyWords (OpenSubtitles 2018, Hermit Dave, content CC BY-SA 4.0): used **only here, offline, as a filter** (card
+  FW1, "real words only"): a guess must be seen at least GUESS_SEEN times in the subtitles, a general answer at least
+  ANSWER_SEEN times, a category word CATEGORY_SEEN times (or be in `<lang>-keep.txt`). Nothing of it is shipped: no counts, no ranks, no word that is not in
+  the dictionaries above.
+Category lists (`<lang>-cat-<id>.txt`, hand-written, card FW1) become CATEGORIES in the same module: every word of a
+category is an answer of that category and an allowed guess while playing it.
+
+    python3 scripts/words/build-words.py --check
+
+rebuilds everything in memory and fails when the shipped modules differ from it or a list breaks a rule (a non-word
+answer, a short category, a category word that is never seen in the subtitles, a blocked word).
 Answers keep every answer shipped before (`<lang>-answers-v1.txt`) and add our own picks; `<lang>-extra.txt` adds words
 by hand, `<lang>-exclude.txt` removes them (the eye review).
 """
@@ -35,7 +46,19 @@ SOURCES = {
     'zemberek.dict': 'https://raw.githubusercontent.com/ahmetaa/zemberek-nlp/master/morphology/src/main/resources/tr/master-dictionary.dict',
     'ldnoobw-en.txt': 'https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en',
     'ldnoobw-tr.txt': 'https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/tr',
+    'freq-en.txt': 'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_full.txt',
+    'freq-tr.txt': 'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/tr/tr_full.txt',
 }
+
+# How often a word must appear in the subtitles (FrequencyWords, hundreds of millions of words) to count as a real,
+# living word: a guess, a general answer, a category word.
+GUESS_SEEN = 5
+ANSWER_SEEN = 20
+CATEGORY_SEEN = 3
+# The categories, in the order the game lists them. Each needs at least this many words (three weeks of daily play).
+CATEGORY_IDS = ['countries', 'cities', 'animals', 'food', 'jobs', 'nature', 'home']
+CATEGORY_MIN = 21
+CHECK = {'on': False, 'problems': []}
 
 
 def fetch(cache, name):
@@ -58,20 +81,83 @@ def listed(name):
     return words
 
 
-def write(lang, guesses, answers, header):
+def seen(cache, lang):
+    """Five-letter words and how often the subtitles use them (all letter cases added up)."""
+    counts = {}
+    for line in open(fetch(cache, f'freq-{lang}.txt'), encoding='utf-8'):
+        parts = line.split()
+        if len(parts) != 2 or len(parts[0]) != 5:
+            continue
+        w = tr_lower(parts[0]) if lang == 'tr' else parts[0].lower()
+        counts[w] = counts.get(w, 0) + int(parts[1])
+    return counts
+
+
+def categories(lang, counts, bad, alphabet, keep):
+    """The hand-written category lists, checked: five letters of the alphabet, no repeats, seen, not blocked."""
+    out = {}
+    for cat in CATEGORY_IDS:
+        words = listed(f'{lang}-cat-{cat}.txt')
+        problems = [w for w in words if len(w) != 5 or not set(w) <= alphabet]
+        problems += [w for w in words if counts.get(w, 0) < CATEGORY_SEEN and w not in keep]
+        problems += [w for w in words if w in bad]
+        problems += sorted({w for w in words if words.count(w) > 1})
+        if problems:
+            problem(f'{lang} category {cat}: {" ".join(problems)}')
+        if len(set(words)) < CATEGORY_MIN:
+            problem(f'{lang} category {cat}: {len(set(words))} words, needs {CATEGORY_MIN}')
+        out[cat] = sorted(set(words))
+    return out
+
+
+def problem(text):
+    CHECK['problems'].append(text)
+    print(f'PROBLEM: {text}')
+
+
+def write(lang, guesses, answers, header, cats):
     words = sorted(set(guesses) | set(answers))
     index = {w: i for i, w in enumerate(words)}
     answers = sorted(set(answers), key=lambda w: index[w])
     packed = ''.join(words)
     positions = ','.join(base36(index[w]) for w in answers)
     path = os.path.join(OUT, f'{lang}.ts')
-    with open(path, 'w', encoding='utf-8') as f:
+    with opened(path) as f:
         f.write(header.format(guesses=f'{len(words)}', answers=f'{len(answers)}'))
         f.write('\n/** Every allowed guess, five letters each, one after another. */\n')
         f.write(f"export const WORDS = '{packed}';\n\n")
         f.write('/** The answers: positions in WORDS, base 36, comma-separated (not plain text, so the list is no spoiler). */\n')
-        f.write(f"export const ANSWERS = '{positions}';\n")
-    print(f'{lang}: {len(words)} guesses, {len(answers)} answers -> {os.path.relpath(path, ROOT)}')
+        f.write(f"export const ANSWERS = '{positions}';\n\n")
+        f.write('/**\n * The categories (card FW1): five-letter words glued together, per category. A category\'s words are its answers\n')
+        f.write(' * and, while playing it, allowed guesses too (country and city names are not in WORDS).\n */\n')
+        f.write('export const CATEGORIES: Record<string, string> = {\n')
+        for cat in CATEGORY_IDS:
+            f.write(f"  {cat}: '{''.join(cats[cat])}',\n")
+        f.write('};\n')
+    print(f'{lang}: {len(words)} guesses, {len(answers)} answers, {sum(len(v) for v in cats.values())} category words -> {os.path.relpath(path, ROOT)}')
+
+
+class opened:
+    """Writes a module, or with --check compares the text with the shipped one."""
+
+    def __init__(self, path):
+        self.path, self.parts = path, []
+
+    def __enter__(self):
+        return self
+
+    def write(self, text):
+        self.parts.append(text)
+
+    def __exit__(self, *exc):
+        text = ''.join(self.parts)
+        if CHECK['on']:
+            old = open(self.path, encoding='utf-8').read() if os.path.exists(self.path) else ''
+            if old != text:
+                problem(f'{os.path.relpath(self.path, ROOT)} is not what the lists build (run build-words.py)')
+        else:
+            with open(self.path, 'w', encoding='utf-8') as f:
+                f.write(text)
 
 
 def base36(n):
@@ -96,7 +182,7 @@ def write_blocked(cache):
         words |= {w for w in listed(f'{lang}-exclude.txt') if len(w) == 5}
         out[lang] = sorted(words)
     path = os.path.join(OUT, 'blocked.ts')
-    with open(path, 'w', encoding='utf-8') as f:
+    with opened(path) as f:
         f.write('// Five-letter words that must never be a Five Frames answer: the bad-word lists of LDNOOBW (CC BY 4.0, Shutterstock,\n')
         f.write('// see /third-party-notices.txt) and our eye review. Generated by scripts/words/build-words.py; used by the tests only.\n\n')
         for lang in ('en', 'tr'):
@@ -146,17 +232,23 @@ def build_en(cache):
         return any(len(s) >= 2 and s in lexicon for s in stems)
 
     bad = bad_words(cache, 'en')
+    counts = seen(cache, 'en')
     exclude = set(listed('en-exclude.txt'))
+    keep = set(listed('en-keep.txt'))
     picked = {w for w, s in level.items() if s <= 35 and not inflected(w) and w not in proper}
     answers = (set(listed('en-answers-v1.txt')) | picked | set(listed('en-extra.txt'))) - exclude - bad
-    guesses = enable | guesses | answers
+    # FW1: only words people really use (an answer seen ANSWER_SEEN times, a guess GUESS_SEEN times).
+    answers = {w for w in answers if counts.get(w, 0) >= ANSWER_SEEN or w in keep}
+    guesses = {w for w in enable | guesses if counts.get(w, 0) >= GUESS_SEEN} | answers
+    cats = categories('en', counts, bad, set('abcdefghijklmnopqrstuvwxyz'), keep)
     header = (
         '// Five Frames word list, English ({guesses} allowed guesses, {answers} answers). Generated by\n'
         '// scripts/words/build-words.py; see docs/internal/research/word-game.md "Shipped lists" and /third-party-notices.txt.\n'
-        '// Guesses: ENABLE (public domain) and SCOWL (Copyright 2000-2018 by Kevin Atkinson, permissive licence), five-letter words.\n'
-        '// Answers: our own picks of common words from them, stored as base-36 indices (not plain text).\n'
+        '// Guesses: ENABLE (public domain) and SCOWL (Copyright 2000-2018 by Kevin Atkinson, permissive licence), five-letter words\n'
+        '// that are really in use (FW1). Answers: our own picks of common words from them, stored as base-36 indices (not\n'
+        '// plain text). Categories: our own hand-written lists.\n'
     )
-    write('en', guesses, answers, header)
+    write('en', guesses, answers, header, cats)
 
 
 VOWELS = 'aeıioöuü'
@@ -240,30 +332,42 @@ def build_tr(cache):
             lemmas.add(word)
         forms = verb_forms(word, marks) if pos == 'Verb' else noun_forms(word, marks) if pos in ('Noun', 'Adj') else []
         guesses |= {f for f in forms if len(f) == 5}
-    guesses = {w for w in guesses | lemmas if set(w) <= letters}
     bad = bad_words(cache, 'tr')
+    counts = seen(cache, 'tr')
     exclude = set(listed('tr-exclude.txt'))
+    keep = set(listed('tr-keep.txt'))
     answers = (set(listed('tr-answers-v1.txt')) | (set(listed('tr-extra.txt')) & lemmas)) - exclude - bad
+    # FW1: only words people really use (an answer seen ANSWER_SEEN times, a guess GUESS_SEEN times).
+    answers = {w for w in answers if counts.get(w, 0) >= ANSWER_SEEN or w in keep}
+    guesses = {w for w in guesses | lemmas if set(w) <= letters and counts.get(w, 0) >= GUESS_SEEN} | answers
+    cats = categories('tr', counts, bad, letters, keep)
     header = (
         '// Five Frames word list, Turkish ({guesses} allowed guesses, {answers} answers). Generated by\n'
         '// scripts/words/build-words.py; see docs/internal/research/word-game.md "Shipped lists" and /third-party-notices.txt.\n'
         '// Guesses: the five-letter words of the Zemberek dictionary (Apache 2.0) and the five-letter forms we make from its\n'
-        '// lemmas. Answers: our own picks of common lemmas, stored as base-36 indices (not plain text).\n'
+        '// lemmas, the ones really in use (FW1). Answers: our own picks of common lemmas, stored as base-36 indices (not\n'
+        '// plain text). Categories: our own hand-written lists.\n'
     )
-    write('tr', guesses, answers, header)
+    write('tr', guesses, answers, header, cats)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--cache', default=os.path.join(os.path.expanduser('~'), '.cache', 'sidelit-words'))
     parser.add_argument('--lang', default='all', choices=['en', 'tr', 'all'])
+    parser.add_argument('--check', action='store_true', help='change nothing; fail if the shipped lists differ or break a rule')
     args = parser.parse_args()
+    CHECK['on'] = args.check
     os.makedirs(args.cache, exist_ok=True)
     if args.lang in ('en', 'all'):
         build_en(args.cache)
     if args.lang in ('tr', 'all'):
         build_tr(args.cache)
     write_blocked(args.cache)
+    if CHECK['problems']:
+        raise SystemExit(f'{len(CHECK["problems"])} problem(s) in the word lists')
+    if args.check:
+        print('word lists ok')
 
 
 if __name__ == '__main__':

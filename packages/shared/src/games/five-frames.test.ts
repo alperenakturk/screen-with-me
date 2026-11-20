@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALPHABET, FRAMES_VERSION, MAX_TRIES,
-  answerFor, dayNumber, freshFrames, liveStreak, guess, loadFrames, normalize, record, saveFrames, score, seeded, shareLine,
+  CATEGORY_IDS, answerFor, categoryAnswer, dayNumber, decodeCategories, freshFrames, isCategory, todayIn, liveStreak, guess, loadFrames, normalize, record, saveFrames, score, seeded, shareLine,
   solved, today, trayMarks, upper, wellFormed, type DayGame,
 } from './five-frames.ts';
 
@@ -181,3 +181,60 @@ describe('Five Frames stats and save', () => {
     expect(cleaned.stats.en.tries).toEqual([1, 0, 0, 0, 0, 0, 0]);
   });
 });
+
+// FW1: a daily word per category, the category in the share line, its own save per language and category.
+describe('categories', () => {
+  const words = ['spain', 'italy', 'japan', 'china', 'india', 'egypt', 'chile', 'nepal'];
+
+  it('every category answer comes from its list, the same for everyone, and categories do not walk in step', () => {
+    for (let day = 1; day <= 30; day++) {
+      expect(words).toContain(categoryAnswer(day, words, 'en', 'countries'));
+      expect(categoryAnswer(day, words, 'en', 'countries')).toBe(categoryAnswer(day, [...words], 'en', 'countries'));
+    }
+    const a = Array.from({ length: 8 }, (_, i) => categoryAnswer(i + 1, words, 'en', 'countries')).join();
+    const b = Array.from({ length: 8 }, (_, i) => categoryAnswer(i + 1, words, 'en', 'cities')).join();
+    expect(a).not.toBe(b);
+    // One round uses every word once.
+    expect(new Set(Array.from({ length: 8 }, (_, i) => categoryAnswer(i + 1, words, 'en', 'countries'))).size).toBe(8);
+  });
+
+  it('decodes packed lists, a missing one as empty', () => {
+    const cats = decodeCategories({ countries: 'spainitaly', cities: 'ürdünmısır' });
+    expect(cats.countries).toEqual(['spain', 'italy']);
+    expect(cats.cities).toEqual(['ürdün', 'mısır']);
+    expect(cats.food).toEqual([]);
+    expect(CATEGORY_IDS.every((c) => isCategory(c))).toBe(true);
+    expect(isCategory('daily')).toBe(false);
+  });
+
+  it('keeps a game per language and category, separate from the daily word, and saves it', () => {
+    const save = freshFrames();
+    todayIn(save, 'en', 'countries', 5).guesses.push('spain');
+    today(save, 'en', 5).guesses.push('house');
+    expect(todayIn(save, 'en', 'countries', 5).guesses).toEqual(['spain']);
+    expect(todayIn(save, 'tr', 'countries', 5).guesses).toEqual([]);
+    expect(todayIn(save, 'en', 'cities', 5).guesses).toEqual([]);
+    // A new day starts the category fresh.
+    expect(todayIn(save, 'en', 'countries', 6).guesses).toEqual([]);
+    todayIn(save, 'en', 'countries', 6).guesses.push('italy');
+    const back = loadFrames(saveFrames(save));
+    expect(back.cats['en:countries']).toEqual({ day: 6, guesses: ['italy'] });
+    expect(back.games.en).toEqual({ day: 5, guesses: ['house'] });
+    // Unknown keys and junk are dropped.
+    const junk = loadFrames({ ...JSON.parse(saveFrames(save)), cats: { ...save.cats, 'en:planets': { day: 1, guesses: ['venus'] }, 'en:food': 3 } });
+    expect(Object.keys(junk.cats).sort()).toEqual(['en:cities', 'en:countries', 'tr:countries']);
+  });
+
+  it('a save without categories still loads', () => {
+    const old = JSON.parse(saveFrames(freshFrames()));
+    delete old.cats;
+    expect(loadFrames(old).cats).toEqual({});
+  });
+
+  it('the share line names the category, never the word', () => {
+    const game = { day: 12, guesses: ['italy', 'spain'] };
+    expect(shareLine('Five Frames', game, 'spain', '🌍 Countries')).toBe('🍿 Five Frames #12 · 🌍 Countries · 2/7');
+    expect(shareLine('Five Frames', game, 'spain')).toBe('🍿 Five Frames #12 · 2/7');
+  });
+});
+

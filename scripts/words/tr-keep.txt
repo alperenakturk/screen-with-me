@@ -1,0 +1,4 @@
+# Words kept although the subtitles rarely use them (card FW1): common in everyday Turkish, rare in film dialogue.
+aşure iftar sahur kefir humor tunik triko lodos lüfer salep imece
+# Category words (province names).
+düzce iğdır
