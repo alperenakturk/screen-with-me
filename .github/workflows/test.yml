@@ -465,7 +465,17 @@ jobs:
 
       - name: Games sweep on a 360 × 640 phone (the Games tab, EN + TR)
         # PH2: every game fits a small phone's Games tab unscaled (13 px text, 44 px targets), running tables included.
-        run: SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+        run: SHOTS=/tmp/phone-shots SIZES=small GW_LANGS=none node scripts/harness/games-sweep/run.cjs http://localhost:8787
+
+      # GPH1: the small phone's shots of every game, kept a week with the run, so a PR shows what a phone sees.
+      - name: Keep the small phone's game shots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phone-game-shots
+          path: /tmp/phone-shots
+          retention-days: 7
+          if-no-files-found: ignore
 
       # Card GW5: every game's free window looks the same at its smallest, a middle and its largest size (only scaled);
       # the tables in a sideways tablet's video's place keep 13 px text (the GW3 handoff's Duel and Sea Battle six).
