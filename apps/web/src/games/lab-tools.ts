@@ -115,6 +115,38 @@ async function layoutStable(kind: string, openTable: (kind: RoomGameKind) => voi
   return { kind, stable, phone, before, during, after };
 }
 
+/** GPH1: the open game on a phone, judged as the games sweep does: is it drawn at its own size (not scaled down), does
+ * every control get 44 px, is any control covered by another block, and is any text under 13 px. */
+function phoneSweep(): unknown {
+  const stage = document.getElementById('game-stage');
+  if (!stage || stage.hidden) throw new Error('no game open');
+  const inner = stage.firstElementChild as HTMLElement | null;
+  const scale = inner && inner.offsetWidth ? +(inner.getBoundingClientRect().width / inner.offsetWidth).toFixed(3) : 1;
+  const label = (el: Element) => (el.id ? `#${el.id}` : `.${[...el.classList].slice(0, 2).join('.')}`) || el.tagName.toLowerCase();
+  const tiny: string[] = [];
+  const covered: string[] = [];
+  const small: string[] = [];
+  for (const el of stage.querySelectorAll<HTMLElement>('*')) {
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height || el.closest('[aria-hidden="true"], svg, [hidden]')) continue;
+    const style = getComputedStyle(el);
+    if (style.visibility === 'hidden' || style.display === 'none') continue;
+    if (el.matches('button, [role="button"], input, select, a[href]') && !(el as HTMLButtonElement).disabled) {
+      // The sweep's three exceptions: Five Frames' keys (a phone keyboard's shape), Sea Battle's cells (tap aims, a
+      // second tap fires) and backgammon's tall, narrow points (a near miss snaps).
+      const keyOk = el.matches('.ff-key') && r.height >= 43.5 && r.width >= 26;
+      const pointOk = el.matches('.bg-point') && r.height >= 87.5 && r.width >= 22;
+      if (!keyOk && !pointOk && !el.matches('.sea-cell') && Math.min(r.width, r.height) < 43.5) tiny.push(`${label(el)} ${Math.round(r.width)}×${Math.round(r.height)}`);
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (hit && !el.contains(hit) && !hit.contains(el) && style.pointerEvents !== 'none') covered.push(`${label(el)} under ${label(hit)}`);
+    }
+    const own = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim());
+    if (own && parseFloat(style.fontSize) * scale < 12.8 && !el.closest('.dama-board, .chess-board, .bg-board, .xox-board, .sea-grid')) small.push(`${label(el)} ${(parseFloat(style.fontSize) * scale).toFixed(1)}px`);
+  }
+  const ok = scale > 0.99 && !tiny.length && !covered.length && !small.length;
+  return { ok, scale, tiny: tiny.slice(0, 8), covered: covered.slice(0, 8), small: small.slice(0, 8) };
+}
+
 /** The hall's commands, registered once by the games stage. */
 /** LAB2: the tables a 🤖 friend can sit at (`lab-table-friend.ts`, loaded only when one sits down). */
 const FRIEND_KINDS: readonly RoomGameKind[] = ['quiz', 'draw', 'poker', 'duel', 'sea'];
@@ -144,6 +176,19 @@ export function registerGamesLab(
         where: IN_ROOM,
         run: () => void openSolo(kind),
       })),
+      {
+        // GPH1 (owner, 19 Nov 2026): games on a phone: its own size, 44 px targets, nothing covering a control.
+        id: 'games.phoneSweep',
+        title: { en: 'Games: check the open game on this phone', tr: 'Oyunlar: açık oyunu bu telefonda denetle' },
+        help: {
+          en: 'Looks at the open game as the games sweep does and writes whether it is drawn at its own size (not shrunk), which controls are under 44 px, which are covered by another block, and which texts are under 13 px.',
+          tr: 'Açık oyuna oyun taramasının baktığı gibi bakar; kendi boyunda mı çizildiğini (küçültülmeden), hangi düğmelerin 44 px altında, hangilerinin başka bir bloğun altında kaldığını ve hangi yazıların 13 px altında olduğunu yazar.',
+        },
+        tab: 'games',
+        where: IN_ROOM,
+        available: () => !!document.querySelector('#game-stage:not([hidden])') || { en: 'open a game first', tr: 'önce bir oyun aç' },
+        run: () => JSON.stringify(phoneSweep()),
+      },
       {
         // GW4 (owner, 17 Nov 2026): opening, playing and closing a game never moves the video or the side panel.
         id: 'games.layoutStable',

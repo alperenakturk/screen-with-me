@@ -5,7 +5,8 @@
 // Screenshots go to SHOTS (default: a temp folder) for a human look.
 //
 //   npm run dev (its server has the lab flag), then: node scripts/harness/games-sweep/run.cjs [site]
-//   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room.
+//   GAMES=chess,quiz SIZES=laptop LANGS=en narrows the run; FRIENDS=3 adds the Test Lab's fake friends to the room;
+//   PROBE='<js expression>' prints its value on every page.
 //   Card GW: on computers every game is also shrunk to its smallest and grown to its largest window (and has no ⛶:
 //   W1); GW_LANGS=tr runs those passes in Turkish only, GW_LANGS=none skips them.
 const { chromium, devices } = require('playwright');
@@ -520,6 +521,8 @@ async function windowPasses(page, label, g, phone) {
         const phone = /^(iphone|pixel|small)/.test(size);
         const m = await page.evaluate(measure, { mayScroll: MAY_SCROLL, minTarget: phone ? 44 : 24, whole: !!g.whole });
         await page.screenshot({ path: path.join(SHOTS, `${size}-${lang}-${game}.png`) });
+        // PROBE='<js expression>' prints what it returns on each page (a look at sizes while fixing a layout).
+        if (process.env.PROBE) console.log(`probe ${label}:`, JSON.stringify(await page.evaluate(process.env.PROBE).catch((e) => String(e))));
         if (m.missing) {
           check(false, `${label}: the game window shows`);
           continue;
@@ -537,6 +540,13 @@ async function windowPasses(page, label, g, phone) {
         check(m.tinyCount === 0, `${label}: every control is at least ${phone ? 44 : 24} px to hit`, m.tiny.slice(0, process.env.TINY_ALL ? 200 : 6).join(' | '));
         check(!m.pageScroll, `${label}: the page does not scroll`, m.pageScroll);
         check(m.covered.length === 0, `${label}: nothing lies over a control (every tap lands)`, m.covered.join(' | '));
+        // GPH1: on a phone the Test Lab's own check (`games.phoneSweep`, what the owner can run on his phone) agrees.
+        if (phone && !g.busy) {
+          const lab = await run('games.phoneSweep').catch((e) => ({ text: String(e) }));
+          let verdict = null;
+          try { verdict = JSON.parse(lab.text.slice(lab.text.indexOf('{'))); } catch {}
+          check(!!verdict?.ok, `${label}: the Test Lab's games.phoneSweep passes`, verdict ? JSON.stringify(verdict) : lab.text);
+        }
         // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
         if (!phone && !g.busy && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
       }
