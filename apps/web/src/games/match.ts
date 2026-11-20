@@ -553,7 +553,9 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
       el(
         'span',
         { class: 'xox-name' },
-        person ? `${person.bot ? t('classics.botName') : person.name}${person.id === me ? ` (${t('games.you')})` : ''}` : el('span', { class: 'muted' }, t('games.seatEmpty')),
+        // GPH1: "(you)" is its own span, so a phone's half-width seat can drop it and keep the name whole.
+        person ? (person.bot ? t('classics.botName') : person.name) : el('span', { class: 'muted' }, t('games.seatEmpty')),
+        person?.id === me ? el('span', { class: 'xox-you' }, ` (${t('games.you')})`) : '',
         person && !person.online ? el('small', {}, ` · ${t('games.offline')}`) : '',
       ),
       seatExtra(mark),
