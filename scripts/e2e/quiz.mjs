@@ -68,7 +68,8 @@ alex.send({ t: 'start' });
 const q1 = await alex.wait((m) => m.t === 'state' && m.phase === 'question', 'q1');
 ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && (q1.options.length >= 2 || q1.typed) && !('correct' in q1), 'First question: general knowledge, right option hidden');
 ok(q1.lv === 3 && QUIZ_BANK[q1.qid]?.d === 3, 'QZ4: a Hard game asks a hard question, and says so (lv 3)');
-ok(/^[\x00-\x7F’…“”°×−]+$/.test(q1.question), 'The question is in English');
+// The bank's own English text (an ASCII test failed on names such as "László Bíró", a QZ4 hard question).
+ok(q1.question === QUIZ_BANK[q1.qid]?.en.q, 'The question is in English');
 
 // 50:50 (on a four-option question): only Alex gets the hidden options; a second use does nothing.
 let fiftyHide = null;
