@@ -4888,6 +4888,24 @@ html.phone #game-stage .quiz-page.draw-lobby .quiz-intro .place-2 .game-podium-s
   cursor: default;
 }
 
+/* QZ3: after my answer ×2 is the joker still to press (until the reveal): it glows. */
+.quiz-joker.ready {
+  background: color-mix(in srgb, var(--warn) 40%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warn) 55%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .quiz-joker.ready {
+    animation: quiz-joker-ready 1.2s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes quiz-joker-ready {
+  to {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--warn) 25%, transparent);
+  }
+}
+
 .quiz-option.gone {
   opacity: 0.18;
   filter: grayscale(1);

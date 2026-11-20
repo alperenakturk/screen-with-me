@@ -107,7 +107,8 @@ const e1 = entryOf(q);
 const bonus = quizLevelBonus(e1.d, e1.typed);
 const ra = r.players.find((p) => p.id === wa.you);
 const rs = r.players.find((p) => p.id === ws.you);
-ok(ra.rank === 1 && ra.gained >= Math.round(2 * 170 * bonus), `Double: Alex's right answer counts twice (${ra.gained})`);
+// QZ3: ×2 played before answering doubles a right answer but without the first-answer bonus (≈ 2 × 150).
+ok(ra.rank === 1 && ra.gained >= Math.round(2 * 130 * bonus) && ra.gained <= Math.round(2 * 160 * bonus), `Double before answering: Alex's right answer counts twice, without the first-answer bonus (${ra.gained})`);
 ok(rs.gained > 0 && rs.gained <= Math.round((175 * bonus) / 2) + 2, `Second chance: Sam's second try counts half (${rs.gained})`);
 ok(r.players.find((p) => p.id === wk.you).gained === 0, 'Kim was wrong');
 

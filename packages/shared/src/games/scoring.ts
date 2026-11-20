@@ -9,9 +9,10 @@ const share = (leftMs: number, totalMs: number): number => (totalMs > 0 ? Math.m
 /** Quiz: speed part 50–150, bonus for the first three right answers (50 / 25 / 10) and a streak bonus (+10 for every
  * right answer in a row after the first, at most +30). A wrong or missing answer gets 0. Best case 230. */
 export const QUIZ_RANK_BONUS = [50, 25, 10] as const;
-export function quizPoints(leftMs: number, totalMs: number, rank: number, streak: number): number {
+export function quizPoints(leftMs: number, totalMs: number, rank: number, streak: number, rankBonus = true): number {
   const speed = 50 + Math.round(100 * share(leftMs, totalMs));
-  const bonus = QUIZ_RANK_BONUS[rank - 1] ?? 0;
+  // QZ3: a ×2 Double pressed before answering gives up the first-answer bonus.
+  const bonus = rankBonus ? (QUIZ_RANK_BONUS[rank - 1] ?? 0) : 0;
   return speed + bonus + 10 * Math.min(3, Math.max(0, streak - 1));
 }
 
