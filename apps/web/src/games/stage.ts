@@ -16,7 +16,7 @@
 import { slideIn } from './motion.ts';
 import { CLASSICS_SIZES, GAME_CATALOG, LATEST_NEWS, SOLO_CATALOG, isSoloKind, unseenNews, type SoloKind, type SoloRoom } from '@swm/shared/games/catalog';
 import { personOf, type Avatar, type ClientMessage, type Member, type RoomGame, type RoomGameKind } from '@swm/shared/protocol';
-import { hasMouse, holdUpright, isPhoneLayout, isSideways, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
+import { hasMouse, isPhoneLayout, isSideways, isTouch, onPhoneLayout, onTabletUpright } from '../device.ts';
 import { flashHint } from '../ui/hint.ts';
 import { el } from '../dom.ts';
 import { lang, t } from '../i18n.ts';
@@ -367,9 +367,8 @@ export function createGameStage(opts: StageOptions) {
     document.documentElement.classList.toggle('game-below', mode === 'below' && !stage.hidden);
     // phone.css: the room's video becomes a small preview in the game's head (it keeps playing, a tap goes back).
     document.documentElement.classList.toggle('ph-game', isPhoneLayout() && mode === 'full' && !stage.hidden && !shortsView() && !inTab);
-    // PH2: the game in the Games tab (ui/phone-room.ts shows that tab); turning the phone changes nothing meanwhile.
+    // PH2: the game in the Games tab (ui/phone-room.ts shows that tab); held sideways, ui/turn-note.ts covers it (PH4).
     document.documentElement.classList.toggle('ph-game-tab', inTab && !stage.hidden);
-    holdUpright(inTab && !stage.hidden);
     phoneHead();
     if (mode === 'below') placeBelow();
     if (mode === 'float') placeFloat();
@@ -1430,7 +1429,7 @@ export function createGameStage(opts: StageOptions) {
       shown: !stage.hidden,
       inTab: stage.classList.contains('in-tab'),
       waiting: document.getElementById('ph-tab-games')?.classList.contains('game-waiting') ?? false,
-      upright: html.classList.contains('upright-turned') ? 'held' : isSideways() ? 'sideways' : 'upright',
+      upright: isSideways() ? 'sideways' : 'upright',
       fit: {
         panel: panel ? [Math.round(panel.width), Math.round(panel.height)] : null,
         window: [Math.round(box.width), Math.round(box.height)],

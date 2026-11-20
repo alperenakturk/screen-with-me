@@ -33,6 +33,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Phone room: what shows now', tr: 'Telefon odası: şu an ne görünüyor' },
     help: { en: 'Writes the open tab, the input row and the visible buttons into the log.', tr: 'Açık sekmeyi, yazma satırını ve görünen düğmeleri kayda yazar.' },
   },
+  'phone.turnNote': {
+    title: { en: 'Phone: the "turn upright" note', tr: 'Telefon: "dik tut" notu' },
+    help: { en: 'Writes whether the note shows, whether the phone is sideways and whether only the video is on screen.', tr: 'Notun görünüp görünmediğini, telefonun yan olup olmadığını ve ekranda yalnızca videonun olup olmadığını kayda yazar.' },
+  },
   'pwa.state': {
     title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
     help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },

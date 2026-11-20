@@ -976,6 +976,8 @@ export const tr: Record<I18nKey, string> = {
   'phone.turn.fs': 'Tam ekran izle',
   'phone.turn.or': 'ya da telefonu dik tut',
   'phone.turn.upright': 'Telefonu dik tut',
+  'phone.turnNote': 'Telefonu dik tut',
+  'phone.turnNote.why': 'Yan çevrilince yalnızca video izlenir.',
   'phone.more.lab': 'Test Panosu',
   'phone.more.labError': 'Test Panosu · hata var',
   'phone.more.invite': 'Davet et',
