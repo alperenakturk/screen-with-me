@@ -675,7 +675,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   LAB3: on a phone held sideways (`html.phone.sideways`) a tip waits hidden (and the first one waits to start) until the
   phone is upright again, so it never covers "Watch fullscreen"; the sideways empty room's box takes the column's full
   height (`.player-wrap` `aspect-ratio: auto`, `100dvh`) and the right column is `min(53%, 380px)` with a 13 px
-  placeholder, so an iPhone SE fits it and "Say something…" stays whole. Harness `phone-sideways` (site job).
+  placeholder, so an iPhone SE fits it and "Say something…" stays whole. Since PH4 the turn note covers a sideways
+  phone's empty room (the layout stays under it). Harness `phone-sideways` (site job).
   Extension install while the "Filme git" card waits: the extension has the `scripting` permission and on
   `onInstalled` (`install`) injects `site-bridge.js` into open site tabs; the site watches `data-swm-extension` and
   redraws the card ("✓ Eklenti kuruldu!"). Store-time follow-up: a one-click store link on that card.
@@ -844,6 +845,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   manipulation`, push-to-talk hidden, footer ad-block tip hidden; viewport `viewport-fit=cover,
   interactive-widget=resizes-content` + safe-area paddings. Test: `scripts/harness/phone/run.cjs` (iPhone 13 /
   Pixel 7 emulation, 19 checks). **TV version:** see "TV version" below.
+- **Phones: upright only, except the video (PH4, owner, 19 Nov 2026: "everything upright, except watching the
+  video; if we can't control the turn, show a note"):** `ui/turn-note.ts` (`startTurnNote()`, from `app.ts`, not in the
+  extension's shell) keeps one `#turn-note` (`role="alertdialog"`, last in `<body>`, z-index 2147483647, `var(--bg)`,
+  rules at the end of `styles.css`, `html.turn-noted` stops page scroll). It shows when `isPhone()` and `isSideways()`
+  and not `watching()`: watching = the room has a video (`.room.has-item`), the phone room is on its Room tab
+  (`html[data-ph-tab]`), `#player-error` is hidden, no game window or games hall shows and no `[aria-modal]` /
+  `.dialog-backdrop` shows except the 💬 chat sheet (`data-sheet="shorts-chat"`). So the room's sideways view (the
+  video, ⛶ Watch fullscreen, 💬, 🎙) and the video's fullscreen stay; the Games / Search / Me tabs, any game, dialogs,
+  sheets, the room before its first video, joining and the home page get the note "📱↻ Turn your phone upright" /
+  "Telefonu dik tut" (`phone.turnNote`, `phone.turnNote.why`). While it shows every other child of `<body>` is `inert`
+  (no tap, no key reaches them, and the focus leaves the page; the note itself is not focused, so no ring); it asks `device.ts` `lockPortrait()` once per showing (works on Android in fullscreen or
+  an installed app: the page turns and the note goes by itself) and lets go of that lock (`screen.orientation.unlock`)
+  as soon as only the video is on screen. It watches `<body>` for dialogs, tabs and games only while a phone is
+  sideways (or held upright by it). Tablets and computers never see it. Test Lab: `phone.turnNote` (shown, phone,
+  sideways, watching, locked, the text). Harnesses: `phone-sideways` (site job: Galaxy S5 EN, iPhone SE TR, iPhone 13
+  EN; home, joining, the empty room, the Room tab with a video and 💬, the three tabs, the invite window, a computer and
+  an iPad with no note), `game-window-head` (a table in the Games tab turned sideways), `safety` (the report dialog).
 - **Phone room as an app screen (0.9.92.3, owner's picks 1A 2B 3A 4B 5A 6B 7A 8A 9A 10A 11A on
   https://claude.ai/artifact/MsCuFRZjQ6EyDAX8YFtEQu; step 1 of 3, `ui/phone-room.ts` + phone.css):** `<html class=
   "phone">` = `isPhoneLayout()` (≤ 700 px wide, or touch ≤ 500 px tall; `device.ts`, live). `ph-room` = phone + room,
@@ -930,10 +948,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   dot on 🎮 for a minimized table or a game left running on another tab. Tables pause the video here too (`autoPause`).
   Fit: a game not in `TAB_LAYOUT` (Game Studio adds each one with its own tab layout) lays out at `TAB_H` (600 px, its
   height on the phone's whole screen) and is scaled into the panel; one in it fills the panel and only overflow shrinks
-  it. Upright only: `device.ts` `holdUpright(on)` while the window shows in the tab keeps `isSideways()` false and
-  `html.sideways` off; held sideways, `html.upright-turned` lays `body` out at the last upright size (`--up-w`,
-  `--up-h`), centred and scaled to the height (`--up-s`); closing the game releases it. 0.9.97.135 (B2 on .132): the bands beside it are
-  `var(--bg)`; the strip's height comes from `--up-h` there (not the short sideways page); `phone-room.ts` puts a
+  it. Upright only (PH4 replaced PH2's `holdUpright` / `html.upright-turned` scaled column): held sideways, the
+  turn note ("Phones: upright only, except the video") covers the Games tab; the game keeps running under it. 0.9.97.135 (B2 on .132): `phone-room.ts` puts a
   `.ph-strip-back` "▶ Back to video" bar (28 px, `game.minimize`) first in the Games panel, under the strip and never
   over the player (YouTube's controls may cover the strip), shown only while a game shows in the tab; the strip is
   `clamp(52px, 100dvh − 584px, 152px)` so the game keeps its 450 px. A sideways tablet's side-game home starts 2 px right of
@@ -941,9 +957,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the panel's, never off screen; Snack Bar's text needs that width for 13 px), and under the link row only when that
   does not fit (`homeBox`, `isTablet()`; the 1366 laptop keeps its ≈ 4 px). The whole-screen `ph-game` is
   left only for a phone-narrow window outside the phone room (the TV); its video-thumbnail rules are gone. Test Lab:
-  `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / held / sideways, the panel and window sizes, the
-  scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone / phone-land: in the tab, video above
-  and tabs below, paused, ⋯, the dot, back to the game, turning changes nothing, leaving brings sideways back) and
+  `phoneGames.state` (the tab, the game, `inTab`, the dot, upright / sideways, the panel and window sizes, the
+  scale, in the panel, anything cut off). Harnesses: `game-window-head` (phone: in the tab, video above
+  and tabs below, paused, ⋯, the dot, back to the game, turned sideways the note covers it, upright again it is back) and
   `phone` (a table in the Games tab, the dot). **Game layouts in the tab (Game Studio):** every game is in
   `TAB_LAYOUT`. While a game shows (`html.ph-game-tab[data-ph-tab='games']`) the video is a strip
   `clamp(80px, 100dvh − 556px, 180px)` tall (room.css; the player takes no taps, a tap on `#theater` goes back to the
@@ -2553,7 +2569,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `(hover: none) and (pointer: coarse)`. The Test Lab drawer lies over the room on a touch screen without a mouse (no
   `padding-right` on `body`). The join card on a short screen keeps the room's name and hint. "Fullscreen when turned
   sideways" stays hidden on phones on purpose: a browser needs a tap for fullscreen, so a sideways phone offers "Watch
-  fullscreen" instead. Tests: `phone-sideways` (invite and Settings fit, iPhone SE + Galaxy S9+), `room-more` (the
+  fullscreen" instead (PH4: anything else sideways gets the turn note). Tests: `phone-sideways` (the turn note), `room-more` (the
   room reaches the window's foot at 1366 / 1920 / 2560 wide, with and without a video), `test-lab` (sideways tablet).
 - **🎞 Cinema mode (card 14, 0.9.96.7; `room.ts` `side`, CSS `html.cinema-on` in `room.css`, harness `cinema`):** T, the
   rail's ⋯ or `#side-toggle` (the old "hide the side panel") turns the page around the video dark and gives the video the

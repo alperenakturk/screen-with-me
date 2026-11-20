@@ -10,7 +10,9 @@
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
 - [ ] Lane A (handoff 19 Nov; older lines in `archive/status-history.md` "Lane A handoff lines, archived 19 Nov
   2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. CAM2 live (#555, v0.9.97.173; 27ai).
-  - [ ] TG1 (`claude/tg1-together-compact`): PR → live; hand test 27ak. Then the GPH1 phone check (Planner, findings).
+  - [ ] PH4 (`claude/ph4-phone-upright`): turn note → PR → merge → live e2e; hand test 27al.
+  - [ ] PH3 (`claude/ph3-phone-games-tab`): rebase after PH4, keep fix (a), drop (b); PH3 + PH4 cards to archive.
+  - [ ] Then the GPH1 phone check (Planner, findings).
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
     scenario.
@@ -21,7 +23,6 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
   `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
-- [ ] Game Studio 2 (20 Nov): FW1 #563 → merge → live e2e; hand test 27al.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -55,16 +56,15 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 
 **C. Recent releases** (each one line; the release's own wording is in the archive under its version)
 - [ ] 15d. [W135, 0.9.97.135] Tablet sideways, a video: Snack Bar's window starts just right of the link box ("Şimdi aç" whole), full height.
-  Phone held sideways, open a game: the small video shows on top with "▶ Videoya dön" under it (a tap goes back to the
-  room); the sides of the upright screen are the theme's colour, not black.
+  Phone upright, open a game: the small video shows on top with "▶ Videoya dön" under it (a tap goes back to the room).
 - [ ] 15c. [PH2, 0.9.97.130] Phone, upright: open Snack Bar, then a table with a friend (Quiz or Dama): it plays in
-  the Oyunlar tab, the video a strip on top (a tap on it goes back to the room), nothing cut off or tiny. Turn the
-  phone mid-game: nothing changes. Draw & Guess: draw with the tools and 🎨. Tavla: a tap just beside a point counts.
+  the Oyunlar tab, the video a strip on top (a tap on it goes back to the room), nothing cut off or tiny. Turned
+  mid-game: the PH4 note. Draw & Guess: draw with the tools and 🎨. Tavla: a tap just beside a point counts.
 - [ ] 15d. [0.9.97.134] Laptop and a sideways tablet, with a friend in the room and the film playing: Büfe shows every
   text whole (the income, 👥 +%…, the stand names), and the BÜFE sign is whole in the picture.
 - [ ] 15a. [QA3, 0.9.97.126] The four table lobbies look alike: 👑 / "(sen)", the "Bekleniyor…" chair, the grey
   "Oyunu başlat" (Duel: "Hazır") with its hint under it. In Five Frames typing T / M / F / Boşluk writes letters, no
-  cinema mode. Matinee: Five Frames and Snack Bar are light. Window Garden on an upright tablet and a sideways phone:
+  cinema mode. Matinee: Five Frames and Snack Bar are light. Window Garden on an upright tablet and an upright phone:
   the album under the window sill, Sula / Stub'un ışığı inside their card.
 - [ ] 15b. [0.9.97.128] Phone, upright: open any table (Draw & Guess, Quiz, Sea Battle…), tap ⋯ in its top bar:
   "Masadan kalk" and "Masayı kapat" can be tapped, and "Masadan kalk" leaves the table.
@@ -213,8 +213,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
 - [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
   visible and work (in voice too). Put the game away (✕): the full card comes back.
-- [ ] 27al. [FW1] Five Frames: odd words refused, everyday ones work (EN, TR). 🌍 Countries: the gold hint stays, a
-  country name is accepted, Copy names it. At 1366 the boxes sit centred, no line after the number.
+- [ ] 27al. [PH4] Phone, a video playing, turn it: video, ⛶, 💬, 🎙 as before. Turn it in Oyunlar, Ara, Ben, a game,
+  the invite window, the home page: a "📱↻ Telefonu dik tut" note, nothing under it reacts; upright, all as it was.
+- [ ] 27am. [FW1] Five Frames: odd words refused; 🌍 Countries: gold hint, a country is a guess; boxes centred.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

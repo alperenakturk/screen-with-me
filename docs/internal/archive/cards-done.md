@@ -3047,4 +3047,4 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   ≥ 20 times in OpenSubtitles (offline filter, `<lang>-keep.txt` exceptions): EN 7,716 / 2,036, TR 7,657 / 2,056;
   seven categories per language (`<lang>-cat-<id>.txt`, 22–44 words) with the category select as the hint, its own
   daily word, save and share line; `build-words.py --check`; Test Lab `fiveFrames.category`; harnesses `five-frames`
-  and `lab-games`; tickets centred on the whole row, stub without the tear line; hand test 27al.
+  and `lab-games`; tickets centred on the whole row, stub without the tear line; hand test 27am.

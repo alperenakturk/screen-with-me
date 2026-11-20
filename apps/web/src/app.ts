@@ -9,6 +9,7 @@ import { checkExtensionVersion } from './ext-update.ts';
 import { startDebugLab } from './debug-lab.ts';
 import { startDialogFocus } from './ui/dialog-focus.ts';
 import { isShell, replaceRemovedAvatars } from './storage.ts';
+import { startTurnNote } from './ui/turn-note.ts';
 
 const app = document.querySelector<HTMLElement>('#app')!;
 document.documentElement.lang = lang();
@@ -18,6 +19,8 @@ applyTheme(currentTheme(), { wait: false });
 applyFont(currentFont(), { remember: false });
 registerFontLab();
 registerThemeLab();
+// PH4: a phone held sideways shows only the video; anything else asks to turn it upright.
+if (!isShell) startTurnNote();
 
 // Geri tuşuyla dönülünce tarayıcı sayfayı önbellekten "donmuş" haliyle getirebilir (bağlantı
 // kapalı, "Sayfaya gidiliyor…" yazısı takılı kalır). Öyleyse sayfayı tazele.

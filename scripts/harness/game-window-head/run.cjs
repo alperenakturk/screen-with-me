@@ -15,7 +15,7 @@
 //   QA2 Tablets: a side game lines up with the side panel (upright: its column beside the chat), never over the video; the rail's hall shows whole. 1366: words
 //       on a table's head buttons where they fit, the paused note under the head, a gap to "Play now", a side game leaves
 //       cinema mode. Phone (PH2): games play inside the Games tab; a one-row head (name, ?, 🎙, ⋯ with Leave / Close); turning the phone
-//       with a game open changes nothing.
+//       with a game open shows the turn-upright note (PH4).
 //   W5  The free window follows a drag of its head (over a video file it may cover the video, nothing pushes it away);
 //       over a YouTube player it never covers it and never jumps while dragged; each game remembers its own spot and
 //       size; ✕ and 🎮 bring it back in the same spot; a double click on the head puts it back; the corner resizes it.
@@ -570,9 +570,9 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     await ctx.close();
   }
   // PH2: a phone with a table and a video: the table plays in the Games tab under the video (paused, with the note), its
-  // head one row (name, ?, 🎙, ⋯) with Leave / Close in ⋯; another tab keeps it running with a dot on 🎮; turning the
-  // phone changes nothing while it is open, and closing it brings sideways back. Opened sideways it is held upright too.
-  for (const [L, device] of [['phone', 'iPhone 13'], ['phone-land', 'iPhone 13 landscape']]) {
+  // head one row (name, ?, 🎙, ⋯) with Leave / Close in ⋯; another tab keeps it running with a dot on 🎮. PH4: turned
+  // sideways, the "Turn your phone upright" note covers it; upright again, the table is as it was.
+  for (const [L, device] of [['phone', 'iPhone 13']]) {
     const ctx = await browser.newContext({ ...devices[device] });
     await ctx.addInitScript(() => {
       for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1' })) localStorage.setItem(k, v);
@@ -635,25 +635,6 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     const inHead = await page.evaluate(() => window.__noteInHead === true);
     // (Here the phone's video often hasn't started, so there may be nothing to pause and no note at all.)
     check(!note, `${L} GP1: no note floats over the game (when the table pauses the video it says so in the head's title line${inHead ? ', seen' : ''})`, { inHead, note });
-    if (L === 'phone-land') {
-      check(s.upright === 'held', 'phone-land PH2: opened sideways, the room is held upright', s);
-      // 0.9.97.135 (B2 on .132): the strip shows, "▶ Back to video" under it (never over the player) goes back to the
-      // Room tab, and the bands beside the upright column are the theme's background, not black.
-      const strip = await page.evaluate(() => {
-        const v = document.querySelector('.player-wrap').getBoundingClientRect();
-        const bar = document.querySelector('.ph-strip-back')?.getBoundingClientRect();
-        const bg = getComputedStyle(document.documentElement).backgroundColor;
-        return { video: Math.round(v.height), bar: bar ? Math.round(bar.height) : 0, under: !!bar && bar.top >= v.bottom - 1, bg };
-      });
-      check(strip.video >= 20 && strip.bar > 0 && strip.under, 'phone-land 135: the strip shows, with "▶ Back to video" under it', strip);
-      check(strip.bg !== 'rgb(0, 0, 0)' && strip.bg !== 'rgba(0, 0, 0, 0)', 'phone-land 135: the bands beside the column are the theme background', strip);
-      await page.click('.ph-strip-back');
-      await wait(400);
-      const back = await phoneGames(page);
-      check(back.tab === 'room', 'phone-land 135: "▶ Back to video" goes back to the Room tab', back);
-      await page.click('#ph-tab-games');
-      await wait(400);
-    }
     await page.evaluate(() => window.__swmLab.run('gameWindow.more'));
     await wait(300);
     const menu = await page.evaluate(() => [...document.querySelectorAll('.game-more-pop:not([hidden]) button')].filter((b) => b.getBoundingClientRect().width > 0).map((b) => b.textContent.trim()));
@@ -668,20 +649,18 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       await wait(400);
       const back = await phoneGames(page);
       check(back.tab === 'games' && back.shown && !(await visible(page, '#game-menu')), 'phone PH2: back on 🎮 the table shows again (not the hall)', back);
-      // Turning the phone with the table open changes nothing: no sideways layout, the upright column stays.
-      await page.setViewportSize({ width: 844, height: 340 });
+      // PH4: turned sideways with the table open, the "Turn your phone upright" note covers it; the table stays in the tab.
+      await page.setViewportSize({ width: 664, height: 390 });
       await wait(800);
-      const turned = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways') }));
+      const turned = await page.evaluate(() => ({ note: !document.getElementById('turn-note')?.hidden }));
       const t2 = await phoneGames(page);
-      check(!turned.sideways && t2.upright === 'held' && t2.inTab && t2.fit.inPanel, 'phone PH2: turning the phone with a table open changes nothing', { ...turned, ...t2 });
-      // Closing it brings the room's sideways layout back.
-      await page.evaluate(() => window.__swmLab.run('gameWindow.more'));
-      await wait(300);
-      await page.evaluate(() => document.querySelector('.game-more-pop .game-leave').click());
-      await until(() => page.evaluate(() => document.getElementById('game-stage').hidden), 4000);
-      await wait(400);
-      const after = await page.evaluate(() => ({ sideways: document.documentElement.classList.contains('sideways'), held: document.documentElement.classList.contains('upright-turned') }));
-      check(after.sideways && !after.held, 'phone PH2: leaving the table brings the sideways layout back', after);
+      check(turned.note && t2.upright === 'sideways' && t2.inTab, 'phone PH4: turned sideways with a table open, the note covers it', { ...turned, ...t2 });
+      // Upright again, the table is as it was.
+      await page.setViewportSize({ width: 390, height: 664 });
+      await wait(800);
+      const t3 = await phoneGames(page);
+      const noteGone = await page.evaluate(() => !!document.getElementById('turn-note')?.hidden);
+      check(noteGone && t3.inTab && t3.shown && t3.fit.inPanel, 'phone PH4: upright again, the table is back in the Games tab', { noteGone, ...t3 });
     }
     await ctx.close();
   }

@@ -1,23 +1,28 @@
-// Card LAB3 + PH1: a phone held sideways. (1) A phone has no first-time tips; sideways with a video shows "Watch
-// fullscreen". (2) An iPhone SE's empty room fits sideways: "No video yet" inside the screen, nothing cut off, and the
-// message box's hint whole. (3) QA2-A: the invite window fits a sideways phone (iPhone SE, Galaxy S9+) without
-// scrolling, and Settings opens the Me tab beside the video, inside the screen.
+// Cards LAB3 + PH1 + PH4: a phone held sideways. PH4 (owner, 19 Nov 2026: "everything upright, except watching the
+// video"): on a Galaxy S5, an iPhone SE and an iPhone 13 held sideways,
+//   (1) the home page, joining and the room before its first video show the full-screen "Turn your phone upright" note
+//       (EN and TR), it covers the whole screen and nothing under it takes a tap; upright again, it goes;
+//   (2) with a video, the Room tab keeps today's sideways view: no note, ⛶ "Watch fullscreen" beside the video, and 💬
+//       opens the chat beside it (still no note); a phone has no first-time tips;
+//   (3) the Games, Search and Me tabs, the games hall and the invite window show the note; back on the Room tab it goes.
+// The Test Lab's `phone.turnNote` says the same as the page.
 //
-//   built site on wrangler dev (CI):  npm run build && (cd apps/server && npx wrangler dev --port 8787)
+//   built site on wrangler dev (CI):  npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LAB_SERVER:1)
 //                                     node scripts/harness/phone-sideways/run.cjs http://localhost:8787
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 let fails = 0;
 const check = (ok, label, extra = '') => {
-  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${extra}` : ''}`);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${!ok && extra ? ` → ${typeof extra === 'string' ? extra : JSON.stringify(extra)}` : ''}`);
   if (!ok) fails++;
 };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const until = async (fn, ms = 8000) => {
   for (let i = 0; i < ms / 150; i++) {
     const v = await fn().catch(() => null);
     if (v) return v;
-    await new Promise((r) => setTimeout(r, 150));
+    await wait(150);
   }
   return null;
 };
@@ -29,119 +34,168 @@ const tipShown = (page) =>
     return r.width > 0 && r.height > 0 && getComputedStyle(t).display !== 'none';
   });
 
-async function enter(page, room, name, tips) {
-  await page.addInitScript((seen) => {
-    localStorage.setItem('lang', 'en');
-    if (seen) localStorage.setItem('tipsSeen', '1');
-  }, !tips);
+/** What the note looks like now: shown, covering the screen, on top at the given selector's middle, its text. */
+const note = (page, under) =>
+  page.evaluate(async (sel) => {
+    const n = document.getElementById('turn-note');
+    if (!n) return { exists: false };
+    const r = n.getBoundingClientRect();
+    const target = sel && document.querySelector(sel);
+    let blocked = null;
+    if (target) {
+      const b = target.getBoundingClientRect();
+      const hit = document.elementFromPoint(Math.min(innerWidth - 1, Math.max(0, b.left + b.width / 2)), Math.min(innerHeight - 1, Math.max(0, b.top + b.height / 2)));
+      blocked = !!hit && n.contains(hit);
+    }
+    const inert = [...document.body.children].filter((c) => c !== n).every((c) => c.inert);
+    const lab = window.__swmLab ? JSON.parse((await window.__swmLab.run('phone.turnNote')).text.replace(/^\S+\s/, '')) : null;
+    return {
+      shown: !n.hidden && r.width > 0,
+      covers: r.left <= 0 && r.top <= 0 && r.right >= innerWidth && r.bottom >= innerHeight,
+      blocked,
+      inert,
+      text: n.querySelector('.turn-note-t')?.textContent,
+      lab,
+    };
+  }, under ?? null);
+
+/** Turns the page to `size` and waits for the note to settle. */
+async function turn(page, size) {
+  await page.setViewportSize(size);
+  await wait(500);
+}
+
+async function enter(page, room, name, { tips = false, lang = 'en' } = {}) {
+  await page.addInitScript(
+    ([seen, l]) => {
+      localStorage.setItem('lang', l);
+      if (seen) localStorage.setItem('tipsSeen', '1');
+    },
+    [!tips, lang],
+  );
+  await page.goto(`${SITE}/?debug=1`);
+  await page.waitForFunction(() => !!window.__swmLab, null, { timeout: 15000 });
   await page.goto(`${SITE}/r/${room}`);
   await page.fill('#name', name);
   await page.click('#name-form button.primary');
   await page.waitForSelector('.room');
 }
 
+const DEVICES = [
+  ['Galaxy S5', devices['Galaxy S5']],
+  ['iPhone SE', devices['iPhone SE']],
+  ['iPhone 13', devices['iPhone 13']],
+];
+
 (async () => {
   const browser = await chromium.launch();
-  const se = devices['iPhone SE'];
-  const sideways = { width: se.viewport.height, height: se.viewport.width };
 
-  // ---- (2) The empty room fits sideways on an iPhone SE ----
-  {
-    const ctx = await browser.newContext({ ...se });
-    const page = await ctx.newPage();
-    await enter(page, `side-fit-${Date.now().toString(36)}`, 'Alex', false);
-    await page.setViewportSize(sideways);
-    await page.waitForTimeout(800);
-    const fit = await page.evaluate(() => {
-      const wrap = document.querySelector('.player-wrap').getBoundingClientRect();
-      const parts = ['.room .empty h2, .room .empty h3, .room .empty strong'].map((s) => document.querySelector(s)).filter(Boolean);
-      const box = (e) => e.getBoundingClientRect();
-      const inside = parts.every((e) => {
-        const r = box(e);
-        return r.top >= Math.max(0, wrap.top) - 1 && r.bottom <= Math.min(innerHeight, wrap.bottom) + 1;
-      });
-      return { inside, parts: parts.length, wrap: [wrap.top, wrap.bottom].map(Math.round), vh: innerHeight, scroll: document.documentElement.scrollHeight <= innerHeight + 1 };
-    });
-    check(fit.parts >= 1 && fit.inside, 'iPhone SE sideways, empty room: the heading is inside the screen', JSON.stringify(fit));
-    check(fit.scroll, 'iPhone SE sideways, empty room: the page does not scroll', JSON.stringify(fit));
-    const hint = await page.evaluate(() => {
-      const i = document.querySelector('#chat-input');
-      const c = document.createElement('canvas').getContext('2d');
-      const ph = getComputedStyle(i, '::placeholder');
-      c.font = `${ph.fontSize} ${ph.fontFamily}`;
-      const cs = getComputedStyle(i);
-      return { room: Math.round(i.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight)), text: Math.round(c.measureText(i.placeholder).width) };
-    });
-    check(hint.text <= hint.room, 'iPhone SE sideways: the message box\'s "Say something…" is whole', JSON.stringify(hint));
-    await ctx.close();
-  }
+  for (const [label, dev] of DEVICES) {
+    const up = dev.viewport;
+    const side = { width: up.height, height: up.width };
+    const lang = label === 'iPhone SE' ? 'tr' : 'en';
+    const words = lang === 'tr' ? 'Telefonu dik tut' : 'Turn your phone upright';
 
-  // ---- (1) A phone has no first-time tips (PH1, phone essentials); sideways with a video shows "Watch fullscreen" ----
-  {
-    const room = `side-tip-${Date.now().toString(36)}`;
+    // ---- (1) Home, joining, the empty room ----
+    {
+      const ctx = await browser.newContext({ ...dev });
+      const page = await ctx.newPage();
+      await page.addInitScript((l) => localStorage.setItem('lang', l), lang);
+      await page.goto(`${SITE}/?debug=1`);
+      await page.waitForFunction(() => !!window.__swmLab, null, { timeout: 15000 });
+      check(!(await note(page)).shown, `${label} upright, home: no note`);
+      await turn(page, side);
+      const home = await note(page, '#create-room, .hero .btn.primary, main button');
+      check(home.shown && home.covers && home.text === words, `${label} sideways, home: "${words}" covers the screen`, home);
+      check(home.blocked !== false && home.inert, `${label} sideways, home: nothing under the note takes a tap`, home);
+      check(home.lab && home.lab.shown === true && home.lab.sideways === true, `${label}: the Test Lab's phone.turnNote says it shows`, home.lab);
+      await turn(page, up);
+      const back = await note(page);
+      check(!back.shown && !back.inert, `${label} upright again, home: the note goes`, back);
+
+      await page.goto(`${SITE}/r/side-join-${Date.now().toString(36)}`);
+      await page.waitForSelector('#name');
+      await turn(page, side);
+      const join = await note(page, '#name');
+      check(join.shown && join.blocked, `${label} sideways, joining: the note covers the name box`, join);
+      await turn(page, up);
+      await page.fill('#name', 'Alex');
+      await page.click('#name-form button.primary');
+      await page.waitForSelector('.room');
+      await turn(page, side);
+      const empty = await note(page);
+      check(empty.shown, `${label} sideways, a room before its first video: the note`, empty);
+      await ctx.close();
+    }
+
+    // ---- (2) Watching: the Room tab with a video ----
+    const room = `side-${label.replace(/\W/g, '').toLowerCase()}-${Date.now().toString(36)}`;
     const friend = await browser.newContext();
     const fp = await friend.newPage();
-    await enter(fp, room, 'Sam', false);
-    const ctx = await browser.newContext({ ...se });
+    await enter(fp, room, 'Sam');
+    const ctx = await browser.newContext({ ...dev });
     const page = await ctx.newPage();
-    await enter(page, room, 'Alex', true);
-    check(!(await until(() => tipShown(page), 3000)), 'phone: no first-time tip');
-    // Something to watch, so sideways shows the video and "Watch fullscreen".
+    await enter(page, room, 'Alex', { tips: true, lang });
+    if (label === 'Galaxy S5') check(!(await until(() => tipShown(page), 3000)), 'phone: no first-time tip');
     await fp.evaluate(() => document.querySelector('#sync-test')?.click());
     await until(() => page.evaluate(() => !!document.querySelector('.room.has-item')));
-    await page.setViewportSize(sideways);
-    await page.waitForTimeout(800);
-    const turn = await page.evaluate(() => {
-      const b = document.querySelector('.ph-turn-fs, .ph-turn button');
-      if (!b) return null;
-      const r = b.getBoundingClientRect();
-      return r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null;
+    await turn(page, side);
+    const watch = await note(page);
+    const fs = await page.evaluate(() => {
+      const b = document.querySelector('.ph-turn-fs');
+      const r = b?.getBoundingClientRect();
+      return !!r && r.width > 0 && document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('.ph-turn-fs') === b;
     });
-    check(!!turn, 'sideways with a video: "Watch fullscreen" shows', turn);
+    check(!watch.shown && !watch.inert && watch.lab?.watching === true, `${label} sideways with a video: no note`, watch);
+    check(fs, `${label} sideways with a video: "Watch fullscreen" shows and takes a tap`);
+    await page.click('#ph-side-chat');
+    await wait(500);
+    const chat = await note(page);
+    const sheet = await page.evaluate(() => document.querySelector('.ph-sheet:not([hidden])')?.dataset.sheet ?? null);
+    check(sheet === 'shorts-chat' && !chat.shown, `${label} sideways: 💬 opens the chat beside the video, no note`, { sheet, ...chat });
+    await page.keyboard.press('Escape');
+    await page.evaluate(() => document.querySelector('.ph-backdrop:not([hidden])')?.click());
+    await wait(300);
+
+    // ---- (3) Everything else sideways: the note ----
+    for (const tab of ['games', 'search', 'me']) {
+      await turn(page, up);
+      await page.click(`#ph-tab-${tab}`);
+      await wait(400);
+      await turn(page, side);
+      const n = await note(page, '.ph-tabs');
+      check(n.shown && n.covers && n.blocked !== false, `${label} sideways, the ${tab} tab: the note`, n);
+    }
+    await turn(page, up);
+    await page.click('#ph-tab-room');
+    await wait(400);
+    await turn(page, side);
+    const again = await note(page);
+    check(!again.shown, `${label} sideways, back on the Room tab: the note goes`, again);
+    await turn(page, up);
+    await page.evaluate(() => document.querySelector('#invite-btn').click());
+    await page.waitForSelector('.invite-dialog');
+    await turn(page, side);
+    const inv = await note(page, '.invite-dialog');
+    check(inv.shown && inv.blocked, `${label} sideways, the invite window: the note covers it`, inv);
+    await turn(page, up);
+    check(!(await note(page)).shown, `${label} upright, the invite window: no note`);
     await ctx.close();
     await friend.close();
   }
 
-  // ---- (3) QA2-A: the invite window and Settings fit a sideways phone ----
-  for (const [label, dev] of [['iPhone SE', devices['iPhone SE landscape']], ['Galaxy S9+', devices['Galaxy S9+ landscape']]]) {
-    const ctx = await browser.newContext({ ...dev });
+  // ---- A computer and a tablet never see it ----
+  for (const [label, opts] of [['computer 1366 × 768', { viewport: { width: 1366, height: 768 } }], ['iPad Mini sideways', devices['iPad Mini landscape']]]) {
+    const ctx = await browser.newContext(opts);
     const page = await ctx.newPage();
-    await enter(page, `side-dlg-${Date.now().toString(36)}`, 'Alex', false);
-    await page.waitForTimeout(600);
-    if (!(await page.$('.invite-dialog'))) await page.evaluate(() => document.querySelector('#invite-btn').click());
-    await page.waitForSelector('.invite-dialog');
-    await page.waitForTimeout(400);
-    const inv = await page.evaluate(() => {
-      const d = document.querySelector('.invite-dialog');
-      const r = d.getBoundingClientRect();
-      const wa = d.querySelector('.invite-wa')?.getBoundingClientRect();
-      return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, scroll: d.scrollHeight - d.clientHeight, wa: wa ? Math.round(wa.bottom) : null };
-    });
-    check(inv.top >= 0 && inv.bottom <= inv.vh && inv.scroll <= 1, `${label} sideways: the invite window fits without scrolling`, JSON.stringify(inv));
-    check(inv.wa !== null && inv.wa <= inv.bottom, `${label} sideways: the invite's WhatsApp button is inside the window`, JSON.stringify(inv));
-    await page.keyboard.press('Escape');
-    // PH1: Settings on a phone is the Me tab: every category, in the right-hand column, inside the screen (a list, so
-    // it may scroll).
-    await page.evaluate(() => document.querySelector('#settings-open').click());
-    await page.waitForTimeout(400);
-    const set = await page.evaluate(() => {
-      const panel = document.querySelector('.ph-panel[data-ph-panel="me"]');
-      const r = panel?.getBoundingClientRect();
-      return {
-        tab: document.documentElement.dataset.phTab,
-        secs: panel ? panel.querySelectorAll('.settings-sec').length : 0,
-        box: r && { top: Math.round(r.top), bottom: Math.round(r.bottom), left: Math.round(r.left), right: Math.round(r.right) },
-        vw: innerWidth,
-        vh: innerHeight,
-        dialog: !!document.querySelector('#settings-dialog[open]'),
-      };
-    });
-    check(set.tab === 'me' && set.secs === 4 && !set.dialog && set.box && set.box.top >= 0 && set.box.bottom <= set.vh && set.box.right <= set.vw && set.box.left > set.vw / 3, `${label} sideways: Settings opens the Me tab beside the video, inside the screen`, JSON.stringify(set));
+    await page.goto(`${SITE}/`);
+    await wait(600);
+    check(!(await note(page)).shown, `${label}: no note`);
     await ctx.close();
   }
 
   await browser.close();
-  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ A sideways phone: tips wait, the empty room, the invite and Settings fit');
+  console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ A sideways phone shows only the video; everything else asks to turn it upright');
   process.exit(fails ? 1 : 0);
 })().catch((e) => {
   console.error(e);

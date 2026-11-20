@@ -37,6 +37,21 @@ Two sessions never edit the same lines; the Planner splits work by files.
 
 (see `STATUS.md` "Task queue")
 
+### PH4. A phone is used upright, except to watch the video (owner, 19 Nov 2026; lane A)
+- Why: owner's pick "Her şey dik, video izleme hariç; dönmeyi kontrol edemiyorsak not çıksın" (Planner chat, 19 Nov
+  2026, "important"): games, settings and dialogs held sideways were cramped or scaled down (PH2's `upright-turned`).
+- What: a sideways phone keeps today's sideways video watching (the video, ⛶ Watch fullscreen, 💬 / 🎙 beside it, the
+  video's fullscreen). Anything else held sideways (the Games / Search / Me tabs, any game, settings, dialogs, the home
+  page, joining) shows one calm full-screen note "📱↻ Turn your phone upright" / "Telefonu dik tut" in the theme's
+  colours, and nothing under it can be tapped. Where the browser allows it (`screen.orientation.lock('portrait')`,
+  Android in fullscreen) the screen is locked upright instead. `device.ts` only (`isPhone`, `isSideways`). Replaces
+  PH2's `html.upright-turned` scaled column for phones (removed); tablets unchanged.
+- Done when: the note shows and blocks taps in each of those places on a Galaxy S5, an iPhone SE and an iPhone 13
+  held sideways (EN + TR) and never while watching, on a tablet or a computer; Test Lab hook `phone.turnNote`; harness
+  `phone-sideways` in the `site` job; first look; reference section, `changelog/next`, STATUS hand test.
+- Tests: harness `phone-sideways` (+ `game-window-head`, `safety`); owner's hand test 27al.
+- Owner's pick: "Her şey dik, video izleme hariç" (Planner chat, 19 Nov 2026).
+
 ## Ready
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across

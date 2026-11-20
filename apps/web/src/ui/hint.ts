@@ -74,13 +74,8 @@ export function flashHint(anchor: HTMLElement, text: string, ms = 2800, below = 
   const left = spot?.left ?? Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
   const above = r.top - bubble.offsetHeight - 8;
   const top = spot?.top ?? (above > 8 && !below ? above : r.bottom + 8);
-  // A scaled page (a phone held sideways with a game open, device.ts `holdUpright`) makes <body> the fixed bubble's
-  // frame: screen points are turned into its own.
-  const page = document.body.getBoundingClientRect();
-  const scale = document.body.offsetWidth ? page.width / document.body.offsetWidth : 1;
-  const fixed = Math.abs(scale - 1) > 0.01;
-  bubble.style.left = `${fixed ? (left - page.left) / scale : left}px`;
-  bubble.style.top = `${fixed ? (top - page.top) / scale : top}px`;
+  bubble.style.left = `${left}px`;
+  bubble.style.top = `${top}px`;
   current = { bubble, anchor };
   timer = window.setTimeout(close, ms);
   document.addEventListener('pointerdown', onPointerDown, true);
