@@ -267,6 +267,8 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
   `#feed-row-pause` never visible) and CI kept no picture (B2, 16 Nov).
 - **Old game layout points (Game Studio's first look, 16 Nov):** phone Sea Battle "Play against Stub" line wraps beside
   Easy / Medium; tablet: an empty band above the game; Draw & Guess round choices "1 / 2 / 3" in EN but "1 tur" in TR.
+- **Small leftovers (Planner, 20 Nov):** upright-tablet Shorts bar has no ⋯ More; the feed drawer cuts room text
+  mid-word; live e2e `quota.mjs` flake (shards share one address); `side-games-polish` harness stale since GW5.
 
 ## Testing in the cloud (verified 28 Oct 2026)
 Order matters: the server wants `apps/web/dist`, so build first.
