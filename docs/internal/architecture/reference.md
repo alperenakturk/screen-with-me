@@ -952,7 +952,11 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   turn note ("Phones: upright only, except the video") covers the Games tab; the game keeps running under it. 0.9.97.135 (B2 on .132): `phone-room.ts` puts a
   `.ph-strip-back` "▶ Back to video" bar (28 px, `game.minimize`) first in the Games panel, under the strip and never
   over the player (YouTube's controls may cover the strip), shown only while a game shows in the tab; the strip is
-  `clamp(52px, 100dvh − 584px, 152px)` so the game keeps its 450 px. A sideways tablet's side-game home starts 2 px right of
+  `clamp(52px, 100dvh − 584px, 152px)` so the game keeps its 450 px. PH3 (GPH1 review): in that strip the empty room
+  shows only its Search / Invite buttons (`.empty` centred, its `h2` and mascot hidden, the buttons 30–40 px tall, 13 px
+  text), whole above "Back to video" on 568–664 px phones; the Room tab keeps the full card. Test Lab
+  `phoneRoom.gamesTab` (the page scrolls?, the two buttons whole?, the title shown?); harness `phone-games-tab` (site job:
+  iPhone SE, Galaxy S5, iPhone 13). A sideways tablet's side-game home starts 2 px right of
   `#media-form` when the link row reaches over the window, at least `minSize[0]` wide (its right edge up to `EDGE` past
   the panel's, never off screen; Snack Bar's text needs that width for 13 px), and under the link row only when that
   does not fit (`homeBox`, `isTablet()`; the 1366 laptop keeps its ≈ 4 px). The whole-screen `ph-game` is

@@ -9,9 +9,8 @@
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
 - [ ] Lane A (handoff 19 Nov; older lines in `archive/status-history.md` "Lane A handoff lines, archived 19 Nov
-  2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. CAM2 live (#555, v0.9.97.173; 27ai).
-  - [ ] PH4 (`claude/ph4-phone-upright`): turn note → PR → merge → live e2e; hand test 27al.
-  - [ ] PH3 (`claude/ph3-phone-games-tab`): rebase after PH4, keep fix (a), drop (b); PH3 + PH4 cards to archive.
+  2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. CAM2 live (#555, v0.9.97.173; 27ai). PH4 #561 (27al).
+  - [ ] PH3 (`claude/ph3-phone-games-tab-v2`): PR → merge → live e2e; hand test 27am.
   - [ ] Then the GPH1 phone check (Planner, findings).
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
@@ -21,7 +20,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio: GPH1 #562 → part 3: `design/games/phone-review-gph1.md`, Quiz; Five Frames after FW1.
+- [ ] Game Studio: GPH1 #562, part 3: `design/games/phone-review-gph1.md`, Quiz, Five Frames after FW1.
 - [ ] Game Studio 2 (handoff 19 Nov): QZ3 #559 → FW1 (+ 1366: cells off centre, stray line per row).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
@@ -215,7 +214,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   visible and work (in voice too). Put the game away (✕): the full card comes back.
 - [ ] 27al. [PH4] Phone, a video playing, turn it: video, ⛶, 💬, 🎙 as before. Turn it in Oyunlar, Ara, Ben, a game,
   the invite window, the home page: a "📱↻ Telefonu dik tut" note, nothing under it reacts; upright, all as it was.
-- [ ] 27am. [GPH1] Phone: Son Kalp shows all 5 🤖; Büfe / Bahçe "closed" note under the art.
+- [ ] 27am. [PH3] Phone upright, an empty room, open a game: the small strip on top shows Ara / Davet et whole.
+- [ ] 27an. [GPH1] Phone: Son Kalp shows all 5 🤖; Büfe / Bahçe "closed" note below art.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
