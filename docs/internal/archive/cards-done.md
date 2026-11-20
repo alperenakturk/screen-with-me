@@ -3043,7 +3043,7 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   for weeks of play in both languages; Test Lab hook `fiveFrames.category`; unit tests.
 - Tests: unit + list check; owner's hand test.
 - Owner's pick: none needed.
-- Done: FW1 PR (`claude/fw1-five-frames-words`, Game Studio 2, 20 Nov 2026): guesses must be seen ≥ 5 times and answers
+- Done: https://github.com/alperenakturk/screen-with-me/pull/563 (`claude/fw1-five-frames-words`, Game Studio 2, 20 Nov 2026): guesses must be seen ≥ 5 times and answers
   ≥ 20 times in OpenSubtitles (offline filter, `<lang>-keep.txt` exceptions): EN 7,716 / 2,036, TR 7,657 / 2,056;
   seven categories per language (`<lang>-cat-<id>.txt`, 22–44 words) with the category select as the hint, its own
   daily word, save and share line; `build-words.py --check`; Test Lab `fiveFrames.category`; harnesses `five-frames`
