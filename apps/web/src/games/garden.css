@@ -303,3 +303,17 @@ html.phone .wg-chip { min-height: 44px; }
 /* GW5: the 🎨 page's shop rows scroll inside their own list in the small design (a free window is always it, scaled);
    the title, the petals line, ✕ and the visitors line stay in sight. */
 .wg-page-list.wg-decor-list { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+
+/* GPH1: a phone's Games tab. The "resting" note sits under the window sill, where the scene is empty (at the top it
+   covered the window frame and the moon). On the narrowest phones (≤ 400 px) the album's eight 44 px plants lose their
+   gaps to the cells' own transparent edge, so the strip fits the width (it ran 8 px past both edges). */
+#game-stage.in-tab .wg-rest { top: auto; bottom: 6px; }
+/* ...and on a short scene (the smallest phone) it keeps its first line, clear of the pots. */
+@container (max-height: 230px) { #game-stage.in-tab .wg-rest small { display: none; } }
+@container game (max-width: 400px) {
+  #game-stage.in-tab .wg { padding-inline: 4px; }
+  #game-stage.in-tab .wg-album { gap: 0; }
+  #game-stage.in-tab .wg-album-cell { border: 2px solid transparent; background-clip: padding-box; box-sizing: border-box; }
+}
+/* GPH1: on a phone every pot button is a 44 px target (Stub's lamp, shown once per film, was 40 px). */
+html.phone #game-stage .wg-btn { min-height: 44px; }

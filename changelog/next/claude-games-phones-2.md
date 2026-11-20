@@ -1,0 +1,3 @@
+- On a phone, Last Heart with six players shows every opponent, and whose turn it is never hides off screen.
+- On a phone, Snack Bar's "closed until the film plays" and Window Garden's "resting" notes no longer cover the picture, and the garden's plant strip fits the screen.
+- On a wider phone, the boards keep a small margin from the screen's edges.

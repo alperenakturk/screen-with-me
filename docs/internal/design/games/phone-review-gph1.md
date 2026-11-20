@@ -3,21 +3,21 @@
 A fresh reviewer read the games sweep's phone shots (`SIZES=iphone,pixel,small LANGS=en`, upright; Quiz and Five
 Frames solo left out, Game Studio 2 owns them) and listed what a person sees. The automated sweep passed all 624
 checks on those shots. GPH1 part 1 (`claude/games-phones`) added the missing check (nothing drawn over a control) and
-fixed item 1. The rest is open for the next Game Studio session, roughly in this order.
+fixed item 1; part 2 (`claude/games-phones-2`) fixed items 2 and 3 and the board gutter, and added Lab `games.phoneSweep`. The rest is open for the next Game Studio session, roughly in this order.
 
 ## Ranked
 1. **Fixed (part 1).** Duel in play: the other player's card lay over the letter keys C–H and M–Q, and the status line
    covered row 7. Taps landed on the card.
-2. **Last Heart with six players:** only two of the five other players show, and whose turn it is may be hidden.
+2. **Fixed (part 2).** **Last Heart with six players:** only two of the five other players show, and whose turn it is may be hidden.
    "Sam is thinking…" wraps into a narrow column. About 350 px stay empty under the table. The five board cards take
    about 60 % of the width, pushed left, and a lone ♠ floats after "Blinds 2/4".
-3. **Banners and toasts over the art** in Snack Bar and Window Garden:
+3. **Fixed (part 2)**, except the pot card's gap (kept: WG2 holds its height steady). **Banners and toasts over the art** in Snack Bar and Window Garden:
    - Snack Bar: "Closed until the film plays" covers the popcorn machine and Glowbeam. On the small phone the
      "Paused" pill is only an icon.
    - Snack Bar busy: "New badge" covers the +3 chip and the SNACK sign, and touches the "?".
    - Window Garden: "Resting until the film plays" covers the window frame and the moon. On the small phone the pot
      card has a big gap and the plant strip is cut at both edges.
-4. **Board sizes are inconsistent:**
+4. **Gutter fixed (part 2)**; Sea Battle's sizes and chess's jump at the start are open. **Board sizes are inconsistent:**
    - Chess in play, Four in a Row, backgammon and tic-tac-toe on the Pixel run edge to edge with no gutter, and Four's
      blue base bleeds off both sides.
    - Sea Battle's lobby board is about 65 % wide, its six-player board about 80 %.
@@ -44,6 +44,13 @@ fixed item 1. The rest is open for the next Game Studio session, roughly in this
     - Tic-tac-toe cells read as a button grid (no grid lines).
     - Draw & Guess's first two brush dots look the same.
     - The side games' head lacks the "?" that tables have.
+
+## Part 2's first look (20 Nov 2026), still open
+- Tall phones (Pixel) leave 200–250 px empty under Last Heart, Snack Bar (it still says "+4 more") and the boards in play.
+- Last Heart: the shared cards fill only ⅔ of the pot box on a Pixel; "Bedelsiz çekil" wraps (TR, 360 px).
+- Classics: "Robin (yo…" / "Robi…" in the players' row; Four in a Row's stand reaches both edges at 360 px.
+- Not phones: in a computer's free window the closed / resting notes still lie over the art; at 1366 a side game's
+  window covers the side panel; the tablet's Last Heart lobby stacks its Deck options.
 
 ## Shared causes
 - No common board gutter or size rule.

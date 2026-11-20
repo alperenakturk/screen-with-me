@@ -74,6 +74,29 @@
 /* The ♠ "hand ranks" help keeps its small look but gets a 44 px target (negative margins keep its line's height). */
 #game-stage.in-tab .pk-help { min-width: 44px; min-height: 44px; margin: -12px -10px; padding: 0; border: 0; background: transparent; box-shadow: none; }
 #game-stage.in-tab .pk-slider input { min-height: 44px; }
+/* GPH1: with three or more opponents every one of them shows (a sideways row showed two of five, whose turn could be
+   off screen): three small cards per line (name and ♥ life, then what they did beside their two cards; the life bar is left out), at least 44 px tall to
+   tap as a target. My "waiting for …" line spans my seat's width at the buttons' height, so nothing jumps on my turn. */
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) > .pk-seat {
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'top life' 'status cards';
+  padding: 3px 6px; min-height: 44px; gap: 1px 4px;
+}
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-life { grid-template-columns: auto auto; gap: 2px; justify-self: end; }
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-bar { display: none; }
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* No faces in these small cards (the 🤖 / name stays): a face cut the name to "Ro…" on a 412 px phone. */
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-avatar { display: none; }
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-card { width: 20px; }
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-cards { gap: 2px; min-height: 0; align-items: center; }
+#game-stage.in-tab .pk-actions > p { grid-column: 1 / -1; min-height: 44px; display: flex; align-items: center; }
+/* GPH1: the smallest phone's Games tab (≈ 360 × 450) with five opponents: the shared cards and my two cards a step
+   smaller, so the table fits at full size, never scaled down. */
+@container game (max-height: 500px) and (max-aspect-ratio: 1 / 1) {
+  #game-stage.in-tab .pk:has(.pk-seat:nth-child(3)) .pk-board { grid-template-columns: repeat(5, minmax(0, 32px)); }
+  #game-stage.in-tab .pk:has(.pk-seat:nth-child(3)) .pk-me .pk-card.big { width: 32px; }
+}
 
 /* Elsewhere the amounts stay where they were (their wrapper adds no box) and ± is not there. */
 .pk-amounts { display: contents; }

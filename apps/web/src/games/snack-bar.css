@@ -352,11 +352,21 @@ html.phone #game-stage .sb :is(.sb-mode, .sb-upgrades-open, .sb-up-buy, .sb-pric
 #game-stage.in-tab .sb .sb-scene-box { height: 80px; max-height: 80px; }
 #game-stage.in-tab .sb .sb-scene { height: 80px; }
 /* The "closed" note keeps both lines but sits lower and thinner in that 80 px scene, under the SNACK BAR sign. */
-#game-stage.in-tab .sb .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }
+/* GPH1: on a phone the "closed" note is one line (its title) under the picture, not over it (it covered the popcorn machine and
+   Glowbeam); the stands fitted under it are counted with it (`fitRows`). */
+#game-stage.in-tab .sb .sb-scene-box:has(> .sb-rest:not([hidden])) { margin-bottom: 18px; }
+#game-stage.in-tab .sb .sb-rest {
+  top: calc(100% + 2px); bottom: auto; left: 0; transform: none; max-width: 100%; padding: 0 2px; gap: 6px;
+  flex-direction: row; align-items: baseline; background: none; box-shadow: none; border-radius: 0;
+}
+#game-stage.in-tab .sb .sb-rest b { font-size: 13px; }
+#game-stage.in-tab .sb .sb-rest small { display: none; }
+/* GPH1: a passing note ("New badge …") comes over the stands' foot, not over the counter picture and its pills. */
+#game-stage.in-tab .sb .sb-note { top: auto; bottom: 64px; }
 /* 0.9.97.134 (B2): in a short window the counter picture is at its lowest (64 px): the "closed" note keeps one line
    and sits on the counter's edge, under the SNACK BAR sign. */
 @container game (max-height: 470px) {
-  #game-stage .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }
+  #game-stage:not(.in-tab) .sb-rest { bottom: 3px; padding: 2px 10px; gap: 0; }
   #game-stage .sb-rest small { display: none; }
 }
 /* ...and below 420 px the cinema line (its number and stars) gives its row to the stands. */
