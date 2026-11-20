@@ -85,15 +85,15 @@
 #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-life { grid-template-columns: auto auto; gap: 2px; justify-self: end; }
 #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-bar { display: none; }
 #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-avatar { width: 20px; height: 20px; font-size: 13px; }
+/* No faces in these small cards (the 🤖 / name stays): a face cut the name to "Ro…" on a 412 px phone. */
+#game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-avatar { display: none; }
 #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-card { width: 20px; }
 #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-seat-cards { gap: 2px; min-height: 0; align-items: center; }
 #game-stage.in-tab .pk-actions > p { grid-column: 1 / -1; min-height: 44px; display: flex; align-items: center; }
 /* GPH1: the smallest phone's Games tab (≈ 360 × 450) with five opponents: the shared cards and my two cards a step
-   smaller and the opponents' faces left out (their names stay), so the table fits at full size, never scaled down. */
+   smaller, so the table fits at full size, never scaled down. */
 @container game (max-height: 500px) and (max-aspect-ratio: 1 / 1) {
-  #game-stage.in-tab .pk-seats:has(> .pk-seat:nth-child(3)) .pk-avatar { display: none; }
   #game-stage.in-tab .pk:has(.pk-seat:nth-child(3)) .pk-board { grid-template-columns: repeat(5, minmax(0, 32px)); }
   #game-stage.in-tab .pk:has(.pk-seat:nth-child(3)) .pk-me .pk-card.big { width: 32px; }
 }

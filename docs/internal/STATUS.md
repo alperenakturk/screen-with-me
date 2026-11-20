@@ -19,8 +19,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
-  `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
+- [ ] Game Studio (20 Nov): GPH1 part 2 `claude/games-phones-2` (Last Heart, Snack Bar, Garden, gutters,
+  Lab `games.phoneSweep`) → part 3 (items 4–10 of `design/games/phone-review-gph1.md`, Quiz) → Five Frames after FW1.
 - [ ] Game Studio 2 (handoff 19 Nov): QZ3 #559 → FW1 (+ 1366: cells off centre, stray line per row).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
@@ -213,6 +213,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
 - [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
   visible and work (in voice too). Put the game away (✕): the full card comes back.
+- [ ] 27al. [GPH1] Phone, upright: Last Heart with 5 🤖 friends shows all 5; Büfe / Bahçe "closed" note under the
+  picture; boards have a small margin. Lab "Oyunlar: açık oyunu bu telefonda denetle" says ok.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

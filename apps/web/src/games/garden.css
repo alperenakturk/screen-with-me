@@ -315,3 +315,5 @@ html.phone .wg-chip { min-height: 44px; }
   #game-stage.in-tab .wg-album { gap: 0; }
   #game-stage.in-tab .wg-album-cell { border: 2px solid transparent; background-clip: padding-box; box-sizing: border-box; }
 }
+/* GPH1: on a phone every pot button is a 44 px target (Stub's lamp, shown once per film, was 40 px). */
+html.phone #game-stage .wg-btn { min-height: 44px; }
