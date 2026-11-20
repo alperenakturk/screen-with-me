@@ -236,3 +236,8 @@ html.phone .sea-bot-label { flex-basis: auto; }
   .sea-places li { grid-template-columns: 32px 20px minmax(0, 1fr) auto; font-size: 13px; }
   .sea-places .sea-avatar.small { width: 20px; height: 20px; }
 }
+/* GPH1 part 3a first look: Stub's label balances its two lines; with three or more players the sea chips spread over
+   the bar's free width with room for the turn's dashed ring (it touched the head's line and the screen's edge). */
+#game-stage.in-tab .sea-bot-label { text-wrap: balance; }
+#game-stage.in-tab .sea.many .sea-targets { flex: 1 1 auto; justify-content: space-evenly; padding: 4px 3px; }
+#game-stage.in-tab .sea-bot .btn { flex: none; }
