@@ -105,17 +105,44 @@ const LANG_SEED: Record<Lang, number> = { en: 0x5eed_0001, tr: 0x5eed_0002 };
  * The answer of a day: the list shuffled with a fixed seed, one word a day, a new shuffle every time the list runs
  * out (so every word comes once per round). Days before day 1 count as day 1.
  */
-export function answerFor(day: number, answers: readonly string[], lang: Lang): string {
+export function answerFor(day: number, answers: readonly string[], lang: Lang, salt = 0): string {
   if (!answers.length) throw new Error('no answers');
   const index = Math.max(0, Math.floor(day) - 1);
   const round = Math.floor(index / answers.length);
   const order = answers.map((_, i) => i);
-  const random = seeded(LANG_SEED[lang] + round * 7919);
+  const random = seeded(LANG_SEED[lang] + salt + round * 7919);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [order[i], order[j]] = [order[j]!, order[i]!];
   }
   return answers[order[index % answers.length]!]!;
+}
+
+// ---- Categories (card FW1): a daily word from one list (countries, cities, …), the category shown as the hint ----
+
+/** The categories, in the order the game lists them (the word modules have one packed list each). */
+export const CATEGORY_IDS = ['countries', 'cities', 'animals', 'food', 'jobs', 'nature', 'home'] as const;
+export type Category = (typeof CATEGORY_IDS)[number];
+export const isCategory = (value: unknown): value is Category => CATEGORY_IDS.includes(value as Category);
+
+/** Each category gets its own shuffle, so two categories never walk their lists in step. */
+const categorySalt = (cat: Category): number => (CATEGORY_IDS.indexOf(cat) + 1) * 104_729;
+
+/** The answer of a day in a category (the same for everyone, like the daily word). */
+export function categoryAnswer(day: number, words: readonly string[], lang: Lang, cat: Category): string {
+  return answerFor(day, words, lang, categorySalt(cat));
+}
+
+/** Unpacks a word module's CATEGORIES (five letters each, glued together). A missing category is an empty list. */
+export function decodeCategories(packed: Record<string, string>): Record<Category, string[]> {
+  const out = {} as Record<Category, string[]>;
+  for (const cat of CATEGORY_IDS) {
+    const chars = Array.from(packed[cat] ?? '');
+    const words: string[] = [];
+    for (let i = 0; i + WORD_LENGTH <= chars.length; i += WORD_LENGTH) words.push(chars.slice(i, i + WORD_LENGTH).join(''));
+    out[cat] = words;
+  }
+  return out;
 }
 
 export interface DayGame {
@@ -161,10 +188,12 @@ export interface FramesSave {
   v: typeof FRAMES_VERSION;
   games: Partial<Record<Lang, DayGame>>;
   stats: Record<Lang, Stats>;
+  /** FW1: today's game per language and category (`en:countries`); the stats and the streak are the daily word's only. */
+  cats: Partial<Record<string, DayGame>>;
 }
 
 const freshStats = (): Stats => ({ played: 0, won: 0, streak: 0, best: 0, last: 0, tries: Array.from({ length: MAX_TRIES }, () => 0) });
-export const freshFrames = (): FramesSave => ({ v: FRAMES_VERSION, games: {}, stats: { en: freshStats(), tr: freshStats() } });
+export const freshFrames = (): FramesSave => ({ v: FRAMES_VERSION, games: {}, stats: { en: freshStats(), tr: freshStats() }, cats: {} });
 
 /** Counts a finished day once. A win continues the streak only if the day before was won too. */
 export function record(save: FramesSave, lang: Lang, game: DayGame, answer: string): boolean {
@@ -202,10 +231,23 @@ export function today(save: FramesSave, lang: Lang, day: number): DayGame {
   return fresh;
 }
 
-/** The share line, without the word or any letter: "🍿 Five Frames #12 · 4/7", "… · X/7" when not solved. */
-export function shareLine(title: string, game: DayGame, answer: string): string {
+/** Today's game in a category: the saved one if it is today's, else a new empty one (one save per language and category). */
+export function todayIn(save: FramesSave, lang: Lang, cat: Category, day: number): DayGame {
+  const key = `${lang}:${cat}`;
+  const game = save.cats[key];
+  if (game && game.day === day) return game;
+  const fresh = { day, guesses: [] };
+  save.cats[key] = fresh;
+  return fresh;
+}
+
+/**
+ * The share line, without the word or any letter: "🍿 Five Frames #12 · 4/7", "… · X/7" when not solved; a category
+ * game adds its name: "🍿 Five Frames #12 · 🌍 Countries · 4/7".
+ */
+export function shareLine(title: string, game: DayGame, answer: string, category?: string): string {
   const n = game.guesses.indexOf(answer);
-  return `🍿 ${title} #${game.day} · ${n >= 0 ? n + 1 : 'X'}/${MAX_TRIES}`;
+  return `🍿 ${title} #${game.day}${category ? ` · ${category}` : ''} · ${n >= 0 ? n + 1 : 'X'}/${MAX_TRIES}`;
 }
 
 const num = (value: unknown, max: number): number =>
@@ -225,16 +267,24 @@ export function loadFrames(raw: unknown): FramesSave {
   const record = data as Record<string, unknown>;
   const save = freshFrames();
   const games = (record.games && typeof record.games === 'object' ? record.games : {}) as Record<string, unknown>;
+  const cats = (record.cats && typeof record.cats === 'object' ? record.cats : {}) as Record<string, unknown>;
+  const readGame = (game: unknown, lang: Lang): DayGame | null => {
+    if (!game || typeof game !== 'object' || !Array.isArray((game as { guesses?: unknown }).guesses)) return null;
+    const g = game as { day?: unknown; guesses: unknown[] };
+    const words = g.guesses
+      .filter((w): w is string => typeof w === 'string')
+      .map((w) => normalize(w, lang))
+      .filter((w) => wellFormed(w, lang))
+      .slice(0, MAX_TRIES);
+    return { day: num(g.day, 1e6), guesses: words };
+  };
   const stats = (record.stats && typeof record.stats === 'object' ? record.stats : {}) as Record<string, unknown>;
   for (const lang of LANGS) {
-    const game = games[lang] as Record<string, unknown> | undefined;
-    if (game && typeof game === 'object' && Array.isArray(game.guesses)) {
-      const words = game.guesses
-        .filter((w): w is string => typeof w === 'string')
-        .map((w) => normalize(w, lang))
-        .filter((w) => wellFormed(w, lang))
-        .slice(0, MAX_TRIES);
-      save.games[lang] = { day: num(game.day, 1e6), guesses: words };
+    const game = readGame(games[lang], lang);
+    if (game) save.games[lang] = game;
+    for (const cat of CATEGORY_IDS) {
+      const one = readGame(cats[`${lang}:${cat}`], lang);
+      if (one) save.cats[`${lang}:${cat}`] = one;
     }
     const s = stats[lang] as Record<string, unknown> | undefined;
     if (s && typeof s === 'object') {

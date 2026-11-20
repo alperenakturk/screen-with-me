@@ -123,6 +123,12 @@ const until = async (fn, ms = 6000) => {
   const next = await run('fiveFrames.day', '1');
   const dayAfter = await page.evaluate(() => document.querySelector('#game-stage .ff-day')?.textContent);
   check(next.dir === 'lab' && dayAfter !== dayBefore, 'Five Frames: another day', `${dayBefore} → ${dayAfter}`);
+  // FW1: a category (its own word list, the category kept in view as the hint), then back to the daily word.
+  const cat = await run('fiveFrames.category', 'countries');
+  const hint = await page.evaluate(() => { const s = document.querySelector('#game-stage .ff-cat'); return s ? `${s.value}|${s.classList.contains('hinted')}|${s.getAttribute('aria-label')}` : ''; });
+  check(cat.dir === 'lab' && /countries: (2\d|[3-9]\d) words, hint "🌍 \S+", today \S{5}/u.test(cat.text) && /^countries\|true\|\S+: 🌍/u.test(hint), 'Five Frames: a category with its hint', `${cat.text} | ${hint}`);
+  await run('fiveFrames.category', 'daily');
+  check(await page.evaluate(() => document.querySelector('#game-stage .ff-cat')?.value === 'daily'), 'Five Frames: back to the daily word');
 
   // ---- A Classics table on the lab server (DL3b; the local server runs with SWM_LAB_SERVER) ----
   const table = await run('games.open.classics');

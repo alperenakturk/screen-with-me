@@ -1,0 +1,3 @@
+- Five Frames: only real, everyday words count now, in English and Turkish: rare dictionary-only words are no longer accepted as guesses, and a few odd answers are gone (so today's word may differ from yesterday's list).
+- Five Frames: new categories beside the daily word: Countries, Cities, Animals, Food & drink, Jobs, Nature and At home. Pick one above the board; the category stays in view as your hint, each has its own word of the day, and the copied result names it.
+- Five Frames: the letter boxes sit in the middle of each ticket again, without the stray line after the row number.
