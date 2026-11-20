@@ -9,8 +9,9 @@
 
 import './five-frames.css';
 import {
-  ALPHABET, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, dayNumber, decodeWords, finished, liveStreak, guess, letters, loadFrames, normalize,
-  record, saveFrames, score, shareLine, solved, today, trayMarks, upper, type FramesSave, type Lang, type Mark,
+  ALPHABET, CATEGORY_IDS, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, categoryAnswer, dayNumber, decodeCategories, decodeWords, finished,
+  isCategory, liveStreak, guess, letters, loadFrames, normalize, record, saveFrames, score, shareLine, solved, today, todayIn, trayMarks, upper,
+  type Category, type FramesSave, type Lang, type Mark,
 } from '@swm/shared/games/five-frames';
 import { el } from '../dom.ts';
 import { lang as pageLang } from '../i18n.ts';
@@ -55,6 +56,16 @@ const TEXT = {
     legendNear: 'In the word',
     legendMiss: 'Not in the word',
     played: '{won}/{played} won · best run {best}',
+    catTitle: 'Which word: the daily word, or a word from a category (the category is your hint)',
+    catDaily: '🎟️ Daily word',
+    countries: '🌍 Countries',
+    cities: '🏙️ Cities',
+    animals: '🐾 Animals',
+    food: '🍲 Food & drink',
+    jobs: '🧰 Jobs',
+    nature: '🌿 Nature',
+    home: '🏠 At home',
+    hint: 'Hint: {cat}',
   },
   tr: {
     how1Title: 'Beş harfli kelimeyi bul',
@@ -87,6 +98,16 @@ const TEXT = {
     legendNear: 'Kelimede var',
     legendMiss: 'Kelimede yok',
     played: '{won}/{played} kazandın · en uzun seri {best}',
+    catTitle: 'Hangi kelime: günün kelimesi ya da bir kategoriden kelime (kategori senin ipucun)',
+    catDaily: '🎟️ Günün kelimesi',
+    countries: '🌍 Ülkeler',
+    cities: '🏙️ Şehirler',
+    animals: '🐾 Hayvanlar',
+    food: '🍲 Yiyecek ve içecek',
+    jobs: '🧰 Meslekler',
+    nature: '🌿 Doğa',
+    home: '🏠 Evde',
+    hint: 'İpucu: {cat}',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -97,16 +118,20 @@ function t(key: TextKey, values: Record<string, string | number> = {}): string {
 
 /** The word language: the page's, until I pick the other one here (`fiveFrames:lang`). */
 const LANG_KEY = 'fiveFrames:lang';
+/** FW1: the daily word or a category (`fiveFrames:cat`). */
+const CAT_KEY = 'fiveFrames:cat';
+type Mode = 'daily' | Category;
 
 interface List {
   allowed: Set<string>;
   answers: string[];
+  cats: Record<Category, string[]>;
 }
 const lists = new Map<Lang, Promise<List>>();
 function wordList(lang: Lang): Promise<List> {
   let list = lists.get(lang);
   if (!list) {
-    list = (lang === 'tr' ? import('@swm/shared/games/words/tr') : import('@swm/shared/games/words/en')).then(({ WORDS, ANSWERS }) => decodeWords(WORDS, ANSWERS));
+    list = (lang === 'tr' ? import('@swm/shared/games/words/tr') : import('@swm/shared/games/words/en')).then(({ WORDS, ANSWERS, CATEGORIES }) => ({ ...decodeWords(WORDS, ANSWERS), cats: decodeCategories(CATEGORIES) }));
     lists.set(lang, list);
   }
   return list;
@@ -126,6 +151,8 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   let state: FramesSave = loadFrames(load(FRAMES_KEY));
   let wordLang: Lang = load(LANG_KEY) === 'tr' ? 'tr' : load(LANG_KEY) === 'en' ? 'en' : pageLang() === 'tr' ? 'tr' : 'en';
   let list: List | null = null;
+  const savedCat = load(CAT_KEY);
+  let mode: Mode = isCategory(savedCat) ? savedCat : 'daily';
   let answer = '';
   let typed = '';
   /** The Test Lab can play another day's word (days from today). */
@@ -147,7 +174,25 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     });
     return b;
   });
+  // FW1: the daily word or a category; the picked category stays in view as the hint.
+  const catPick = el('select', { class: 'ff-cat', 'data-cat': '' }) as HTMLSelectElement;
+  const catOptions = (['daily', ...CATEGORY_IDS] as Mode[]).map((m) => {
+    const o = el('option', { value: m }) as HTMLOptionElement;
+    catPick.append(o);
+    return o;
+  });
+  catPick.addEventListener('change', () => setMode(isCategory(catPick.value) ? catPick.value : 'daily'));
+  function setMode(next: Mode): void {
+    if (next === mode) return;
+    mode = next;
+    save(CAT_KEY, mode);
+    typed = '';
+    clearFlip();
+    pickAnswer();
+    draw();
+  }
   const head = el('div', { class: 'ff-head' }, title, dayLabel, streak, el('span', { class: 'ff-gap' }), el('span', { class: 'ff-langs', role: 'group' }, ...langButtons));
+  const catRow = el('div', { class: 'ff-cat-row' }, catPick);
 
   const board = el('div', { class: 'ff-board', tabindex: '0', role: 'group', 'data-takes-keys': '' });
   const rows = Array.from({ length: MAX_TRIES }, (_, i) => {
@@ -182,7 +227,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   // The legend and the result line share one slot: the legend before the first guess, the result after.
   const result = el('div', { class: 'ff-result' }, legend, message, share);
   const tray = el('div', { class: 'ff-tray' });
-  const box = el('div', { class: 'ff' }, head, board, result, tray);
+  const box = el('div', { class: 'ff' }, head, catRow, board, result, tray);
   root.replaceChildren(box);
   const how = howToPlay(box, 'fiveFrames:howSeen', () => [
     { art: how1, title: t('how1Title'), line: t('how1') },
@@ -203,7 +248,14 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     if (ms) messageTimer = setTimeout(() => draw(), ms);
   }
 
-  const game = () => today(state, wordLang, day);
+  const game = () => (mode === 'daily' ? today(state, wordLang, day) : todayIn(state, wordLang, mode, day));
+  /** Today's answer for the language and mode (a category with no words falls back to the daily word). */
+  function pickAnswer(): void {
+    if (!list) return;
+    const words = mode === 'daily' ? [] : list.cats[mode];
+    answer = mode !== 'daily' && words.length ? categoryAnswer(day, words, wordLang, mode) : answerFor(day, list.answers, wordLang);
+  }
+  const catLabel = (): string => (mode === 'daily' ? '' : t(mode));
 
   // ---- The turn of a scored row (Design's `side-games-polish.md` §4) ----
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -273,7 +325,8 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   function submit(): void {
     if (!list) return;
     const g = game();
-    const error = guess(g, typed, answer, wordLang, { allowed: (w) => list!.allowed.has(w) });
+    const extra = mode === 'daily' ? [] : list.cats[mode];
+    const error = guess(g, typed, answer, wordLang, { allowed: (w) => list!.allowed.has(w) || extra.includes(w) });
     if (error) {
       if (error !== 'done') {
         playSound('guessWrong');
@@ -289,7 +342,8 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     }
     typed = '';
     const done = finished(g, answer);
-    const recorded = done && record(state, wordLang, g, answer);
+    // The stats and the streak count the daily word only; a category game just ends.
+    const recorded = done && (mode === 'daily' ? record(state, wordLang, g, answer) : true);
     save(FRAMES_KEY, saveFrames(state));
     // The sound comes with the last cell's colour.
     reveal(g.guesses.length - 1, () => {
@@ -335,14 +389,20 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     title.textContent = t('title');
     dayLabel.textContent = t('day', { n: day });
     const stats = state.stats[wordLang];
+    streak.hidden = mode !== 'daily';
     streak.textContent = t('streak', { n: liveStreak(stats, day) });
+    catPick.title = t('catTitle');
+    catPick.setAttribute('aria-label', mode === 'daily' ? t('catTitle') : t('hint', { cat: catLabel() }));
+    catOptions.forEach((o) => (o.textContent = o.value === 'daily' ? t('catDaily') : t(o.value as Category)));
+    catPick.value = mode;
+    catPick.classList.toggle('hinted', mode !== 'daily');
     streak.title = `${t('streakTitle')} · ${t('played', { won: stats.won, played: stats.played, best: stats.best })}`;
     langButtons.forEach((b) => {
       b.classList.toggle('on', b.dataset.lang === wordLang);
       b.setAttribute('aria-pressed', String(b.dataset.lang === wordLang));
       b.title = t('langTitle');
     });
-    board.setAttribute('aria-label', t('board'));
+    board.setAttribute('aria-label', mode === 'daily' ? t('board') : `${t('hint', { cat: catLabel() })}. ${t('board')}`);
     legendLabels[0]!.textContent = t('legendHit');
     legendLabels[1]!.textContent = t('legendNear');
     legendLabels[2]!.textContent = t('legendMiss');
@@ -397,7 +457,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   }
 
   share.addEventListener('click', () => {
-    const text = shareLine(t('title'), game(), answer);
+    const text = shareLine(t('title'), game(), answer, catLabel() || undefined);
     void navigator.clipboard?.writeText(text).then(
       () => setShare(true),
       // No clipboard: show the line itself, to copy by hand.
@@ -413,7 +473,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     if (stopped || want !== wordLang) return;
     list = loaded;
     day = nowDay();
-    answer = answerFor(day, list.answers, wordLang);
+    pickAnswer();
     draw();
     // BUG6: the keyboard goes straight to the word.
     grabKeys(board);
@@ -423,7 +483,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   const timer = setInterval(() => {
     if (nowDay() !== day && list) {
       day = nowDay();
-      answer = answerFor(day, list.answers, wordLang);
+      pickAnswer();
       typed = '';
       draw();
     } else if (finished(game(), answer) && !message.classList.contains('flash')) draw();
@@ -451,7 +511,27 @@ export function mountFiveFrames(root: HTMLElement): () => void {
         tab: 'games',
         where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
         available: () => !!answer || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
-        run: () => `${wordLang}: ${answer}`,
+        run: () => `${wordLang}${mode === 'daily' ? '' : ` ${mode}`}: ${answer}`,
+      },
+      {
+        // FW1: play a category (its word list, the category shown as the hint) or go back to the daily word.
+        id: 'fiveFrames.category',
+        title: { en: 'Five Frames: play a category', tr: 'Beş Kare: bir kategori oyna' },
+        help: {
+          en: `Switches to a category (arg: ${CATEGORY_IDS.join(', ')} or daily; empty = the next one) and writes how many words it has and today's answer.`,
+          tr: `Bir kategoriye geçer (${CATEGORY_IDS.join(', ')} ya da daily yaz; boş = sıradaki) ve kaç kelimesi olduğunu ve bugünün cevabını yazar.`,
+        },
+        tab: 'games',
+        where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
+        available: () => !!list || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
+        run: (arg) => {
+          const all = ['daily', ...CATEGORY_IDS] as Mode[];
+          const asked = String(arg ?? '').trim();
+          setMode(asked === 'daily' || isCategory(asked) ? (asked as Mode) : all[(all.indexOf(mode) + 1) % all.length]!);
+          const words = mode === 'daily' ? list!.answers : list!.cats[mode];
+          return `${wordLang} ${mode}: ${words.length} words, hint "${catLabel() || '-'}", today ${answer}`;
+        },
+        undo: () => setMode('daily'),
       },
       {
         // Owner bug (0.9.97.126): T on the board switched on cinema mode. The board is `[data-takes-keys]`, so the room's
@@ -487,7 +567,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
           const asked = Number(arg);
           dayShift = arg !== undefined && arg !== '' && Number.isInteger(asked) ? Math.max(-365, Math.min(365, asked)) : dayShift + 1;
           day = nowDay();
-          answer = answerFor(day, list!.answers, wordLang);
+          pickAnswer();
           typed = '';
           draw();
           return `day ${day}`;
@@ -495,14 +575,14 @@ export function mountFiveFrames(root: HTMLElement): () => void {
         undo: () => {
           dayShift = 0;
           day = nowDay();
-          if (list) answer = answerFor(day, list.answers, wordLang);
+          pickAnswer();
           typed = '';
           draw();
         },
       },
     ],
     () => [
-      ['Five Frames', `day ${day}${dayShift ? ` (today ${dayShift > 0 ? '+' : ''}${dayShift})` : ''} · ${wordLang}`],
+      ['Five Frames', `day ${day}${dayShift ? ` (today ${dayShift > 0 ? '+' : ''}${dayShift})` : ''} · ${wordLang} · ${mode}`],
       // BUG6: where the letters go now (the word, or a text box such as the chat).
       [{ en: 'Keyboard goes to', tr: 'Klavye nereye gidiyor' }, document.activeElement === board ? { en: 'the word', tr: 'kelimeye' } : { en: 'somewhere else (click the game)', tr: 'başka yere (oyuna tıkla)' }],
     ],

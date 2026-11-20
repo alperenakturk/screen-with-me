@@ -103,5 +103,16 @@ with credit; hunspell-tr (MPL 2.0) was looked at and left out, the Leipzig corpo
 - Both ship in the game's lazy chunks (`packages/shared/src/games/words/`; the Five Frames Duel server reads them too),
   answers as base-36 positions (not plain text). Credits, the SCOWL notice and the full Apache 2.0 text:
   `apps/web/public/third-party-notices.txt`, linked from the game.
+- **FW1 (19–20 Nov 2026, Game Studio 2): real words only + categories.** The owner found odd non-words accepted. ENABLE
+  and SCOWL 80 hold many Scrabble-only words (aahed, aalii, coxae…), and the Turkish forms we generate include shapes
+  nobody writes. The build now uses FrequencyWords (OpenSubtitles 2018, CC BY-SA 4.0) **offline, as a yes / no filter
+  only** (the grey use the table above allows; nothing of it ships, credited in the notices): a guess must appear ≥ 5
+  times, an answer ≥ 20 times (`<lang>-keep.txt` keeps a few everyday words that films rarely say: iftar, salep…).
+  Result: EN 11,509 → 7,716 guesses, 2,052 → 2,036 answers (out: sylph, xylem, whorl…); TR 15,057 → 7,657 guesses,
+  2,235 → 2,056 answers (out: archaic lemmas such as şümul, vezin, tebaa). Seven hand-written category lists per
+  language (`<lang>-cat-<id>.txt`: countries, cities, animals, food, jobs, nature, at home; 22–44 words each, every
+  word seen ≥ 3 times in the subtitles or kept by hand) become `CATEGORIES` in the same modules.
+  `python3 scripts/words/build-words.py --check` rebuilds in memory and fails if the shipped modules differ or a list
+  breaks a rule (the "check script over the lists" of the card).
 - To change a list: edit the pick / exclude files, run `python3 scripts/words/build-words.py`. Changing the
   answers changes the daily word for everyone on the same day (everyone gets the new list together after a deploy).

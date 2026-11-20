@@ -49,6 +49,13 @@ word lists, built by scripts/words/build-words.py.
    licensed under Creative Commons Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/).
    Used to keep words off the answer lists; its five-letter words are kept in our tests, unmodified.
 
+4. Real-word filter (2026): FrequencyWords by Hermit Dave (https://github.com/hermitdave/FrequencyWords, word
+   frequencies from OpenSubtitles 2018, content licensed under CC BY-SA 4.0). Used only while building the lists, as a
+   yes / no filter (a word must appear in film subtitles to stay a guess or an answer); nothing of it is shipped: no
+   counts, no ranks and no word that is not already in the lists above. Credited here with thanks.
+
+5. The Five Frames category lists (countries, cities, animals, food, jobs, nature, at home) are our own.
+
 ------------------------------------------------------------------------------------------------------------------
 
 

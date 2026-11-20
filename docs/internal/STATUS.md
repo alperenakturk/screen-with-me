@@ -22,7 +22,6 @@ One handoff per lane or role; each session updates only its own lines and delete
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 - [ ] Game Studio (19 Nov, handoff): GD1 live (v0.9.97.172); GPH1 part 1 #556 → rest in
   `design/games/phone-review-gph1.md`. Open: site `quiz.ts` needs GD1's `watchLink` (Game Studio 2).
-- [ ] Game Studio 2 (handoff 19 Nov): QZ3 #559 → FW1 (+ 1366: cells off centre, stray line per row).
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -216,6 +215,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27al. [PH4] Phone, a video playing, turn it: video, ⛶, 💬, 🎙 as before. Turn it in Oyunlar, Ara, Ben, a game,
   the invite window, the home page: a "📱↻ Telefonu dik tut" note, nothing under it reacts; upright, all as it was.
 - [ ] 27am. [PH3] Phone upright, an empty room, open a game: the small strip on top shows Ara / Davet et whole.
+- [ ] 27an. [FW1] Five Frames: odd words refused; 🌍 Countries: gold hint, a country is a guess.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
