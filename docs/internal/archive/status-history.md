@@ -1781,3 +1781,6 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 ## Idea line shortened, archived 20 Nov 2026 (GPH1 part 3 fixed its Sea Battle part; STATUS size limit)
 - **Old game layout points (Game Studio's first look, 16 Nov):** phone Sea Battle "Play against Stub" line wraps beside
   Easy / Medium; tablet: an empty band above the game; Draw & Guess round choices "1 / 2 / 3" in EN but "1 tur" in TR.
+
+## Game Studio handoff line, archived 20 Nov 2026 (GPH1 done; no Game Studio branch left)
+- [x] Game Studio (handoff 20 Nov): GPH1 done (#566, #567); leftovers in `design/games/phone-review-gph1.md`.

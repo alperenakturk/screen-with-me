@@ -3077,3 +3077,23 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   seven categories per language (`<lang>-cat-<id>.txt`, 22–44 words) with the category select as the hint, its own
   daily word, save and share line; `build-words.py --check`; Test Lab `fiveFrames.category`; harnesses `five-frames`
   and `lab-games`; tickets centred on the whole row, stub without the tear line; hand test 27an.
+
+### GPH1. Games on phones: proportions, taps and type fixed for good (owner, 19 Nov 2026; Game Studio, after GD1)
+- Why: the owner says the games' UI on a phone is very bad: wrong proportions, tapping problems, text that shifts,
+  blocks that overlap.
+- What: every table and side game on a phone upright and sideways (iPhone SE, a mid Android, a big phone): take
+  screenshots yourself (`scripts/shots.cjs`, games sweep), compare, and fix: nothing overlaps, no text jumps size,
+  every control ≥ 44 px and tappable, the game fits its space without scrolling (CLAUDE.md §6). A fresh subagent
+  reviews the shots (QA1) before the PR.
+- Done when: the games sweep at phone sizes shows no overlap or cut text for every game; tap-target check passes;
+  Test Lab hook `games.phoneSweep`; the shots are in the PR.
+- Tests: games sweep harness in the `games` job; owner's hand test on his phone.
+- Owner's pick: none needed.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/556, https://github.com/alperenakturk/screen-with-me/pull/562,
+  https://github.com/alperenakturk/screen-with-me/pull/566 (v0.9.97.182),
+  https://github.com/alperenakturk/screen-with-me/pull/567 (Game Studio, 19–20 Nov 2026): the sweep's "nothing over a
+  control" check and Lab `games.phoneSweep`; Duel, Last Heart six seats, Snack Bar / Window Garden notes, board gutter;
+  Classics steady at the start, "(you)" hidden in the tab, XOX # lines, Sea Battle mid-battle tidy, Last Heart cards on
+  tall phones; Quiz top bar, Five Frames picker in the head row; side-game notes off the art in a computer's window.
+  Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
+  Hand tests 27ao, 27ap.
