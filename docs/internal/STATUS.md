@@ -8,10 +8,9 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (handoff 19 Nov; older lines in `archive/status-history.md` "Lane A handoff lines, archived 19 Nov
-  2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. CAM2 live (#555, v0.9.97.173; 27ai). PH4 #561 (27al).
-  - [ ] PH3 (`claude/ph3-phone-games-tab-v2`): PR → merge → live e2e; hand test 27am.
-  - [ ] Then the GPH1 phone check (Planner, findings).
+- [ ] Lane A (handoff 20 Nov; no unmerged lane A branch; older lines in `archive/status-history.md` "Lane A handoff
+  lines, archived 19 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. Live: CAM2 (v0.9.97.173; 27ai), PH4
+  (#561, v0.9.97.178; 27al), PH3 (#564, v0.9.97.179; 27am); GPH1 phone check done. Nothing Ready in lane A.
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
     scenario.
