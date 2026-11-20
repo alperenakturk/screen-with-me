@@ -45,6 +45,13 @@ fixed item 1; part 2 (`claude/games-phones-2`) fixed items 2 and 3 and the board
     - Draw & Guess's first two brush dots look the same.
     - The side games' head lacks the "?" that tables have.
 
+## Part 2's first look (20 Nov 2026), still open
+- Tall phones (Pixel) leave 200–250 px empty under Last Heart, Snack Bar (it still says "+4 more") and the boards in play.
+- Last Heart: the shared cards fill only ⅔ of the pot box on a Pixel; "Bedelsiz çekil" wraps (TR, 360 px).
+- Classics: "Robin (yo…" / "Robi…" in the players' row; Four in a Row's stand reaches both edges at 360 px.
+- Not phones: in a computer's free window the closed / resting notes still lie over the art; at 1366 a side game's
+  window covers the side panel; the tablet's Last Heart lobby stacks its Deck options.
+
 ## Shared causes
 - No common board gutter or size rule.
 - Floating status, toast and banner layers placed absolutely without reserved space (Duel, Snack Bar, Window Garden).
