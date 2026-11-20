@@ -6,14 +6,4 @@ Game Studio 2: QZ3 → QZ4 → FW1 (all done). GPH1 may now take `quiz.ts` / `fi
 
 ## Ready
 
-### GPH1. Games on phones: proportions, taps and type fixed for good (owner, 19 Nov 2026; Game Studio, after GD1)
-- Why: the owner says the games' UI on a phone is very bad: wrong proportions, tapping problems, text that shifts,
-  blocks that overlap.
-- What: every table and side game on a phone upright and sideways (iPhone SE, a mid Android, a big phone): take
-  screenshots yourself (`scripts/shots.cjs`, games sweep), compare, and fix: nothing overlaps, no text jumps size,
-  every control ≥ 44 px and tappable, the game fits its space without scrolling (CLAUDE.md §6). A fresh subagent
-  reviews the shots (QA1) before the PR.
-- Done when: the games sweep at phone sizes shows no overlap or cut text for every game; tap-target check passes;
-  Test Lab hook `games.phoneSweep`; the shots are in the PR.
-- Tests: games sweep harness in the `games` job; owner's hand test on his phone.
-- Owner's pick: none needed.
+(none)
