@@ -145,7 +145,7 @@ html.phone .ff-cat { min-height: 44px; font-size: 15px; }
    the right. */
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .ff:not(.duel) {
-    display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas: 'board head' 'board result' 'board tray'; gap: 8px 20px; padding: 12px 16px;
   }
   #game-stage .ff:not(.duel) .ff-head { grid-area: head; }
@@ -257,3 +257,24 @@ html:not(.phone) #game-stage .ff:not(.duel) .ff-title { display: none; }
 #game-stage.in-tab .ff:not(.duel) .ff-tray .ff-key { min-height: 44px; height: 44px; }
 #game-stage.in-tab .ff:not(.duel) .ff-board { flex: 1 1 0; min-height: 0; }
 #game-stage.in-tab .ff:not(.duel) .ff-row { flex: 1 1 0; min-height: 0; height: auto; }
+
+/* GPH1 part 3b: the round "?" in the head is as tall as the EN / TR pills beside it on a computer (28 against 24 px);
+   a phone keeps 44 px for all three. */
+html:not(.phone) .ff-head button.htp-open:not(.htp-head) { width: 24px; height: 24px; min-height: 24px; }
+/* GPH1 part 3b: a small phone's Games tab (a game box ≤ 480 px tall) left the seven ticket rows about 20 px each, the
+   tiles 13 px tall: the word picker joins the head's row (the day's number goes; the streak, EN / TR and "?" stay), so
+   the rows get that line's height. */
+@container game (max-height: 480px) and (max-aspect-ratio: 1 / 1) {
+  #game-stage.in-tab .ff:not(.duel) {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'cat head' 'board board' 'result result' 'tray tray'; column-gap: 6px;
+  }
+  #game-stage.in-tab .ff:not(.duel) > .ff-head { grid-area: head; }
+  #game-stage.in-tab .ff:not(.duel) > .ff-cat-row { grid-area: cat; justify-content: flex-start; }
+  #game-stage.in-tab .ff:not(.duel) > .ff-board { grid-area: board; }
+  #game-stage.in-tab .ff:not(.duel) > .ff-result { grid-area: result; }
+  #game-stage.in-tab .ff:not(.duel) > .ff-tray { grid-area: tray; }
+  #game-stage.in-tab .ff:not(.duel) .ff-day { display: none; }
+  #game-stage.in-tab .ff:not(.duel) > .ff-cat-row { min-width: 0; }
+  #game-stage.in-tab .ff:not(.duel) .ff-cat { padding-inline: 6px; min-width: 0; max-width: 100%; font-size: 13px; }
+}

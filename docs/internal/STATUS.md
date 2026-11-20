@@ -19,7 +19,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio: GPH1 3a `claude/games-phones-3`, then 3b (Quiz, Five Frames): `design/games/phone-review-gph1.md`.
+- [ ] Game Studio: GPH1 #566, `claude/games-phones-4`: `design/games/phone-review-gph1.md`.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -215,7 +215,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27am. [PH3] Phone upright, an empty room, open a game: the small strip on top shows Ara / Davet et whole.
 - [ ] 27an. [FW1] Five Frames: odd words refused; 🌍 Countries: gold hint, a country is a guess.
 - [ ] 27ao. [GPH1] Phone: Son Kalp shows all 5 🤖; Büfe / Bahçe "closed" note below art.
-- [ ] 27ap. [GPH1] Phone: chess board still at the start; XOX # lines; Amiral Battı one level mid-game.
+- [ ] 27ap. [GPH1] Phone: chess still at start, XOX # lines, quiz bar clear, Beş Kare picker by 🔥. PC: Büfe note off art.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

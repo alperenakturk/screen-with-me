@@ -220,3 +220,21 @@
 #quiz-n { white-space: nowrap; }
 /* Off a game (the lobby, the podium) the jokers take no room at all (the result card keeps its full size). */
 .draw-lobby .quiz-jokers { display: none; }
+
+/* GPH1 part 3b: Quiz running in a phone's Games tab. The top bar's three columns (count · topic · jokers and timer)
+   overlapped on a phone ("Quest|Nature and animals" under the ½ joker): the count and the jokers share the first line,
+   the topic chip gets the whole second line. */
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .draw-top {
+  grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'n right' 'cat cat'; row-gap: 4px;
+}
+#game-stage.in-tab .quiz-page:not(.draw-lobby) #quiz-n { grid-area: n; overflow: hidden; text-overflow: ellipsis; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-cat { grid-area: cat; justify-self: center; max-width: 100%; }
+#game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-top-right { grid-area: right; }
+/* A tall phone (a game box over 540 px tall) left a third of the tab empty under the players: there the question and
+   its answers get bigger targets and type. */
+@container game (min-height: 540px) and (max-aspect-ratio: 3 / 4) {
+  #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-question { font-size: 20px; }
+  #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-options { gap: 10px; }
+  #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-option { min-height: 56px; font-size: 17px; }
+  #game-stage.in-tab .quiz-page:not(.draw-lobby) .quiz-body { gap: 12px; }
+}

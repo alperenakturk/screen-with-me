@@ -307,7 +307,7 @@ html.phone .wg-chip { min-height: 44px; }
 /* GPH1: a phone's Games tab. The "resting" note sits under the window sill, where the scene is empty (at the top it
    covered the window frame and the moon). On the narrowest phones (≤ 400 px) the album's eight 44 px plants lose their
    gaps to the cells' own transparent edge, so the strip fits the width (it ran 8 px past both edges). */
-#game-stage.in-tab .wg-rest { top: auto; bottom: 6px; }
+#game-stage:is(.in-tab, [data-place='float']) .wg-rest { top: auto; bottom: 6px; } /* part 3b: a free window too */
 /* ...and on a short scene (the smallest phone) it keeps its first line, clear of the pots. */
 @container (max-height: 230px) { #game-stage.in-tab .wg-rest small { display: none; } }
 @container game (max-width: 400px) {
@@ -317,3 +317,7 @@ html.phone .wg-chip { min-height: 44px; }
 }
 /* GPH1: on a phone every pot button is a 44 px target (Stub's lamp, shown once per film, was 40 px). */
 html.phone #game-stage .wg-btn { min-height: 44px; }
+/* GPH1 part 3b: a computer's free window has a short scene: the note keeps its title on one compact line under the
+   pots (its second line reached up over them). */
+#game-stage[data-place='float']:not(.in-tab) .wg-rest { bottom: 3px; padding: 2px 10px; }
+#game-stage[data-place='float']:not(.in-tab) .wg-rest small { display: none; }

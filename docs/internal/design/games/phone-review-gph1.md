@@ -61,6 +61,13 @@ shared by the bar, the head, the status and three buttons), backgammon's Roll un
 list on a tall phone (it shows every stand that fits). Not phones: Sea Battle in battle on an upright tablet fails the
 sweep's fair-size check (217 px sea in 714 × 433; not in CI's tablet list, older than this part).
 
+## Part 3b (`claude/games-phones-4`, 20 Nov 2026)
+Quiz running: the top bar's three columns overlapped ("Quest|Nature and animals" under the ½ joker) and a tall phone
+left a third empty: fixed. Five Frames on a 360 × 640 phone: ticket rows ≈ 20 px with 13 px tiles: the word picker
+joins the head's row. Computer: the free window's closed / resting notes no longer cover the art; Five Frames' "?"
+is the pills' 24 px. Left: the side panel covered by a side game's window at 1366 and the tablet's Last Heart lobby
+(both not phones, a tablet batch).
+
 ## Shared causes
 - No common board gutter or size rule.
 - Floating status, toast and banner layers placed absolutely without reserved space (Duel, Snack Bar, Window Garden).
