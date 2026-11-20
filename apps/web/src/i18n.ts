@@ -974,6 +974,8 @@ const en = {
   'phone.turn.fs': 'Watch fullscreen',
   'phone.turn.or': 'or hold the phone upright',
   'phone.turn.upright': 'Hold the phone upright',
+  'phone.turnNote': 'Turn your phone upright',
+  'phone.turnNote.why': 'Only the video plays sideways.',
   'phone.more.lab': 'Test Lab',
   'phone.more.labError': 'Test Lab · errors',
   'phone.more.invite': 'Invite',

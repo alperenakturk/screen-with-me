@@ -435,11 +435,16 @@ async function lab(page, id) {
         const page = await ctx.newPage();
         page.on('pageerror', (e) => problems.push(`${name} ${size} ${lang}: page error ${e.message}`));
         const file = `${name.replace(/[^\w-]+/g, '_')}-${size}-${lang}${theme === 'gece' ? '' : `-${theme}`}.png`;
+        // PH4: a sideways phone covers everything but the video with the turn-upright note, so a sideways phone gets
+        // there upright and is turned for the picture.
+        const turnAfter = size.endsWith('-land') && SIZES[size].isMobile && SIZES[size].viewport.width < 1000;
+        if (turnAfter) await page.setViewportSize({ width: SIZES[size].viewport.height, height: SIZES[size].viewport.width });
         try {
           if (s.room) await enterRoom(page, s);
           else await s.go(page);
           if (s.lab) await lab(page, s.lab);
           if (s.after) await s.after(page);
+          if (turnAfter) await page.setViewportSize(SIZES[size].viewport);
           await wait(700);
           // The Test Lab opened the screen; its 🐞 is not part of what a person sees.
           if (!s.keepLab) await page.addStyleTag({ content: '#debug-panel-root { display: none !important; }' });
