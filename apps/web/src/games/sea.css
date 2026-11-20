@@ -182,6 +182,10 @@ html.phone .sea-bot-label { flex-basis: auto; }
 #game-stage.in-tab .sea-bot-label { white-space: normal; min-width: 0; flex: 0 1 auto; line-height: 1.2; }
 #game-stage.in-tab .sea-watch-open[data-n='0'] { display: none; }
 #game-stage.in-tab .sea-score { flex: none; white-space: nowrap; }
+/* GPH1 part 3: in battle only Stub's level in play stays (the other level is a lobby choice), and the sea's head under
+   the "Their sea / My sea" switch shows the name alone (the switch already says whose sea it is). */
+#game-stage.in-tab .sea[data-phase='play'] .sea-bot-level:not(.on) { display: none; }
+#game-stage.in-tab .sea:not(.many, [data-phase='place']) .sea-name b { display: none; }
 
 /* GMP b: three to six players. A row of chips in the bar picks the sea in the big box (a player's target); a sunk
    fleet is crossed out and can't be picked by a player. My own chip only shows in a narrow window (one sea at a time). */
@@ -232,3 +236,8 @@ html.phone .sea-bot-label { flex-basis: auto; }
   .sea-places li { grid-template-columns: 32px 20px minmax(0, 1fr) auto; font-size: 13px; }
   .sea-places .sea-avatar.small { width: 20px; height: 20px; }
 }
+/* GPH1 part 3a first look: Stub's label balances its two lines; with three or more players the sea chips spread over
+   the bar's free width with room for the turn's dashed ring (it touched the head's line and the screen's edge). */
+#game-stage.in-tab .sea-bot-label { text-wrap: balance; }
+#game-stage.in-tab .sea.many .sea-targets { flex: 1 1 auto; justify-content: space-evenly; padding: 4px 3px; }
+#game-stage.in-tab .sea-bot .btn { flex: none; }

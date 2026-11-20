@@ -1777,3 +1777,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
     Run 43923095993 (105eadc, the same server code as 1caaf0e) went green on the first attempt with no drop in any
     shard: tagged v0.9.97.153. Merges may resume. If it comes back, compare the canary drop times with the deploy's
     "Wait for the new version" end before blaming a PR.
+
+## Idea line shortened, archived 20 Nov 2026 (GPH1 part 3 fixed its Sea Battle part; STATUS size limit)
+- **Old game layout points (Game Studio's first look, 16 Nov):** phone Sea Battle "Play against Stub" line wraps beside
+  Easy / Medium; tablet: an empty band above the game; Draw & Guess round choices "1 / 2 / 3" in EN but "1 tur" in TR.

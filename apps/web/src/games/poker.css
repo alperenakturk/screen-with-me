@@ -66,9 +66,9 @@
 #game-stage.in-tab .pk-slider input { min-width: 0; width: 100%; }
 #game-stage.in-tab .pk-moves { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
 #game-stage.in-tab .pk-moves-label { display: none; }
-#game-stage.in-tab .pk-move { min-height: 44px; padding: 2px 4px; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'name' 'cost'; justify-items: center; align-items: center; row-gap: 0; text-align: center; }
+#game-stage.in-tab .pk-move { min-height: 44px; padding: 2px; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'name' 'cost'; justify-items: center; align-items: center; row-gap: 0; text-align: center; }
 #game-stage.in-tab .pk-move-icon { display: none; }
-#game-stage.in-tab .pk-move-name { grid-area: name; }
+#game-stage.in-tab .pk-move-name { grid-area: name; white-space: nowrap; } /* GPH1 part 3: "Bedava çekil" on one line */
 #game-stage.in-tab .pk-move small { grid-area: cost; }
 #game-stage.in-tab :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-street, .pk-move small, .pk-life b, .pk-help, .pk-quick .game-chip, .pk-move-name) { font-size: 13px; }
 /* The ♠ "hand ranks" help keeps its small look but gets a 44 px target (negative margins keep its line's height). */
@@ -96,6 +96,13 @@
 @container game (max-height: 500px) and (max-aspect-ratio: 1 / 1) {
   #game-stage.in-tab .pk:has(.pk-seat:nth-child(3)) .pk-board { grid-template-columns: repeat(5, minmax(0, 32px)); }
   #game-stage.in-tab .pk:has(.pk-seat:nth-child(3)) .pk-me .pk-card.big { width: 32px; }
+}
+/* GPH1 part 3: a tall phone's Games tab (a Pixel 7's game box is ≈ 412 × 553) left a fifth of the table empty under
+   the moves, and the shared cards filled two thirds of the pot box: there the shared cards and my two cards grow. */
+@container game (min-height: 540px) and (max-aspect-ratio: 3 / 4) {
+  #game-stage.in-tab .pk-board { grid-template-columns: repeat(5, minmax(0, 60px)); }
+  #game-stage.in-tab .pk-me .pk-card.big { width: 50px; }
+  #game-stage.in-tab .pk-me { padding-block: 10px; }
 }
 
 /* Elsewhere the amounts stay where they were (their wrapper adds no box) and ± is not there. */

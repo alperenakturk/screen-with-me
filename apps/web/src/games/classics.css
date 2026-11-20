@@ -251,6 +251,18 @@
 /* Per-game touches: XOX playful, Four in a Row on its stand, dama and chess on wood. */
 #game-stage .mt[data-board='xox'] .xox-cell { border-radius: 22%; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
 #game-stage .mt[data-board='xox'] .xox-cell:nth-child(odd) { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+/* GPH1 part 3: a tic-tac-toe grid, not nine tiles that read as buttons: flat cells with the classic # lines between
+   them (each cell's right and bottom edge, except the last column's and row's). */
+#game-stage .mt[data-board='xox'] .xox-board:not(.four-board) { gap: 0; padding: 0; background: none; }
+#game-stage .mt[data-board='xox'] .xox-board:not(.four-board) .xox-cell {
+  --line: color-mix(in srgb, var(--accent) 60%, var(--text));
+  border: 0; border-radius: 0; box-shadow: none;
+  border-right: 4px solid var(--line); border-bottom: 4px solid var(--line);
+}
+#game-stage .mt[data-board='xox'] .xox-board:not(.four-board) .xox-cell:not(.win) { background: transparent; }
+#game-stage .mt[data-board='xox'] .xox-board:not(.four-board) .xox-cell.win { border-color: var(--line); }
+#game-stage .mt[data-board='xox'] .xox-board:not(.four-board) .xox-cell:nth-child(3n) { border-right: 0; }
+#game-stage .mt[data-board='xox'] .xox-board:not(.four-board) .xox-cell:nth-child(n + 7) { border-bottom: 0; }
 /* QA2 (9): the stand hangs from the board itself (a little wider, right under it), so it never floats apart or grows
    wider than the board on a phone. */
 #game-stage .mt[data-board='four'] .four-board { position: relative; }
@@ -421,10 +433,18 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 #game-stage.in-tab .mt .mt-bar { margin-right: 6px; }
 #game-stage.in-tab .mt .xox-actions { margin-top: 4px; }
 #game-stage.in-tab .mt :is(.xox-board, .dama-board) { padding: 2px; border-radius: 6px; }
+/* GPH1 part 3: waiting keeps the playing layout's rows (players, board, one row under it), so the board doesn't jump
+   when play starts: the bar with "Play against Stub" and "Just watch" share the row under the board, and the status
+   goes (the empty seat already says "Waiting…"). */
 #game-stage.in-tab .xox-page.mt > .mt-table:has(.cl-ref-mascot.wait) {
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'players players' 'bar bar' 'board board' 'tray tray' 'status actions';
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'players players' 'board board' 'tray tray' 'bar actions';
 }
+#game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .cl-ref { display: none; }
+/* The seat keeps the name whole in a half-width chip: "(you)" goes (the reader still hears it), and so does an empty
+   seat's dashed circle. */
+#game-stage.in-tab .mt .xox-you { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#game-stage.in-tab .mt .xox-player .xox-avatar.vacant { display: none; }
 #game-stage.in-tab .mt .xox-players { display: flex; grid-area: players; gap: 6px; }
 #game-stage.in-tab .mt .xox-players > .xox-player { flex: 1 1 0; min-width: 0; min-height: 40px; gap: 6px; padding: 2px 8px; }
 #game-stage.in-tab .mt #seat-1 { order: 0; }
@@ -441,7 +461,7 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 #game-stage.in-tab .mt .mt-watch-open { margin-left: 0; }
 #game-stage.in-tab .mt .mt-table:not(:has(.cl-ref-mascot.wait)) .cl-bot-level:not(.on) { display: none; }
 #game-stage.in-tab .mt .mt-watch-open[data-n='0'] { display: none; }
-#game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .mt-bar { justify-content: center; margin-inline: 6px; }
+#game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .mt-bar { justify-content: flex-start; margin-inline: 6px 0; }
 #game-stage.in-tab .mt .cl-ref { justify-content: flex-start; min-height: 44px; gap: 6px; }
 #game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .bg-tray { display: none; }
 #game-stage.in-tab .mt .mt-table:has(.cl-ref-mascot.wait) .xox-actions { margin: 4px 6px 0 0; align-self: center; }
@@ -473,7 +493,8 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
    (match.ts `SNAP_PX`) and ignores the rest. */
 .bg-board .bg-point:disabled { pointer-events: none; }
 /* Four in a Row keeps a margin from the screen's edges (its board is narrower than an 8 × 8 one). */
-#game-stage.in-tab .mt .four-board { width: min(100cqw - 16px, (100cqh - 14px) * 7 / 6); }
+/* GPH1 part 3: and its stand (3 % wider on each side) stays inside the screen with an 8 px margin too. */
+#game-stage.in-tab .mt .four-board { width: min((100cqw - 16px) / 1.06, (100cqh - 14px) * 7 / 6); }
 
 /* XO1: in the video's place on a box that is not wide (a sideways tablet, ≈ 740 × 595), a table still waiting for an
    opponent puts its note and "Just watch" on one row (as the phone's Games tab does), so the board keeps the height:
@@ -500,3 +521,11 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
    none on a 360 px phone, where chess needs the whole width for 44 px squares (boards ran edge to edge on a Pixel,
    Four in a Row's stand past both sides). */
 #game-stage.in-tab .mt .xox-board-wrap { box-sizing: border-box; padding-inline: clamp(0px, (100% - 360px) / 2, 12px); }
+/* GPH1 part 3: tic-tac-toe's three cells don't need the whole width: its # lines keep 12 px from the screen's edges. */
+#game-stage.in-tab .mt[data-board='xox'] .xox-board:not(.four-board) { width: min(100cqw - 24px, 100cqh); }
+/* GPH1 part 3a first look: in the tab Stub's level chips keep their width ("Medium" ran into its border when the row
+   was short; the label gives way instead, balanced over its two lines), and the turn ring is drawn inside the seat
+   (the 4 px ring outside it went past the screen's edge and into the head's line). */
+#game-stage.in-tab .mt .cl-bot .btn { flex: none; }
+#game-stage.in-tab .mt .cl-bot-label { text-wrap: balance; }
+#game-stage.in-tab .mt .xox-player.turn { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }

@@ -52,6 +52,15 @@ fixed item 1; part 2 (`claude/games-phones-2`) fixed items 2 and 3 and the board
 - Not phones: in a computer's free window the closed / resting notes still lie over the art; at 1366 a side game's
   window covers the side panel; the tablet's Last Heart lobby stacks its Deck options.
 
+## Part 3a (`claude/games-phones-3`, 20 Nov 2026)
+Fixed: chess's jump at the start (waiting keeps the playing rows), "Robin (yo…" (the tab hides "(you)"), the waiting
+status cut in "…" (the empty seat says it), Four's stand at 360 px, tic-tac-toe's grid lines, Sea Battle's colon, its
+idle level and the doubled "Their sea", "Bedelsiz çekil" (now "Bedava çekil", one line), Last Heart's small shared
+cards on a tall phone. Left as they are: Sea Battle's placing board on a 360 × 640 phone (≈ 60 % wide; the height is
+shared by the bar, the head, the status and three buttons), backgammon's Roll under a width-bound board, Snack Bar's
+list on a tall phone (it shows every stand that fits). Not phones: Sea Battle in battle on an upright tablet fails the
+sweep's fair-size check (217 px sea in 714 × 433; not in CI's tablet list, older than this part).
+
 ## Shared causes
 - No common board gutter or size rule.
 - Floating status, toast and banner layers placed absolutely without reserved space (Duel, Snack Bar, Window Garden).

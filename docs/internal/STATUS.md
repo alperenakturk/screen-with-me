@@ -19,7 +19,7 @@ One handoff per lane or role; each session updates only its own lines and delete
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
-- [ ] Game Studio: GPH1 #562, part 3: `design/games/phone-review-gph1.md`, Quiz, Five Frames (FW1 live).
+- [ ] Game Studio: GPH1 3a `claude/games-phones-3`, then 3b (Quiz, Five Frames): `design/games/phone-review-gph1.md`.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -215,6 +215,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27am. [PH3] Phone upright, an empty room, open a game: the small strip on top shows Ara / Davet et whole.
 - [ ] 27an. [FW1] Five Frames: odd words refused; 🌍 Countries: gold hint, a country is a guess.
 - [ ] 27ao. [GPH1] Phone: Son Kalp shows all 5 🤖; Büfe / Bahçe "closed" note below art.
+- [ ] 27ap. [GPH1] Phone: chess board still at the start; XOX # lines; Amiral Battı one level mid-game.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
@@ -264,8 +265,7 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
   the socket is not open); queue it until open or show "still connecting" (lane A, 16 Nov).
 - **Screenshot on failure for the feed harness:** `scripts/harness/feed/run.cjs` failed once on main (the friend's
   `#feed-row-pause` never visible) and CI kept no picture (B2, 16 Nov).
-- **Old game layout points (Game Studio's first look, 16 Nov):** phone Sea Battle "Play against Stub" line wraps beside
-  Easy / Medium; tablet: an empty band above the game; Draw & Guess round choices "1 / 2 / 3" in EN but "1 tur" in TR.
+- **Old game layout points (16 Nov):** tablet: an empty band above the game; Draw & Guess rounds "1 / 2 / 3" vs "1 tur".
 - **Small leftovers (Planner, 20 Nov):** upright-tablet Shorts bar has no ⋯ More; the feed drawer cuts room text
   mid-word; live e2e `quota.mjs` flake (shards share one address); `side-games-polish` harness stale since GW5.
 
