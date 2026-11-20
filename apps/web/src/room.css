@@ -12249,16 +12249,6 @@ html.ph-game-tab[data-ph-tab='games'] .room .theater:not(:fullscreen, .fake-fs, 
   padding: 4px max(8px, env(safe-area-inset-right)) 4px max(10px, env(safe-area-inset-left));
   gap: 6px;
 }
-/* Held sideways with a game open, the upright column stays: laid out at its upright size, centred, scaled to the
-   height (device.ts `holdUpright`). */
-html.upright-turned {
-  overflow: hidden;
-  background: var(--bg);
-}
-/* Opened sideways the page is short: the strip takes its size from the upright page it is laid out at. */
-html.upright-turned.ph-game-tab[data-ph-tab='games'] .room #theater.theater:not(:fullscreen, .fake-fs, .pseudo-fs) .player-wrap {
-  height: clamp(52px, calc(var(--up-h) - 584px), 152px);
-}
 /* "▶ Back to video" under the strip (ui/phone-room.ts): only while a game shows in the Games tab. */
 .ph-strip-back {
   display: none;
@@ -12275,14 +12265,6 @@ html.ph-game-tab[data-ph-tab='games'] .ph-strip-back {
   font: 600 13px/1.2 inherit;
   text-align: left;
 }
-html.upright-turned body {
-  width: var(--up-w);
-  height: var(--up-h);
-  margin: 0 auto;
-  transform: scale(var(--up-s));
-  transform-origin: top center;
-}
-
 /* MSG1: a deleted message's line; the ⋯ stays out of sight until ui/chat-menu.css (lazy) styles it. */
 .chat-deleted{margin:2px 0;font-size:12.5px;font-style:italic;color:var(--muted);text-align:center}
 .chat-more{opacity:0}
