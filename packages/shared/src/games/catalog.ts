@@ -39,7 +39,7 @@ export interface GameInfo {
 export const GAME_CATALOG: Record<RoomGameKind, GameInfo> = {
   xox: { min: 2, max: 2, place: 'stage', size: [420, 560], fit: [300, 420], minSize: [540, 620], maxSize: [672, 896], wide: [820, 440] },
   four: { min: 2, max: 2, place: 'stage', size: [520, 590], fit: [360, 440], minSize: [543, 620], maxSize: [832, 944], wide: [820, 440] },
-  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440], minSize: [789, 550], maxSize: [1204, 840], wide: [820, 440] },
+  draw: { min: 2, max: 8, place: 'stage', size: [860, 600], fit: [640, 440], minSize: [789, 550], maxSize: [1204, 840], wide: [820, 500] },
   quiz: { min: 2, max: 8, place: 'stage', size: [680, 640], fit: [520, 440], minSize: [625, 588], maxSize: [952, 896], wide: [820, 440] },
   poker: { min: 2, max: 6, place: 'stage', size: [860, 600], fit: [640, 440], minSize: [728, 507], maxSize: [1204, 840], wide: [880, 480] },
   // 🎲 Classics (P6): two players, or one against Stub. Its window follows the board on the table (`CLASSICS_SIZES`).
