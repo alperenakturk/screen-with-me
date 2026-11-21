@@ -292,7 +292,7 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   merges: wait for the checks, merge if green, check the deploy run is green, report. The owner only updates the
   extension in his own Chrome.
 - No `wrangler login` in the cloud (deploys go through Actions); install, typecheck, tests, build, `wrangler dev` + e2e
-  work. Tested sequence: `docs/internal/STATUS.md` "Testing in the cloud".
+  work. Tested sequence: `docs/internal/cloud-testing.md`.
 - A restricted network may block `www.youtube.com` (the title test in `room.mjs` hangs; allow it under Network access →
   Allowed domains). `*.googlevideo.com` stays blocked and headless Chromium can't decode YouTube's H.264: real YouTube
   playback is the owner's check.

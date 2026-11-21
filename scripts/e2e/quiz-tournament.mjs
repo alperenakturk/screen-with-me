@@ -2,9 +2,10 @@
 // Tournament: each player picks a round's category in turn (only the picker may pick; time up = a random one), three
 // questions a round, the round's best scorer wins it, the winner has the most round wins. Jokers: Double (×2 if
 // right), Second chance (a wrong answer may be tried once more, half points, only that player hears "again"),
-// 50:50; each kind once per game, one joker per question.
+// 50:50; each kind once per game, one joker per question. QZ5: after the topic rounds a five-question closest-guess
+// finale (no jokers; with three players the closest guess gets 200, the next 100, the last 0).
 import { GameSocket } from './game-socket.mjs';
-import { QUIZ_BANK } from '../../packages/shared/src/games/quiz-questions.ts';
+import { QUIZ_BANK, guessValue } from '../../packages/shared/src/games/quiz-questions.ts';
 import { quizLevelBonus } from '../../packages/shared/src/games/quiz.ts';
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'quizt' + Math.random().toString(36).slice(2, 8);
@@ -19,7 +20,7 @@ function client(name, cid) {
     inbox.push(m);
     if (m.t === 'state') last = m;
   });
-  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, name, cid, lang: 'en' })));
+  ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 4, name, cid, lang: 'en' })));
   let nudgedAt = 0;
   const wait = async (pred, label, ms = 15000) => {
     for (let i = 0; i < ms / 50; i++) {
@@ -46,12 +47,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const entryOf = (s) => QUIZ_BANK[s.qid];
 const rightMsg = (s) => {
   const e = entryOf(s);
-  if (s.typed) return { t: 'answer', n: s.n, text: e.en.a[0] };
-  if (e.tf !== undefined) return { t: 'answer', n: s.n, pick: e.tf ? 0 : 1 };
   return { t: 'answer', n: s.n, pick: s.options.indexOf(e.en.o[0]) };
 };
 const wrongMsg = (s, hide = []) => {
-  if (s.typed) return { t: 'answer', n: s.n, text: 'zzzz' };
   const right = rightMsg(s).pick;
   return { t: 'answer', n: s.n, pick: s.options.findIndex((_, i) => i !== right && !hide.includes(i)) };
 };
@@ -71,7 +69,7 @@ alex.send({ t: 'start' });
 
 // Round 1: Alex picks.
 const p1 = await sam.wait((m) => m.t === 'state' && m.phase === 'pick', 'pick 1');
-ok(p1.round === 1 && p1.rounds === 3 && p1.picker === wa.you && p1.offer.length === 3 && p1.total === 9, 'Round 1 of 3: Alex picks from three categories');
+ok(p1.round === 1 && p1.rounds === 4 && p1.picker === wa.you && p1.offer.length === 3 && p1.total === 14, 'Round 1 of 4 (3 topic rounds + the finale): Alex picks from three categories');
 sam.send({ t: 'pick', cat: p1.offer[1] });
 await sleep(400);
 ok(sam.state.phase === 'pick', 'Only the picker may pick');
@@ -88,7 +86,7 @@ let kimHide = [];
 if (kimKind === 'fifty') {
   const f = await kim.wait((m) => m.t === 'fifty', 'fifty');
   kimHide = f.hide;
-  ok(q.typed ? f.hint && f.hint.length >= 1 && f.hide.length === 0 : f.hide.length === 2, q.typed ? `50:50 on a typed question gives a hint: "${f.hint}"` : '50:50 hides two options');
+  ok(f.hide.length === 2, '50:50 hides two options');
 }
 kim.send({ t: 'joker', n: 1, kind: 'second' });
 const used = await alex.wait((m) => m.t === 'state' && m.players.filter((p) => p.jokers?.length).length === 3, 'jokers shown');
@@ -104,7 +102,7 @@ sam.send(rightMsg(q));
 kim.send(wrongMsg(q, kimHide));
 let r = await alex.wait((m) => m.t === 'state' && m.phase === 'reveal', 'r1 reveal 1');
 const e1 = entryOf(q);
-const bonus = quizLevelBonus(e1.d, e1.typed);
+const bonus = quizLevelBonus(e1.d);
 const ra = r.players.find((p) => p.id === wa.you);
 const rs = r.players.find((p) => p.id === ws.you);
 // QZ3: ×2 played before answering doubles a right answer but without the first-answer bonus (≈ 2 × 150).
@@ -146,12 +144,36 @@ for (const n of [7, 8, 9]) {
   for (const c of [alex, sam, kim]) c.send(wrongMsg(q));
   await alex.wait((m) => m.t === 'state' && m.phase === 'reveal' && m.n === n, `r3 reveal ${n}`);
 }
+// QZ5: the finale: five closest-guess questions, nobody picks, no jokers. Alex guesses the number, Sam a bit off,
+// Kim far off: 200 / 100 / 0 each time.
+const before = Object.fromEntries(alex.state.players.map((p) => [p.id, p.score]));
+for (let n = 10; n <= 14; n++) {
+  q = await alex.wait((m) => m.t === 'state' && m.phase === 'question' && m.n === n, `finale q${n}`, 20000);
+  if (n === 10) {
+    ok(q.round === 4 && q.finale === true && !('picker' in q) && q.total === 14, 'After round 3 the finale starts at once: round 4/4, nobody picks');
+    const r3 = q.players;
+    ok(r3.find((p) => p.id === wa.you).wins === 1 && r3.find((p) => p.id === wk.you).wins === 1, 'Round 3 had no winner; Alex and Kim won a round each');
+  }
+  const v = guessValue(entryOf(q));
+  ok(q.guess === true && q.options.length === 0 && !('value' in q) && v !== null && q.endsAt - Date.now() > 15_000, `Finale question ${n - 9}: a closest guess, no options, the number hidden, 20 s`);
+  if (n === 10) {
+    alex.send({ t: 'joker', n, kind: 'fifty' });
+    alex.send({ t: 'answer', n, pick: 0 });
+    await sleep(300);
+    ok(!alex.inbox.some((m) => m.t === 'fifty') && !alex.state.players.find((p) => p.id === wa.you).answered, 'No joker and no option pick on a closest guess');
+  }
+  alex.send({ t: 'answer', n, num: v });
+  sam.send({ t: 'answer', n, num: v + Math.abs(v) * 0.1 + 1 });
+  kim.send({ t: 'answer', n, num: v + Math.abs(v) * 0.5 + 100 });
+  const r = await alex.wait((m) => m.t === 'state' && m.phase === 'reveal' && m.n === n, `finale reveal ${n}`);
+  const g = (id) => r.players.find((p) => p.id === id);
+  ok(r.value === v && g(wa.you).guess === v && g(wa.you).rank === 1 && g(wa.you).gained === 200 && g(ws.you).rank === 2 && g(ws.you).gained === 100 && g(wk.you).gained === 0, `Finale ${n - 9}: the number shown; closest 200, next 100, last 0 (three players)`);
+}
 const over = await alex.wait((m) => m.t === 'state' && m.phase === 'over', 'over', 20000);
 const wins = Object.fromEntries(over.players.map((p) => [p.id, p.wins]));
-ok(over.roundWin.length === 0 && wins[wa.you] === 1 && wins[wk.you] === 1 && wins[ws.you] === 0, 'Round 3 had no winner; Alex and Kim won a round each');
-const ap = over.players.find((p) => p.id === wa.you).score;
-const kp = over.players.find((p) => p.id === wk.you).score;
-ok(ap !== kp, `A tie on round wins goes to points (Alex ${ap}, Kim ${kp})`);
+const score = (id) => over.players.find((p) => p.id === id).score;
+ok(over.roundWin.length === 1 && over.roundWin[0] === wa.you && wins[wa.you] === 2 && wins[wk.you] === 1 && wins[ws.you] === 0, 'The finale is a round: Alex won it (2 round wins), Kim 1');
+ok(score(wa.you) - before[wa.you] === 1000 && score(ws.you) - before[ws.you] === 500 && score(wk.you) === before[wk.you], 'Finale points added: Alex +1000, Sam +500, Kim +0');
 
 for (const c of [alex, sam, kim]) c.ws.close();
 setTimeout(() => process.exit(0), 100);

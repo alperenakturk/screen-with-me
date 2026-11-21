@@ -48,15 +48,29 @@ export const MAX_MESSAGE_BYTES = 4096;
  * İlk sayfa her zamanki; sonrakiler daha absürt/eğlenceli. Sunucu listede
  * olmayanı kabul etmez. Sona sayfa eklemek eski istemcileri bozmaz.
  */
+/** Card EMO1 (owner, 21 Nov 2026): the "Hand signs" pages (two of eight); each may carry a skin tone (`SKIN_TONES`). */
+export const HAND_PAGES = [
+  ['👍', '👏', '🙌', '👋', '🤞', '🫶', '✌️', '👌'],
+  ['🤙', '🤘', '👊', '🙏', '🤟', '💪', '✋', '👐'],
+] as const;
+export const HAND_REACTIONS = HAND_PAGES.flat();
+/** Card EMO1: the Fitzpatrick modifiers a hand may carry ('' = the default yellow). */
+export const SKIN_TONES = ['', '\u{1F3FB}', '\u{1F3FC}', '\u{1F3FD}', '\u{1F3FE}', '\u{1F3FF}'] as const;
 export const REACTION_PAGES = [
   ['😂', '😮', '😍', '😱', '👏', '🔥', '😢', '💀'],
   ['🤮', '💩', '🥵', '🤡', '🤯', '😴', '🙄', '🥴'],
   ['😡', '🍿', '🎉', '👀', '💔', '🙏', '😈', '👻'],
+  ...HAND_PAGES,
 ] as const;
+/** Card EMO1: the first hand-signs page's place among REACTION_PAGES (the next one follows it). */
+export const HANDS_PAGE = 3;
+/** Card EMO1: a hand in a skin tone (a tone replaces the emoji's U+FE0F presentation mark, as in ✌🏽). */
+export const handInTone = (hand: string, tone: string): string => (tone ? hand.replace('\uFE0F', '') + tone : hand);
 
 export const REACTIONS = REACTION_PAGES.flat();
 
-export type Reaction = (typeof REACTION_PAGES)[number][number];
+export type Reaction = (typeof REACTION_PAGES)[number][number] | `${string}${Exclude<(typeof SKIN_TONES)[number], ''>}`;
+const TONED = new Set<string>(HAND_REACTIONS.flatMap((hand) => SKIN_TONES.map((tone) => handInTone(hand, tone))));
 
 /**
  * Çizilmiş avatarlar (public/avatars/<kimlik>.svg; scripts/avatars.mjs çizer). Değer,
@@ -788,7 +802,7 @@ export function isValidRate(x: unknown): x is number {
 }
 
 export function isReaction(x: unknown): x is Reaction {
-  return typeof x === 'string' && (REACTIONS as readonly string[]).includes(x);
+  return typeof x === 'string' && ((REACTIONS as readonly string[]).includes(x) || TONED.has(x));
 }
 
 export const ROOM_NAME_MAX = 40;

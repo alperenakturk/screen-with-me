@@ -1620,6 +1620,32 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   enabled after my answer and glows (`.quiz-joker.ready`, `room.css`); its tooltip and How to play card 2
   say when to press it (the lobby's rules line stays short so the small phone's lobby fits at 13 px). Test Lab `quiz.joker.double`. Tests: `quiz.test.ts` / `scoring.test.ts`, e2e `quiz.mjs`
   QZ3 block (×2 after a right answer doubles, after a wrong one 0, once a game).
+  **QZ5 closest guesses and the finale (21 Nov 2026, the owner's rules):** true / false (`tf`) and typed-word entries
+  are retired (`isRetired`; their ids stay, so browsers' seen lists keep meaning the same questions) and never asked;
+  the fifth bank `quiz-questions-5.ts` (`QUIZ_BANK_5`, files in `quiz-bank-5/`) rewrites the good true / false ones as
+  four-option questions, adds closest-guess entries (`k: 'guess'`, a number `n`, the same in both languages) for every
+  category, and the categories `screen` (film and TV, never a title), `games`, `travel` (`quiz.cat.*`). An old typed
+  question whose first accepted answer is the same plain number in both languages counts as a guess (`guessValue`).
+  `quizPool(…, kind)` keeps `choice` and `guess` apart; `pickQuestions(…, guesses)` puts `quizGuessCount(count)` (5 → 1,
+  10 → 2, 15 → 3) guesses spread out, the last one closing the game (a topic or level short of guesses tops up from the
+  topic's other levels, then from every topic). A guess question: no options, `QUIZ_GUESS_MS` 20 s, the state's
+  `guess: true`; the answer is `{t:'answer', n, num}` (finite, ≤ `QUIZ_GUESS_MAX`, two decimals; the browser reads what
+  people type with `parseGuess`: "1 440", "1.440", "3,14"); no joker, no option pick, no speed or first-answer bonus, no
+  streak change. At the reveal `guessPoints` gives places (1 + how many were strictly closer: a tie shares the better
+  place) and `QUIZ_GUESS_POINTS` 200 / 100 / 50 to the first `min(3, players − 1)` places (2 players 200 / 0, 3 players
+  200 / 100 / 0; players = those online plus those who guessed); the reveal sends `value` and each player's `guess`,
+  with `rank` = place. Tournament: `rounds` = players × laps + 1, the last round (`Saved.finale`) is the finale: no pick,
+  `QUIZ_FINALE_QUESTIONS` (5) guesses from every topic; it is a round like the others (its best scorer gets a round win)
+  and its points add up; the state says `finale: true` and no `picker`; `total` = topic rounds × 3 + 5. Saved tables
+  from before QZ5 have no `finale` and end as before. `QUIZ_PROTOCOL_VERSION` 4 (text answers gone). Client: the number
+  field reuses `.quiz-type` (`inputmode="decimal"`), "🎯 Closest guess wins" above the question (in the finale
+  "🏁 Finale: closest wins 200 / 100 / 50", the ladder this table's player count pays; numbers under 10 000 ungrouped), the reveal lists the
+  guesses by place (`.quiz-said`), the head says "🏁 Finale · i/5", the joker row is off on a guess; Stub cheers an exact
+  hit. Test Lab `quiz.guess` (lab op `guess`: the next classic game asks only guesses) and `quiz.finale` (lab op `finale`:
+  the next tournament plays only its finale), local lab server only. Tests: `quiz.test.ts` (no true / false or typed
+  in any pool or game, the ladder, ties, `parseGuess`, placement), e2e `quiz.mjs` (the 5th of 5 is a guess; lab part:
+  200 / 0, hidden until the reveal, jokers and picks refused) and `quiz-tournament.mjs` (the finale: 200 / 100 / 0 five
+  times, a round win, +1000 / +500 / 0).
 - **Players thrown out of tables (card GD1, 19 Nov 2026):** three causes found and fixed. (1) **The room's "at
   this table" mark** lives on the room connection's attachment (`{t:'at', table}`, `setAt`); a new room connection
   (a deploy, a phone wake, a Wi-Fi switch) started without it, and the client re-sent it only when it reopened the
@@ -2410,6 +2436,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `#speed-pop`: the speed picker, below) · ⇥ · ⛶; icons only at ≤1180 px. Fullscreen and Shorts bars stay flat (8 slots +
     ▲▼). In the shell, popups opening over the hole (`[data-island]`: tray, speed, game menu) are islands; they have no
     opening animation (measurements shifted).
+    **Card EMO1 (21 Nov 2026): Hand signs** (owner's name: "El işaretleri"). `protocol.ts` `HAND_PAGES` (two pages
+    of eight: 👍 👏 🙌 👋 🤞 🫶 ✌️ 👌 · 🤙 🤘 👊 🙏 🤟 💪 ✋ 👐) are pages 4–5 of `REACTION_PAGES` (`HANDS_PAGE` = 3,
+    before the room's custom emoji pages); `isReaction` also takes each hand with one `SKIN_TONES` modifier
+    (`handInTone`: the tone replaces ✌️'s U+FE0F; no protocol bump: additive). The tray's chips: Emojis (pages 0–2) ·
+    Hand signs · In this room · My collection; on a hand page a labelled row of six ✋ tones (`.tray-tones`,
+    `reactTray.tone0–5`, `opt:handTone`, per browser) sits above the grid and every hand page (the flat rail /
+    fullscreen / Shorts bars too, reached with ▲▼) carries the tone. Test Lab `react.hands`. Harness
+    `scripts/harness/hands` (CI `site`: phone EN / TR, a toned 🫶 received, the tone after a reload, the rail's ▼). Unit test `packages/shared/src/reactions.test.ts`.
   - **Top bar** (`html.in-room`): "Bağlı" text, ⟳, 🎨 and TR/EN hidden in the room; the connection is the dot of the
     room name (`.room-title-dot` green/yellow/red, short text next to it when not connected, click reconnects; on
     phones only the dot). Language and ⟳ sit at the top of the profile menu (`.profile-actions`); ⚙️ is its own button

@@ -6711,7 +6711,45 @@ html.in-room .topbar-right > .lang {
 
 .tray-head {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+}
+
+/* Card EMO1: the hands page's skin tones, one row the width of the grid. */
+.tray-tones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.tray-tones-label {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tray-tone {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.tray-tone:hover {
+  background: var(--surface-2);
+}
+
+.tray-tone.on {
+  border-color: var(--accent);
+  background: var(--surface-2);
 }
 
 .tray-chip {
