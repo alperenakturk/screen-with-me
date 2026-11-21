@@ -1784,3 +1784,10 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 
 ## Game Studio handoff line, archived 20 Nov 2026 (GPH1 done; no Game Studio branch left)
 - [x] Game Studio (handoff 20 Nov): GPH1 done (#566, #567); leftovers in `design/games/phone-review-gph1.md`.
+
+## STATUS header, archived 21 Nov 2026 (Planner)
+> Live: site and extension **0.9.97.121** (11 Nov 2026), tagged `v0.9.97.121`. What to work on: `ROADMAP.md` "Focus:
+> now / next / frozen" and the Ready cards in `CARDS.md`. What each release changed: `CHANGELOG.md`. Everything
+> finished that used to be in this file (old task queue, every per-release hand-test block, the Lab test round, the
+> design sweep, the last full test pass, the short history) is verbatim in `docs/internal/archive/status-history.md`
+> (card DOCS2). Keep this file short: a finished item leaves it in the PR that finishes it.

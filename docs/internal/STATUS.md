@@ -1,10 +1,8 @@
 # Status: where we are (every session reads this first)
 
-> Live: site and extension **0.9.97.121** (11 Nov 2026), tagged `v0.9.97.121`. What to work on: `ROADMAP.md` "Focus:
-> now / next / frozen" and the Ready cards in `CARDS.md`. What each release changed: `CHANGELOG.md`. Everything
-> finished that used to be in this file (old task queue, every per-release hand-test block, the Lab test round, the
-> design sweep, the last full test pass, the short history) is verbatim in `docs/internal/archive/status-history.md`
-> (card DOCS2). Keep this file short: a finished item leaves it in the PR that finishes it.
+> What to work on: `ROADMAP.md` "Focus" and the Ready cards in `CARDS.md`; what each release changed: `CHANGELOG.md`.
+> Finished items live verbatim in `docs/internal/archive/status-history.md` (DOCS2). A finished item leaves this file
+> in the PR that finishes it.
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
