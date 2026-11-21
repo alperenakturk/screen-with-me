@@ -1,10 +1,8 @@
 # Status: where we are (every session reads this first)
 
-> Live: site and extension **0.9.97.121** (11 Nov 2026), tagged `v0.9.97.121`. What to work on: `ROADMAP.md` "Focus:
-> now / next / frozen" and the Ready cards in `CARDS.md`. What each release changed: `CHANGELOG.md`. Everything
-> finished that used to be in this file (old task queue, every per-release hand-test block, the Lab test round, the
-> design sweep, the last full test pass, the short history) is verbatim in `docs/internal/archive/status-history.md`
-> (card DOCS2). Keep this file short: a finished item leaves it in the PR that finishes it.
+> What to work on: `ROADMAP.md` "Focus" and the Ready cards in `CARDS.md`; what each release changed: `CHANGELOG.md`.
+> Finished items live verbatim in `docs/internal/archive/status-history.md` (DOCS2). A finished item leaves this file
+> in the PR that finishes it.
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
@@ -12,6 +10,7 @@ One handoff per lane or role; each session updates only its own lines and delete
   (8ce4385) still missing. Cards in order: CAM3 (branch `claude/cam3`) → VC4 → PTT1 → TG2. Lane A2 has the rail, game
   invites, emoji, recap, rating. DM1 (Dailymotion) waits for the owner's Player ID; UI2 `rail-speed` flake: if it
   fails again, add a `sync-engine.test.ts` scenario.
+- [ ] FW2 (Five Frames): [x] 1 places [ ] 2 timer, points [ ] 3 big board [ ] 4 levels [ ] 5 words
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -220,7 +219,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
   screens in step (and stands still with "reduce motion" on).
 
-**D. Before the 1.0 store submission** (Claude reminds the owner right before it)
+**D. Before the store submission (STORE2, ~25 Nov)** (the Planner reminds the owner first)
 - [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
   film page and voice there, fullscreen, sounds; Brave Shields + "Disable non-proxied UDP" shows the "blocks direct
   connections" note; Edge "Strict" tracking prevention; Opera's ad blocker, VPN and GX limits; write down each version.
@@ -245,7 +244,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   stays peer-to-peer. With a card: Worker secrets `REALTIME_APP_ID` + `REALTIME_APP_SECRET`, the code switches to SFU
   by itself (`ses-goruntu.md`), a budget brake is mandatory, and the same card could hide IP addresses in voice,
   camera and streams (ROADMAP Phase 2).
-- **Chrome Web Store submission:** with 1.0. **Trademark filing, donations, legal entity:** `ROADMAP.md` §4.
+- **Chrome Web Store submission:** ~25 Nov 2026, before 1.0 (owner, 21 Nov; card STORE2). **Trademark filing, donations, legal entity:** `ROADMAP.md` §4.
 - **Film page intro** (play the room intro on the film page or not; Planner recommends not): decided right before the store
   submission, not now (owner, 17 Nov 2026).
 - **After 1.0:** a Firefox extension (L), a TURN relay (Phase 2). Not planned: a Safari extension, Opera's own store.

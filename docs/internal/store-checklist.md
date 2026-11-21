@@ -1,4 +1,22 @@
-# Store submission dry run (card STORE1, 7 Nov 2026)
+# Store submission check (card STORE1 dry run, 7 Nov 2026; redone for card STORE2, 21 Nov 2026)
+
+**STORE2 re-check (21 Nov 2026, extension 0.9.97.141, submission planned by ~25 Nov, before 1.0 by the owner's pick).**
+What changed since the 7 Nov dry run and what was done:
+
+| Item | Result |
+|---|---|
+| Manifest (name, summary, permissions, host permissions, content scripts, web-accessible resources) | ✅ unchanged since STORE1 (`apps/extension/build.mjs`); nothing new to justify |
+| No remote code | ✅ scanned the zip: no `eval` / `new Function`, every `<script>` is a packaged file, the only outside address is our own server (WebSocket + the website in the room layer's iframe) |
+| Package | ✅ `npm run store` builds; the zip is the same file as the live site's `/screenwithme-extension.zip`, so the owner downloads it there (it carries the live release number). No `1.0.0` bump: the store takes the four-part CI number |
+| Screenshots | 🔧 regenerated (the room now fills the window and lost the room name / IP line in the top bar, as on the live site); the "Go to the film" highlight ring in screenshot 2 moved back onto its button. A fresh reviewer found no blockers |
+| Description | 🔧 games listed by kind (classics, Sea Battle, quiz, draw and guess, a card game, a word race); block / report added; the IP sentence now points at the privacy policy (the separate notice before joining voice is gone) |
+| Privacy tab | 🔧 chat kept as the last 1000 messages until the room is deleted (was 50); reports (name + last chat lines to us); session recap (per-person counts and watched videos, ≤ 90 days) added under user activity / web history; the `offscreen` justification no longer mentions the removed notice. Checked against `privacy.html` (last updated 17 Nov 2026) |
+| Privacy policy, support | ✅ `privacy.html` EN + TR with a dated change list; support URL `help.html` (FAQ, feedback form, abuse e-mail) |
+| Public-text rules (CLAUDE.md §6) | ✅ no film / series / piracy site names, no "open source", no donation prompt |
+| `PROTOCOL_VERSION` | ⚠️ never bumped while the review runs (CLAUDE.md §7); the Planner tells the building sessions on submission day |
+| Owner's steps | sent to the Planner (Turkish, step by step, with the Brave / Edge hand test first) |
+
+The STORE1 tables below are kept as the field-by-field reference; where they say "1.0", read "the STORE2 submission".
 
 We went through the Chrome Web Store submission field by field as if we were sending it today (extension
 0.9.97.72), plus the Edge Add-ons differences. The texts to paste are in `web-store.md` (the form guide); this page
@@ -13,8 +31,8 @@ Legend: ✅ ready · 🔧 fixed in this card · 👤 only the owner can do it ·
 | Chrome Web Store developer account | ✅ | Opened earlier (publisher e-mail screenwithme.app@gmail.com, non-trader). |
 | 2-step verification on that Google account | 👤 | Google requires it before publishing. Check it is on. |
 | Publisher contact e-mail verified in the dashboard | 👤 | Dashboard → Account → contact e-mail → verify link. |
-| Version for submission | 👤 | `1.0.0` in `apps/extension/package.json` and the site footer on submission day (the owner names the step). |
-| Package | ✅ | `npm run store` → `store/screenwithme-<version>.zip` (made and checked in this card: 0.9.97.72). |
+| Version for submission | ✅ | STORE2: the live release number as it is (four parts); no `1.0.0` needed. |
+| Package | ✅ | the live site's `/screenwithme-extension.zip` = `npm run store` → `store/screenwithme-<version>.zip` (checked 0.9.97.72, again 0.9.97.141). |
 | Real-browser hand test (Brave / Edge / Opera) | 👤 | `STATUS.md` "Owner's hand tests"; remind the owner right before submitting. |
 
 ## 1. Package (the manifest, `apps/extension/build.mjs`)
@@ -105,7 +123,7 @@ Legend: ✅ ready · 🔧 fixed in this card · 👤 only the owner can do it ·
 
 1. Turn on 2-step verification and verify the contact e-mail (Chrome dashboard).
 2. Open the Edge Partner Center account.
-3. Say "1.0" so the version moves to `1.0.0`; Claude runs `npm run store`.
+3. (STORE2) No version step: download the live `/screenwithme-extension.zip` (or Claude runs `npm run store`).
 4. Upload the zip, paste the texts from `web-store.md` (Claude can walk him through it live), press **Submit for review** in both stores.
 5. Optional, before 1.0: a lawyer's read of `privacy.html` and `terms.html` (Turkish law / KVKK, EU users).
 6. After approval: tell Claude the store link; the install steps on `extension.html` become an "Add to Chrome" button.

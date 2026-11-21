@@ -1,0 +1,1 @@
+- Five Frames Duel with three or more: whoever finds the word first keeps "1st" while the others are still racing (two players could both read "2nd").

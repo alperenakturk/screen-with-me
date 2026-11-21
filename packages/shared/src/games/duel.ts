@@ -68,6 +68,14 @@ export function duelRanks(boards: readonly (DuelBoard | null)[], answer: string,
 }
 
 /**
+ * FW2: a seat's place among the players who found the word so far (1 = first), 0 while it hasn't. The page showed the
+ * count of solvers instead, so the first finder read "2nd" as soon as a second one found it.
+ */
+export function duelPlace(solved: readonly number[], seat: number): number {
+  return solved.indexOf(seat) + 1;
+}
+
+/**
  * Hard mode (NG1, owner's pick 9.4): every letter found so far must be used again. A ✓ letter stays in its place; a •
  * letter appears somewhere (as many times as the marks have shown it). Returns null when the guess keeps to that, or
  * the first rule it breaks: the letter and, for a ✓, its place (0-based). Both normalized words.
@@ -133,6 +141,8 @@ export interface DuelPlayer {
   solved: boolean;
   /** Used all seven tries without the word. */
   out: boolean;
+  /** FW2: the place this seat found the word in (1 = first), sent once it has; absent before. */
+  place?: number;
 }
 
 export type DuelServerMessage =
