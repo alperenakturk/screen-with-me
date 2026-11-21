@@ -191,3 +191,30 @@
   #game-stage[data-place='stage'] .pk-feed p:not(:last-child) { display: none; }
   #game-stage[data-place='stage'] .pk-me .pk-card.big { width: 46px; }
 }
+
+/* ==== LH4 (review, 21 Nov 2026) ==== */
+/* Card faces scale with the card (a fixed 14 / 22 px rank and suit hid the rank under the suit on a phone's 38 px
+   cards): the rank in the top-left corner, the suit in the bottom-right, both a share of the card's width. */
+.pk .pk-card.pk-card { container-type: inline-size; }
+.pk .pk-card.pk-card b { top: 5cqw; left: 9cqw; font-size: 40cqw; line-height: 1; }
+.pk .pk-card.pk-card i { position: absolute; right: 7cqw; bottom: 3cqw; font-size: 48cqw; line-height: 1; }
+.pk .pk-card.pk-card.joker b { position: absolute; inset: 22cqw 0 auto; text-align: center; font-size: 50cqw; }
+.pk .pk-card.pk-card.joker small { position: absolute; inset: auto 0 12cqw; text-align: center; font-size: 13cqw; }
+/* A loser's best five at the showdown: a quiet outline (gold is for the winning cards only). */
+.pk-card.kept { box-shadow: 0 0 0 2px color-mix(in srgb, var(--muted) 70%, transparent), 0 2px 6px rgb(0 0 0 / 0.35); }
+/* The flask's liquid eases to its new level (the same node from state to state). */
+.pk .pk-liquid { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+/* Parts hidden while I'm not in the hand (their own `display` would win over [hidden]). */
+.pk-me > [hidden], .pk-me-info > [hidden] { display: none !important; }
+/* The board's five places keep their card's size (a place holds one card or the dashed slot). */
+.pk-slot { display: contents; }
+/* A rival I can pick for a special move: the whole seat is one button (it lies over the seat). */
+.pk-seat { position: relative; }
+.pk-seat-pick { position: absolute; inset: 0; z-index: 1; margin: 0; padding: 0; border: 0; border-radius: inherit; background: transparent; cursor: pointer; }
+.pk-seat-pick:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* Fold's red hover stayed on after a tap on a touch screen. */
+@media (hover: none) {
+  .pk .pk-fold:hover { border-color: var(--border); color: var(--text); }
+}
+/* The hand's result is the status strip's own line now (no toast over it): on a phone it may take two lines. */
+#game-stage.in-tab .pk-status.result .pk-status-text { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }

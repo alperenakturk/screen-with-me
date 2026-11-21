@@ -90,10 +90,14 @@ ok(r.dq && r.life === 100 && mv.life === moverLife - 10 && mv.used.includes('dq'
 
 // Peek: only the one who peeked sees the card.
 const peeker = Object.values(byId).find((c) => c !== raiser && c !== mover);
+const clockBefore = alex.state.endsAt;
+await sleep(1100);
 peeker.send({ t: 'move', m: 'peek', target: moverId });
 const peek = await peeker.wait((m) => m.t === 'peek', 'peek');
 await sleep(300);
 ok(peek.target === moverId && typeof peek.card === 'string' && !mover.inbox.some((m) => m.t === 'peek') && !raiser.inbox.some((m) => m.t === 'peek'), 'Peek: the card went only to the one who peeked');
+// LH4: a special move out of turn leaves the turn clock as it was (it used to restart the 30 s).
+ok(alex.state.last?.e === 'move' && alex.state.last.m === 'peek' && (peeker !== actor() ? alex.state.endsAt === clockBefore : true), 'A special move out of turn keeps the turn clock');
 
 // Play the hand out: whoever acts checks or calls.
 for (let i = 0; i < 20 && alex.state.phase !== 'showdown'; i++) {
