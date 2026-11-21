@@ -10,7 +10,7 @@ Done: DOCS1 (#358), QUOTA1a + IMG2 (#359), QUOTA2 + ERR1 (#361), QUOTA3 (#388), 
 **Still open:** owner's Cloudflare usage alerts (step 1); CF-8 log check; CF-4 batched wake read; ROOMCAP leftovers
 (IP block on kick, join attempts per minute); HYG1 (after 1.0); the 0.9.98 test round; `reference.md` split into area
 files; the PR area-file warning; STATUS ≈ 28 KB and ROADMAP ≈ 31 KB still over their ≈ 15 KB targets.
-Reusable guides from this work: `docs/internal/playbooks/` (AI team) and `docs/internal/github-playbook.md`.
+Reusable guides from this work: `docs/internal/playbooks/` (AI team) and `docs/internal/playbooks/github.md`.
 
 ## Goals
 1. **Safer:** no anonymous person can take the whole site down by using up the free Cloudflare quotas.

@@ -33,8 +33,8 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 | Design notes and picks, game design | `docs/internal/design/`, `docs/internal/design/games/` |
 | Research, vision | `docs/internal/research/`, `docs/internal/VIZYON.md`, `docs/internal/rakip-analizi.md`, `docs/internal/name-research.md` |
 | Security reviews | `docs/internal/security-review-<n>.md`, `docs/internal/security-review-cf.md` (Cloudflare audit) |
-| The optimization plan (quota, docs, glossary) and the docs analysis | `docs/internal/OPTIMIZATION.md`, `docs/internal/docs-sprawl.md` |
-| Skills and tools for this project | `docs/internal/tools.md` |
+| Optimization plan, docs analysis | `docs/internal/OPTIMIZATION.md`, `docs/internal/docs-sprawl.md` |
+| Skills, tools; guides for new projects | `docs/internal/tools.md`; `docs/internal/playbooks/` |
 | Costs and free limits, custom domain, breach plan, store texts | `docs/internal/costs.md`, `custom-domain.md`, `breach-plan.md`, `web-store.md` |
 | The owner's board (his test ticks) | https://claude.ai/artifact/NWZG7GLH4JzAnZt1rNgrJo (one Artifact, kept by the Planner) |
 
@@ -306,7 +306,7 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   Third-party parts keep their licences (`apps/web/public/third-party-notices.txt`); shipped code has no third-party
   package code; a new runtime dependency needs a licence check (MIT / Apache / BSD fine) and a line there.
 - **The repo is public** (free Actions minutes): never commit secrets, tokens, private e-mails, hidden addresses
-  (push protection on, `github-playbook.md`)
+  (push protection on, `playbooks/github.md`)
 - `apps/web/public/privacy.html` and `terms.html` (TR + EN, `?lang=en|tr` via `lang.js`; `data-terms-link` links get
   `?lang=` from `i18n.ts` `translate`; the old `gizlilik.html` redirects). Abuse / takedown: `terms.html#abuse`
   (e-mail "Report", 72 hours; `SECURITY.md` and help `#report` point there). A change adds a dated "Changes" line in

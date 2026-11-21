@@ -4,7 +4,7 @@ What this project set up and learned on Cloudflare, written so the next project 
 chose, where it lives, why, and its state: **done**, **open**, or **check in the dashboard** (the repo does not record
 it). Sources: `security-review-cf.md` (the Cloudflare audit, 8 Nov 2026), `security-review-3.md` / `-4.md`,
 `costs.md`, `custom-domain.md`, `breach-plan.md`, `OPTIMIZATION.md` Part A, `apps/server/wrangler.jsonc`,
-`apps/web/public/_headers`, `architecture/reference.md`. The GitHub side of deploys is in `github-playbook.md` and is
+`apps/web/public/_headers`, `architecture/reference.md`. The GitHub side of deploys is in `github.md` and is
 not repeated here.
 
 Shape of this project: one Worker serves the static site (Workers static assets) and `/api/*`; one SQLite-backed
@@ -164,7 +164,7 @@ Alerts (owner, no code), all **open** unless he confirms:
 | Uptime outside Cloudflare | a GitHub scheduled workflow (best-effort, may skip runs) + cloudflarestatus.com; the in-Worker check cannot see a Cloudflare outage | done (backup only) |
 | Error tracking | no client/server error reporting service; a privacy-friendly `/api/report` was proposed | open (review 3 A1) |
 | Kill switch | only feature flags such as `VOICE=off` and Worker variables (`keep_vars`) | partial; open (ROADMAP §6) |
-| Deploy | Actions only, from `main`, in the `production` environment, then wait-live (version id 8 times), live e2e, tag | done (`github-playbook.md`) |
+| Deploy | Actions only, from `main`, in the `production` environment, then wait-live (version id 8 times), live e2e, tag | done (`github.md`) |
 | Rollback | re-run the last good `main` deploy in Actions, or `wrangler rollback` (needs a token on a trusted machine); DO migrations cannot be rolled back, so never delete a class or edit a migration tag; keep the previous build's hashed assets so open tabs still load | documented; never rehearsed (open) |
 | Breach steps | contain in the first hour (roll back, rotate secrets, switch the feature off), understand in a day (Workers Logs ≤ 7 days, Actions runs, audit log), report within 72 h, tell users, fix with a regression test (`breach-plan.md`) | done as a plan |
 

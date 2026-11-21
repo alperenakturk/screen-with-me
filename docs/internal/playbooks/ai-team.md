@@ -3,7 +3,7 @@
 A reusable, project-independent guide to how this project runs a team of Claude Code cloud sessions for one human
 owner. Copy it to a new project and replace the names. Sources: `CLAUDE.md` §4, §5, §9; `planner-handoff.md`;
 `CARDS.md`; `STATUS.md`; `OPTIMIZATION.md`; `docs-sprawl.md`; `tools.md`; `scripts/check-docs.mjs`. State as of
-21 Nov 2026. The GitHub side (repo settings, CI, auto-merge, secrets) is in `../github-playbook.md`.
+21 Nov 2026. The GitHub side (repo settings, CI, auto-merge, secrets) is in `github.md`.
 
 ## 1. Roles and the hub
 
@@ -157,7 +157,7 @@ If a usage limit or quota stops you, tell the Planner at once.
 
 ## 8. Next project: setup in order
 
-1. Repo, settings, CI and secrets: follow `../github-playbook.md` §5 (auto-merge on, branch rules, required checks).
+1. Repo, settings, CI and secrets: follow `github.md` §5 (auto-merge on, branch rules, required checks).
 2. Write `CLAUDE.md` from this project's skeleton: product, map, language, roles table, working with the owner,
    product rules, invariants, commands, release checklist. Keep it under 30 KB from day one.
 3. Create `docs/internal/` with `STATUS.md`, `CARDS.md` (card format + lanes table), `ROADMAP.md` (Focus first),
