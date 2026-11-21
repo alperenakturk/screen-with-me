@@ -270,9 +270,10 @@ const grouped = await until(async () => {
 });
 check(!!grouped, '“▣”: kameralar tek pencerede toplandı', JSON.stringify(grouped));
 const title = await sam.center('#voice-cams .cam-bar-title');
-await drag(title, -300, -200);
+// The default window sits at the video's bottom left: pull it right and up (left would hit the page's edge).
+await drag(title, 300, -200);
 const moved = await sam.evaluate(BOX);
-check(Math.abs(moved.x - (grouped.x - 300)) < 6 && Math.abs(moved.y - (grouped.y - 200)) < 6, 'yüzen pencere sürüklenince taşındı', JSON.stringify({ önce: grouped, sonra: moved }));
+check(Math.abs(moved.x - (grouped.x + 300)) < 6 && Math.abs(moved.y - (grouped.y - 200)) < 6, 'yüzen pencere sürüklenince taşındı', JSON.stringify({ önce: grouped, sonra: moved }));
 const corner = await sam.center('#voice-cams .cam-resize');
 await drag(corner, 120, 0);
 const grown = await sam.evaluate(BOX);
@@ -339,9 +340,9 @@ await sam.sleep(1200);
 const inFs = await sam.evaluate(BOX);
 check(inFs.fs && inFs.parent.includes('player-wrap') && inFs.w > 80 && inFs.h > 50, 'tam ekranda kameralar videonun içinde', JSON.stringify(inFs));
 const fsTitle = await sam.center('#voice-cams .cam-bar-title');
-await drag(fsTitle, -200, 150);
+await drag(fsTitle, 200, -150);
 const fsMoved = await sam.evaluate(BOX);
-check(Math.abs(fsMoved.x - (inFs.x - 200)) < 6 && Math.abs(fsMoved.y - (inFs.y + 150)) < 6, 'tam ekranda da sürükleniyor', JSON.stringify({ önce: inFs, sonra: fsMoved }));
+check(Math.abs(fsMoved.x - (inFs.x + 200)) < 6 && Math.abs(fsMoved.y - (inFs.y - 150)) < 6, 'tam ekranda da sürükleniyor', JSON.stringify({ önce: inFs, sonra: fsMoved }));
 await sam.shot('kamera-tam-ekran');
 // Free tiles in fullscreen too: inside the video, in its top-right corner, a separate place from the page.
 await sam.evaluate(`document.querySelector('#voice-cams .cam-layout').click(); 1`);

@@ -3,6 +3,7 @@
 // Çizim 1000×750'lik ızgarada tam sayı noktalar olarak, 50 ms'de bir parça parça gider.
 
 import './lobby.css';
+import './draw.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
   DRAW_CHOOSE_MS,
@@ -85,7 +86,7 @@ const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.t
 
 export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
-    <div class="xox-page draw-page">
+    <div class="xox-page draw-page dg-page">
       <div class="draw-main">
         <div class="draw-left">
           <div class="draw-top">
@@ -94,9 +95,11 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
             <span id="draw-timer" class="draw-timer"></span>
           </div>
           <div class="draw-bar" aria-hidden="true"><i id="draw-time"></i></div>
-          <div class="draw-canvas-wrap">
-            <canvas id="draw-canvas" width="${DRAW_W}" height="${DRAW_H}"></canvas>
-            <div id="draw-overlay" class="draw-overlay" hidden></div>
+          <div class="draw-canvas-cell">
+            <div class="draw-canvas-wrap">
+              <canvas id="draw-canvas" width="${DRAW_W}" height="${DRAW_H}"></canvas>
+              <div id="draw-overlay" class="draw-overlay" hidden></div>
+            </div>
           </div>
           <div id="draw-tools" class="draw-tools" hidden></div>
         </div>
@@ -420,6 +423,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     const hint = $('#draw-hint');
     hint.textContent = s.phase === 'draw' ? (s.word ?? s.hint) : s.phase === 'reveal' ? (s.word ?? '') : '';
     hint.classList.toggle('mine', s.phase === 'draw' && !!s.word);
+    hint.classList.toggle('revealed', s.phase === 'reveal');
     // Araçlar ve tuvalin imleci sadece çizende.
     const drawingNow = s.phase === 'draw' && s.drawer === me;
     tools.hidden = !drawingNow;
@@ -430,6 +434,9 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     overlay.classList.toggle('lobby-card', s.phase === 'lobby' || s.phase === 'over');
     // Lobby and podium need no canvas: the card takes the canvas's place at its own height (BHG: it was shrunk to fit).
     app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
+    // GFIT1 / DG2: a running game fills the video's place (the canvas takes what the narrow side column leaves); the lobby
+    // and podium card keep the design shape's scale (filled, the card stood small in a big box).
+    app.firstElementChild!.toggleAttribute('data-fill', s.phase !== 'lobby' && s.phase !== 'over');
     if (s.phase === 'over') showPointsResult(result, `draw:${gameId}`, s.players, s.host, me, { win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') }, () => send({ t: 'start' }));
     else result.hide();
     if (s.phase === 'lobby' || s.phase === 'over') {
@@ -656,10 +663,37 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
   };
   addEventListener('pagehide', close);
   addEventListener('langchange', onLang);
+  // DG2: the end-of-drawing results with eight made-up players, on this screen only, for one reveal's time (the real
+  // state comes back after it, or with the server's next message): do they fit the canvas without shrinking the game?
+  function previewReveal(): void {
+    const real = state;
+    if (!real) return;
+    const realPhase = lastPhase;
+    const names = ['Alex', 'Sam', 'Max', 'Kim', 'Lee', 'Jo', 'Pat', 'Robin'];
+    const fake: State = {
+      ...real,
+      phase: 'reveal',
+      word: 'parking lot',
+      round: real.round || 1,
+      drawer: 'lab-7',
+      endsAt: Date.now() + offset + DRAW_REVEAL_MS,
+      players: names.map((n, i) => ({ ...real.players[0]!, id: `lab-${i}`, name: n, online: true, guessed: i < 7, score: 400 - i * 40, gained: 200 - i * 20 })),
+    };
+    state = fake;
+    lastPhase = 'reveal';
+    render();
+    setTimeout(() => {
+      if (state !== fake) return;
+      state = real;
+      lastPhase = realPhase;
+      render();
+    }, DRAW_REVEAL_MS);
+  }
   // Test Lab (DL3b): the current phase ends now (local lab server only).
   const offLab = debugHooks.register('table.draw', () => ({
     commands: [
       quiet.command('draw', { en: 'Draw & Guess', tr: 'Çiz-Bil' }),
+      { id: 'draw.reveal8', title: { en: 'Draw & Guess: preview the results with 8 players', tr: 'Çiz-Bil: 8 oyunculu sonuç ekranını önizle' }, help: { en: 'Shows the end-of-drawing results with eight made-up players for a few seconds, on this screen only, to check they fit the canvas and the game keeps its size.', tr: 'Çizim sonundaki sonuçları sekiz uydurma oyuncuyla birkaç saniye gösterir, sadece bu ekranda; tuvale sığıyor mu, oyun boyunu koruyor mu diye bakmak için.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, available: () => (!!state && state.players.length > 0) || { en: 'once the table has loaded', tr: 'masa yüklenince' }, run: previewReveal },
       { id: 'draw.referee', title: { en: 'Draw & Guess: Stub reacts', tr: 'Çiz-Bil: Stub tepki versin' }, help: { en: 'Stub says one of his reveal lines in the corner of the table.', tr: 'Stub masanın köşesinde kelime açılınca söylediklerinden birini söyler.' }, tab: 'games', where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => ref.say(tx('refAll'), 'cheer') },
       { id: 'draw.skip', title: { en: 'Draw & Guess: end this phase now', tr: 'Çiz-Bil: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel test sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Draw & Guess table', tr: 'Çiz-Bil masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).

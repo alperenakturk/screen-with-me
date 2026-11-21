@@ -6,12 +6,9 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (handoff 20 Nov; no unmerged lane A branch; older lines in `archive/status-history.md` "Lane A handoff
-  lines, archived 19 Nov 2026"). Open: tag `v0.9.97.113` (8ce4385) still missing. Live: CAM2 (v0.9.97.173; 27ai), PH4
-  (#561, v0.9.97.178; 27al), PH3 (#564, v0.9.97.179; 27am); GPH1 phone check done. Nothing Ready in lane A.
-  - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
-  - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
-    scenario.
+- [ ] Lane A (cameras, voice; 21 Nov; older: `archive/status-history.md`). Tag `v0.9.97.113` (8ce4385) missing.
+  Cards: CAM3 (#577) → VC4 → PTT1 → TG2. DM1 waits for the owner's Player ID; UI2 `rail-speed` flake: if it fails
+  again, add a `sync-engine.test.ts` scenario.
 - [ ] Lane A2 (handoff 21 Nov): open PRs #573, #578, #581.
   - [ ] RC2 part 2: look C (marquee) + music 1 (own pad), owner's picks; `design/recap-cinema/`.
   - [ ] FR1 (host-only "Rate the film" poll, film page).
@@ -220,6 +217,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   takes them to the table. Close it: the line greys out with "The table closed".
 - [ ] 27em. [EMO1] Phone: 😀 React → Hands → pick a skin tone → send 🫶. The friend sees it in that tone; the tone stays
   after a reload.
+- [ ] 27ar. [CAM3] With 2–5 friends' cameras: the camera window starts framed (one window), tiles same size in rows
+  like 3 + 2, faces whole; pull any edge or corner of the window: it resizes and the cameras re-row.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

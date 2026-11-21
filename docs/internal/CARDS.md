@@ -50,21 +50,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   sent to the Planner; the owner submits.
 - Owner's pick: "Hemen gönder" (Planner chat, 21 Nov 2026).
 
-### CAM3. Camera: start framed, resize from any edge, a real grid (owner, 21 Nov 2026; lane A, first)
-- Why: some browsers start in the free camera mode (an old saved choice); the framed window resizes only from its
-  bottom-right corner; with 4 people the tiles sat 3 in a row + 1 alone below, wasting space; heads were cut.
-- What: (1) reset everyone's saved camera mode once (new storage key or migration): every browser, old or new, starts
-  in the framed mode; free mode stays a choice. (2) The framed window (and free tiles) resize from every edge and
-  corner, keeping the ratio. (3) Grid like Google Meet, done better: never more tiles in a lower row than an upper
-  one, rows fill top-left first and shrink downwards (2 = side by side or stacked by the window's shape; 3 = a row or
-  a column; 4 = 2×2; 5 = 3+2; 6 = 3+3 or 2+2+2 …), the layout picked from the window's aspect ratio to give each tile
-  the biggest size; faces never cut (object-fit cover with a centre-top focus, or contain when a tile is very off-ratio).
-  Read how Meet / Zoom / Discord tile first and note it in the reference.
-- Done when: 1–8 cameras at 3 window shapes give the rule above (a unit test over the layout function); resize from
-  all 8 handles; a fresh and an old profile both start framed; Test Lab `camera.grid` (fake cameras 1–8); harness in
-  `site`; first look.
-- Owner's pick: his message (Planner chat, 21 Nov 2026).
-
 ### VC4. Voice 8, cameras 6, a chat note past that (owner, 21 Nov 2026; lane A, with CAM3)
 - Why: 5 in voice and 4 cameras ran without trouble; the owner wants more room.
 - What: voice limit 6 → 8, camera limit 4 → 6 (server + client constants); when a room goes past what we

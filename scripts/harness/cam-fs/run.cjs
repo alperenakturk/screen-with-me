@@ -74,7 +74,7 @@ const check = (ok, label, extra = '') => {
   });
   for (const layout of ['group', 'free']) {
     await a.evaluate((l) => {
-      localStorage.setItem('opt:camLayout', l);
+      localStorage.setItem('opt:camView', l);
       for (const k of ['camFloat:fsSpot', 'camTiles:fsSpot', 'camPill:fsSpot']) localStorage.removeItem(k);
     }, layout);
     await a.reload();
