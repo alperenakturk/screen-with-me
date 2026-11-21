@@ -1397,6 +1397,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   only fixed emojis (`GAME_EMOJIS`). An empty game is deleted after 24 h. New board game: `GAME_KINDS` + `GAME_RULES`
   + rules file + board drawing in `match.ts` + `ROOM_GAME_KINDS` (`protocol.ts`) + `stage.ts` (icon, which piece
   mounts) + i18n `games.<kind>.title/text`. Test: `scripts/e2e/xox.mjs` (XOX + Connect Four).
+  **Classics in the video's place (GFIT1):** `.xox-page.mt` carries `data-fill` (match.ts), so it fills the box
+  (stage.ts `fills`). From a 6 : 5 box (`classics.css` "GFIT1") the board's column is the biggest square the height
+  allows (backgammon 1.45 : 1, Four in a Row 7 : 6), capped by the width left beside the shared `--game-side` column;
+  the bar (score and 👁 on one line, Stub and its levels on their own), seats, status (three lines) and buttons stack in
+  that column, the two centred as one block. Under 720 px of layout "(you)" is for screen readers only and backgammon's
+  home / pips line gives way with "…" so names stay whole. `game-proportions` checks the square boards are ≥ 80 % of
+  the room left beside the column.
   **Classics (0.9.97.35, Game Studio, `docs/internal/design/games/classics.md`):** room kind `classics` (`ROOM_GAME_KINDS`) is
   one table in the `Game` object holding any board of `GAME_KINDS` (`xox`, `four`, `dama`): hello `classics: true` lets
   the table take a board's kind, `{t:'switch', game}` changes the board while no game is in progress (`in_progress`),

@@ -267,11 +267,13 @@ export function mountMatch(app: HTMLElement, tableKind: GameKind | 'classics', g
   const classics = tableKind === 'classics';
   /** The board on the table now (a Classics table can change it from its shelf). */
   let kind: GameKind = classics ? 'xox' : tableKind;
+  // GFIT1: `data-fill` = in the video's place the table is laid out at the box itself (stage.ts `fills`): the board as
+  // big as the height allows, the bar, seats and status in the shared narrow side column (classics.css).
   // Card CL2 (owner): the board is the hero. A Classics table first shows only its picker (no board behind it); a
   // board's screen is the opponent above the board, me below it (like a chess app), one status line, and small chips
   // for the score, Stub and the watchers (👁 with a popover).
   app.innerHTML = `
-    <div class="xox-page mt${classics ? ' classics' : ''}">
+    <div class="xox-page mt${classics ? ' classics' : ''}" data-fill>
       <section class="cl-picker" hidden></section>
       ${classics ? `<p class="mt-loading muted" role="status">${tc('loading')}</p>` : ''}
       <div class="mt-table"${classics ? ' hidden' : ''}>

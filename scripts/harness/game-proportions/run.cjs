@@ -262,6 +262,17 @@ async function placeIn(page, mode) {
             return out;
           });
           if (cut) check(cut.length === 0, `${label}: every "How to play" card fits the window`, cut.join(', '));
+          // GFIT1 (owner, 21 Nov 2026): a Classics board in the video's place is the biggest square the box allows (the
+          // narrow column beside it): at least 80 % of the room left beside the column where the box is wide enough to put it beside.
+          if (g.board && (g.board === 'xox' || g.board === 'chess') && m.w >= m.h * 1.2) {
+            const b = await page.evaluate(() => {
+              const r = document.querySelector('#game-stage #xox-board')?.getBoundingClientRect();
+              return r ? Math.round(Math.min(r.width, r.height)) : 0;
+            });
+            // The column takes ≈ 300 px of the width (its 264 px, the gap and the padding, at the game's scale).
+            const most = Math.min(m.h, m.w - 300 * m.scale);
+            check(b >= most * 0.8, `${label}: the board is the biggest square the box allows (${b} px of ${Math.round(most)} px in ${m.w}×${m.h})`);
+          }
           check(m.used >= 28, `${label}: the game covers its box (${m.used}% of ${m.w}×${m.h}, ${m.usedW}% wide, ${m.usedH}% high)`);
           const free = rows.find((r) => r.label === `${size}/${game}/float`);
           // GW5: the free window now shows the game's design scaled up (a tablet's chess frame: 30 px text); the video's place
