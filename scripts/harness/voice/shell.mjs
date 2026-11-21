@@ -189,11 +189,21 @@ check(!!grouped, 'back to the one window (an island on the film page)');
 // Bas-konuş film sayfasında: V tuşu film sitesine gösterilmeden katmana gider (basınca ve bırakınca).
 await sam.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = true; c.dispatchEvent(new Event('change')); return 1; })()`);
 const pttMuted = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
-await sam.evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', bubbles: true })); 1`);
+await sam.evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', code: 'KeyV', bubbles: true })); 1`);
 const pttTalk = await until(() => alex.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
-await sam.evaluate(`window.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', bubbles: true })); 1`);
+await sam.evaluate(`window.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', code: 'KeyV', bubbles: true })); 1`);
 const pttBack = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
 check(!!pttMuted && !!pttTalk && !!pttBack, 'bas-konuş film sayfasında: V basılıyken mikrofon açık, bırakınca kapalı', JSON.stringify({ pttMuted, pttTalk, pttBack }));
+// PTT1: another key (Right Ctrl) set in the overlay reaches the film page through the layout and talks from there.
+await sam.evalFrame('shell=1', `(() => { localStorage.setItem('opt:pttKey', 'ControlRight'); localStorage.setItem('opt:pttLabel', 'Right Ctrl'); return 1; })()`);
+await sam.evalFrame('shell=1', `(() => { document.getElementById('voice-ptt').dispatchEvent(new Event('change')); dispatchEvent(new Event('swm-layout')); return 1; })()`);
+await sam.sleep(1200);
+await sam.evaluate(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Control', code: 'ControlRight', ctrlKey: true, bubbles: true })); 1`);
+const ctrlTalk = await until(() => alex.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+await sam.evaluate(`window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', code: 'ControlRight', bubbles: true })); 1`);
+const ctrlBack = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+check(!!ctrlTalk && !!ctrlBack, 'PTT1 film page: Right Ctrl (chosen key) talks while held, V no longer needed', JSON.stringify({ ctrlTalk, ctrlBack }));
+await sam.evalFrame('shell=1', `(() => { localStorage.removeItem('opt:pttKey'); localStorage.removeItem('opt:pttLabel'); dispatchEvent(new Event('swm-layout')); return 1; })()`);
 await sam.evalFrame('shell=1', `(() => { const c = document.getElementById('voice-ptt'); c.checked = false; c.dispatchEvent(new Event('change')); return 1; })()`);
 
 // 0.9.91.14 (owner): on the film page I choose the microphone / camera / speaker myself: "🎛" on myself lists the

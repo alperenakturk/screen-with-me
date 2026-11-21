@@ -19,6 +19,7 @@ import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { isTyping } from './typing.ts';
 import { isPttEvent, onPttKeyChange, pttKeyButton, pttLabel, setPttLive } from './ptt-key.ts';
+import { canTalkWindow, createTalkWindow } from './talk-window.ts';
 import { setDeafNow } from './deafen.ts';
 import { debugHooks, labFail, labPeer, labText, type LabText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
@@ -233,6 +234,20 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   /** Card PTT1: the push-to-talk key, changed by pressing it (ptt-key.ts). */
   const pttKeyBtn = root.querySelector<HTMLButtonElement>('#voice-ptt-key')!;
   pttKeyButton(pttKeyBtn);
+  /** Card PTT1: the talk window (talk-window.ts), for talking while another tab is in front. */
+  const talkWinBtn = root.querySelector<HTMLButtonElement>('#voice-talk-window')!;
+  const talkWindow = createTalkWindow({
+    state: () => ({ active: client.active, ptt, mic: client.micEnabled, talking, deaf }),
+    talk: (on) => talk(on),
+    toggleMic: () => micButton.click(),
+  });
+  talkWinBtn.addEventListener('click', () => {
+    if (talkWindow.isOpen()) return talkWindow.close();
+    void talkWindow.open().then((ok) => {
+      if (!ok) flashHint(talkWinBtn, t('voice.talkWinFailed'), 4000);
+      render();
+    });
+  });
 
   let available = false;
   let members: Member[] = [];
@@ -551,6 +566,9 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     micButton.classList.toggle('talking', ptt && talking);
     setPttLive(ptt && active);
     pttKeyBtn.hidden = !ptt;
+    talkWinBtn.hidden = !active || !canTalkWindow();
+    talkWinBtn.setAttribute('aria-pressed', String(talkWindow.isOpen()));
+    talkWindow.update();
     const micLabel = ptt ? t('voice.pttHold', { key: pttLabel() }) : client.micEnabled ? t('voice.mute') : t('voice.unmute');
     micButton.title = micLabel;
     micButton.setAttribute('aria-label', micLabel);
@@ -1141,7 +1159,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   document.addEventListener('keyup', (event) => {
     if (isPttEvent(event, false)) talk(false);
   });
-  addEventListener('blur', () => talk(false));
+  // Losing the focus to the talk window (pressing its button) isn't letting go; losing it to anything else is.
+  addEventListener('blur', () => {
+    if (!talkWindow.isOpen()) return talk(false);
+    setTimeout(() => talkWindow.hasFocus() || document.hasFocus() || talk(false), 60);
+  });
   onPttKeyChange(() => {
     talk(false);
     render();

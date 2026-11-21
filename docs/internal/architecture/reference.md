@@ -1201,6 +1201,38 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   push-to-talk keeps it off); 🎙 while deafened undeafens with the mic on (Discord-like). Kept per room
   (`voiceDeaf:<room>`): a rejoin or reload stays deafened with the mic off. The film's own sound is untouched. Test Lab
   `voice.deafen` (arg `on` / `off`); e2e `voice.mjs`; harness `scripts/harness/deafen/run.cjs`.
+  **Push-to-talk key (card PTT1, 21 Nov 2026):** `ui/ptt-key.ts`. The key is any single key, matched by
+  `KeyboardEvent.code` (the physical key: Shift and the keyboard layout don't change it) and saved per browser
+  (`opt:pttKey` = code, `opt:pttLabel` = what the key printed when picked; default `KeyV` / "V",
+  `DEFAULT_PTT_CODE` in `packages/shared/src/embed.ts`). `#voice-ptt-key` (shown while push-to-talk is on) waits for
+  the next key: Esc or a click elsewhere cancels; a modifier alone (Left / Right Shift, Ctrl, Alt) counts when let go
+  without another key; a modifier + key is refused as a combination; the room's shortcuts (1–8, P, M, K, T, ?, Enter,
+  Space, Tab, arrows, Page Up / Down, Home, End, Backspace, Delete) and the system's (Meta / OS, Context Menu, Caps
+  Lock, F5, F11, F12, media / browser keys) are refused with a hint (`refusal`). `isPttEvent` matches a key event
+  (other modifiers held turn it into a shortcut, unless the key itself is a modifier); a forwarded event without a
+  `code` (extensions before PTT1 send `key: 'v'` only) still counts when the key is V. The shortcuts card shows
+  `pttLabel()`. **Film page:** while push-to-talk is on and I'm in voice (`setPttLive`, from `voice.ts` `render`),
+  the overlay's full layout carries `ptt: <code>` (`ShellLayout`, cleaned by `cleanLayout` / `cleanPttCode`; no
+  protocol change). The content script captures only that code (keydown and keyup, never shown to the film site),
+  and sends `{type:'key', key, code, ptt: true, up?}`; the background passes it on with the clean `code`; the site's
+  shell player dispatches a `KeyboardEvent` with that `code`. The other forwarded shortcuts are `isShortcutKey`
+  (1–8, Enter, P): V is no longer swallowed on the film page while push-to-talk is off. Old extensions keep
+  forwarding V (`isForwardedKey`). Test Lab `voice.pttKey` (`KeyB`, `ControlRight`, `reset`; reports the code, the
+  label and what the film page gets). Harness: `voice/run.mjs` (picker refuses M, takes B; V silent, B talks) and
+  `voice/shell.mjs` (Right Ctrl talks from the film page).
+  **Talking from another tab (PTT1 research, 21 Nov 2026):** a browser never gives key events to a tab that isn't in
+  front, and no web API listens to keys globally (Discord's web app has the same limit; its desktop app uses OS-level
+  hooks). Options looked at: (1) the extension's `chrome.commands` with `"global": true`: works with Chrome in the
+  background, but global suggestions are limited to Ctrl+Shift+0–9, `onCommand` fires once per press (no key-up, so
+  it can only toggle the mic, never hold-to-talk), ChromeOS has no global commands, and it is a manifest change (a
+  new store review; no permission warning). Not built. (2) **Document Picture-in-Picture** (built): `ui/talk-window.ts`.
+  `#voice-talk-window` ("🪟 Talk window", only while in voice and when `documentPictureInPicture` exists in a top-level
+  page: Chrome / Edge / Brave / Opera 116+ on a computer; not in the film page's overlay, an iframe, where the API
+  throws) opens a small always-on-top window (260 × 170) of our own: one big button (hold to talk with push-to-talk,
+  else mute / unmute via 🎙) and a line naming the key; the push-to-talk key works while it is in front, and its blur
+  ends talking. The room window's own blur ends talking unless the focus went to the talk window (checked 60 ms
+  later). It closes from the same button or when I leave voice. Needs a click, no permission, no extension, nothing
+  over the YouTube player. Harness `voice/run.mjs` (opens it, B in it talks, closes).
   **Focus after a click in the YouTube player (VC1, with R26):** R26 takes the keyboard focus back from the player's
   frame after a click there; doing it at once ended a drag on YouTube's own volume slider. `fullscreen.ts`
   `focusBackFrom` now watches the player's volume / mute: unchanged after 400 ms → focus back (Enter etc. work again);
@@ -2317,8 +2349,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
 - **"Back to the room" notice:** in the shell, "🏠 Odaya dön" → `{t:'home'}` → the server sends `{t:'home', by}` to
   everyone except the sender (once per 30 s per person, `homeLimit`); people on the film get a "join them?" card over
   the video (`askHome`, 20 s; at most once a minute from the same person).
-- **Keyboard:** 1–8 that page's emojis/custom emojis, Enter message, P pin, V push-to-talk (when "Bas-konuş" is chosen
-  in voice chat, the mic is on while held; `opt:ptt`; key-up also arrives from the film page: embed `key` `up`) (site
+- **Keyboard:** 1–8 that page's emojis/custom emojis, Enter message, P pin, the push-to-talk key (V unless changed,
+  card PTT1 in the voice section; when push-to-talk is chosen in voice chat, the mic is on while held; `opt:ptt`;
+  key-up also arrives from the film page: embed `key` `up`) (site
   `reactions.ts` + `room.ts`, fullscreen `fullscreen.ts`). On the film page (shell) keys are captured in the capture
   phase and forwarded to the site, never shown to the film site: players seek with digits (3 = 30%), otherwise
   sending an emoji would seek everyone.
