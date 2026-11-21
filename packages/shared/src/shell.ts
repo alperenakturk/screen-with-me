@@ -5,7 +5,7 @@
 // eklenti sadece site ile film çerçevesindeki senkron motoru arasında mesaj taşır.
 // Bu dosya üç tarafın (site, shell.html, arka plan) ortak mesajlarını içerir.
 
-import type { EmbedReply, EmbedRequest } from './embed.ts';
+import { cleanPttCode, type EmbedReply, type EmbedRequest } from './embed.ts';
 import type { Member, RtcRequest, RtcResult, Signal, VoiceMode } from './protocol.ts';
 
 /** Ekrandaki bir dikdörtgen (CSS pikseli, görünür alana göre). */
@@ -25,7 +25,8 @@ export interface Rect {
  */
 export type ShellLayout =
   | { mode: 'bar'; height: number }
-  | { mode: 'full'; hole: Rect; islands: Rect[] }
+  /** `ptt` (card PTT1): the push-to-talk key (`KeyboardEvent.code`) the film page passes on; absent = push-to-talk off. */
+  | { mode: 'full'; hole: Rect; islands: Rect[]; ptt?: string }
   | { mode: 'open' };
 
 /** Ayar deposunun bir kaydı: değer ve ne zaman yazıldığı (hangisi yeniyse o geçerli). */
@@ -204,11 +205,12 @@ export function isRect(x: unknown): x is Rect {
 
 /** Gelen yerleşimi doğrular (en fazla 12 adacık). */
 export function cleanLayout(x: unknown): ShellLayout | null {
-  const l = x as Partial<{ mode: string; height: number; hole: unknown; islands: unknown }> | null;
+  const l = x as Partial<{ mode: string; height: number; hole: unknown; islands: unknown; ptt: unknown }> | null;
   if (l?.mode === 'open') return { mode: 'open' };
   if (l?.mode === 'bar') return typeof l.height === 'number' && l.height > 0 && l.height < 400 ? { mode: 'bar', height: Math.round(l.height) } : null;
   if (l?.mode === 'full' && isRect(l.hole) && Array.isArray(l.islands)) {
-    return { mode: 'full', hole: l.hole, islands: l.islands.filter(isRect).slice(0, 12) };
+    const ptt = cleanPttCode(l.ptt);
+    return { mode: 'full', hole: l.hole, islands: l.islands.filter(isRect).slice(0, 12), ...(ptt ? { ptt } : {}) };
   }
   return null;
 }

@@ -353,6 +353,28 @@ const SCREENS = {
   'camera-grid-4': { what: 'Card CAM3: the camera window with 4 drawn test cameras: 2 × 2', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => window.__swmLab.run('camera.grid', '4')); } },
   // Card VC4: past 4 cameras the chat shows one note (the Test Lab's voice.crowdNote), room activity lines hidden.
   'voice-crowd-note': { what: 'Card VC4: the chat note shown once when a room has more than 4 cameras or 6 people in voice (room activity lines hidden: only the note shows)', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => { localStorage.setItem('opt:chatEvents', '0'); return window.__swmLab.run('voice.crowdNote', '5 5'); }); } },
+  // Card PTT1: in voice with push-to-talk on and the key changed to B: the key button and 🪟 Talk window show.
+  'voice-ptt': {
+    what: 'Card PTT1: in voice with push-to-talk on and its key changed to B (Test Lab voice.pttKey): the key button shows "B" and a "🪟 Talk window" button opens a small window to talk from another tab',
+    room: true,
+    sizes: ['laptop', 'desktop', 'phone'],
+    after: async (p) => {
+      await p.evaluate(() => {
+        localStorage.setItem('opt:voiceCheck', 'skip');
+        localStorage.setItem('opt:ipNotice:voice', '1');
+        localStorage.setItem('opt:ptt', '1');
+      });
+      await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
+      await p.evaluate(() => window.__swmLab.run('voice.pttKey', 'KeyB'));
+      await p.evaluate(() => {
+        const box = document.getElementById('voice-ptt');
+        box.checked = true;
+        box.dispatchEvent(new Event('change'));
+        document.getElementById('voice-join').click();
+      });
+      await p.waitForFunction(() => !document.getElementById('voice-on').hidden, null, { timeout: 15000 });
+    },
+  },
   'camera-refused': { what: 'Card CAM2: 📷 pressed and the browser refused the camera: a message next to the 📷 says why and how to allow it', room: true, after: (p) => camera(p, 'blocked') },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
@@ -365,7 +387,8 @@ const SCREENS = {
 const SCREEN_FOR = [
   [/^docs\/|\.md$|^\.github\/|^scripts\/(?!shots)/, []],
   [/^apps\/web\/src\/ui\/chat\.ts$/, ['chat-delete', 'room']],
-  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['camera-on', 'camera-grid', 'camera-grid-4', 'camera-refused', 'room']],
+  [/^apps\/web\/src\/ui\/(ptt-key|talk-window)/, ['voice-ptt', 'room']],
+  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['voice-ptt', 'camera-on', 'camera-grid', 'camera-grid-4', 'camera-refused', 'room']],
   [/^apps\/web\/src\/ui\/together-compact/, ['together-compact', 'room']],
   [/^apps\/web\/public\/help/, ['help']],
   [/^apps\/web\/public\/privacy/, ['privacy']],

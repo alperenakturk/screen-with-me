@@ -141,6 +141,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Where the stream I watch sits', tr: 'İzlediğim yayın nerede' },
     help: { en: 'Writes the stream viewer\'s mode (window or fullscreen), its box, whether it is on the screen and whether it covers a YouTube player (it never should) into the log.', tr: 'İzlediğim yayının hâlini (pencere ya da tam ekran), kutusunu, ekranda olup olmadığını ve bir YouTube oynatıcısını örtüp örtmediğini (hiç örtmemeli) kayda yazar.', },
   },
+  'voice.pttKey': {
+    title: { en: 'Push-to-talk key: read or change it', tr: 'Bas-konuş tuşu: oku ya da değiştir' },
+    help: { en: 'Writes the push-to-talk key (its code and label) and what the film page is told to pass on (null while push-to-talk is off or I am not in voice). A key code sets it ("KeyB", "Backquote", "ControlRight"); a room shortcut such as "KeyM" is refused; "reset" goes back to V.', tr: 'Bas-konuş tuşunu (kodu ve adı) ve film sayfasına iletmesi söylenen tuşu yazar (bas-konuş kapalıyken ya da seste değilken null). Bir tuş kodu tuşu değiştirir ("KeyB", "Backquote", "ControlRight"); "KeyM" gibi bir oda kısayolu reddedilir; "reset" V\'ye döner.' },
+  },
   'together.compact': {
     title: { en: 'Together card: compact beside a game window?', tr: 'Birlikte kartı: oyun penceresinin yanında kısa mı?' },
     help: { en: 'Writes whether the Together card is compact (a game window lies over the side panel) and whether "Join voice" and "Share" are clear. "on" / "off" hold it that way, "auto" follows the game window again.', tr: 'Birlikte kartının kısa olup olmadığını (bir oyun penceresi yan panelin üstünde) ve "Sese katıl" ile "Paylaş"ın açıkta olup olmadığını yazar. "on" / "off" kartı öyle tutar, "auto" yeniden oyun penceresine uyar.' },

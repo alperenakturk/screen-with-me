@@ -1,5 +1,4 @@
 import { CAM_MAX, CAM_RECOMMENDED, VOICE_MAX, VOICE_MAX_P2P, VOICE_RECOMMENDED, personOf, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
-import { isPushToTalkKey } from '@swm/shared/embed';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
 import { LevelMeter } from '@swm/shared/level-meter';
@@ -19,6 +18,8 @@ import type { ExtVoice } from './voice-ext.ts';
 import { phoneCamSize, setPhoneCamSize } from './phone-cams.ts';
 import { isPhoneLayout } from '../device.ts';
 import { isTyping } from './typing.ts';
+import { isPttEvent, onPttKeyChange, pttKeyButton, pttLabel, setPttLive } from './ptt-key.ts';
+import { canTalkWindow, createTalkWindow } from './talk-window.ts';
 import { setDeafNow } from './deafen.ts';
 import { debugHooks, labFail, labPeer, labText, type LabText } from '../debug-lab.ts';
 import { loadChunk, whenIdle } from './lazy.ts';
@@ -230,6 +231,23 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let ptt = load('opt:ptt') === '1';
   let talking = false;
   pttBox.checked = ptt;
+  /** Card PTT1: the push-to-talk key, changed by pressing it (ptt-key.ts). */
+  const pttKeyBtn = root.querySelector<HTMLButtonElement>('#voice-ptt-key')!;
+  pttKeyButton(pttKeyBtn);
+  /** Card PTT1: the talk window (talk-window.ts), for talking while another tab is in front. */
+  const talkWinBtn = root.querySelector<HTMLButtonElement>('#voice-talk-window')!;
+  const talkWindow = createTalkWindow({
+    state: () => ({ active: client.active, ptt, mic: client.micEnabled, talking, deaf }),
+    talk: (on) => talk(on),
+    toggleMic: () => micButton.click(),
+  });
+  talkWinBtn.addEventListener('click', () => {
+    if (talkWindow.isOpen()) return talkWindow.close();
+    void talkWindow.open().then((ok) => {
+      if (!ok) flashHint(talkWinBtn, t('voice.talkWinFailed'), 4000);
+      render();
+    });
+  });
 
   let available = false;
   let members: Member[] = [];
@@ -546,7 +564,12 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     setDeafNow(deaf && active);
     micButton.classList.toggle('ptt', ptt);
     micButton.classList.toggle('talking', ptt && talking);
-    const micLabel = ptt ? t('voice.pttHold') : client.micEnabled ? t('voice.mute') : t('voice.unmute');
+    setPttLive(ptt && active);
+    pttKeyBtn.hidden = !ptt;
+    talkWinBtn.hidden = !active || !canTalkWindow();
+    talkWinBtn.setAttribute('aria-pressed', String(talkWindow.isOpen()));
+    talkWindow.update();
+    const micLabel = ptt ? t('voice.pttHold', { key: pttLabel() }) : client.micEnabled ? t('voice.mute') : t('voice.unmute');
     micButton.title = micLabel;
     micButton.setAttribute('aria-label', micLabel);
     micButton.classList.toggle('muted-mic', !client.micEnabled);
@@ -1128,15 +1151,23 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   // Push-to-talk and M never fire while typing (a text box, or a game board that takes the keys: `isTyping`).
   const typing = isTyping;
   document.addEventListener('keydown', (event) => {
-    if (!ptt || !isPushToTalkKey(event.key) || event.ctrlKey || event.metaKey || event.altKey || typing(event.target)) return;
+    if (!ptt || !isPttEvent(event, true) || typing(event.target)) return;
     if (!client.active) return;
     event.preventDefault();
     if (!event.repeat) talk(true);
   });
   document.addEventListener('keyup', (event) => {
-    if (isPushToTalkKey(event.key)) talk(false);
+    if (isPttEvent(event, false)) talk(false);
   });
-  addEventListener('blur', () => talk(false));
+  // Losing the focus to the talk window (pressing its button) isn't letting go; losing it to anything else is.
+  addEventListener('blur', () => {
+    if (!talkWindow.isOpen()) return talk(false);
+    setTimeout(() => talkWindow.hasFocus() || document.hasFocus() || talk(false), 60);
+  });
+  onPttKeyChange(() => {
+    talk(false);
+    render();
+  });
   micButton.addEventListener('pointerdown', (event) => {
     if (!ptt) return;
     micButton.setPointerCapture(event.pointerId);

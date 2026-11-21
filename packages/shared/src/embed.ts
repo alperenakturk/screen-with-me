@@ -74,7 +74,7 @@ export type EmbedReply =
   | { type: 'status'; status: EmbedStatus }
   /** Film sayfasında basılan kısayol (1–8 emoji, Enter mesaj, P pin): site kendi kısayolu gibi işler. */
   /** `up`: tuş bırakıldı (sadece bas-konuş tuşu için gelir). */
-  | { type: 'key'; key: string; up?: boolean }
+  | { type: 'key'; key: string; up?: boolean; code?: string }
   /** Film sitesinin kendi tam ekran düğmesine basıldı: site kendi tam ekranını açsın. */
   | { type: 'fullscreen' }
   /**
@@ -86,12 +86,28 @@ export type EmbedReply =
 /** Card R5: how close to the film's right edge (px) the mouse brings the rail on the film page. */
 export const FILM_EDGE = 40;
 
-/** Bas-konuş tuşu: basılı tutulunca mikrofon açılır (sesli sohbette "bas-konuş" seçiliyse). */
+/** The push-to-talk key before anyone picks another (card PTT1), as a `KeyboardEvent.code`. */
+export const DEFAULT_PTT_CODE = 'KeyV';
+
+/** A push-to-talk key as `KeyboardEvent.code` ("KeyB", "Backquote", "ControlRight", "F8" …), or null. */
+export function cleanPttCode(x: unknown): string | null {
+  return typeof x === 'string' && /^[A-Z][A-Za-z0-9]{1,23}$/.test(x) ? x : null;
+}
+
+/**
+ * The old fixed push-to-talk key (V). Extensions before card PTT1 forward it from the film page without a `code`;
+ * the site still takes it when the chosen key is V.
+ */
 export function isPushToTalkKey(key: string): boolean {
   return key.toLowerCase() === 'v';
 }
 
-/** Film sayfasından siteye iletilen kısayol tuşları. */
+/** The room's shortcuts the film page passes on (1–8 emoji, Enter chat, P pin); push-to-talk goes by `code`. */
+export function isShortcutKey(key: string): boolean {
+  return key === 'Enter' || key.toLowerCase() === 'p' || /^[1-8]$/.test(key);
+}
+
+/** Film sayfasından siteye iletilen kısayol tuşları (what extensions before PTT1 forward: shortcuts + V). */
 export function isForwardedKey(key: string): boolean {
-  return key === 'Enter' || key.toLowerCase() === 'p' || /^[1-8]$/.test(key) || isPushToTalkKey(key);
+  return isShortcutKey(key) || isPushToTalkKey(key);
 }

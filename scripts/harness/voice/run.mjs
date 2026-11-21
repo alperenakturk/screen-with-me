@@ -461,6 +461,33 @@ check(!!pttOn && pttLevel.rms > 0.01, 'bas-konuş: Sam V’ye basılı tutunca A
 await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', bubbles: true })); 1`);
 const pttOff = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
 check(!!pttOff, 'bas-konuş: V bırakılınca Sam yine sessiz (🔇)');
+// PTT1: Sam picks B with the key button (press it, then press B); V no longer talks, B does; M is refused.
+await sam.evaluate(`(() => { const b = document.getElementById('voice-ptt-key'); b.click(); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'm', code: 'KeyM', bubbles: true, cancelable: true })); b.click(); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', code: 'KeyB', bubbles: true, cancelable: true })); return 1; })()`);
+const keyText = await sam.evaluate(`({ label: document.getElementById('voice-ptt-key').textContent, saved: localStorage.getItem('opt:pttKey') })`);
+check(keyText.label === 'B' && keyText.saved === 'KeyB', 'PTT1: the key button takes B (M, a room shortcut, was refused)', JSON.stringify(keyText));
+await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'v', code: 'KeyV', bubbles: true })); 1`);
+await alex.sleep(1500);
+const vSilent = await alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`);
+await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keyup', { key: 'v', code: 'KeyV', bubbles: true })); 1`);
+await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', code: 'KeyB', bubbles: true })); 1`);
+const bTalk = await until(() => alex.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+await sam.evaluate(`document.dispatchEvent(new KeyboardEvent('keyup', { key: 'b', code: 'KeyB', bubbles: true })); 1`);
+const bBack = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+check(vSilent && !!bTalk && !!bBack, 'PTT1: with B chosen, V stays silent and B talks while held', JSON.stringify({ vSilent, bTalk, bBack }));
+// PTT1: the talk window (Document Picture-in-Picture) opens from the card; the chosen key works inside it.
+const talkWin = await sam.evaluate(`(async () => { if (!window.documentPictureInPicture) return { api: false }; document.getElementById('voice-talk-window').click(); for (let i = 0; i < 20 && !documentPictureInPicture.window?.document.querySelector('button')?.textContent; i++) await new Promise((r) => setTimeout(r, 100)); const w = documentPictureInPicture.window; return { api: true, open: !!w, text: w?.document.querySelector('button')?.textContent ?? '' }; })()`);
+if (talkWin.api) {
+  check(talkWin.open && /Hold|Basılı/.test(talkWin.text), 'PTT1: the talk window opens with a hold-to-talk button', JSON.stringify(talkWin));
+  await sam.evaluate(`documentPictureInPicture.window.document.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', code: 'KeyB', bubbles: true })); 1`);
+  const winTalk = await until(() => alex.evaluate(`!document.querySelector('#voice-people .voice-muted')`), 8000);
+  const winText = await sam.evaluate(`documentPictureInPicture.window.document.querySelector('button').textContent`);
+  await sam.evaluate(`documentPictureInPicture.window.document.dispatchEvent(new KeyboardEvent('keyup', { key: 'b', code: 'KeyB', bubbles: true })); 1`);
+  const winBack = await until(() => alex.evaluate(`!!document.querySelector('#voice-people .voice-muted')`), 8000);
+  check(!!winTalk && !!winBack && /Talking|Konuşuyorsun/.test(winText), 'PTT1: B in the talk window talks while held, silent again after', JSON.stringify({ winTalk, winBack, winText }));
+  await sam.evaluate(`(() => { document.getElementById('voice-talk-window').click(); return 1; })()`);
+  check(!!(await until(() => sam.evaluate(`!documentPictureInPicture.window`), 4000)), 'PTT1: the talk window closes from the same button');
+} else console.log('     (no Document Picture-in-Picture in this Chromium: talk window not tested)');
+await sam.evaluate(`(() => { localStorage.removeItem('opt:pttKey'); localStorage.removeItem('opt:pttLabel'); return 1; })()`);
 await sam.evaluate(`(() => { const c = document.getElementById('voice-ptt'); c.checked = false; c.dispatchEvent(new Event('change')); return 1; })()`);
 
 // Kim durdurdu: Alex senkron testini açıp durdurunca Sam'de videonun üstünde "Alex durdurdu" notu.

@@ -41,7 +41,8 @@ export type FrameMessage =
   /** Videonun durumu (sitedeki ilerleme çubuğu ve pin şeridi için). */
   | { type: 'status'; status: EmbedStatus }
   /** Film sayfasında basılan kısayol ya da film sitesinin tam ekran düğmesi siteye iletilsin. */
-  | { type: 'key'; key: string; up?: boolean }
+  /** `ptt` + `code` (card PTT1): the push-to-talk key the site's layout named, matched by its `KeyboardEvent.code`. */
+  | { type: 'key'; key: string; up?: boolean; code?: string; ptt?: boolean }
   | { type: 'fullscreen' }
   /**
    * Fare film sayfasında oynadı (oda görünümünde): sitenin tam ekran kontrolleri belirsin. `click`: tıklandı (hemen
