@@ -71,6 +71,7 @@ async function table(n) {
   ok(alex.state.phase === 'wait', 'three seated: two ready is not enough');
   robin.send({ t: 'ready', on: true });
   ok(await until(() => people.every((p) => p.state.phase === 'play')), 'all three ready: the race starts');
+  ok(alex.state.time === 180 && alex.state.left > 170_000 && alex.state.left <= 180_000, `FW2: a new table has 3 minutes a game (${alex.state.left} ms left)`);
   const answer = answerFor(alex.state.daily, answers, 'en');
   const wrong = wrongFor(answer);
   alex.send({ t: 'guess', word: wrong[0] });
@@ -95,6 +96,35 @@ async function table(n) {
   ok(JSON.stringify(end.ranks) === JSON.stringify([2, 1, 3]), `places follow the finishing order: ${JSON.stringify(end.ranks)}`);
   ok(people.every((p) => p.state.answer === answer && JSON.stringify(p.state.ranks) === JSON.stringify(end.ranks)), 'everyone sees the word and the same places');
   ok(robin.state.players[0].words?.length === 2, 'at the end everyone sees every board\'s letters');
+  // FW2 points: Sam 2nd guess + first 3 = 9, Alex 2nd guess = 6, Robin 0.
+  ok(JSON.stringify(end.players.map((p) => p.gained)) === JSON.stringify([6, 9, 0]), `FW2: points 7 → 1 by guess, +3 first: ${JSON.stringify(end.players.map((p) => p.gained))}`);
+  ok(JSON.stringify(end.players.map((p) => p.points)) === JSON.stringify([6, 9, 0]), 'FW2: the table keeps the points');
+  ok(end.left === undefined, 'FW2: no time left is sent once the game is over');
+  for (const p of people) p.ws.close();
+}
+
+// ---- FW2: a time limit picked in the lobby; the time runs out (lab server) ----
+{
+  const { people } = await table(3);
+  const [alex, sam, robin] = people;
+  robin.send({ t: 'settings', time: 7 });
+  alex.send({ t: 'settings', time: 60 });
+  ok(await until(() => people.every((p) => p.state.time === 60)), 'FW2: a seated player picks 1 minute (an odd value is refused)');
+  for (const p of people) p.send({ t: 'ready', on: true });
+  ok(await until(() => people.every((p) => p.state.phase === 'play')), 'FW2: the timed race starts');
+  ok(alex.state.left > 50_000 && alex.state.left <= 60_000, `FW2: about a minute left (${alex.state.left} ms)`);
+  const answer = answerFor(alex.state.daily, answers, 'en');
+  sam.send({ t: 'guess', word: answer });
+  ok(await until(() => alex.state.players[1].solved), 'Sam finds it');
+  alex.send({ t: 'lab', op: 'timeup' });
+  const lab = await until(() => alex.state.phase === 'over' || alex.inbox.some((m) => m.code === 'lab_off'), 4000);
+  if (alex.state.phase === 'over') {
+    const end = alex.state;
+    ok(end.winner === 1 && end.players[0].timeUp && end.players[2].timeUp && !end.players[1].timeUp, 'FW2: time up: the others are out, the solver wins');
+    ok(JSON.stringify(end.ranks) === JSON.stringify([2, 1, 2]) && JSON.stringify(end.players.map((p) => p.gained)) === JSON.stringify([0, 10, 0]), `FW2: places and points after the time: ${JSON.stringify(end.ranks)} ${JSON.stringify(end.players.map((p) => p.gained))}`);
+    robin.send({ t: 'guess', word: answer });
+    ok(await until(() => robin.inbox.some((m) => m.code === 'over')), 'FW2: a guess after the time is refused');
+  } else console.log(`skip FW2 time-up end: ${lab ? 'not a lab server' : 'no answer'} (unit tests cover duelTimeUp)`);
   for (const p of people) p.ws.close();
 }
 

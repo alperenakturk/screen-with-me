@@ -11,12 +11,6 @@ window only when the player picks it); in the video's place the game itself fill
 chat, menus) stays narrow and the board / play area is as large as it can be, centred and balanced when its shape
 leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness / e2e, first look, EN + TR.
 
-### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
-- Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.
-- What: the shared stage rule above (`stage.ts`, shared lobby / side column CSS: one narrow side width for all
-  games), always open in the video's place; then Classics (chess, dama, backgammon, reversi, XOX, Four) fills it.
-- Done when: every table opens in the video's place; Classics' board is the biggest square that fits; sweep shots.
-
 ### DG2. Draw & Guess: a big canvas, a small side, the results bug (owner, 21 Nov 2026; Game Studio "Draw")
 - Bug: when a drawing ends, the results view shrinks the play area to ~10 % (screenshot 21 Nov).
 - What: canvas large like draw.io, players list compact, chat readable below or beside; results fit without shrinking.

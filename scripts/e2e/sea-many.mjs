@@ -98,6 +98,22 @@ async function play(people, pick, watcher) {
   ok(await until(() => shooter.inbox.some((m) => m.code === 'bad_target')), 'with three a shot must name its target');
   shooter.send({ t: 'shot', cell: 0, target: turn });
   ok(await until(() => shooter.inbox.filter((m) => m.code === 'bad_target').length === 2), 'never my own sea');
+  // SB2: the shooter's live aim reaches everyone else (players and the watcher), never the shooter; an aim from
+  // someone whose turn it isn't, or at the shooter's own sea, goes nowhere (and gets no answer).
+  const aimTarget = (turn + 1) % 3;
+  const others = [...people.filter((_, i) => i !== turn), watcher];
+  const aimsIn = (c) => c.inbox.filter((m) => m.t === 'aim');
+  shooter.send({ t: 'aim', target: aimTarget, cell: 42 });
+  ok(await until(() => others.every((c) => aimsIn(c).some((m) => m.by === turn && m.target === aimTarget && m.cell === 42))), 'SB2: the shooter\'s aim (sea + cell) reaches the other players and the watcher');
+  shooter.send({ t: 'aim', target: aimTarget, cell: null });
+  ok(await until(() => others.every((c) => aimsIn(c).some((m) => m.cell === null))), 'SB2: "off the sea" (no cell) is passed on too');
+  const notTurn = people[(turn + 1) % 3];
+  const counts = others.map((c) => aimsIn(c).length);
+  notTurn.send({ t: 'aim', target: turn, cell: 7 });
+  shooter.send({ t: 'aim', target: turn, cell: 7 });
+  await sleep(600);
+  ok(others.every((c, i) => aimsIn(c).length === counts[i]) && !aimsIn(shooter).length, 'SB2: an aim out of turn, or at my own sea, goes nowhere; the shooter never gets its own');
+  ok(!notTurn.inbox.some((m) => m.t === 'error' && m.code === 'rate'), 'SB2: aims cost nothing of the message budget');
   // Alex and Sam shoot Robin (seat 3) until his fleet sinks (Robin shoots Alex), then Alex and Sam fight on.
   const outTurns = await play(people, (st) => (st.players[2].out || st.turn === 2 ? (st.turn === 0 ? 1 : 0) : 2), watcher);
   ok(!outTurns.length, 'a sunk fleet never gets the turn again');

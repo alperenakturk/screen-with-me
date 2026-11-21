@@ -49,3 +49,14 @@ One message per guess (plus Ready / language), far under the per-connection limi
   place, a • appears somewhere, counted (two • E's need two E's). A guess that breaks it is refused with the letter
   (and place) and costs nothing, in English and Turkish. The tag and the result card say "Hard mode".
 - Not taken: Glowbeam as the second player.
+
+## FW2 (21 Nov 2026, owner's card)
+
+- **Places:** a solver's "You are 2nd" is their place in the finishing order (`place` from the server), never the
+  count of solvers (two players both read "2nd").
+- **Time limit** picked in the lobby: none, 1, 2, 3 (default) or 5 minutes a game. The server's alarm ends the game:
+  every board not done is out; the first to solve wins, nobody = a draw. A guess after the time is refused.
+- **Points:** 7 for finding it on the first guess down to 1 on the seventh, +3 for the first finder; others 0. The bar
+  shows the table's points; the places list at the end shows each game's points.
+- **My board big:** in the video's place my tickets take the full height; one other player is a small 7 × 5 grid,
+  three to six others a column of one-line strips (name, tries, a column of five squares per guess).

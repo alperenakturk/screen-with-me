@@ -95,6 +95,8 @@ function secureRandom(): number {
 export class Sea extends DurableObject<Env> {
   private data: Saved = fresh();
   private readonly limit = new RateLimiter(20, 8);
+  /** SB2: the shooter's live aim has its own small budget (the page sends at most ~6 a second); extra aims are dropped. */
+  private readonly aims = new RateLimiter(10, 8);
   /** A local lab server (`lab.ts`): only then does a `lab` message do anything. */
   private lab = false;
   private botTimer: ReturnType<typeof setTimeout> | null = null;
@@ -158,6 +160,7 @@ export class Sea extends DurableObject<Env> {
     const message = typeof raw === 'string' ? parseSeaMessage(raw) : null;
     if (!message) return this.sendTo(ws, { t: 'error', code: 'bad' });
     if (message.t === 'ping') return this.sendTo(ws, { t: 'pong', now: Date.now() });
+    if (message.t === 'aim') return this.aim(ws, me, message);
     if (!this.limit.allow(me.id)) return this.sendTo(ws, { t: 'error', code: 'rate' });
     if (message.t === 'hello') return me.name === null ? this.hello(ws, me, message) : this.sendTo(ws, { t: 'error', code: 'bad' });
     if (me.name === null || !me.key || !this.data.people[me.key]) return this.sendTo(ws, { t: 'error', code: 'bad' });
@@ -384,6 +387,23 @@ export class Sea extends DurableObject<Env> {
         return;
     }
     await this.changed();
+  }
+
+  /**
+   * SB2: with three or more seats, the shooter's live aim goes to everyone else at the table (players and watchers) so
+   * their second view can follow it. Only the seat whose turn it is, at a fleet afloat that isn't its own; never stored,
+   * nothing else changes (no save, no state broadcast). Over its budget or wrong: dropped without an answer.
+   */
+  private aim(ws: WebSocket, me: Attachment, message: Extract<SeaClientMessage, { t: 'aim' }>): void {
+    const d = this.data;
+    if (me.name === null || !me.key || d.phase !== 'play' || d.seats.length <= 2) return;
+    const seat = this.seatOf(me.key);
+    if (seat < 0 || seat !== d.turn || message.target === seat || !this.alive()[message.target]) return;
+    if (!this.aims.allow(me.id)) return;
+    const out: SeaServerMessage = { t: 'aim', by: seat, target: message.target, cell: message.cell };
+    for (const other of this.sockets(ws)) {
+      if ((other.deserializeAttachment() as Attachment | null)?.name) this.sendTo(other, out);
+    }
   }
 
   /**

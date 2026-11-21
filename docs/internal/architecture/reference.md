@@ -1397,6 +1397,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   only fixed emojis (`GAME_EMOJIS`). An empty game is deleted after 24 h. New board game: `GAME_KINDS` + `GAME_RULES`
   + rules file + board drawing in `match.ts` + `ROOM_GAME_KINDS` (`protocol.ts`) + `stage.ts` (icon, which piece
   mounts) + i18n `games.<kind>.title/text`. Test: `scripts/e2e/xox.mjs` (XOX + Connect Four).
+  **Classics in the video's place (GFIT1):** `.xox-page.mt` carries `data-fill` (match.ts), so it fills the box
+  (stage.ts `fills`). From a 6 : 5 box (`classics.css` "GFIT1") the board's column is the biggest square the height
+  allows (backgammon 1.45 : 1, Four in a Row 7 : 6), capped by the width left beside the shared `--game-side` column;
+  the bar (score and 👁 on one line, Stub and its levels on their own), seats, status (three lines) and buttons stack in
+  that column, the two centred as one block. Under 720 px of layout "(you)" is for screen readers only and backgammon's
+  home / pips line gives way with "…" so names stay whole. `game-proportions` checks the square boards are ≥ 80 % of
+  the room left beside the column.
   **Classics (0.9.97.35, Game Studio, `docs/internal/design/games/classics.md`):** room kind `classics` (`ROOM_GAME_KINDS`) is
   one table in the `Game` object holding any board of `GAME_KINDS` (`xox`, `four`, `dama`): hello `classics: true` lets
   the table take a board's kind, `{t:'switch', game}` changes the board while no game is in progress (`in_progress`),
@@ -1510,12 +1517,23 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `aria-live`), its chip / head pops its ✕ (`.just-out`), and the result card waits until it is over (`sankUntil`).
   Lab `sea.sank` plays it in this tab; `seaBattle.state` adds `sank` and `dragging`. Sea harness: ghost mid-drag, R
   turns it, the drop lands on the ghost, a tap turns the picked ship, the end's moment before the card.
+  SB2 part 2 (three or more): the shooter's page sends its live aim `aim {target, cell|null}` (a mouse over their sea,
+  a phone's first tap, a chip pick; at most one per 150 ms, only on change: `queueAim`). The server (`Sea.aim`) passes
+  it as `aim {by, target, cell}` to every other connection that said hello, only from the seat whose turn it is, at a
+  fleet afloat that isn't its own; never stored or saved, its own budget (`RateLimiter(10, 8)`, extra ones dropped
+  silently), no error answers. On someone else's turn the page follows the shooter (`following()`, `follow`): the big
+  box shows the sea they aim at (else the sea they last shot at), their pointer pulses on that cell (`.peer-aim`, on my
+  own sea when they aim at me), the status says "Lee aims at Max's sea" / "Lee aims at you!"; aimed at me, my own sea
+  is the big box (`.sea.following` swaps the columns). A chip picked by hand wins until the turn changes; my own turn
+  brings back my last target (`myTarget`). Lab `seaBattle.state` adds `following`, `follow`, `peerAim`. Tests: unit
+  (`aim` parsing), e2e `sea-many.mjs` (relayed to players and the watcher, not to the shooter; out of turn / own sea
+  dropped), sea harness (Kim's hover reaches the sockets; Lee's aim at Kim and at Max on Kim's page).
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
   `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
   `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
-  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); the word lists moved to `packages/shared/src/games/words/` (the server
+  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); FW2 time and points: the lobby's `settings` carries `time` (`DUEL_TIMES` 0 / 60 / 120 / 180 / 300 s, 180 by default); `start` sets `endsAt`, `scheduleAlarm` includes it and `alarm` (or a guess that comes after it, answered `error` `time`) calls `timeUp` → `duelTimeUp` (every board not done gets `timeUp`, the first solver wins, else a draw); `state.left` is the milliseconds left while a game runs (the page counts it down, `.duel-clock`). `finish` gives `duelPoints` (7 → 1 by the guess it took, `FIRST_BONUS` 3 to the first finder) as each seat's `gained` and adds it to its `points` (the bar shows points; best of three still counts matches). In the video's place my tickets share the full height (rows ≤ 50 px) and three to six others are one-line strips; the lobby's settings after the word language are selects (two a row under 520 px). Lab `duel.timeup` ends the time at once (lab server only). the word lists moved to `packages/shared/src/games/words/` (the server
   unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
   → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
   day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
