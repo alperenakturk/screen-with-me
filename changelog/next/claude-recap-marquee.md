@@ -1,0 +1,2 @@
+- The session recap now plays on a theatre marquee sign: chasing lights round a gold frame and each moment of the night lettered on the board, starting with "Now showing: our movie night". The lights stay still if you prefer less motion.
+- The recap's music is softer, slower and warmer, with a gentle piano note on each chord.
