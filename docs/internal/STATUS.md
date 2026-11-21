@@ -236,7 +236,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 31. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
   bar; `?measure=1` switch times with a friend (then decide on a hidden preload player); TikTok links play and loop;
   a fresh invite opens on one screen; the extension's install card turns into "Go to the film" by itself.
-- [ ] 27aq. [GFIT1] Laptop and a big screen: press 🪟 on a table, then open another table: it opens in the video's place
+- [ ] 27aw. [GFIT1] Laptop and a big screen: press 🪟 on a table, then open another table: it opens in the video's place
   again. Classics there (chess, backgammon, Four in a Row): the board as tall as the box, the score, Stub, players and status in a
   narrow column beside it, names whole.
 
