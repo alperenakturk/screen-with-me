@@ -14,7 +14,7 @@
 //   DEBUG=/tmp/x.png saves the screen when a head button changed nothing.
 //   FILM_URL: the video file (default the film server's http://localhost:5300/video.webm; CI's games-more job serves one).
 const { chromium } = require('playwright');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const FILM = process.env.FILM_URL || 'http://localhost:5300/video.webm';
@@ -138,7 +138,7 @@ function seen() {
 
 async function newPage(browser, size) {
   const ctx = await withMouse(() => browser.newContext({ ...SIZES[size] }));
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   await ctx.addInitScript(() => {
     for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', extUpdateSeen: '9', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1', 'classics:chess:howSeen': '1' })) localStorage.setItem(k, v);
   });

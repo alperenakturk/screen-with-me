@@ -4,7 +4,7 @@
 // computer and a phone, with a second person who sees the row. YouTube's answers are faked (no API key locally).
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/feed/run.cjs [http://localhost:8787] [out-dir]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube: fakePlayer } = require('../fake-youtube.cjs');
 const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
@@ -41,7 +41,7 @@ async function fakeYouTube(ctx, asked) {
     const asked = [];
     const open = async (name, opts) => {
       const ctx = await browser.newContext(opts);
-      await viaYouTube(ctx);
+      await fakePlayer(ctx);
       await fakeYouTube(ctx, asked);
       await ctx.addInitScript((l) => {
         try {

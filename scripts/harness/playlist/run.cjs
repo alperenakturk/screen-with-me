@@ -5,7 +5,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/playlist/run.cjs [http://localhost:8787] [out-dir]
 const { chromium, devices } = require('playwright');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { phoneReady } = require('../phone-ready.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
@@ -49,7 +49,7 @@ async function settled(page) {
   ]) {
     const asked = [];
     const ctx = await browser.newContext(options);
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     await ctx.route('**/api/youtube/playlist**', (route) => {
       const url = new URL(route.request().url());
       asked.push(url.searchParams.get('list'));

@@ -3086,6 +3086,12 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   step gets it) every untagged live version is pushed with it and the catch-up (`LOOKBACK` 80 first-parent commits)
   back-fills the missing ones; without it the job behaves as before.
   The repo is public since Nov 2026, so the minutes are free; the diet keeps runs short.
+  **No required step waits on a third party (card CI4, 21 Nov 2026):** harnesses that only need a YouTube video in the
+  room load `scripts/harness/fake-youtube.cjs` (`fakeYouTube(ctx)`: the `iframe_api` address answered with a stand-in
+  `YT.Player` that keeps time like the real one, black embed pages, thumbnails answered empty); a real Short took up to
+  15 s on a busy runner and failed `games-shorts` on many first attempts. `yt-focus` (clicks inside YouTube's own
+  player) is the one real-YouTube step, `continue-on-error`. Sea's zoom check waits for the zoom-out transition to end
+  before the next tap. `cam-phone` part 5 fails only inside cloud containers (`docs/internal/cloud-testing.md`).
 - **Scene top space and sides:** the scene (1600×900) is bottom-aligned and covers the screen; on wide screens the top
   is cropped and also covered by the top bar: don't put decorations above y≈200. Room content is centered, at most
   1280 px; the user mostly looks at it while watching, so main decorations (moon, castle, dragon, caravan) stay at the

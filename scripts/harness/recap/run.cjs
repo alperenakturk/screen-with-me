@@ -7,7 +7,7 @@
 // a Short playing the room leaves the Shorts view for the show and comes back after. Test Lab `recap.state` reports it.
 //
 //   wrangler dev with the lab flag (CI), then: NODE_PATH=$(npm root -g) node scripts/harness/recap/run.cjs [site]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
@@ -21,7 +21,7 @@ const state = async (page) => JSON.parse(await lab(page, 'recap.state'));
 
 async function join(browser, options, room, name) {
   const ctx = await browser.newContext(options);
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));

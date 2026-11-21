@@ -6,7 +6,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
 //   NODE_PATH=$(npm root -g) node scripts/harness/games-youtube/run.cjs [site]
 const { chromium } = require('playwright');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const SITE = process.argv[2] || 'http://localhost:8787';
 let fails = 0;
 const check = (ok, label, extra) => {
@@ -38,7 +38,7 @@ const where = (page) =>
   const browser = await chromium.launch();
   for (const [label, viewport] of [['1366×768', { width: 1366, height: 768 }], ['1920×1080', { width: 1920, height: 1080 }], ['1024×640', { width: 1024, height: 640 }]]) {
     const ctx = await browser.newContext({ viewport });
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     await ctx.addInitScript(() => {
       for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'classics:chess:howSeen': '1' })) localStorage.setItem(k, v);
     });

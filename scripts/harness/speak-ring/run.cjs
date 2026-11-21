@@ -1,11 +1,11 @@
 // Card SH1 (3): the speaking ring in the Shorts view. Alex (computer) and Sam (phone) watch a Short and join voice,
 // each with Chromium's fake microphone playing a speech-like tone. Both see the green ring on the speaker's face in the
 // Shorts seats (computer bar and the phone's Shorts bar), on their own face too, growing with the level; a muted
-// person's ring goes out; under "reduce motion" the ring stays but nothing grows. Needs YouTube (a real Short).
+// person's ring goes out; under "reduce motion" the ring stays but nothing grows. YouTube's player is the test stand-in (fake-youtube.cjs, card CI4).
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/speak-ring/run.cjs [http://localhost:8787] [out-dir]
 const { chromium, devices } = require('playwright');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -63,7 +63,7 @@ const FAKE = ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-str
 async function person(name, options, wav) {
   const browser = await chromium.launch({ args: [...FAKE, `--use-file-for-fake-audio-capture=${wav}`] });
   const ctx = await browser.newContext({ ...options, permissions: ['microphone'] });
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   await ctx.addInitScript(() => {
     try {
       localStorage.setItem('tipsSeen', '1');

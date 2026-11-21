@@ -1,9 +1,9 @@
 // Card SH1 (1): the way back into the Shorts view. After "↩ Room view" a phone (Room tab) shows "📱 Shorts view" in
 // the strip under the video while a Short plays, and it works any number of times; a computer keeps its own
-// "📱 Shorts view" button. Needs YouTube (the Short plays in its real player).
+// "📱 Shorts view" button. YouTube's player is the test stand-in (fake-youtube.cjs, card CI4).
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/shorts-back/run.cjs [http://localhost:8787] [out-dir]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
@@ -26,7 +26,7 @@ const check = (ok, label, extra = '') => {
     ['tablet', { ...devices['iPad Mini landscape'] }, 'tr'],
   ]) {
     const ctx = await browser.newContext(options);
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     await ctx.addInitScript((l) => {
       try {
         localStorage.setItem('tipsSeen', '1');

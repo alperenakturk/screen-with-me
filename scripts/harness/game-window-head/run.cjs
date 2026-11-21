@@ -23,7 +23,7 @@
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
 //   node scripts/harness/game-window-head/run.cjs [site] [webm]   (a playable webm, default http://localhost:5300/video.webm)
 const { chromium, devices } = require('playwright');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const VIDEO = `${SITE}/sample.mp4`;
@@ -47,7 +47,7 @@ async function until(fn, ms = 8000) {
 
 async function room(browser, viewport, { phone = false } = {}) {
   const ctx = await browser.newContext(phone ? { ...devices['Pixel 7'] } : { viewport });
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   await ctx.addInitScript(() => {
     for (const [k, v] of Object.entries({ lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'snackBar:howSeen': '1', 'windowGarden:howSeen': '1', 'fiveFrames:howSeen': '1', 'classics:chess:howSeen': '1' })) localStorage.setItem(k, v);
   });
