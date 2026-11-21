@@ -1278,3 +1278,21 @@
   #game-stage.fill .pk[data-fill] .pk-seat .pk-bar { display: none; }
   #game-stage.fill .pk[data-fill] .pk-seat .pk-life { grid-template-columns: auto auto; justify-content: start; }
 }
+/* First look (round table): my bet chip took both the rivals' "bottom" and its own "top" and stretched into a tall
+   pill; the quick amounts go 2 × 2 so Turkish "Orta kadar" / "Hepsini koy" stay on one line. */
+#game-stage.fill .pk[data-fill] .pk-me-top > .pk-seat-bet { bottom: auto; }
+#game-stage.fill .pk[data-fill] .pk-quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#game-stage.fill .pk[data-fill] .pk-quick .game-chip { white-space: nowrap; }
+/* A narrow video's place (a sideways tablet's ≈ 740 px box: the table ≈ 460 px beside the side column): the rivals'
+   compact seats, three a row, so they never push the board under my seat. */
+@container game (max-width: 820px) {
+  #game-stage.fill .pk[data-fill] .pk-seats { padding-inline: 0; gap: 14px 6px; }
+  #game-stage.fill .pk[data-fill] .pk-seats > .pk-seat { flex-basis: 124px; padding: 2px 8px; }
+  #game-stage.fill .pk[data-fill] .pk-seat .pk-avatar { display: none; }
+  #game-stage.fill .pk[data-fill] .pk-seat .pk-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #game-stage.fill .pk[data-fill] .pk-seat .pk-bar { display: none; }
+  #game-stage.fill .pk[data-fill] .pk-seat .pk-life { grid-template-columns: auto auto; justify-content: start; }
+  #game-stage.fill .pk[data-fill] .pk-seat .pk-card { width: 26px; }
+  #game-stage.fill .pk[data-fill] .pk-seat .pk-seat-status:empty { display: none; }
+}
+#game-stage.fill .pk[data-fill] .pk-middle { min-height: 0; }
