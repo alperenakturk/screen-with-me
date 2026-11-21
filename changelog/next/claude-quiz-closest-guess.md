@@ -1,0 +1,4 @@
+- Quiz: no more true / false statements; the good ones came back as four-option questions.
+- Quiz: typed answers are gone. Instead, every game has 1–3 "closest guess" questions (a year, a height, a sum…): type a number, and the closest guess wins 200 points, the next 100, the third 50. No jokers on these.
+- Quiz: a tournament now ends with a five-question closest-guess finale (200 / 100 / 50; with two players 200 / 0, with three 200 / 100 / 0). The finale counts as a round.
+- Quiz: three new topics: Film & TV, Games and Travel, plus about 420 rewritten questions and 400 number guesses across every topic.

@@ -353,6 +353,10 @@ jobs:
       - name: Delete a chat message
         run: node scripts/harness/chat-delete/run.cjs http://localhost:8787
 
+      # Card EMO1: the emoji picker's Hands page with a skin tone (phone EN / TR, a toned hand received, the rail's ▼).
+      - name: Hands emoji page
+        run: node scripts/harness/hands/run.cjs http://localhost:8787
+
       # Card CR2: a YouTube Music album / playlist link fills the queue in order (the endpoint faked; EN computer, TR phone).
       - name: YouTube Music playlists
         run: node scripts/harness/playlist/run.cjs http://localhost:8787

@@ -41,6 +41,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
     help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
   },
+  'react.hands': {
+    title: { en: 'Emojis: the hand signs pages', tr: 'Emojiler: el hareketleri sayfaları' },
+    help: { en: 'Writes the chosen skin tone, the page the emoji picker shows and the hand signs as they would be sent into the log.', tr: 'Seçili ten rengini, emoji seçicinin gösterdiği sayfayı ve gönderilecek el hareketlerini kayda yazar.' },
+  },
   'chat.gameInvite': {
     title: { en: 'Chat: game table lines', tr: 'Sohbet: oyun masası satırları' },
     help: { en: 'Writes the chat\'s "opened a table" lines into the log: the table, the game, who opened it, closed or not, and whether Join shows.', tr: 'Sohbetteki "masa açtı" satırlarını kayda yazar: masa, oyun, açan kişi, kapandı mı ve Katıl görünüyor mu.' },

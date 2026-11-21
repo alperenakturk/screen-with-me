@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { doubledAfter, QUIZ_DOUBLE_GRACE_MS, QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, QUIZ_TYPED_MAX, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, foldAnswer, matchTyped, parseQuizMessage, quizLevelBonus,  roundWinners, tournamentOrder, typedHint, QUIZ_OFFER, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
-import { QUIZ_BANK, QUIZ_CATEGORIES } from './quiz-questions.ts';
+import { doubledAfter, QUIZ_DOUBLE_GRACE_MS, QUIZ_LEVELS, levelDifficulty, QUIZ_PROTOCOL_VERSION, QUIZ_QUESTIONS, SEEN_CHARS, decodeSeen, encodeSeen, fiftyFifty, parseQuizMessage, quizLevelBonus, roundWinners, tournamentOrder, QUIZ_OFFER, QUIZ_FINALE_QUESTIONS, QUIZ_GUESS_POINTS, guessPoints, parseGuess, quizGuessCount, quizAnswerMs, QUIZ_ROUND_QUESTIONS } from './quiz.ts';
+import { QUIZ_BANK, QUIZ_CATEGORIES, guessValue, isRetired } from './quiz-questions.ts';
 import { pickQuestions, quizOffer, quizPool } from './quiz-pick.ts';
 
 describe('Quiz', () => {
@@ -8,7 +8,9 @@ describe('Quiz', () => {
     for (const lang of ['tr', 'en'] as const) {
       const pool = quizPool(lang);
       expect(pool.length).toBeGreaterThanOrEqual(380);
-      const texts = pool.map((id) => QUIZ_BANK[id]![lang]!.q);
+      // A question with the same right answer is asked once (QZ5: generic texts such as "Which of these came first?"
+      // ask different things, told apart by their options).
+      const texts = pool.map((id) => `${QUIZ_BANK[id]![lang]!.q} → ${QUIZ_BANK[id]![lang]!.o![0]}`);
       expect(new Set(texts).size).toBe(texts.length);
       for (const category of QUIZ_CATEGORIES) expect(quizPool(lang, category).length).toBeGreaterThanOrEqual(20);
     }
@@ -19,6 +21,10 @@ describe('Quiz', () => {
         expect(text.q.trim()).toBe(text.q);
         if (entry.typed) {
           expect(text.a!.length).toBeGreaterThan(0);
+          expect(text.o).toBeUndefined();
+          continue;
+        }
+        if (entry.k === 'guess') {
           expect(text.o).toBeUndefined();
           continue;
         }
@@ -53,8 +59,8 @@ describe('Quiz', () => {
     const mixed = pickQuestions('tr', 15, Math.random, 'history');
     expect(mixed.map((q) => q.level)).toEqual([...mixed.map((q) => q.level)].sort());
     // A level too small for the game tops up from the topic's other levels.
-    const typedHard = pickQuestions('en', 15, Math.random, 'general', [], (e) => !!e.typed, 'hard');
-    expect(typedHard).toHaveLength(15);
+    const oddHard = pickQuestions('en', 15, Math.random, 'general', [], (e) => e.k === 'odd', 'hard');
+    expect(oddHard).toHaveLength(15);
     for (const level of QUIZ_LEVELS) expect(parseQuizMessage(JSON.stringify({ t: 'settings', level }))).toEqual({ t: 'settings', level });
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', level: 'expert' }))).toBeNull();
     expect(quizOffer('en', Math.random, 'hard')).toHaveLength(QUIZ_OFFER);
@@ -74,12 +80,8 @@ describe('Quiz', () => {
     expect(new Set(questions.map((q) => q.id)).size).toBe(15);
     for (const q of questions) {
       const entry = QUIZ_BANK[q.id]!;
-      if (entry.typed) {
-        expect(q.typed && q.options.length === 0 && q.accept).toEqual([...entry.tr!.a!]);
-        continue;
-      }
-      if (entry.tf === undefined) expect(q.options[q.correct]).toBe(entry.tr!.o![0]);
-      else expect(q.correct).toBe(entry.tf ? 0 : 1);
+      expect(q.guess).toBeUndefined();
+      expect(q.options[q.correct]).toBe(entry.tr!.o![0]);
       expect([...q.options].sort()).toEqual([...entry.tr!.o!].sort());
     }
     // The right option is not always in the same place.
@@ -99,7 +101,7 @@ describe('Quiz', () => {
     expect(pickQuestions('tr', 10, Math.random, 'math', all)).toHaveLength(10);
   });
 
-  it('50:50 hides two wrong options, never on true / false', () => {
+  it('50:50 hides two wrong options, never with fewer than four', () => {
     const [q] = pickQuestions('tr', 40).filter((x) => x.options.length === 4);
     for (let i = 0; i < 20; i++) {
       const hide = fiftyFifty(q!);
@@ -115,51 +117,106 @@ describe('Quiz', () => {
     expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 3, pick: 4 }))).toBeNull();
     expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 15, pick: 0 }))).toEqual({ t: 'answer', n: 15, pick: 0 });
     expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 2 }))).toEqual({ t: 'joker', n: 2 });
+    // QZ5: a closest guess is a finite number (two decimals kept); text answers are gone.
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 5, num: 1889 }))).toEqual({ t: 'answer', n: 5, num: 1889 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 5, num: 3.14159 }))).toEqual({ t: 'answer', n: 5, num: 3.14 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 5, num: -40 }))).toEqual({ t: 'answer', n: 5, num: -40 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 5, num: '1889' }))).toBeNull();
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 5, num: 1e13 }))).toBeNull();
+    expect(parseQuizMessage('{"t":"answer","n":5,"num":1e999}')).toBeNull();
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 5, text: 'Paris' }))).toBeNull();
+    for (const op of ['skip', 'guess', 'finale']) expect(parseQuizMessage(JSON.stringify({ t: 'lab', op }))).toEqual({ t: 'lab', op });
+    expect(parseQuizMessage(JSON.stringify({ t: 'lab', op: 'typed' }))).toBeNull();
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', lang: 'en', topic: 'space', count: 5 }))).toEqual({ t: 'settings', lang: 'en', topic: 'space', count: 5 });
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', topic: 'films', count: 7 }))).toBeNull();
     expect(parseQuizMessage(JSON.stringify({ t: 'hello', v: 1, name: 'Sam', lang: 'en' }))).toEqual({ t: 'hello', v: 1, name: 'Sam', lang: 'en' });
   });
 
-  it('typed answers (QZ2): cleaned, capped, never empty', () => {
-    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: '  Mount   Everest ' }))).toEqual({ t: 'answer', n: 2, text: 'Mount Everest' });
-    const long = parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: 'x'.repeat(500) }));
-    expect(long && 'text' in long && long.text.length).toBe(QUIZ_TYPED_MAX);
-    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: '\u0000\u202e\n ' }))).toBeNull();
-    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: 42 }))).toBeNull();
-    const odd = parseQuizMessage(JSON.stringify({ t: 'answer', n: 2, text: 'Pa\u202eris\u0007' }));
-    expect(odd && 'text' in odd && /[\u202e\u0007]/.test(odd.text)).toBe(false);
+  it('harder questions are worth more (QZ2)', () => {
+    expect(quizLevelBonus(1)).toBe(1);
+    expect(quizLevelBonus(undefined)).toBe(1.2);
+    expect(quizLevelBonus(3)).toBe(1.5);
+  });
+});
+
+describe('Quiz closest guesses (QZ5)', () => {
+  it('no true / false and no typed words are asked any more, in any topic, level or language', () => {
+    for (const lang of ['tr', 'en'] as const)
+      for (const topic of ['mix', ...QUIZ_CATEGORIES] as const)
+        for (const kind of ['choice', 'guess'] as const)
+          for (const id of quizPool(lang, topic, undefined, 'mix', kind)) {
+            const e = QUIZ_BANK[id]!;
+            expect(e.tf, `${id}`).toBeUndefined();
+            expect(isRetired(e)).toBe(false);
+            if (kind === 'choice') expect(e[lang]!.o).toHaveLength(e.k === 'first' ? 2 : 4);
+            else expect(guessValue(e)).not.toBeNull();
+          }
+    // Every game of every topic, level and length: four options (two on "which came first") or a closest guess.
+    for (const level of QUIZ_LEVELS)
+      for (const topic of ['mix', ...QUIZ_CATEGORIES] as const) {
+        const qs = pickQuestions('en', 15, Math.random, topic, [], undefined, level, quizGuessCount(15));
+        expect(qs).toHaveLength(15);
+        for (const q of qs) expect(q.guess ? q.options.length === 0 && Number.isFinite(q.value) : q.options.length >= 2 && !['True', 'False'].includes(q.options[0]!)).toBe(true);
+      }
   });
 
-  it('typed answers match forgivingly: case, accents, ı / İ, "the", one typo on longer words, numbers exact', () => {
-    expect(foldAnswer('  The Pacific-Ocean! ')).toBe('pacificocean');
-    expect(foldAnswer('İSTANBUL')).toBe(foldAnswer('istanbul'));
-    expect(matchTyped('istanbul', ['İstanbul'])).toBe(true);
-    expect(matchTyped('ISTANBUL', ['İstanbul'])).toBe(true);
-    expect(matchTyped('Ankara', ['İstanbul'])).toBe(false);
-    expect(matchTyped('akciger', ['Akciğer'])).toBe(true);
-    expect(matchTyped('Sao Paulo', ['São Paulo'])).toBe(true);
-    expect(matchTyped('Jupitre', ['Jupiter'])).toBe(true);
-    expect(matchTyped('Jupitr', ['Jupiter'])).toBe(true);
-    expect(matchTyped('Jptr', ['Jupiter'])).toBe(false);
-    expect(matchTyped('Mars', ['Mars'])).toBe(true);
-    expect(matchTyped('Mors', ['Mars'])).toBe(false);
-    expect(matchTyped('207', ['206'])).toBe(false);
-    expect(matchTyped('206', ['206'])).toBe(true);
-    expect(matchTyped('40', ['-40'])).toBe(false);
-    expect(matchTyped('−40', ['-40'])).toBe(true);
-    expect(matchTyped('minus 40', ['-40'])).toBe(true);
-    expect(matchTyped('eksi 40', ['-40'])).toBe(true);
-    expect(matchTyped('X-ray', ['X-ray'])).toBe(true);
-    expect(matchTyped('ten', ['10', 'ten'])).toBe(true);
-    expect(matchTyped('', ['10'])).toBe(false);
-    expect(matchTyped('!!!', ['10'])).toBe(false);
+  it('every category has closest-guess questions; the fifth bank brings three new topics', () => {
+    for (const lang of ['tr', 'en'] as const) {
+      const guesses = quizPool(lang, 'mix', undefined, 'mix', 'guess');
+      expect(guesses.length).toBeGreaterThanOrEqual(300);
+      const texts = guesses.map((id) => QUIZ_BANK[id]![lang]!.q);
+      expect(texts.filter((q, i) => texts.indexOf(q) !== i)).toEqual([]);
+      for (const topic of QUIZ_CATEGORIES) expect(quizPool(lang, topic, undefined, 'mix', 'guess').length, `${lang} ${topic}`).toBeGreaterThanOrEqual(10);
+    }
+    for (const topic of ['screen', 'games', 'travel'] as const) expect(QUIZ_CATEGORIES).toContain(topic);
+    // A fifth-bank guess carries its number; an old typed number counts as a guess only when both languages agree.
+    expect(guessValue({ c: 'math', d: 1, k: 'guess', n: 391, en: { q: '17 × 23?' }, tr: { q: '17 × 23?' } })).toBe(391);
+    expect(guessValue({ c: 'math', d: 1, typed: true, en: { q: '?', a: ['12', 'twelve'] }, tr: { q: '?', a: ['12'] } })).toBe(12);
+    expect(guessValue({ c: 'math', d: 1, typed: true, en: { q: '?', a: ['Paris'] } })).toBeNull();
+    expect(guessValue({ c: 'math', d: 1, typed: true, en: { q: '?', a: ['12'] }, tr: { q: '?', a: ['13'] } })).toBeNull();
   });
 
-  it('harder questions and typed answers are worth more (QZ2)', () => {
-    expect(quizLevelBonus(1, false)).toBe(1);
-    expect(quizLevelBonus(undefined, false)).toBe(1.2);
-    expect(quizLevelBonus(3, false)).toBe(1.5);
-    expect(quizLevelBonus(3, true)).toBeCloseTo(1.95);
+  it('a classic game asks 1–3 of them, spread out, the last one closing the game; 20 s each', () => {
+    expect([5, 10, 15].map(quizGuessCount)).toEqual([1, 2, 3]);
+    for (const [count, at] of [[5, [4]], [10, [4, 9]], [15, [4, 9, 14]]] as const) {
+      const qs = pickQuestions('en', count, Math.random, 'mix', [], undefined, 'mix', quizGuessCount(count));
+      expect(qs.map((q, i) => (q.guess ? i : -1)).filter((i) => i >= 0)).toEqual([...at]);
+    }
+    // A topic or level short of guesses still fills the game (from the topic's other levels, then from every topic).
+    expect(pickQuestions('tr', 5, Math.random, 'travel', [], undefined, 'hard', 5).every((q) => q.guess)).toBe(true);
+    expect(quizAnswerMs(true)).toBe(20_000);
+    expect(quizAnswerMs(false)).toBe(15_000);
+    expect(QUIZ_FINALE_QUESTIONS).toBe(5);
+  });
+
+  it('closest scoring: 200 / 100 / 50 / 0; two players 200 / 0, three 200 / 100 / 0; ties share the better place', () => {
+    expect(QUIZ_GUESS_POINTS).toEqual([200, 100, 50]);
+    const four = guessPoints({ a: 1890, b: 1900, c: 1850, d: 2000, e: 1700 }, 1889, 5);
+    expect(Object.fromEntries(Object.entries(four).map(([k, r]) => [k, r.points]))).toEqual({ a: 200, b: 100, c: 50, d: 0, e: 0 });
+    expect(four.a!.place).toBe(1);
+    expect(four.d!.place).toBe(4);
+    expect(guessPoints({ a: 10, b: 11 }, 10, 2)).toEqual({ a: { place: 1, points: 200 }, b: { place: 2, points: 0 } });
+    expect(guessPoints({ a: 10, b: 13, c: 20 }, 11, 3)).toEqual({ a: { place: 1, points: 200 }, b: { place: 2, points: 100 }, c: { place: 3, points: 0 } });
+    // Equal distance on either side: both closest; the next one is third.
+    expect(guessPoints({ a: 9, b: 11, c: 15, d: 30 }, 10, 4)).toEqual({ a: { place: 1, points: 200 }, b: { place: 1, points: 200 }, c: { place: 3, points: 50 }, d: { place: 4, points: 0 } });
+    // A player who did not answer still counts for the ladder (three at the table, two guessed).
+    expect(guessPoints({ a: 5, b: 7 }, 5, 3)).toEqual({ a: { place: 1, points: 200 }, b: { place: 2, points: 100 } });
+    expect(guessPoints({}, 5, 3)).toEqual({});
+  });
+
+  it('a typed guess reads like people write numbers', () => {
+    expect(parseGuess('1889')).toBe(1889);
+    expect(parseGuess(' 1 440 ')).toBe(1440);
+    expect(parseGuess('1,440')).toBe(1440);
+    expect(parseGuess('1.440')).toBe(1440);
+    expect(parseGuess('12.345.678')).toBe(12345678);
+    expect(parseGuess('3,14')).toBe(3.14);
+    expect(parseGuess('3.14159')).toBe(3.14);
+    expect(parseGuess('0.125')).toBe(0.13);
+    expect(parseGuess('−40')).toBe(-40);
+    expect(parseGuess('-40')).toBe(-40);
+    expect(parseGuess('.5')).toBe(0.5);
+    for (const bad of ['', '-', 'abc', '12a', '1e5', '1.2.3', '1,2,3']) expect(parseGuess(bad), bad).toBeNull();
   });
 });
 
@@ -171,7 +228,7 @@ describe('quiz bank 2 and rotation (P9)', () => {
       for (const text of [entry.en, entry.tr]) {
         if (!text) continue;
         expect(text.q.length).toBeLessThanOrEqual(160);
-        if (entry.typed) continue;
+        if (entry.typed || entry.k === 'guess') continue;
         expect(new Set(text.o).size).toBe(text.o!.length);
         expect(text.o!.length).toBe(entry.tf === undefined && entry.k !== 'first' ? 4 : 2);
       }
@@ -213,20 +270,13 @@ describe('Quiz tournament and jokers (QZ2)', () => {
     expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 4, kind: 'double' }))).toEqual({ t: 'joker', n: 4, kind: 'double' });
     expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 4 }))).toEqual({ t: 'joker', n: 4 });
     expect(parseQuizMessage(JSON.stringify({ t: 'joker', n: 4, kind: 'triple' }))).toBeNull();
-    // A tournament of 8 players × 2 laps × 3 questions numbers up to 48.
-    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 48, pick: 1 }))).toEqual({ t: 'answer', n: 48, pick: 1 });
-    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 49, pick: 1 }))).toBeNull();
+    // A tournament of 8 players × 2 laps × 3 questions and its 5-question finale numbers up to 53.
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 53, pick: 1 }))).toEqual({ t: 'answer', n: 53, pick: 1 });
+    expect(parseQuizMessage(JSON.stringify({ t: 'answer', n: 54, pick: 1 }))).toBeNull();
     expect(parseQuizMessage(JSON.stringify({ t: 'pick', cat: 'body' }))).toEqual({ t: 'pick', cat: 'body' });
     expect(parseQuizMessage(JSON.stringify({ t: 'pick', cat: 'mix' }))).toBeNull();
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', mode: 'tournament', laps: 2 }))).toEqual({ t: 'settings', mode: 'tournament', laps: 2 });
     expect(parseQuizMessage(JSON.stringify({ t: 'settings', mode: 'league', laps: 3 }))).toBeNull();
-  });
-
-  it('a typed 50:50 shows the first letter and the length', () => {
-    expect(typedHint('Berlin')).toBe('B·····');
-    expect(typedHint('mount everest')).toBe('M···· ·······');
-    expect(typedHint('206')).toBe('2··');
-    expect(typedHint('istanbul')).toBe('I·······');
   });
 
   it('an offer is three different categories with enough questions', () => {
