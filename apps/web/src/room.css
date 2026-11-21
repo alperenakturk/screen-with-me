@@ -2520,7 +2520,7 @@ html.phone .feed-qrow :is(.btn, .icon-btn) {
   border-color: var(--accent);
 }
 
-.chat-list.hide-events .chat-system {
+.chat-list.hide-events .chat-system:not(.chat-note) {
   display: none;
 }
 
@@ -2529,7 +2529,7 @@ html.phone .feed-qrow :is(.btn, .icon-btn) {
   display: none;
 }
 
-.chat-list.hide-events > .chat-empty:not(:has(~ .chat-line, ~ .chat-game)) {
+.chat-list.hide-events > .chat-empty:not(:has(~ .chat-line, ~ .chat-game, ~ .chat-note)) {
   display: block;
 }
 
@@ -6282,6 +6282,29 @@ html.in-room .topbar-right > .lang {
 
 .chat-list .chat-system > span {
   max-width: 80%;
+}
+
+/* VC4 first look: the crowd note is read once, so it is a soft card in the text colour, not a faint divider line. */
+.chat-list .chat-system.chat-note {
+  display: block;
+  margin: 10px 4px 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.chat-list .chat-system.chat-note::before,
+.chat-list .chat-system.chat-note::after {
+  content: none;
+}
+
+.chat-list .chat-system.chat-note > span {
+  max-width: none;
 }
 
 /* Yazma kutusu: gönder oku kutunun içinde */

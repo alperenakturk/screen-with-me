@@ -1161,7 +1161,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   who didn't join hear nobody. Member field `voice: {mic, track?}` (no version bump); `{t:'voice', on, mic}`. Transport
   is `welcome.voiceMode`: **p2p** (default, no card/account): each person has a separate WebRTC connection with
   everyone in voice (the smaller id makes the offer), the server relays `{t:'signal'}` only if both sides are in voice
-  (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (6), STUN Cloudflare only (every STUN server
+  (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (8 since VC4), STUN Cloudflare only (every STUN server
   sees each user's IP). **No IP notice (card SIMP1, owner, 10 Nov 2026):** the 0.9.86 dialog before voice / a stream /
   watching and the "🔒 People in voice can see your IP · Why?" line are gone (`ui/ip-notice.ts` deleted; old
   `opt:ipNotice:*` keys are harmless leftovers). The legal place is `privacy.html#voice` (EN) / `#voice-tr` (TR), linked
@@ -2151,10 +2151,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   incoming streams + my own preview (`me`) reach the site in the overlay through a **local WebRTC bridge**
   (`{op:'loop'}`: offscreen makes the offer, `cams` = mid → member; the bridge restarts on every change; no `data` = no
   camera). Old extensions don't send `caps.cam` → button hidden. My own voice level: a bar under 🎙 (`LevelMeter`
-  "me"; in the extension offscreen `me`). At most `CAM_MAX` (4) cameras at once (server `cam_full`). **Limits always
-  visible** (user's request): "Seste 3/6 · 📷 1/4" in the card, yellow at the last slot, red when full; a full button is
+  "me"; in the extension offscreen `me`). At most `CAM_MAX` (6 since VC4) cameras at once (server `cam_full`). **Limits always
+  visible** (user's request): "Seste 3/8 · 📷 1/6" in the card, yellow at the last slot, red when full; a full button is
   dimmed (`.is-full`) and pressing it explains why (peer-to-peer, upload speed) via `flashHint`. Tests:
   `voice/run.mjs` (camera frames are counted), e2e `voice.mjs` (cam_full).
+  **Card VC4 (owner, 21 Nov 2026: 5 in voice and 4 cameras ran without trouble):** `VOICE_MAX_P2P` 6 → 8, `CAM_MAX`
+  4 → 6 (server-checked; no protocol bump: only the numbers change, old clients just show the old maximum). What we
+  recommend is `CAM_RECOMMENDED` (4) cameras and `VOICE_RECOMMENDED` (6) people in voice: past either, `crowdNote` in
+  `ui/voice.ts` (on every `members`) puts one grey line in the chat (`voice.crowdNote`, EN + TR, "…we recommend up to 4
+  cameras and 6 people in voice"), once per room in this browser (`localStorage` `voiceCrowd:<room>`). It is a local
+  line through `VoiceRoom.note` → `chat.note()` (a `system` line with `note: true`, class `.chat-note`), shown even
+  while room activity lines are hidden (`.hide-events` skips it, the "no messages yet" text hides for it). Test Lab
+  `voice.crowdNote` (📊; `[cameras] [people]`, `reset`); e2e `voice.mjs` (8 voices / 6 cameras accepted, the 9th / 7th
+  refused); harness `cam-grid/run.cjs` part 4; shots screen `voice-crowd-note`; the help page states 8 and 6.
 - **Cameras on phones (card CAM1, the owner's test with a friend):** a second capture of the camera while the voice
   camera is live froze or blacked out what the others saw on phones, so the pre-join / 🎛 window shows the live camera
   (`voiceCheck({ live })`) and a pick switches it in place. `P2pVoice.switchCam(open)`: the new track goes into every

@@ -35,7 +35,8 @@ export interface GameLine {
 
 type Line =
   | { kind: 'chat'; message: ChatMessage }
-  | { kind: 'system'; at: number; text: () => string }
+  /** `note` (VC4): a line meant for everyone, shown even while room activity lines are hidden. */
+  | { kind: 'system'; at: number; text: () => string; note?: boolean }
   | { kind: 'game'; at: number; game: GameLine; closed: boolean };
 
 /**
@@ -79,7 +80,7 @@ export function createChatPanel(
   const drawEvents = () => {
     list.classList.toggle('hide-events', !showEvents);
     eventsButton.setAttribute('aria-pressed', String(showEvents));
-    const hidden = lines.filter((line) => line.kind === 'system').length;
+    const hidden = lines.filter((line) => line.kind === 'system' && !line.note).length;
     eventsButton.textContent = showEvents ? t('eventsHide') : hidden ? t('eventsShowN', { n: hidden }) : t('eventsShow');
     eventsButton.title = t('eventsTitle');
     // Nothing to show yet: no button (it read as a control with no purpose in an empty chat, first-look review).
@@ -247,7 +248,7 @@ export function createChatPanel(
   function node(line: Line, prev?: Line): HTMLLIElement {
     if (line.kind === 'game') return gameNode(line);
     if (line.kind === 'system') {
-      return el('li', { class: 'chat-system' }, el('span', {}, el('time', {}, time(line.at)), ' ', line.text()));
+      return el('li', { class: line.note ? 'chat-system chat-note' : 'chat-system' }, el('span', {}, el('time', {}, time(line.at)), ' ', line.text()));
     }
     const { message } = line;
     if (message.deleted) {
@@ -541,6 +542,10 @@ export function createChatPanel(
     /** Gri sistem satırı (oda hareketleri). Okunmamış sayılmaz. */
     system(text: () => string): void {
       push({ kind: 'system', at: Date.now(), text }, false);
+    },
+    /** VC4: a grey line everyone should read (not room activity): shown even while activity lines are hidden. */
+    note(text: () => string): void {
+      push({ kind: 'system', at: Date.now(), text, note: true }, false);
     },
     /** GN1: someone opened a game table (one line per table). */
     gameOpened(game: GameLine): void {
