@@ -35,6 +35,7 @@ import {
   QUEUE_MAX_LENGTH,
   type RoomSettings,
   type ServerMessage,
+  type RoomGame,
 } from '@swm/shared/protocol';
 import { SyncEngine } from '@swm/shared/sync-engine';
 import { JoinFilter, personKey } from '@swm/shared/sound-policy';
@@ -984,6 +985,12 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         run: () => JSON.stringify(chat.history()),
       },
       {
+        // Card GN1: the chat's "opened a table" lines (table, game, who, closed, Join shown).
+        id: 'chat.gameInvite',
+        tab: 'status',
+        run: () => JSON.stringify(chat.gameLines()),
+      },
+      {
         id: 'chat.fill',
         tab: 'friends',
         run: () => {
@@ -1299,6 +1306,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       gift: (to: string, plant: string) => send({ t: 'gift', to, plant }) !== false,
     };
   }
+  /** Card GN1: the chat's "opened a table" line (its cover comes with the games hall's chunk). */
+  const gameLine = (table: RoomGame) =>
+    chat.gameOpened({
+      table,
+      mine: table.by.id === myId,
+      join: () => games.join(table.id),
+      cover: () => loadChunk(() => import('./games/gallery.ts')).then((m) => m?.coverOf(table.kind) ?? null),
+    });
   const games = createLazyGameStage({
     wrap: $('.player-wrap'),
     button: $<HTMLButtonElement>('#game-btn'),
@@ -1602,6 +1617,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         maybeAutoInvite(message.members);
         rememberRoom();
         games.setTables(message.tables ?? (message.game ? [message.game] : []), {}, false);
+        chat.gameTables((message.tables ?? (message.game ? [message.game] : [])).map((x) => x.id));
         games.rejoined();
         chooseFirstTab();
         waitingIds = message.waiting ?? [];
@@ -1793,9 +1809,14 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'game':
         // Old single-game message: the room now sends `tables` too, which carries everything.
         break;
-      case 'tables':
+      case 'tables': {
         games.setTables(message.tables, { ...(message.opened ? { opened: message.opened } : {}), ...(message.closed ? { closed: message.closed } : {}), ...(message.by ? { by: message.by } : {}) });
+        // Card GN1: a table opened: a line in the chat with its cover and Join (greyed once the table closes).
+        const opened = message.opened ? message.tables.find((x) => x.id === message.opened) : undefined;
+        if (opened) gameLine(opened);
+        chat.gameTables(message.tables.map((x) => x.id));
         break;
+      }
       case 'reaction': {
         // SAFE1: nothing from someone I blocked for me.
         if (!settings.options.showReactions || (message.by.id !== myId && blocks.has(message.by))) break;

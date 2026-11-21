@@ -93,11 +93,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Done when: the new card at 1366 / 1920 / phone; all actions reachable by keyboard; Test Lab `together.layout`;
   first look with the old and new screenshot.
 
-### GN1. A chat message when someone opens a game table (owner, 21 Nov 2026; lane A2)
-- Why: when a game is already open, a new table or a newcomer is easy to miss.
-- What: opening a shared table posts a system line in the chat: the game's cover, "Alex opened Sea Battle", a Join
-  button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
-- Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
 
 ### EMO1. A hands emoji page (owner, 21 Nov 2026; lane A2)
 - Why: the owner wants hand / finger gestures (👍 👏 🙌 👋 🤞 🫶 …) as their own page in the reaction picker.

@@ -88,6 +88,11 @@ export function createLazyGameStage(opts: StageOptions) {
       run((s) => s.refused(code));
     },
     isOpen: (): boolean => stage?.isOpen() ?? false,
+    /** GN1: Join from the chat's game line. */
+    join: (id: string): void => {
+      run((s) => void s.join(id));
+      void load();
+    },
     openSolo: (kind: SoloKind): void => {
       run((s) => s.openSolo(kind));
       void load();

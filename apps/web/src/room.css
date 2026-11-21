@@ -355,6 +355,73 @@
   margin-right: 4px;
 }
 
+/* Card GN1: someone opened a game table: the cover, the line and Join, a card in the flow (never hidden as activity). */
+.chat-game {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+  padding: 6px 8px 6px 6px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent, #7c5cff) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #7c5cff) 35%, transparent);
+  font-size: 13px;
+}
+
+.chat-game-cover {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(160deg, #1d1740, #08061a);
+  font-size: 22px;
+}
+
+.chat-game-cover .hub-cover,
+.chat-game-cover svg {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.chat-game-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* First look: the time on its own small line, so the name never sticks to it. */
+.chat-game-text time {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chat-game-state {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Greyed when the table closed: the cover and the line fade, "The table closed" stays readable. */
+.chat-game.closed {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--muted) 40%, transparent);
+}
+
+.chat-game.closed :is(.chat-game-cover, .chat-game-text) {
+  opacity: 0.55;
+}
+
+.chat-game.closed .chat-game-cover {
+  filter: grayscale(1);
+}
+
 .chat-empty {
   color: var(--muted);
   font-size: 13px;
@@ -2462,7 +2529,7 @@ html.phone .feed-qrow :is(.btn, .icon-btn) {
   display: none;
 }
 
-.chat-list.hide-events > .chat-empty:not(:has(~ .chat-line)) {
+.chat-list.hide-events > .chat-empty:not(:has(~ .chat-line, ~ .chat-game)) {
   display: block;
 }
 

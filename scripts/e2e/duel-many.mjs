@@ -87,6 +87,7 @@ async function table(n) {
   alex.send({ t: 'guess', word: answer });
   ok(await until(() => robin.state.players[0].solved), 'Alex finds it second');
   ok(robin.state.phase === 'play', 'Robin still plays');
+  ok(sam.state.players[1].place === 1 && sam.state.players[0].place === 2, 'FW2: Sam keeps 1st while Alex is 2nd (not both "2nd")');
   for (const w of wrong) robin.send({ t: 'guess', word: w });
   ok(await until(() => people.every((p) => p.state.phase === 'over')), 'every board done: the game is over');
   const end = alex.state;

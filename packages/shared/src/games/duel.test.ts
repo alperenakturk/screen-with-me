@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boardDone, boardSolved, duelGuess, duelOutcome, duelRanks, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
+import { boardDone, boardSolved, duelGuess, duelOutcome, duelPlace, duelRanks, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
 import { MAX_TRIES } from './five-frames.ts';
 
 const ANSWER = 'crane';
@@ -60,6 +60,21 @@ describe('Five Frames Duel judging', () => {
     for (const w of wrong) duelGuess(boards[2]!, w, ANSWER, 'en', allowed);
     expect(duelOutcome(boards, ANSWER, 2, solved)).toBe(3);
     expect(duelRanks(boards, ANSWER, solved)).toEqual([2, 0, 3, 1]);
+  });
+
+  it('FW2 bug: a solver keeps the place they finished in while the others still race (not the count of solvers)', () => {
+    // Owner, 21 Nov 2026: two players both showed "2nd" though one finished first.
+    const boards: DuelBoard[] = [{ guesses: [] }, { guesses: [] }, { guesses: [] }];
+    const solved: number[] = [];
+    duelGuess(boards[1]!, 'crane', ANSWER, 'en', allowed);
+    solved.push(1);
+    duelGuess(boards[0]!, 'slate', ANSWER, 'en', allowed);
+    duelGuess(boards[0]!, 'crane', ANSWER, 'en', allowed);
+    solved.push(0);
+    expect(duelOutcome(boards, ANSWER, 0, solved)).toBeNull();
+    expect(duelPlace(solved, 1)).toBe(1);
+    expect(duelPlace(solved, 0)).toBe(2);
+    expect(duelPlace(solved, 2)).toBe(0);
   });
 
   it('GMP b: six players, nobody solves: a draw, everyone shares the first place', () => {

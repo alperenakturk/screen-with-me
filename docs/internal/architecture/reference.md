@@ -1252,8 +1252,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (mode `stage`: `#game-stage` inside `.player-wrap`, scaled to that box by `refit` from its own or wide shape; the
   side panel, chat, voice and the top bar stay usable beside it; on a computer the rail comes out beside the table as beside the video: hidden at rest, out at the right edge, always on a touch screen, the table making room meanwhile; `games/stage.css`, the window's own lazy stylesheet. Five Frames Duel for 3–6 puts the others' marks in two narrow columns there, so its letters keep 24 px) or in its **🪟 frame** (the free window), switched any
   time with the head's `.game-mode` button (▣ / 🪟, words "In the video's place" / "Frame"; `setTableMode`) or a bare
-  Esc (place → frame); the mode used last is remembered for every table (`gameMode`: `place` | `frame`; GW2's saved
-  `full` reads as `place`, the first time too). **No game ever calls `requestFullscreen`** (`scripts/check-games-fullscreen.mjs`
+  Esc (place → frame); **GFIT1 (owner, 21 Nov 2026): every table opens in the video's place**, even after the frame was
+  used (`open` saves `gameMode` = `place` on a fresh open; a reload back to my table, `resume`, keeps the mode it had).
+  **Filling the video's place (GFIT1):** a game whose root (the element it mounts into `.game-fit`) carries `data-fill`,
+  set in the game's own file, is laid out at the box itself instead of its design shape (`refit`'s `fills()` branch):
+  the box is read at `FILL_BASE` 1000 × 560 (smaller boxes lay out at scale 1 and shrink only on overflow; bigger ones
+  scale up in proportion, at most `MAX_FILL` 1.6), and `#game-stage` gets `.fill`. Its side column (players, chat,
+  menus) is one narrow width for every game, `--game-side` (264 px, 232 px in a layout under 900 px; `--game-gap`
+  16 / 12 px; `games/stage.css`), and the board / play area takes the rest. A game without `data-fill` keeps PROP's
+  scaled design shape. The Test Lab's `games.frame` line reports `fill`, `fit` and `own`; the status says "fills the
+  place". **No game ever calls `requestFullscreen`** (`scripts/check-games-fullscreen.mjs`
   in CI over `apps/web/src/games` and the shared games; `game-window-head` W1 checks no button, key or double click
   makes anything full screen). The video's place pauses the room's video (`autoPause`, YouTube too: I picked it or no
   readable frame fits beside the player, CLAUDE.md §7's one exception) and leaving it (🪟, Esc, ✕, Leave, close)
@@ -1497,7 +1505,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
   `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
   `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
-  wins, both used up = draw; `practiceWord`); the word lists moved to `packages/shared/src/games/words/` (the server
+  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); the word lists moved to `packages/shared/src/games/words/` (the server
   unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
   → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
   day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
@@ -2336,6 +2344,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     / "Alex (host) deleted Sam's message", not a `.chat-line`, so unread counters skip it) and breaks bubble grouping.
     Test Lab `chat.delete` (deletes my newest message, no question). e2e `chat-delete.mjs`; harness
     `scripts/harness/chat-delete` (CI `site`); shots screen `chat-delete`.
+  - **A game table in the chat (card GN1, 21 Nov 2026):** a `tables` message with `opened` posts `li.chat-game`
+    (`ui/chat.ts` `gameOpened`, a `Line` of kind `game`, local to the tab like activity lines and capped with them, but
+    never hidden by "Hide activity"; it counts as unread except for the opener): the game's cover (`games/gallery.ts`
+    `coverOf`, loaded lazily with the hall's chunk; 🎮 until then), "Alex opened a Sea Battle table" (`hub.opened`) and
+    Join (`hub.join`, `games.join(id)` → stage `join`, the same open as the invite card; not on the opener's own line).
+    Every `tables` / `welcome` calls `gameTables(ids)`: a line whose table is gone redraws greyed with "The table
+    closed" and no Join. One line per table id. Tables have no seat limit (others watch), so there is no "full" state.
+    Test Lab `chat.gameInvite` (JSON of the lines). Harness `scripts/harness/game-chat` (CI `games-more`: open, the line on a
+    computer and a phone, Join from it, greyed on close).
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count

@@ -1,0 +1,1 @@
+- Every table now opens in the video's place, even if you used the 🪟 frame last time; the frame is one click away in its head.

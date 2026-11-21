@@ -15,6 +15,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A2 (handoff 21 Nov): PRs RAIL2 #573, GN1 #575, EMO1 #578, RC2 rules #581, RC2 looks #580 (docs).
   - [ ] RC2 part 2: look C "marquee sign" + music 1 (own pad re-voiced), owner's picks; `design/recap-cinema/`.
   - [ ] FR1 (host-only "Rate the film" poll, film page).
+- [ ] FW2 (Five Frames): [x] 1 places [ ] 2 timer, points [ ] 3 big board [ ] 4 levels [ ] 5 words
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
