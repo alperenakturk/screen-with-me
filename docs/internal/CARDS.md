@@ -93,13 +93,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Done when: the new card at 1366 / 1920 / phone; all actions reachable by keyboard; Test Lab `together.layout`;
   first look with the old and new screenshot.
 
-### RAIL2. The rail beside the video stays put; hide it from the rail itself (owner, 21 Nov 2026; lane A2, first)
-- Why: the vertical control column that slides in at the video's right edge should be fixed by default; hiding it
-  lives in the ⋯ menu today.
-- What: the rail is always shown (fixed) by default; a hide button on the rail itself switches it to auto-hide (slides
-  in on hover / tap as today); pressing it again pins it. Remove "hide frame" from ⋯. Saved per browser. Fullscreen
-  YouTube keeps its own rules (nothing over the YouTube player).
-- Done when: fixed by default, toggle works and persists; Test Lab `rail.pin`; harness; first look.
 
 ### EMO1. A hands emoji page (owner, 21 Nov 2026; lane A2)
 - Why: the owner wants hand / finger gestures (👍 👏 🙌 👋 🤞 🫶 …) as their own page in the reaction picker.

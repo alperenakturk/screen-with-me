@@ -18,7 +18,10 @@ const FOCUS_FIRST_MS = 400;
 /** …or this long after the volume stopped changing (a drag on YouTube's slider), and never later than FOCUS_MAX_MS. */
 const FOCUS_REST_MS = 1200;
 const FOCUS_MAX_MS = 10_000;
-/** "Keep the controls open" changed (the rail's ⋯ or Settings → My screen); the new value is in `opt:railPin`. */
+/**
+ * The rail's hide toggle changed (the button on the rail itself or Settings → My screen); the new value is in
+ * `opt:railAuto` ('1' = waits for the edge; anything else, the default since card RAIL2, = always out).
+ */
 export const RAIL_PIN_EVENT = 'swm-railpin';
 
 interface FullscreenOptions {
@@ -437,9 +440,14 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
    * leaves"): on a computer (the site, not the film page) the rail comes when the mouse is at the video's right edge
    * and goes HIDE_MS after it leaves. A YouTube frame keeps its mouse moves to itself, so a see-through strip on the
    * right edge (`#rail-edge`, clear of YouTube's own buttons at the top and bottom) notices the mouse there.
-   * "Keep the controls open" (⋯ and Settings → My screen, `opt:railPin`) pins it. Touch screens keep it faint as before.
+   * Card RAIL2 (owner, 21 Nov 2026): the rail stays out by default; its own last button (`#rail-pin`, and Settings →
+   * My screen) switches it to waiting for the edge (`opt:railAuto`, a new key so everyone starts with it out).
+   * Fullscreen YouTube keeps its own rules: there it always waits for the edge (nothing of ours over the YouTube
+   * player by itself). Touch screens keep it faint as before.
    */
-  let railPin = load('opt:railPin') === '1';
+  const railAuto = () => load('opt:railAuto') === '1';
+  const pinWanted = () => !railAuto() && !(isActive() && theater.classList.contains('yt-rail'));
+  let railPin = pinWanted();
   // Card 2b (owner's B, 3 Nov 2026): the film page too. There the gutter beside the film is part of our overlay, so
   // the site sees the mouse reach it; the film narrows while the rail is out and widens again when it goes.
   const edgeMode = () => (!isTouch() || hasMouse()) && !railPin;
@@ -537,10 +545,17 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   });
   const railPinButton = q<HTMLButtonElement>('#rail-pin');
   function renderPin(): void {
-    railPin = load('opt:railPin') === '1';
+    const auto = railAuto();
+    railPinButton.setAttribute('aria-pressed', String(!auto));
+    setIcon(railPinButton, auto ? 'rail-keep' : 'rail-hide');
+    const text = t(auto ? 'rail.keep' : 'rail.hide');
+    railPinButton.title = text;
+    railPinButton.setAttribute('aria-label', text);
+    const next = pinWanted();
+    if (next === railPin && theater.classList.contains('rail-pin') === railPin && theater.classList.contains('rail-edge-mode') === edgeMode()) return;
+    railPin = next;
     theater.classList.toggle('rail-pin', railPin);
     theater.classList.toggle('rail-edge-mode', edgeMode());
-    railPinButton.setAttribute('aria-pressed', String(railPin));
     // Pinned, the edge is not watched: the next move after unpinning says where the mouse is.
     nearEdge = false;
     if (railPin) wakeDock();
@@ -548,9 +563,27 @@ export function createFullscreen({ shell = false, ownControls = () => true, onAc
   }
   railPinButton.addEventListener('click', () => {
     openPop(null);
-    save('opt:railPin', railPin ? '0' : '1');
+    save('opt:railAuto', railAuto() ? '0' : '1');
+    // Switched to waiting with the mouse on the rail: hovering keeps it (railBusy) until the mouse leaves.
     dispatchEvent(new Event(RAIL_PIN_EVENT));
   });
+  addEventListener('langchange', renderPin);
+  // Entering or leaving fullscreen, or a YouTube video coming or going, can change the rule (fullscreen YouTube waits).
+  new MutationObserver(renderPin).observe(theater, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('fullscreenchange', renderPin);
+  // Card RAIL2: Test Lab `rail.pin` (title in ui/lab-texts.ts).
+  debugHooks.register('rail-pin', () => ({
+    commands: [
+      {
+        id: 'rail.pin',
+        tab: 'video',
+        run: () => {
+          const text = JSON.stringify({ saved: load('opt:railAuto') ?? 'unset (fixed)', fixed: railPin, edgeMode: edgeMode(), resting: theater.classList.contains('dock-idle') });
+          return { en: text, tr: text };
+        },
+      },
+    ],
+  }));
   addEventListener(RAIL_PIN_EVENT, renderPin);
   renderPin();
 

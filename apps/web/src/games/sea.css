@@ -241,3 +241,65 @@ html.phone .sea-bot-label { flex-basis: auto; }
 #game-stage.in-tab .sea-bot-label { text-wrap: balance; }
 #game-stage.in-tab .sea.many .sea-targets { flex: 1 1 auto; justify-content: space-evenly; padding: 4px 3px; }
 #game-stage.in-tab .sea-bot .btn { flex: none; }
+
+/* SB2: dragging a ship. Its old cells fade; the gold ghost is where it lands (the nearest spot that fits), red when
+   nothing fits near. */
+.sea-mine.dragging .sea-grid { cursor: grabbing; }
+.sea-mine .sea-cell.ship:not(:disabled) { cursor: grab; }
+.sea-cell.lifting:not(.ghost) { opacity: 0.35; }
+.sea-cell.ghost { background: rgb(255 198 90 / 0.55); box-shadow: inset 0 0 0 2px var(--sb-gold), 0 0 10px rgb(255 198 90 / 0.5); border-radius: 4px; z-index: 1; }
+.sea-cell.ghost.bad { background: rgb(255 90 90 / 0.4); box-shadow: inset 0 0 0 2px #ff7a7a; }
+
+/* SB2: the ship that just sank wobbles and goes under. */
+.sea-cell.sinking { animation: sea-sinking 0.9s ease-in both; }
+@keyframes sea-sinking {
+  0% { transform: none; }
+  20% { transform: rotate(-6deg) scale(1.05); }
+  45% { transform: rotate(5deg); filter: brightness(1.4); }
+  100% { transform: scale(0.9); filter: brightness(0.8); }
+}
+
+/* SB2: "ALEX SANK!": a burst and a wobbling title over the seas for about two seconds. */
+.sea-sank {
+  position: absolute; inset: 0; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; pointer-events: none; text-align: center; padding: 12px; box-sizing: border-box; overflow: hidden;
+}
+.sea-sea:has(> .sea-sank) { position: relative; }
+/* Over the board itself (the box can be wider than its square grid): the head's 46 px above, the grid's width. */
+.sea-sea > .sea-sank { inset: 46px calc((100cqw - min(100cqw, 100cqh - 46px)) / 2) auto; height: min(100cqw, 100cqh - 46px); }
+.sea-sea > .sea-sank .sea-sank-boom { width: min(120px, 30cqmin); height: min(120px, 30cqmin); }
+.sea-sea > .sea-sank .sea-sank-title { font-size: clamp(22px, 9cqmin, 54px); }
+.sea-sank[hidden] { display: none; }
+.sea-sank-boom { position: relative; width: 120px; height: 120px; display: block; }
+.sea-sank-boom::before {
+  content: ''; position: absolute; inset: 18%; border-radius: 50%;
+  background: radial-gradient(circle, #fff6d8 0 20%, #ffc65a 40%, #ff7a2f 65%, rgb(255 90 40 / 0) 72%);
+}
+.sea-sank-boom i {
+  position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: #ffc65a;
+  transform: rotate(calc(var(--k) * 45deg)) translateX(48px);
+}
+.sea-sank-title {
+  font-size: clamp(26px, 7cqmin, 54px); font-weight: 900; letter-spacing: 0.02em; color: #ffe7a8;
+  text-shadow: 0 3px 0 #6b4a12, 0 0 18px rgb(255 140 40 / 0.8), 0 6px 22px rgb(0 0 0 / 0.6);
+  -webkit-text-stroke: 1px #6b4a12;
+}
+.sea-sank-line { max-width: 100%; box-sizing: border-box; text-wrap: balance; font-size: 15px; font-weight: 700; padding: 3px 12px; border-radius: 999px; background: rgb(13 27 70 / 0.85); color: #ffe7a8; }
+.sea-sank.go .sea-sank-boom::before { animation: sea-boom 0.7s ease-out both; }
+.sea-sank.go .sea-sank-boom i { animation: sea-spark 0.8s ease-out both; }
+.sea-sank.go .sea-sank-title { animation: sea-sank-in 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) 0.15s both, sea-sank-wobble 0.6s ease-in-out 0.7s 2; }
+.sea-sank.go .sea-sank-line { animation: sea-fade-in 0.3s ease-out 0.4s both; }
+.sea-sank.go { animation: sea-sank-out 0.35s ease-in 1.85s both; }
+@keyframes sea-boom { 0% { transform: scale(0.2); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1.25); opacity: 0.85; } }
+@keyframes sea-spark { 0% { transform: rotate(calc(var(--k) * 45deg)) translateX(6px) scale(1.2); opacity: 1; } 100% { transform: rotate(calc(var(--k) * 45deg)) translateX(64px) scale(0.3); opacity: 0; } }
+@keyframes sea-sank-in { from { transform: scale(0.3) rotate(-8deg); opacity: 0; } }
+@keyframes sea-sank-wobble { 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+@keyframes sea-fade-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes sea-sank-out { to { opacity: 0; } }
+/* The fleet that went under: its chip / head pops its ✕. */
+.sea-target.just-out, .sea-head.just-out .sea-out { animation: sea-out-pop 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.sea-head .sea-out { color: #ff9a7a; }
+@keyframes sea-out-pop { 0% { transform: scale(1); } 40% { transform: scale(1.3) rotate(-6deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .sea-cell.sinking, .sea-sank.go, .sea-sank.go *, .sea-sank.go .sea-sank-boom::before, .sea-target.just-out, .sea-head.just-out .sea-out { animation: none !important; }
+}
