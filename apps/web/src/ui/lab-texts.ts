@@ -81,6 +81,14 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },
   },
+  'film.rate': {
+    title: { en: 'Rate the film: start the poll', tr: 'Filmi puanla: anketi başlat' },
+    help: { en: 'As the host, starts "⭐ Rate the film" for everyone, also outside the film page (where the rail shows the button only in the extension). Everyone gets the five questions; the results show when all have answered.', tr: 'Yönetici olarak "⭐ Filmi puanla"yı herkes için başlatır, film sayfası dışında da (ray düğmeyi yalnızca eklentide gösterir). Herkese beş soru gelir; herkes cevaplayınca sonuçlar görünür.' },
+  },
+  'film.rate.state': {
+    title: { en: 'Rate the film: state', tr: 'Filmi puanla: durum' },
+    help: { en: 'Writes the poll into the log: whether ⭐ shows on the rail, the poll, which window is open (questions, waiting, results), the question, how many answered and the results.', tr: 'Anketi kayda yazar: rayda ⭐ görünüyor mu, anket, hangi pencere açık (sorular, bekleme, sonuçlar), hangi soru, kaç kişi cevapladı ve sonuçlar.' },
+  },
   'recap.button': {
     title: { en: 'Recap: 2 hours together now', tr: 'Özet: şimdi 2 saat birlikte' },
     help: { en: 'Counts this session as 2 hours watched together (test server only): the ✨ button shows for everyone.', tr: 'Bu oturumu 2 saat birlikte izlenmiş sayar (yalnız test sunucusu): ✨ düğmesi herkese görünür.' },

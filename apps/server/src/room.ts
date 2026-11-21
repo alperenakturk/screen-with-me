@@ -50,6 +50,7 @@ import {
 import { readMemory, rememberPlayed, sameFeed, type FeedInfo, type FeedMemoryEntries } from '@swm/shared/feed';
 import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, TITLE_MAX_AGE_MS, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
+import { RATE_MAX_AGE_MS, RATE_PEOPLE_MAX, tallyRate, type FilmRate, type RateAnswer, type RatePerson } from '@swm/shared/film-rate';
 import { chooseFacts, freshRecaps, RECAP_ASK_GAP_MS, RECAP_COUNTDOWN_MS, RECAP_READY_MS, RECAP_MAX_AGE_MS, recapShowEnd, RECAPS_KEEP, RECAPS_KEEP_SAVED, SESSION_GAP_MS, StatsTracker, type Recap, type RecapShow, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
@@ -296,6 +297,8 @@ export class Room extends DurableObject<Env> {
   private feed: FeedInfo | null = null;
   /** Card RC1: the recap showing for everyone now, and whether the video was playing when it started (resumes after). */
   private recapShow: (RecapShow & { resume: boolean }) | null = null;
+  /** Card FR1: the film poll; `answers` and `expect` are browser keys and never leave the server. */
+  private filmRate: { pub: FilmRate; answers: Record<string, RateAnswer>; expect: string[] } | null = null;
   /** Card RC1: last "ask the host" per person key (in memory only, never stored). */
   private recapAsks = new Map<string, number>();
   /** Card RC1: the last together-seconds told to the room (`recap-status` goes out when it moves). */
@@ -432,6 +435,7 @@ export class Room extends DurableObject<Env> {
       this.played = (await ctx.storage.get<QueueItem[]>('played')) ?? [];
       this.feed = (await ctx.storage.get<FeedInfo>('feed')) ?? null;
       this.recapShow = (await ctx.storage.get<RecapShow & { resume: boolean }>('recapShow')) ?? null;
+      this.filmRate = (await ctx.storage.get<NonNullable<typeof this.filmRate>>('filmRate')) ?? null;
       this.feedMemory = readMemory(await ctx.storage.get('feedMemory'), Date.now());
       this.tvTokens = (await ctx.storage.get<Record<string, TvToken>>('tvTokens')) ?? {};
       this.memberIds = (await ctx.storage.get<Record<string, { cid: string; at: number }>>('memberIds')) ?? {};
@@ -883,6 +887,49 @@ export class Room extends DurableObject<Env> {
         this.tellRecapStatus(true);
         return;
       }
+      case 'rate-start': {
+        // Card FR1: the host only (the button is on the film page's rail); one poll at a time.
+        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        const running = this.liveFilmRate();
+        if (running && !running.pub.results) return this.sendTo(ws, { t: 'rate', rate: running.pub });
+        if (!this.commandLimit.allow(me.id)) return;
+        const people: RatePerson[] = [];
+        const expect: string[] = [];
+        for (const j of this.joined()) {
+          const key = keyOf(j);
+          if (!expect.includes(key)) expect.push(key);
+          if (people.length < RATE_PEOPLE_MAX && !people.some((p) => p.id === j.id)) people.push(j.avatar ? { id: j.id, name: j.name, avatar: j.avatar } : { id: j.id, name: j.name });
+        }
+        this.filmRate = { pub: { id: newId(), by: me.name, at: Date.now(), people, answered: 0, waiting: expect.length }, answers: {}, expect };
+        await this.saveFilmRate();
+        await this.scheduleAlarm();
+        return;
+      }
+      case 'rate-answer': {
+        const poll = this.liveFilmRate();
+        if (!poll || poll.pub.id !== message.id || poll.pub.results) return;
+        const key = keyOf(attachment);
+        if (poll.answers[key]) return;
+        const { t: _t, id: _id, ...answer } = message;
+        poll.answers[key] = answer;
+        if (!poll.expect.includes(key)) poll.expect.push(key);
+        poll.pub.answered = Object.keys(poll.answers).length;
+        poll.pub.waiting = poll.expect.length;
+        // Everyone still here has answered: the results come out by themselves.
+        const here = new Set(this.joined().map((j) => keyOf(j)));
+        if (poll.expect.every((k) => poll.answers[k] || !here.has(k))) poll.pub.results = tallyRate(Object.values(poll.answers), poll.pub.people);
+        await this.saveFilmRate();
+        return;
+      }
+      case 'rate-end': {
+        const poll = this.liveFilmRate();
+        if (!poll) return;
+        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        if (!poll.pub.results) poll.pub.results = tallyRate(Object.values(poll.answers), poll.pub.people);
+        else this.filmRate = null;
+        await this.saveFilmRate();
+        return;
+      }
       case 'recap-end': {
         if (!this.recapShow) return;
         if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
@@ -1149,6 +1196,7 @@ export class Room extends DurableObject<Env> {
       this.stats = new StatsTracker(null, now);
       this.statsDirty = false;
       this.recaps = [];
+      this.filmRate = null;
       this.waits.restore({ notReady: [], cooldownUntil: [], waitingFor: [], waitingSince: null });
       this.emptySince = null;
       this.tables = [];
@@ -1161,6 +1209,8 @@ export class Room extends DurableObject<Env> {
       return;
     }
     await this.pruneRecaps(now);
+    // Card FR1: a poll is deleted an hour after it started (privacy.html), whoever is or isn't in the room.
+    if (this.filmRate && !this.liveFilmRate()) this.broadcast({ t: 'rate', rate: null });
     if (this.chatImages.size) await this.pruneChatImages(now);
     if (this.waits.waitingSince !== null && now - this.waits.waitingSince >= WAIT_MAX_MS) await this.evaluateWait();
     await this.closeEmptyTables(now);
@@ -1385,6 +1435,7 @@ export class Room extends DurableObject<Env> {
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
     if (this.statsDirty) times.push(this.statsSavedAt + STATS_SAVE_MS);
+    if (this.filmRate) times.push(this.filmRate.pub.at + RATE_MAX_AGE_MS + 50);
     if (times.length) await this.ctx.storage.setAlarm(Math.min(...times));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -1489,6 +1540,22 @@ export class Room extends DurableObject<Env> {
   }
 
   /** The show without the server's own `resume` flag. */
+  /** Card FR1: the film poll unless it is older than an hour (then it is dropped). */
+  private liveFilmRate(): typeof this.filmRate {
+    if (this.filmRate && Date.now() - this.filmRate.pub.at > RATE_MAX_AGE_MS) {
+      this.filmRate = null;
+      void this.ctx.storage.delete('filmRate').catch((error: unknown) => logError('room: film rate', error));
+    }
+    return this.filmRate;
+  }
+
+  /** Card FR1: stores the poll (it must outlive the object's sleep) and tells everyone what they may see. */
+  private async saveFilmRate(): Promise<void> {
+    if (this.filmRate) await this.ctx.storage.put('filmRate', this.filmRate);
+    else await this.ctx.storage.delete('filmRate');
+    this.broadcast({ t: 'rate', rate: this.filmRate?.pub ?? null });
+  }
+
   private publicShow(show: RecapShow & { resume?: boolean }): RecapShow {
     const { resume: _resume, ...rest } = show;
     return rest;
@@ -1697,6 +1764,7 @@ export class Room extends DurableObject<Env> {
       ...(this.feed ? { feed: this.feed } : {}),
       ...(this.liveRecapShow() ? { recapShow: this.publicShow(this.recapShow!) } : {}),
       recapStatus: this.stats.status(Date.now()),
+      ...(this.liveFilmRate() ? { rate: this.liveFilmRate()!.pub } : {}),
     });
     // Özel emojiler tek tek (hepsi bir mesajda 1 MB sınırını aşabilir).
     // The person who added an emoji gets `mine` so they can remove it after a reload (the owner key itself never leaves).
@@ -2619,7 +2687,7 @@ export class Room extends DurableObject<Env> {
 // ClientMessage'ın tüm türlerinin yukarıda ele alındığını derleyiciye kontrol ettirir.
 type _Handled = Exclude<
   ClientMessage['t'],
-  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'recap-show' | 'recap-end' | 'recap-ask' | 'chat-older' | 'chat-delete' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
+  'ping' | 'hello' | 'tv-link' | 'tv' | 'vote' | 'feed' | 'feed-played' | 'recap' | 'recap-save' | 'recaps' | 'recap-show' | 'recap-end' | 'recap-ask' | 'rate-start' | 'rate-answer' | 'rate-end' | 'chat-older' | 'chat-delete' | 'home' | 'tip' | 'lab' | 'gift' | 'voice' | 'rtc' | 'signal' | 'live' | 'live-watch' | 'live-stop' | 'live-signal' | 'game' | 'table' | 'at' | 'react' | 'sticker-add' | 'sticker-remove' | 'sticker-clear' | 'pin' | 'unpin' | 'chat' | 'rename' | 'kick' | 'knock-answer' | 'make-host' | 'unban' | 'ready' | 'settings' | 'load' | 'enqueue' | RoomAction['t']
 >;
 const _exhaustive: [_Handled] extends [never] ? true : never = true;
 void _exhaustive;

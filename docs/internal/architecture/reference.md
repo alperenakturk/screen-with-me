@@ -2437,6 +2437,26 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   chord (an octave up, 12 ms attack, 2.6 s decay) past it, all under an 1.8 kHz low-pass. `recapCard`, `nudge` and
   their texts are deleted (unused since part 1). `state().sign` = `{ bulbs, chasing, lines }` (Test Lab
   `recap.state`); the harness checks the sign, the first sign's words, reduced motion and gain ≤ 0.025.
+- **Rate the film (card FR1, 21 Nov 2026; `packages/shared/src/film-rate.ts`, site `ui/film-rate.ts` + `.css`, a lazy
+  chunk):** "⭐ Rate the film" `#dock-rate` sits in the rail's first group and shows only on the film page (`isShell`)
+  for the host (`renderRateButton`, on `members` and every `rate`). `{t:'rate-start'}` (host only, else `not_host`;
+  a running poll is re-sent instead of a new one; `commandLimit`) snapshots the named people (`RatePerson`, at most
+  `RATE_PEOPLE_MAX` 16) and the browser keys it waits for (`expect`) and broadcasts `{t:'rate', rate: FilmRate}`
+  (`id, by` (name), `at, people, answered, waiting, results?`). `{t:'rate-answer', id, stars, most?, least?, again?,
+  word?}` (validated by `cleanRateAnswer`: half stars 0.5–5, ids ≤ 40, `RATE_AGAIN`, `RATE_WORDS`) counts once per
+  browser key; when every expected key still here has answered the server adds `results` (`tallyRate`: `votes`, the
+  average to one decimal, a 10-step `hist`, `most` / `least` picks with names and counts, `again`, `words`).
+  `{t:'rate-end'}` (host): results now, or, when they are out, closes it (`rate: null`). Stored as `filmRate`
+  (`{ pub, answers, expect }`; answers and keys never leave the server), sent in `welcome.rate`, dropped an hour after
+  it started (`RATE_MAX_AGE_MS`, by `liveFilmRate` and the room's alarm) and on the room's deletion (privacy.html).
+  Client: `showRate(rate, ctx)` opens a `.dialog-backdrop` (the film page's hole closes) with five steps (stars as
+  ten half buttons, most, least, again, one word; Back / Skip / Not now; the last waits for "Send ✓"), sends once,
+  then "N of M answered" (the host: "Show the results now"), then the results card (average, stars, bars, picks,
+  again, the top word, "Why? Tell each other in the chat 💬", host "Close for everyone", "💬 To the chat"). "Not now"
+  / ✕ / Esc close it for this tab (`rate:closed:<ask|results>:<id>` in sessionStorage; `rate:sent:<id>`). Test Lab
+  `film.rate` (start it anywhere, host only) / `film.rate.state`; unit `film-rate.test.ts`; e2e
+  `scripts/e2e/film-rate.mjs`; harness `scripts/harness/film-rate/run.cjs` (CI `site`); the embed harness clicks ⭐ on
+  the film page; shots `rate-ask`, `rate-results`.
 - **Simpler room (0.9.93.13, card 6, owner's picks C + D):** `ui/room-more.ts` `roomMoreItems` = the room's "⋯ More"
   list (games (phones), film time (host), save, recap, shortcuts (computer), sync test (dimmed while something plays),
   rules; R9, 0.9.97.16: nothing else, Help · Feedback · Privacy are one small line at the foot of the profile menu,

@@ -219,6 +219,36 @@ const SCREENS = {
       },
     ]),
   ),
+  // Card FR1: "Rate the film" (Test Lab `film.rate`: on the film page the rail's ⭐ starts it): the first question
+  // (half stars, 3.5 chosen), then the results card after the host answered and pressed "Show the results now".
+  'rate-ask': {
+    what: 'Card FR1: "Rate the film": the ticket-like window with the first question (five stars, 3.5 chosen, "3.5 / 5"), the step dots, "Not now", "Question 1 of 5" and "Next ›"; the room behind is dimmed',
+    room: true,
+    after: async (p) => {
+      await p.evaluate(() => window.__swmLab.run('film.rate'));
+      await p.waitForSelector('.fr-card.fr-ask');
+      await p.locator('.fr-half').nth(6).click(); // 3.5 stars, in any language
+      await p.mouse.move(0, 0);
+      await wait(300);
+    },
+  },
+  'rate-results': {
+    what: 'Card FR1: the results card: the average with stars, "from 1 person", a small bar chart of the stars, liked it most, again (👍 · 🤔 · 👎), in one word, "Why? Tell each other in the chat 💬", "Close for everyone" and "💬 To the chat"',
+    room: true,
+    after: async (p) => {
+      await p.evaluate(() => window.__swmLab.run('film.rate'));
+      await p.waitForSelector('.fr-card.fr-ask');
+      await p.locator('.fr-half').nth(8).click(); // 4.5 stars
+      await p.click('.fr-next');
+      await p.click('.fr-most .fr-chip');
+      await p.click('.fr-skip');
+      await p.click('.fr-again .fr-chip');
+      await p.click('.fr-word .fr-chip');
+      await p.click('.fr-next');
+      await p.waitForSelector('.fr-results', { timeout: 8000 });
+      await wait(300);
+    },
+  },
   // Card FD1b: the Shorts view with a ♾ Shorts feed running: the rail in three labelled groups, "N left" under ▲, the
   // feed pill above the Short (never on the player), the phone's bar with ♾ Feed.
   'shorts-feed': {
@@ -346,6 +376,7 @@ const SCREEN_FOR = [
   [/^apps\/web\/src\/ui\/(feed-window|feed-row|shorts-feed)/, ['feed-drawer', 'feed-window', 'feed-queue', 'shorts-feed']],
   [/^apps\/web\/src\/shorts\.css$/, ['shorts-feed', 'shorts-chat', 'shorts-more']],
   [/^apps\/web\/src\/ui\/recap/, ['recap-show', 'recap-summary']],
+  [/^apps\/web\/src\/ui\/film-rate/, ['rate-ask', 'rate-results']],
   [/^apps\/web\/src\/ui\/(search|sources|result-row|vimeo-results|podcasts)/, ['sources', 'sources-youtube', 'sources-music', 'search-results', 'tiktok-back']],
   [/^apps\/web\/src\/ui\/settings|^apps\/web\/src\/ui\/room-more/, ['settings-me', 'settings-view', 'settings-room', 'settings-rules', 'settings-sound', 'settings-about']],
   [/^apps\/web\/src\/games\/|^packages\/shared\/src\/games\//, ['games']],

@@ -1,0 +1,1 @@
+- New on the film page: the host can press ⭐ Rate the film. Everyone answers a few quick questions (half stars, who liked it most and least, would you watch it again, one word for it), then sees the results together, ready to talk about why in the chat.

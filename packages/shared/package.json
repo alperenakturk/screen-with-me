@@ -55,6 +55,7 @@
     "./logo": "./src/logo.ts",
     "./qr": "./src/qr.ts",
     "./recap": "./src/recap.ts",
+    "./film-rate": "./src/film-rate.ts",
     "./intro": "./src/intro.ts",
     "./sticker-file": "./src/sticker-file.ts",
     "./voice": "./src/voice.ts",
