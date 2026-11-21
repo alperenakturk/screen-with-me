@@ -87,7 +87,8 @@ type Who = { name: string; avatar?: Avatar };
 /** İzlemeye bu kadar ara verilince yeni oturum başlar (kaydedilmemiş özet silinir). */
 export const SESSION_GAP_MS = 4 * 3600_000;
 /** Card RC1: the recap can be shown to everyone after this much watching together (two or more people). */
-export const RECAP_READY_MS = 30 * 60_000;
+// Card RC2 (owner, 21 Nov 2026): the recap waits for 2 hours together (it was 30 min) and never offers itself.
+export const RECAP_READY_MS = 2 * 3600_000;
 /** Card RC1: one scene of the show; the 3-2-1 before the first one. */
 export const RECAP_SCENE_MS = 5000;
 export const RECAP_COUNTDOWN_MS = 3000;
