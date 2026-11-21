@@ -434,6 +434,13 @@ jobs:
           # BH13-G: two people at a table, a reload and a network drop mid-game (a subset; locally every table).
           OFFLINE_CHUNK=1 BOARDS=dama,backgammon TABLES=sea,duel,poker,quiz node scripts/harness/games-pair/run.cjs http://localhost:8787
 
+      # LH4: Last Heart's round table in the video's place (fills it, stays at its own size after the deal, the side
+      # column, the bets as chips, a free window and back), laptop + upright tablet.
+      - name: Last Heart round table
+        run: |
+          bash scripts/ci-test-video.sh
+          FILM_URL=http://localhost:5300/video.webm node scripts/harness/last-heart/run.cjs http://localhost:8787
+
       - name: Server log (on failure)
         if: failure()
         run: tail -n 150 wrangler.log || true
