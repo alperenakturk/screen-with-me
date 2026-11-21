@@ -19,7 +19,8 @@ import {
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang } from '../i18n.ts';
-import { clientId } from '../storage.ts';
+import { clientId, load, save } from '../storage.ts';
+import { DEFAULT_SEA_THEME, SEA_THEMES, shipSvg, type SeaTheme } from './sea-ships.ts';
 import { avatarNode } from '../ui/avatar.ts';
 import { playSound } from '../sound.ts';
 import { setGameLive } from './live.ts';
@@ -113,6 +114,10 @@ const TEXT = {
     afloat: '🚢 {n} left',
     aimsAt: '{name} aims at {target}’s sea',
     aimsAtMe: '{name} aims at you!',
+    themes: 'Ships',
+    themeNavy: 'Navy',
+    themePirate: 'Pirates',
+    themeToys: 'Bath toys',
     sank: '{name} SANK!',
     sankMe: 'YOUR FLEET SANK!',
     sankLine: 'Every ship of {name} is under water.',
@@ -192,6 +197,10 @@ const TEXT = {
     afloat: '🚢 {n} kaldı',
     aimsAt: '{name}, {target} denizine nişan alıyor',
     aimsAtMe: '{name} sana nişan alıyor!',
+    themes: 'Gemiler',
+    themeNavy: 'Donanma',
+    themePirate: 'Korsanlar',
+    themeToys: 'Banyo oyuncakları',
     sank: '{name} BATTI!',
     sankMe: 'FİLON BATTI!',
     sankLine: '{name} oyuncusunun bütün gemileri suyun altında.',
@@ -254,9 +263,24 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const tabMine = el('button', { type: 'button', role: 'tab', class: 'sea-tab', 'data-sea': 'mine' });
   switcher.append(tabTheirs, tabMine);
 
-  function seaBox(which: 'theirs' | 'mine'): { box: HTMLElement; head: HTMLElement; grid: HTMLElement; frame: HTMLElement; cells: HTMLButtonElement[] } {
+  /** SB2: the ship theme this tab draws every ship in (each player picks their own; remembered in this browser). */
+  const savedTheme = load('sea:theme');
+  let theme: SeaTheme = (SEA_THEMES as readonly string[]).includes(savedTheme ?? '') ? (savedTheme as SeaTheme) : DEFAULT_SEA_THEME;
+  root.dataset.theme = theme;
+  const THEME_NAME: Record<SeaTheme, 'themeNavy' | 'themePirate' | 'themeToys'> = { navy: 'themeNavy', pirate: 'themePirate', toys: 'themeToys' };
+  function setTheme(next: SeaTheme): void {
+    theme = next;
+    root.dataset.theme = next;
+    save('sea:theme', next);
+    for (const b of [theirs, mine]) b.fleet.replaceChildren();
+    render();
+  }
+
+  function seaBox(which: 'theirs' | 'mine'): { box: HTMLElement; head: HTMLElement; grid: HTMLElement; frame: HTMLElement; cells: HTMLButtonElement[]; fleet: HTMLElement } {
     const head = el('div', { class: 'sea-head' });
-    const grid = el('div', { class: 'sea-grid', role: 'grid' });
+    // SB2: the drawn ships lie in a layer under the cells' marks (never takes a click: the cells do).
+    const fleet = el('div', { class: 'sea-fleet', 'aria-hidden': 'true' });
+    const grid = el('div', { class: 'sea-grid', role: 'grid' }, fleet);
     grid.style.setProperty('--n', String(size));
     const cells: HTMLButtonElement[] = [];
     for (let r = 0; r < size; r++) {
@@ -273,7 +297,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     // NG1 (owner's pick 7B): on a phone the enemy sea zooms into a quarter; the frame clips the zoomed grid.
     const frame = el('div', { class: 'sea-zoom' }, grid);
     const box = el('section', { class: `sea-sea sea-${which}`, 'data-sea': which }, head, frame);
-    return { box, head, grid, frame, cells };
+    return { box, head, grid, frame, cells, fleet };
   }
   const theirs = seaBox('theirs');
   const mine = seaBox('mine');
@@ -680,6 +704,13 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     box.box.classList.toggle('dragging', lifting.size > 0);
     // SB2: the ship that just sank wobbles and goes under for a moment.
     const sinking = justSunk && justSunk.seat === seat ? justSunk.cells : null;
+    drawFleet(box, [...ships, ...side.sunk.filter((cells) => !ships.some((x) => x[0] === cells[0]))], {
+      lifting: isMine && placing() && drag?.moved ? drag.ship : -1,
+      picked: isMine && placing() && !lifting.size ? picked : null,
+      sunk,
+      sinking,
+      faint: !isMine && !side.ships && !!revealed,
+    });
     box.cells.forEach((cell, i) => {
       const h = shot.get(i);
       const ship = shipOf.get(i);
@@ -703,13 +734,61 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     });
   }
 
+  /**
+   * SB2: every known ship drawn in the tab's theme, laid over its cells (one element per ship, reused by its key; a ship
+   * running down is the same drawing turned). Sunk ones sit dimmed under their marks; the one that just sank goes under.
+   */
+  function drawFleet(box: typeof mine, ships: readonly (readonly number[])[], o: { lifting: number; picked: number | null; sunk: Set<number>; sinking: Set<number> | null; faint: boolean }): void {
+    const keep = new Set<string>();
+    ships.forEach((cells, n) => {
+      if (!cells.length) return;
+      const sorted = [...cells].sort((a, b) => a - b);
+      const first = sorted[0]!;
+      const down = sorted.length > 1 && sorted[1]! - first === size;
+      const key = `${theme}:${first}:${sorted.length}:${down ? 'd' : 'r'}`;
+      keep.add(key);
+      let ship = box.fleet.querySelector<HTMLElement>(`[data-key="${key}"]`);
+      if (!ship) {
+        const art = el('span', { class: 'sea-ship-art' });
+        art.innerHTML = shipSvg(theme, sorted.length); // our own drawing (a constant string), never user data
+        ship = el('span', { class: `sea-ship${down ? ' down' : ''}`, 'data-key': key, 'data-len': String(sorted.length) }, art);
+        ship.style.setProperty('--r', String(Math.floor(first / size)));
+        ship.style.setProperty('--c', String(first % size));
+        ship.style.setProperty('--len', String(sorted.length));
+        box.fleet.append(ship);
+      }
+      ship.classList.toggle('lifting', n === o.lifting);
+      ship.classList.toggle('picked', n === o.picked);
+      ship.classList.toggle('sunk', sorted.every((c) => o.sunk.has(c)));
+      ship.classList.toggle('sinking', !!o.sinking && sorted.every((c) => o.sinking!.has(c)));
+      ship.classList.toggle('faint', o.faint);
+    });
+    for (const old of [...box.fleet.children] as HTMLElement[]) if (!keep.has(old.dataset.key ?? '')) old.remove();
+  }
+
+  /** SB2: the theme picker in my sea's head while placing: one small drawn boat per theme. */
+  function themePicker(): HTMLElement {
+    const group = el('span', { class: 'sea-themes', role: 'group', 'aria-label': tx('themes') });
+    for (const t of SEA_THEMES) {
+      const b = el('button', { type: 'button', class: 'sea-theme', 'data-theme': t, 'aria-pressed': String(t === theme), 'aria-label': `${tx('themes')}: ${tx(THEME_NAME[t])}`, title: tx(THEME_NAME[t]) }) as HTMLButtonElement;
+      const art = el('span', { class: 'sea-theme-art', 'aria-hidden': 'true' });
+      art.innerHTML = shipSvg(t, 2); // our own drawing
+      b.append(art);
+      b.addEventListener('click', () => setTheme(t));
+      group.append(b);
+    }
+    return group;
+  }
+
   function seatHead(head: HTMLElement, seat: number, label: string): void {
     const p = state!.players[seat];
     const who = p?.bot ? stubArt('opponent', 'sea-avatar sea-bot-avatar') : p ? avatarNode(p.avatar, 'sea-avatar') : el('span', { class: 'sea-avatar vacant' });
     const left = p ? el('span', { class: 'sea-left', title: p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }) }, ...Array.from({ length: p.left }, () => el('i', { 'aria-hidden': 'true' })), el('span', { class: 'sr-only' }, p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }))) : '';
     const ready = state!.phase === 'place' && p?.ready ? el('span', { class: 'sea-ready' }, '✓') : '';
     const out = p?.out || (p && p.left === 0 && state!.phase !== 'place') ? el('span', { class: 'sea-out' }, `✕ ${tx('outTag')}`) : '';
-    head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, out || left);
+    // SB2: while I place my fleet the ships-left pips give way to the theme picker.
+    const picker = head === mine.head && placing() ? themePicker() : null;
+    head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, picker ?? (out || left));
     head.classList.toggle('out', !!p?.out);
     head.classList.toggle('just-out', justOut.has(seat) && !!p && p.left === 0);
     if (head === theirs.head) head.append(wholeSea);
@@ -1082,8 +1161,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     commands: [
       quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
       // GMP: what this tab sees (players, turn, watchers, and how many seas it may see whole: 1 as a player, all as a watcher).
-      { id: 'seaBattle.state', title: { en: 'Sea Battle: what this tab sees', tr: 'Amiral Battı: bu sekme ne görüyor' }, help: { en: 'Players (sunk or afloat), whose turn, the sea in the big box (the target), the places, who watches, and how many seas show their ships here (a watcher sees them all).', tr: 'Oyuncular (batmış ya da yüzüyor), sıra kimde, büyük kutudaki deniz (hedef), sıralama, kim izliyor ve burada kaç denizin gemileri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, turn: s.turn, target: other(), players: s.players.map((p) => p && { name: p.name, ready: p.ready, left: p.left, online: p.online, out: !!p.out }), ranks: s.ranks ?? null, lastTarget: s.last?.target ?? null, watchers: s.watchers.map((w) => w.name), seasWithShips: s.seas.filter((x) => (x.ships?.length ?? 0) > 0).length, sank: sankBox.hidden ? null : sankText.textContent, dragging: drag?.moved ? { ship: drag.ship, fits: !!drag.spot } : null, following: following(), follow, peerAim: [...root.querySelectorAll<HTMLElement>('.sea-cell.peer-aim')].map((c) => `${c.closest<HTMLElement>('.sea-sea')?.dataset.sea}:${c.dataset.cell}`) }); } },
+      { id: 'seaBattle.state', title: { en: 'Sea Battle: what this tab sees', tr: 'Amiral Battı: bu sekme ne görüyor' }, help: { en: 'Players (sunk or afloat), whose turn, the sea in the big box (the target), the places, who watches, and how many seas show their ships here (a watcher sees them all).', tr: 'Oyuncular (batmış ya da yüzüyor), sıra kimde, büyük kutudaki deniz (hedef), sıralama, kim izliyor ve burada kaç denizin gemileri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, turn: s.turn, target: other(), players: s.players.map((p) => p && { name: p.name, ready: p.ready, left: p.left, online: p.online, out: !!p.out }), ranks: s.ranks ?? null, lastTarget: s.last?.target ?? null, watchers: s.watchers.map((w) => w.name), seasWithShips: s.seas.filter((x) => (x.ships?.length ?? 0) > 0).length, sank: sankBox.hidden ? null : sankText.textContent, dragging: drag?.moved ? { ship: drag.ship, fits: !!drag.spot } : null, following: following(), follow, theme, shipsDrawn: root.querySelectorAll('.sea-ship').length, peerAim: [...root.querySelectorAll<HTMLElement>('.sea-cell.peer-aim')].map((c) => `${c.closest<HTMLElement>('.sea-sea')?.dataset.sea}:${c.dataset.cell}`) }); } },
       { id: 'sea.sank', title: { en: 'Sea Battle: show the "sank" moment', tr: 'Amiral Battı: "battı" anını göster' }, help: { en: 'Plays the explosion and "NAME SANK!" in this tab for the other seat (nothing changes in the game); the result card waits for it the same way.', tr: 'Bu sekmede diğer koltuk için patlamayı ve "AD BATTI!" yazısını oynatır (oyunda bir şey değişmez); sonuç kartı da aynı şekilde onu bekler.' }, tab: 'games' as const, available: () => (!!state && state.players.filter(Boolean).length >= 2) || { en: 'two people (or Stub) at the table first', tr: 'önce masada iki kişi (ya da Stub) olsun' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { showSank(other()); render(); return sankText.textContent ?? ''; } },
+      { id: 'sea.theme', title: { en: 'Sea Battle: next ship theme', tr: 'Amiral Battı: sonraki gemi teması' }, help: { en: 'Draws every ship in the next theme (Navy → Pirates → Bath toys), as the picker in my sea’s head does while placing.', tr: 'Bütün gemileri sıradaki temayla çizer (Donanma → Korsanlar → Banyo oyuncakları); yerleştirirken denizimin başlığındaki seçici gibi.' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { setTheme(SEA_THEMES[(SEA_THEMES.indexOf(theme) + 1) % SEA_THEMES.length]!); return theme; } },
       { id: 'sea.bot', title: { en: 'Sea Battle: Stub takes the other seat', tr: 'Amiral Battı: Stub diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, available: () => (!!state && state.seat >= 0) || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
       { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel test sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
       { id: 'sea.zoom', title: { en: 'Sea Battle: zoom into the next quarter (phone view)', tr: 'Amiral Battı: sonraki çeyreğe yakınlaş (telefon görünümü)' }, help: { en: 'Shows the phone zoom on any screen: each run aims at the middle of the next quarter of their sea; Whole sea goes back.', tr: 'Telefondaki yakınlaşmayı her ekranda gösterir: her çalıştırmada rakibin denizinin sonraki çeyreğinin ortasına nişan alır; Bütün deniz geri döner.' }, tab: 'games' as const, available: () => (!!state && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, during the battle', tr: 'Amiral Battı masasında, savaş sırasında' }, run: () => { const q = zoomQ === null ? 0 : (zoomQ + 1) % 4; const half = size / 2; zoomQ = q; aimAt = (Math.floor(q / 2) * half + Math.floor(half / 2)) * size + (q % 2) * half + Math.floor(half / 2); render(); } },

@@ -86,3 +86,11 @@ refused; reload mid-game), harness `scripts/harness/sea/run.cjs` (placing, shoot
 6. **The Turkish name**
    - **A (recommended):** "Amiral Battı" (the name everyone knows).
    - B: "Deniz Savaşı" (a plain translation of Sea Battle).
+
+## Ship themes (card SB2, 21 Nov 2026)
+
+Every ship is drawn: three themes, picked per player in my sea's head while placing (remembered in the browser, never
+sent). **Navy** (default; grey steel ships seen from above: patrol boat, submarine, destroyer, battleship), **Pirates**
+(wooden ships with cream sails, a rowboat), **Bath toys** (a rubber duck, a paper boat, a tugboat, a striped liner).
+Licence: all our own SVG drawn in code (`apps/web/src/games/sea-ships.ts`), no third-party art, no silhouettes copied
+from any product. Previews: `sea-ships/themes.png` (rendered by `sea-ships/render.mjs`).

@@ -317,3 +317,46 @@ html.phone .sea-bot-label { flex-basis: auto; }
 @media (prefers-reduced-motion: reduce) { .sea-cell.peer-aim .sea-mark::after { animation: none; } }
 /* A narrow window shows one sea at a time: the follow view takes the whole width. */
 @container game (max-width: 560px) { .sea.following .sea-seas { grid-template-columns: minmax(0, 1fr); } }
+
+/* SB2: drawn ships (`sea-ships.ts`, the tab's theme). A layer in the grid under the cells' marks: each ship spans its
+   cells (the grid's 4 px padding, then n cells of (100% - 8px) / 10); one running down is the same drawing turned.
+   The cells of a drawn ship stay see-through, so hits, the sunk cross and the picked outline show on the drawing. */
+.sea-grid { position: relative; }
+.sea-row { position: relative; z-index: 1; }
+.sea-fleet { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.sea-ship {
+  --cell: calc((100% - 8px) / var(--n, 10));
+  position: absolute; left: calc(4px + var(--c) * var(--cell)); top: calc(4px + var(--r) * var(--cell));
+  width: calc(var(--len) * var(--cell)); height: var(--cell); container-type: size; transition: opacity 0.15s, filter 0.2s;
+}
+.sea-fleet { --n: 10; }
+.sea-ship.down { width: var(--cell); height: calc(var(--len) * var(--cell)); }
+.sea-ship-art { position: absolute; left: 0; top: 0; width: 100cqw; height: 100cqh; display: block; filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.35)); }
+.sea-ship.down .sea-ship-art { width: 100cqh; height: 100cqw; transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
+.sea-ship-art svg { width: 100%; height: 100%; display: block; }
+.sea-cell.ship, .sea-theirs .sea-cell.ship:not(.hit), .sea-mine .sea-cell.ship.picked { background: transparent; box-shadow: inset 0 0 0 0.5px var(--sb-line); }
+.sea-mine .sea-cell.ship.picked { box-shadow: inset 0 0 0 2px var(--sb-gold); }
+.sea-ship.picked .sea-ship-art { filter: drop-shadow(0 0 6px var(--sb-gold)) brightness(1.12); }
+.sea-ship.lifting { opacity: 0.3; }
+.sea-ship.faint { opacity: 0.4; }
+.sea-ship.sunk { filter: grayscale(0.5) brightness(0.6); }
+.sea-ship.sunk .sea-ship-art { filter: none; }
+.sea-cell.sunk { background: rgb(13 27 70 / 0.25); box-shadow: inset 0 0 0 0.5px var(--sb-line); }
+.sea-cell.hit { background: rgb(255 198 90 / 0.12); }
+.sea-cell.hit .sea-mark::before { text-shadow: 0 0 4px #000, 0 0 8px rgb(255 120 40 / 0.9); }
+.sea-ship.sinking { animation: sea-ship-down 0.9s ease-in both; }
+@keyframes sea-ship-down { 20% { transform: rotate(-4deg); } 50% { transform: rotate(3deg) translateY(4%); } 100% { transform: translateY(8%) scale(0.94); } }
+/* The ghost of a dragged ship stays above the drawings. */
+.sea-cell.ghost { position: relative; }
+/* The theme picker in my sea's head while placing: one small boat per theme. */
+.sea-themes { margin-left: auto; display: inline-flex; gap: 4px; flex: none; }
+.sea-theme {
+  width: 44px; height: 32px; padding: 3px; border-radius: 10px; border: 1px solid var(--border); background: var(--sb-sea);
+  cursor: pointer; display: grid; place-items: center;
+}
+.sea-theme[aria-pressed='true'] { border-color: var(--sb-gold); box-shadow: 0 0 0 1px var(--sb-gold) inset; }
+.sea-theme:focus-visible { outline: 2px solid var(--sb-gold); outline-offset: 2px; }
+.sea-theme-art { width: 34px; height: 17px; display: block; }
+.sea-theme-art svg { width: 100%; height: 100%; display: block; }
+html.phone .sea-theme { height: 44px; }
+@media (prefers-reduced-motion: reduce) { .sea-ship.sinking { animation: none; } .sea-ship { transition: none; } }
