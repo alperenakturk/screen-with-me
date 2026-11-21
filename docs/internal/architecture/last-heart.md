@@ -36,7 +36,9 @@ LH3, GPH1, GFIT1) are still in `reference.md` under those card names.
   boxes (≤ 460 px, an upright tablet) open the amounts from ± and tighten rows. A free window and a phone's Games tab
   keep their layouts (the parts move back). Motion runs two frames after the render and anything in flight finishes
   when the stage starts / stops filling, and chips fly in a clipped `.pk-fx` layer: a deal measured in the old layout
-  made the stage shrink the game to 0.6. Empty board places are `.pk-empty` (`.slot` is the video player's class).
+  made the stage shrink the game to 0.6. Harness `scripts/harness/last-heart/run.cjs` (laptop + upright tablet: fills,
+  fit 1 after the deal, side column, chips, board size, nothing spills, free window and back). Empty board places are `.pk-empty` (`.slot` is the video player's class).
+- **Text size.** At the table's own size nothing is under 13 px (games sweep).
 - **Feed.** The last 4 lines of the hand: each event once (keyed by hand, board size and event, so "Sam checked" on two
   streets shows twice), each new street with its cards ("Flop: 7♦ K♥ 5♥"), a time-out with what it did.
 - **Card faces** scale with the card (`container-type: inline-size`; rank 40 cqw top-left, suit 48 cqw bottom-right).

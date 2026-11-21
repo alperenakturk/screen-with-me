@@ -1296,3 +1296,5 @@
   #game-stage.fill .pk[data-fill] .pk-seat .pk-seat-status:empty { display: none; }
 }
 #game-stage.fill .pk[data-fill] .pk-middle { min-height: 0; }
+/* Games sweep: no text under 13 px at the table's own size (the small print was 12 px in places). */
+#game-stage.fill .pk[data-fill] :is(.pk-life, .pk-seat-status, .pk-info, .pk-feed p, .pk-moves-label, .pk-move small, .pk-move-name, .pk-quick .game-chip, .pk-seat-bet, .pk-street) { font-size: 13px; }
