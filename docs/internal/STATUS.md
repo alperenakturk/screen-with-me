@@ -12,7 +12,7 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
     scenario.
-- [ ] FW2 (Five Frames): [x] 1 places [ ] 2 timer, points [ ] 3 big board [ ] 4 levels [ ] 5 words
+- [ ] FW2 (Five Frames): [x] 1 places [x] 2 timer, points [x] 3 big board [ ] 4 levels [ ] 5 words
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
