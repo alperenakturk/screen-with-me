@@ -1788,3 +1788,10 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 ## B2 CI note, archived 21 Nov 2026 (lane A2, RAIL2: STATUS size limit)
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
+
+## STATUS header, archived 21 Nov 2026 (Planner)
+> Live: site and extension **0.9.97.121** (11 Nov 2026), tagged `v0.9.97.121`. What to work on: `ROADMAP.md` "Focus:
+> now / next / frozen" and the Ready cards in `CARDS.md`. What each release changed: `CHANGELOG.md`. Everything
+> finished that used to be in this file (old task queue, every per-release hand-test block, the Lab test round, the
+> design sweep, the last full test pass, the short history) is verbatim in `docs/internal/archive/status-history.md`
+> (card DOCS2). Keep this file short: a finished item leaves it in the PR that finishes it.
