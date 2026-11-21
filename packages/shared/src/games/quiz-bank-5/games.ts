@@ -154,7 +154,7 @@ export const Q5_GAMES: readonly QuizEntry[] = [
   {"c":"games","d":1,"k":"guess","n":21,"en":{"q":"Add up all the dots on one standard die. What is the total?"},"tr":{"q":"Standart bir zarın üzerindeki bütün noktaları toplayın. Toplam kaçtır?"}},
   {"c":"games","d":1,"k":"guess","n":361,"en":{"q":"A Go board has 19 lines each way. How many points are there where the lines cross?"},"tr":{"q":"Go tahtasında her yönde 19 çizgi vardır. Çizgilerin kesiştiği kaç nokta vardır?"}},
   {"c":"games","d":1,"k":"guess","n":225,"en":{"q":"A Scrabble board is 15 squares by 15 squares. How many squares does it have?"},"tr":{"q":"Scrabble tahtası 15’e 15 karedir. Toplam kaç kare vardır?"}},
-  {"c":"games","d":1,"k":"guess","n":90,"en":{"q":"How many numbered balls are used in UK-style bingo (and Turkish tombala)?"},"tr":{"q":"Tombalada (ve İngiliz usulü bingoda) kaç numaralı top kullanılır?"}},
+  {"c":"games","d":1,"k":"guess","n":90,"en":{"q":"How many numbered balls are used in UK-style bingo?"},"tr":{"q":"Tombalada (ve İngiliz usulü bingoda) kaç numaralı top kullanılır?"}},
   {"c":"games","d":1,"k":"guess","n":7,"en":{"q":"How many pieces does a classic tangram puzzle have?"},"tr":{"q":"Klasik bir tangram bulmacası kaç parçadan oluşur?"}},
   {"c":"games","d":1,"k":"guess","n":40,"en":{"q":"How many spaces are there around a classic Monopoly board?"},"tr":{"q":"Klasik bir Monopoly tahtasının çevresinde kaç alan vardır?"}},
   {"c":"games","d":1,"k":"guess","n":4,"en":{"q":"How many AA batteries did the original Game Boy take?"},"tr":{"q":"İlk Game Boy kaç AA pille çalışırdı?"}},

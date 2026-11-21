@@ -16,6 +16,7 @@ import {
   QUIZ_PROTOCOL_VERSION,
   QUIZ_REVEAL_MS,
   QUIZ_FINALE_QUESTIONS,
+  QUIZ_GUESS_POINTS,
   QUIZ_LAPS,
   QUIZ_LEVELS,
   QUIZ_PICK_MS,
@@ -118,7 +119,7 @@ const TEXT = {
     'guessNone': 'Not the closest this time',
     'refExact': 'Spot on! Exactly right!',
     'finale': '🏁 Finale · {i}/{n}',
-    'finaleStart': '🏁 The finale: 5 closest guesses, 200 / 100 / 50!',
+    'finaleTag': '🏁 Finale: closest wins {points}',
   },
   tr: {
     how1: 'Hızlı cevapla',
@@ -164,7 +165,7 @@ const TEXT = {
     'guessNone': 'Bu sefer en yakın sen değilsin',
     'refExact': 'Tam isabet! Birebir doğru!',
     'finale': '🏁 Final · {i}/{n}',
-    'finaleStart': '🏁 Final: 5 tahmin sorusu, 200 / 100 / 50!',
+    'finaleTag': '🏁 Final: en yakın {points} kazanır',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
@@ -265,14 +266,17 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     const said = el('ul', { class: 'quiz-said' });
     const note = el('p', { class: 'quiz-note' });
     // The note sits right under the field, so "locked in" and the reveal's answer appear in the same place.
-    body.replaceChildren(el('p', { class: 'quiz-round-result' }, tq('guessTag')), el('h3', { class: 'quiz-question' }, question), form, note, said);
+    // The points a place earns at this table (2 players: only the closest scores; 3: two places; 4+: three).
+    const playing = Math.max(2, state?.players.filter((p) => p.online).length ?? 2);
+    const ladder = QUIZ_GUESS_POINTS.slice(0, Math.min(QUIZ_GUESS_POINTS.length, playing - 1)).join(' / ');
+    body.replaceChildren(el('p', { class: 'quiz-round-result' }, state?.finale ? tq('finaleTag', { points: ladder }) : tq('guessTag')), el('h3', { class: 'quiz-question' }, question), form, note, said);
     shownN = n;
     // A keyboard is there: the field is ready to type into (a phone's keyboard opens on a tap).
     if (hasMouse()) queueMicrotask(() => input.focus({ preventScroll: true }));
     return { n, q: question, texts: [], list: form, buttons: [], note, fresh: false, guess: { input, go, said } };
   }
   /** A number as the table's language writes it (1,889.5 / 1.889,5). */
-  const showNum = (n: number): string => n.toLocaleString(lang() === 'tr' ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 2 });
+  const showNum = (n: number): string => n.toLocaleString(lang() === 'tr' ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 2, useGrouping: Math.abs(n) >= 10_000 });
   /** My answer to option `i` of question `n`: once, on the first press (pointer, key or screen reader). */
   function answer(n: number, i: number): void {
     if (!state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
@@ -337,7 +341,6 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (lastKey !== '' && key !== lastKey && s.phase === 'reveal') refereeLine(s);
     if (lastKey !== '' && key !== lastKey && mine) {
       if (s.phase === 'question') playSound('roundMine');
-      if (s.phase === 'question' && s.finale && s.n === s.total - QUIZ_FINALE_QUESTIONS + 1) flash(tq('finaleStart'));
       else if (s.phase === 'reveal') playSound(mine.gained ? 'guessRight' : 'wrong');
       else if (s.phase === 'over') playSound('podium');
     }
@@ -536,7 +539,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
                     'li',
                     { class: `quiz-said-one${p.gained ? ' right' : ''}` },
                     avatarNode(p.avatar, 'quiz-picker'),
-                    el('span', { class: 'quiz-said-text' }, `${p.id === me ? t('games.you') : p.name}: ${showNum(p.guess!)}`),
+                    el('span', { class: 'quiz-said-text' }, `${p.id === me ? `${p.name} (${t('games.you')})` : p.name}: ${showNum(p.guess!)}`),
                     el('span', {}, `+${p.gained ?? 0}`),
                   ),
                 )

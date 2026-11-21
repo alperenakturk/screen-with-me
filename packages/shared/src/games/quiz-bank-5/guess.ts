@@ -31,7 +31,6 @@ export const Q5_GUESS: readonly QuizEntry[] = [
   {"c":"geography","d":2,"k":"guess","n":40075,"en":{"q":"How long is the Equator, in km?"},"tr":{"q":"Ekvator kaç kilometre uzunluğundadır?"}},
   {"c":"geography","d":2,"k":"guess","n":54,"en":{"q":"How many countries are there in Africa (UN members)?"},"tr":{"q":"Afrika'da kaç ülke vardır (BM üyesi olanlar)?"}},
   {"c":"geography","d":2,"k":"guess","n":16,"en":{"q":"How many states does Germany have?"},"tr":{"q":"Almanya'nın kaç eyaleti vardır?"}},
-  {"c":"geography","d":2,"k":"guess","n":6650,"en":{"q":"How long is the Nile, in km?"},"tr":{"q":"Nil Nehri kaç kilometre uzunluğundadır?"}},
   {"c":"geography","d":3,"k":"guess","n":11,"en":{"q":"How many time zones does Russia have?"},"tr":{"q":"Rusya'da kaç saat dilimi vardır?"}},
   {"c":"geography","d":3,"k":"guess","n":1642,"en":{"q":"How deep is Lake Baikal at its deepest point, in metres?"},"tr":{"q":"Baykal Gölü en derin yerinde kaç metre derinliktedir?"}},
   {"c":"geography","d":3,"k":"guess","n":979,"en":{"q":"How high is Angel Falls, the world's highest waterfall, in metres?"},"tr":{"q":"Dünyanın en yüksek şelalesi Angel Şelalesi kaç metre yüksekliğindedir?"}},
