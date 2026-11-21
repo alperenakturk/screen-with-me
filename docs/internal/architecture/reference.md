@@ -1607,7 +1607,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `QUIZ_FINALE_QUESTIONS` (5) guesses from every topic; it is a round like the others (its best scorer gets a round win)
   and its points add up; the state says `finale: true` and no `picker`; `total` = topic rounds × 3 + 5. Saved tables
   from before QZ5 have no `finale` and end as before. `QUIZ_PROTOCOL_VERSION` 4 (text answers gone). Client: the number
-  field reuses `.quiz-type` (`inputmode="decimal"`), "🎯 Closest guess wins" above the question, the reveal lists the
+  field reuses `.quiz-type` (`inputmode="decimal"`), "🎯 Closest guess wins" above the question (in the finale
+  "🏁 Finale: closest wins 200 / 100 / 50", the ladder this table's player count pays; numbers under 10 000 ungrouped), the reveal lists the
   guesses by place (`.quiz-said`), the head says "🏁 Finale · i/5", the joker row is off on a guess; Stub cheers an exact
   hit. Test Lab `quiz.guess` (lab op `guess`: the next classic game asks only guesses) and `quiz.finale` (lab op `finale`:
   the next tournament plays only its finale), local lab server only. Tests: `quiz.test.ts` (no true / false or typed
