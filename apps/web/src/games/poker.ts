@@ -387,7 +387,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   // ---- LH4: motion and sound. What changed since the last state moves: the cards are dealt from the middle, life
   // flies from a seat into the flask, the middle flies to the winners; each has its sound. All of it is skipped under
   // "reduce motion" (the sounds stay). Ghosts are absolutely placed in `.pk` in its own (unscaled) pixels. ----
-  const SFX = { deal: 'place', chip: 'snackServe', fold: 'guessOther', street: 'hint', move: 'locked' } as const satisfies Record<string, SoundId>;
+  const SFX = { deal: 'pokerDeal', chip: 'pokerChip', fold: 'pokerFold', street: 'pokerStreet', move: 'pokerMove' } as const satisfies Record<string, SoundId>;
   let seen: { hand: number; board: number; phase: string; last: string; bets: Map<string, number>; folded: Set<string>; dealt: number; mine: number } = {
     hand: -1, board: 0, phase: '', last: '', bets: new Map(), folded: new Set(), dealt: -1, mine: -1,
   };

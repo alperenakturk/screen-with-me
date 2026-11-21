@@ -1482,7 +1482,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `sea-`; Snack Bar owns `sb-`): placing shows only my sea (tap a ship, tap water; Turn / R; drag; Shuffle; Ready), the
   battle both seas side by side on a computer (theirs bigger, the sea being shot at outlined in gold), one sea at a time
   with a "Their sea / My sea" switch in a narrow window, flipping to their sea on my turn; marks are shapes (ring,
-  burst, dark gold outline), cells named "A1: water"; sounds `seaMiss` / `seaHit` / `seaSunk`. Lab commands `sea.bot`,
+  burst, dark gold outline), cells named "A1: water"; sounds `seaMiss` / `seaHit` / `seaSunk`. Last Heart (LH4): `pokerDeal` / `pokerChip` / `pokerFold` / `pokerStreet` / `pokerMove` (`last-heart.md`). Lab commands `sea.bot`,
   `sea.oneLeft`, `sea.reveal`. Tests: unit `sea.test.ts`, e2e `sea.mjs` (no message ever carries a hidden ship) +
   `lab-server.mjs`, harness `scripts/harness/sea/run.cjs` (in CI's "Games quality"), the `games-sweep` entries `sea` /
   `seaPlay`. KEYREP (0.9.97.94): a held R turns the ship once (`event.repeat` ignored); its repeats sent a `place` each,
