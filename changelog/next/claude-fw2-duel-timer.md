@@ -1,0 +1,3 @@
+- Five Frames Duel: pick a time limit for each game in the lobby (none, 1, 2, 3 or 5 minutes; 3 to start with). When the time runs out, everyone who hasn't found the word is out.
+- Five Frames Duel: points! Finding the word gives 7 points on the first guess down to 1 on the seventh, and 3 more to whoever finds it first. The bar keeps the table's points.
+- Five Frames Duel in the video's place: your own board is big; the others are smaller (with three or more, one line each).

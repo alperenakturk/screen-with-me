@@ -18,19 +18,50 @@ export const DUEL_ID_PATTERN = /^[A-Za-z0-9_-]{3,40}$/;
 
 export type DuelPhase = 'wait' | 'play' | 'over';
 
-/** One player's board: the guesses so far (normalized words). */
+/** One player's board: the guesses so far (normalized words); FW2: `timeUp` once the game's time ran out on it. */
 export interface DuelBoard {
   guesses: string[];
+  timeUp?: boolean;
 }
 
 export const boardSolved = (board: DuelBoard, answer: string): boolean => board.guesses.includes(answer);
-export const boardDone = (board: DuelBoard, answer: string): boolean => boardSolved(board, answer) || board.guesses.length >= MAX_TRIES;
+export const boardDone = (board: DuelBoard, answer: string): boolean => boardSolved(board, answer) || board.guesses.length >= MAX_TRIES || !!board.timeUp;
+
+/** FW2: the time limits a table can pick for each game, in seconds (0 = none), and the one a new table starts with. */
+export const DUEL_TIMES = [0, 60, 120, 180, 300] as const;
+export type DuelTime = (typeof DUEL_TIMES)[number];
+export const DUEL_DEFAULT_TIME: DuelTime = 180;
+export const isDuelTime = (value: unknown): value is DuelTime => (DUEL_TIMES as readonly unknown[]).includes(value);
+
+/** FW2: points for finding the word: 7 for the first guess down to 1 for the seventh. */
+export const FIRST_BONUS = 3;
+/**
+ * FW2 (owner, 21 Nov 2026): a game's points per seat: whoever found the word gets 7 → 1 by the guess it took, the first
+ * to find it 3 more; the others 0 (an empty seat 0).
+ */
+export function duelPoints(boards: readonly (DuelBoard | null)[], answer: string, solved: readonly number[]): number[] {
+  return boards.map((b, i) => {
+    if (!b || !boardSolved(b, answer)) return 0;
+    const tries = b.guesses.indexOf(answer) + 1;
+    return MAX_TRIES + 1 - tries + (solved[0] === i ? FIRST_BONUS : 0);
+  });
+}
+
+/**
+ * FW2: the time ran out. Every board not done yet is out; the result is the first to solve, or a draw when nobody did
+ * (any number of players). Changes the boards.
+ */
+export function duelTimeUp(boards: readonly (DuelBoard | null)[], answer: string, solved: readonly number[]): number | 'draw' {
+  for (const b of boards) if (b && !boardDone(b, answer)) b.timeUp = true;
+  return solved.length ? solved[0]! : 'draw';
+}
 
 /**
  * Adds a guess to a board after the solo game's checks (`guess` in `five-frames.ts`). Returns null when it counted, or
  * why not (the board doesn't change then).
  */
 export function duelGuess(board: DuelBoard, raw: string, answer: string, lang: Lang, allowed: (word: string) => boolean): GuessError | null {
+  if (board.timeUp) return 'done';
   return guess({ day: 0, guesses: board.guesses }, raw, answer, lang, { allowed });
 }
 
@@ -124,8 +155,8 @@ export type DuelClientMessage =
   | { t: 'guess'; word: string }
   | { t: 'sit' }
   | { t: 'rematch' }
-  | { t: 'settings'; bestOf?: 1 | 3; hard?: boolean }
-  | { t: 'lab'; op: 'answer' };
+  | { t: 'settings'; bestOf?: 1 | 3; hard?: boolean; time?: DuelTime }
+  | { t: 'lab'; op: 'answer' | 'timeup' };
 
 export interface DuelPlayer {
   id: string;
@@ -143,6 +174,11 @@ export interface DuelPlayer {
   out: boolean;
   /** FW2: the place this seat found the word in (1 = first), sent once it has; absent before. */
   place?: number;
+  /** FW2: the time ran out on this board. */
+  timeUp?: boolean;
+  /** FW2: points at this table so far, and (once a game is over) what this game gave. */
+  points: number;
+  gained?: number;
 }
 
 export type DuelServerMessage =
@@ -170,6 +206,9 @@ export type DuelServerMessage =
       /** NG1: one game or best of three, and hard mode (letters found must be used again). */
       bestOf: 1 | 3;
       hard: boolean;
+      /** FW2: the table's time limit per game in seconds (0 = none), and while a game goes on the milliseconds left. */
+      time: DuelTime;
+      left?: number;
       /** The match so far: games played in it, wins per seat, whether it is over (and who won it, null = a tie). */
       match: { games: number; wins: number[]; over: boolean; winner: number | null };
       watchers: { id: string; name: string; avatar?: Avatar }[];
@@ -213,10 +252,11 @@ export function parseDuelMessage(raw: string): DuelClientMessage | null {
       const out: Extract<DuelClientMessage, { t: 'settings' }> = { t: 'settings' };
       if (m.bestOf === 1 || m.bestOf === 3) out.bestOf = m.bestOf;
       if (typeof m.hard === 'boolean') out.hard = m.hard;
-      return out.bestOf === undefined && out.hard === undefined ? null : out;
+      if (isDuelTime(m.time)) out.time = m.time;
+      return out.bestOf === undefined && out.hard === undefined && out.time === undefined ? null : out;
     }
     case 'lab':
-      return m.op === 'answer' ? { t: 'lab', op: 'answer' } : null;
+      return m.op === 'answer' || m.op === 'timeup' ? { t: 'lab', op: m.op } : null;
     default:
       return null;
   }

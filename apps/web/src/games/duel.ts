@@ -7,7 +7,7 @@ import './five-frames.css';
 import './duel.css';
 import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
-import { DUEL_MAX_SEATS, DUEL_PROTOCOL_VERSION, type DuelClientMessage, type DuelPlayer, type DuelServerMessage } from '@swm/shared/games/duel';
+import { DUEL_MAX_SEATS, DUEL_PROTOCOL_VERSION, DUEL_TIMES, type DuelClientMessage, type DuelPlayer, type DuelServerMessage } from '@swm/shared/games/duel';
 import { ALPHABET, MAX_TRIES, WORD_LENGTH, letters, normalize, upper, type Lang, type Mark } from '@swm/shared/games/five-frames';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
@@ -41,8 +41,8 @@ const TEXT = {
     oneGame: 'One game',
     bestOf3: 'Best of three',
     hardMode: 'Hard mode',
-    hardOff: 'Off',
-    hardOn: 'On',
+    hardOff: 'Hard mode: off',
+    hardOn: 'Hard mode: on',
     hardTitle: 'Letters you found must be used in your next guesses.',
     hardMiss: 'Hard mode: use {letter}',
     hardMissAt: 'Hard mode: {letter} goes in place {n}',
@@ -110,6 +110,18 @@ const TEXT = {
     yourPlace: 'You finished {place}.',
     places: 'Places',
     noWord: 'no word',
+    lobbyTime: 'Time limit',
+    timeOff: 'No time limit',
+    timeMinutes: '{n} min a game',
+    timeTitle: 'When the time runs out, everyone who hasn’t found the word is out.',
+    timeLeft: 'Time left: {t}',
+    timeUp: 'Time is up!',
+    timeUpMine: 'Time is up. Watch the others finish.',
+    lateTime: 'Too late: the time ran out.',
+    pointsTitle: 'Points: 7 for finding it on the first guess down to 1 on the seventh, +3 for the first to find it.',
+    gained: '+{n}',
+    youGot: '+{n} points',
+    points: '{n} pts',
   },
   tr: {
     daily: 'Günün kelimesi #{n}',
@@ -120,8 +132,8 @@ const TEXT = {
     oneGame: 'Tek oyun',
     bestOf3: 'Üçte iki',
     hardMode: 'Zor mod',
-    hardOff: 'Kapalı',
-    hardOn: 'Açık',
+    hardOff: 'Zor mod: kapalı',
+    hardOn: 'Zor mod: açık',
     hardTitle: 'Bulduğun harfleri sonraki tahminlerinde kullanmalısın.',
     hardMiss: 'Zor mod: {letter} harfini kullan',
     hardMissAt: 'Zor mod: {letter} {n}. yerde olmalı',
@@ -188,6 +200,18 @@ const TEXT = {
     yourPlace: '{place} sırada bitirdin.',
     places: 'Sıralama',
     noWord: 'bulamadı',
+    lobbyTime: 'Süre sınırı',
+    timeOff: 'Süre sınırı yok',
+    timeMinutes: 'Oyun başı {n} dk',
+    timeTitle: 'Süre bitince kelimeyi bulamayan herkes oyun dışı kalır.',
+    timeLeft: 'Kalan süre: {t}',
+    timeUp: 'Süre doldu!',
+    timeUpMine: 'Süre doldu. Diğerlerinin bitirmesini izle.',
+    lateTime: 'Geç kaldın: süre doldu.',
+    pointsTitle: 'Puan: ilk tahminde bulana 7, yedincide bulana 1; ilk bulana +3.',
+    gained: '+{n}',
+    youGot: '+{n} puan',
+    points: '{n} puan',
   },
 } as const;
 type TextKey = keyof (typeof TEXT)['en'];
@@ -231,22 +255,24 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const lobbyFaces = el('ul', { class: 'duel-lobby-faces' });
   const lobbyLangLabel = el('span', { class: 'duel-lobby-label game-setting-label' });
   const lobbyBody = el('div', { class: 'duel-lobby-body' });
-  // NG1: one game or best of three, and hard mode (owner's picks 9.3, 9.4).
-  const chip = (label: () => string, run: () => void) => {
-    const b = el('button', { type: 'button', class: 'game-chip' }) as HTMLButtonElement;
-    b.addEventListener('click', run);
-    return { b, label };
-  };
-  const gamesChips = [
-    { ...chip(() => tx('oneGame'), () => send({ t: 'settings', bestOf: 1 })), v: 1 as const },
-    { ...chip(() => tx('bestOf3'), () => send({ t: 'settings', bestOf: 3 })), v: 3 as const },
-  ];
-  const hardChips = [
-    { ...chip(() => tx('hardOff'), () => send({ t: 'settings', hard: false })), v: false },
-    { ...chip(() => tx('hardOn'), () => send({ t: 'settings', hard: true })), v: true },
-  ];
-  const lobbyGamesLabel = el('span', { class: 'duel-lobby-label game-setting-label' });
-  const lobbyHardLabel = el('span', { class: 'duel-lobby-label game-setting-label' });
+  // NG1: one game or best of three, and hard mode (owner's picks 9.3, 9.4); FW2: the time a game. FW2 (a fourth and
+  // fifth setting no longer fit a phone as rows of chips): each is a select, two a row on a phone (duel.css).
+  type Pick<V> = { label: HTMLElement; select: HTMLSelectElement; values: readonly V[]; name: (v: V) => string; title: () => string; text: () => string; now: (s: State) => V };
+  const picks: Pick<never>[] = [];
+  function pick<V extends string | number | boolean>(values: readonly V[], name: (v: V) => string, text: () => string, title: () => string, now: (s: State) => V, change: (v: V) => DuelClientMessage): HTMLElement {
+    const label = el('label', { class: 'duel-lobby-label game-setting-label' });
+    const select = el('select', { class: 'game-setting-select duel-select' }) as HTMLSelectElement;
+    select.addEventListener('change', () => send(change(values[select.selectedIndex]!)));
+    const one = { label, select, values, name, title, text, now } as unknown as Pick<never>;
+    picks.push(one);
+    const id = `duel-pick-${gameId}-${picks.length}`;
+    select.id = id;
+    label.htmlFor = id;
+    return el('div', { class: 'duel-lobby-lang game-setting duel-pick' }, label, select);
+  }
+  const gamesPick = pick([1, 3] as const, (v) => (v === 1 ? tx('oneGame') : tx('bestOf3')), () => tx('lobbyGames'), () => '', (s) => s.bestOf, (v) => ({ t: 'settings', bestOf: v }));
+  const hardPick = pick([false, true] as const, (v) => (v ? tx('hardOn') : tx('hardOff')), () => tx('hardMode'), () => tx('hardTitle'), (s) => s.hard, (v) => ({ t: 'settings', hard: v }));
+  const timePick = pick(DUEL_TIMES, (n) => (n ? tx('timeMinutes', { n: n / 60 }) : tx('timeOff')), () => tx('lobbyTime'), () => tx('timeTitle'), (s) => s.time, (v) => ({ t: 'settings', time: v }));
   // QA3 (one lobby family): what the game is (title, rules, faces) and the setup (the settings as the other tables
   // show them, Ready in Start's place, Stub's hint under it); lobby.css lays the two halves out like the others.
   const lobby = el(
@@ -260,14 +286,20 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         'div',
         { class: 'duel-lobby-settings game-settings' },
         el('div', { class: 'duel-lobby-lang game-setting' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
-        el('div', { class: 'duel-lobby-lang game-setting' }, lobbyGamesLabel, el('span', { class: 'game-chips', role: 'group' }, ...gamesChips.map((c) => c.b))),
-        el('div', { class: 'duel-lobby-lang game-setting' }, lobbyHardLabel, el('span', { class: 'game-chips', role: 'group' }, ...hardChips.map((c) => c.b))),
+        gamesPick,
+        timePick,
+        hardPick,
       ),
       lobbyBody,
     ),
   );
   const watchers = el('span', { class: 'duel-watchers' });
-  const bar = el('div', { class: 'ff-head duel-bar' }, score0, tag, el('span', { class: 'ff-gap' }), watchers, langs);
+  // FW2: the time left of the running game (from the server's `left`, counted down here).
+  const clock = el('span', { class: 'duel-clock', role: 'timer' });
+  // A phone race with three or more hides the bar (duel.css); this copy beside Stub's line shows the time there.
+  const clock2 = el('span', { class: 'duel-clock duel-clock-ref', 'aria-hidden': 'true' });
+  let endsAt = 0;
+  const bar = el('div', { class: 'ff-head duel-bar' }, score0, tag, clock, el('span', { class: 'ff-gap' }), watchers, langs);
 
   // My board: seven tickets like the solo game.
   const board = el('div', { class: 'ff-board duel-board', tabindex: '0', role: 'group', 'data-takes-keys': '' });
@@ -302,7 +334,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const actions = el('div', { class: 'duel-actions' });
   const tray = el('div', { class: 'ff-tray' });
   // The table id is no secret (the room lists it); harnesses join it as a second player.
-  const refRow = el('div', { class: 'duel-ref' }, referee, status);
+  const refRow = el('div', { class: 'duel-ref' }, referee, clock2, status);
   const box = el('div', { class: 'ff duel', 'data-table': gameId }, bar, main, lobby, refRow, actions, tray);
   app.replaceChildren(box);
   const result = resultCard(main, stubArt('plain', 'duel-glow'), (moved) => actions.prepend(...moved));
@@ -493,6 +525,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       if (s.phase === 'wait') return seat >= 0 && mine?.ready ? tx('readyWaitAll') : tx('readyHint');
       if (s.phase === 'play') {
         if (seat < 0) return tx('watchGo');
+        if (mine?.timeUp) return tx('timeUpMine');
         if (mine?.out) return tx('youOutMany');
         if (mine?.solved) return tx('youSolvedWait', { place: placeName(mine.place ?? s.players.filter((p) => p?.solved).length) });
         return tx('raceGo', { n: seated().length });
@@ -529,15 +562,17 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     lobbyTitle.textContent = tx('lobbyTitle');
     lobbyRules.textContent = tx('lobbyRules');
     lobbyLangLabel.textContent = tx('lobbyLang');
-    lobbyGamesLabel.textContent = tx('lobbyGames');
-    lobbyHardLabel.textContent = tx('hardMode');
-    lobbyHardLabel.title = tx('hardTitle');
-    for (const c of [...gamesChips, ...hardChips]) {
-      const on = 'v' in c && (typeof c.v === 'boolean' ? s.hard === c.v : s.bestOf === c.v);
-      c.b.textContent = c.label();
-      c.b.classList.toggle('on', on);
-      c.b.setAttribute('aria-pressed', String(on));
-      c.b.disabled = mySeat() < 0;
+    for (const p of picks as unknown as Pick<string | number | boolean>[]) {
+      p.label.textContent = p.text();
+      p.label.title = p.title();
+      p.select.title = p.title() || p.text();
+      const now = p.now(s);
+      if (p.select.options.length !== p.values.length || p.select.dataset.lang !== pageLang()) {
+        p.select.replaceChildren(...p.values.map((v) => el('option', {}, p.name(v))));
+        p.select.dataset.lang = pageLang();
+      }
+      p.select.selectedIndex = p.values.indexOf(now);
+      p.select.disabled = mySeat() < 0;
     }
     lobbyLangButtons.forEach((b) => {
       const on = b.dataset.lang === s.lang;
@@ -559,6 +594,22 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     );
   }
 
+  /** FW2: the time left, m:ss (hidden without a limit or between games). */
+  function drawClock(): void {
+    const on = state?.phase === 'play' && endsAt > 0;
+    clock.hidden = !on;
+    clock2.hidden = !on;
+    if (!on) return;
+    const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+    const text = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    if (clock.textContent !== text) clock.textContent = text;
+    if (clock2.textContent !== text) clock2.textContent = text;
+    clock.setAttribute('aria-label', tx('timeLeft', { t: text.slice(2) }));
+    clock.classList.toggle('low', left <= 15);
+    clock2.classList.toggle('low', left <= 15);
+  }
+  const clockTimer = window.setInterval(drawClock, 250);
+
   /** GMP b: the places at the end, 1st to 6th (a shared place for everyone who didn't find the word). */
   function placesList(s: State): HTMLElement {
     const order = seated().sort((x, y) => (s.ranks?.[x] ?? 9) - (s.ranks?.[y] ?? 9));
@@ -569,7 +620,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         const p = s.players[i]!;
         const face = avatarNode(p.avatar, p.name);
         face.classList.add('duel-avatar');
-        return el('li', { class: `${i === s.seat ? 'me' : ''}${p.solved ? '' : ' unsolved'}` }, el('b', { class: 'duel-place' }, placeName(s.ranks?.[i] ?? 0)), face, el('span', { class: 'duel-place-name' }, p.name), el('span', { class: 'duel-place-tries' }, p.solved ? tx('tries', { n: p.marks.length }) : tx('noWord')));
+        return el('li', { class: `${i === s.seat ? 'me' : ''}${p.solved ? '' : ' unsolved'}` }, el('b', { class: 'duel-place' }, placeName(s.ranks?.[i] ?? 0)), face, el('span', { class: 'duel-place-name' }, p.name), el('span', { class: 'duel-place-tries' }, p.solved ? tx('tries', { n: p.marks.length }) : tx('noWord')), el('b', { class: 'duel-place-points', title: tx('pointsTitle') }, tx('gained', { n: p.gained ?? 0 })));
       }),
     );
   }
@@ -579,6 +630,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     if (!s) return;
     const seat = mySeat();
     box.dataset.phase = s.phase;
+    // FW2: the Turkish tray has eleven columns; duel.css keeps it wider in a narrow box.
+    box.dataset.lang = s.lang;
     box.classList.toggle('watching', seat < 0);
     box.classList.toggle('many', many());
     const [a, b] = seated().map((i) => s.players[i]!);
@@ -593,15 +646,16 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
           ? tx('matchLineMany', { n: gameNo })
           : // GMP b: six "name 0" never fit; only who has won so far, most wins first (the whole list in the tooltip).
             seated()
-              .filter((i) => s.players[i]!.wins > 0)
-              .sort((x, y) => s.players[y]!.wins - s.players[x]!.wins)
+              .filter((i) => s.players[i]!.points > 0)
+              .sort((x, y) => s.players[y]!.points - s.players[x]!.points)
               .slice(0, 3)
-              .map((i) => `🏆 ${s.players[i]!.name} ${s.players[i]!.wins}`)
+              .map((i) => `⭐ ${s.players[i]!.name} ${s.players[i]!.points}`)
               .join(' · ')
         : inMatch
         ? tx('matchLine', { n: gameNo, a: a.name, b: b.name, wa: s.match.wins[0] ?? 0, wb: s.match.wins[1] ?? 0 })
-        : `${a.name} ${a.wins} – ${b.wins} ${b.name}`;
-    score0.title = many() ? seated().map((i) => `${s.players[i]!.name} ${s.players[i]!.wins}`).join(' · ') : '';
+        : `${a.name} ${a.points} – ${b.points} ${b.name}`;
+    // FW2: the bar counts points (the tooltip: everyone's, and how they are won).
+    score0.title = `${seated().map((i) => `${s.players[i]!.name} ${tx('points', { n: s.players[i]!.points })}`).join(' · ')}\n${tx('pointsTitle')}`;
     tag.textContent = s.phase === 'wait' ? '' : `${s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice')}${s.hard ? ` · ${tx('hardLine')}` : ''}`;
     langButtons.forEach((btn) => {
       const on = btn.dataset.lang === s.lang;
@@ -611,6 +665,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       btn.disabled = seat < 0 || s.phase === 'play';
     });
     drawLobby(s);
+    drawClock();
     watchers.textContent = s.watchers.length ? tx('watchers', { n: s.watchers.length }) : '';
     watchers.title = tx('watchersTitle', { names: s.watchers.map((w) => w.name).join(', ') });
     // A player: my board + their marks; a watcher: both players' marks.
@@ -638,6 +693,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       }
       if (many() && !(s.bestOf === 3 && s.match.over)) title = s.draw ? tx('draw') : s.winner === seat ? tx('youWin') : tx('winner', { name: nameOf(s.winner ?? 0) });
       const lineParts = [s.answer ? tx('theWord', { word: upper(s.answer, s.lang) }) : ''];
+      if (seat >= 0 && me()?.gained) lineParts.push(tx('youGot', { n: me()!.gained! }));
+      if (s.players.some((p) => p?.timeUp)) lineParts.unshift(tx('timeUp'));
       if (many() && seat >= 0 && s.ranks?.[seat]) lineParts.unshift(tx('yourPlace', { place: placeName(s.ranks[seat]!) }));
       if (s.bestOf === 3 && !s.match.over) lineParts.push(many() ? tx('matchLineMany', { n: s.match.games }) : tx('matchLine', { n: s.match.games, a: nameOf(0), b: nameOf(1), wa, wb }));
       if (s.hard) lineParts.push(tx('hardLine'));
@@ -694,6 +751,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         if (m.round !== lastRound) revealed = '';
         lastRound = m.round;
         state = m;
+        endsAt = m.phase === 'play' && m.left !== undefined ? Date.now() + m.left : 0;
         // QA2 (13): a fresh table takes the opener's page language for its words (Turkish page → Turkish words), once;
         // the other player can still switch it in the lobby.
         if (!langSet && m.phase === 'wait' && m.round === 0 && m.seat >= 0 && m.players.filter(Boolean).length === 1) {
@@ -714,7 +772,10 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
           const letter = upper(m.letter, wordLang());
           shake(m.at !== undefined ? tx('hardMissAt', { letter, n: m.at + 1 }) : tx('hardMiss', { letter }));
         }
-        else if (m.code === 'over') {
+        else if (m.code === 'time') {
+          typed = '';
+          say(tx('lateTime'), 3000);
+        } else if (m.code === 'over') {
           typed = '';
           say(tx('lateGuess'), 3000);
         } else if (m.code === 'full') say(tx('full'));
@@ -758,7 +819,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     commands: [
       quiet.command('duel', { en: 'Five Frames Duel', tr: 'Beş Kare Düellosu' }),
       // GMP: what this tab sees (players, watchers, and how many boards show their letters here: 1 as a player, all as a watcher).
-      { id: 'duel.state', title: { en: 'Five Frames Duel: what this tab sees', tr: 'Beş Kare Düellosu: bu sekme ne görüyor' }, help: { en: 'Players, their tries, who watches, and how many boards show their letters here (a watcher sees them all).', tr: 'Oyuncular, denemeleri, kim izliyor ve burada kaç tahtanın harfleri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Duel table first', tr: 'önce bir Düello masası aç' }, where: { en: 'at a Five Frames Duel table', tr: 'Beş Kare Düellosu masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, players: s.players.map((p) => p && { name: p.name, ready: p.ready, tries: p.marks.length, solved: p.solved }), seats: s.players.length, ranks: s.ranks ?? null, watchers: s.watchers.map((w) => w.name), boardsWithLetters: s.players.filter((p) => (p?.words?.length ?? 0) > 0).length }); } },
+      { id: 'duel.state', title: { en: 'Five Frames Duel: what this tab sees', tr: 'Beş Kare Düellosu: bu sekme ne görüyor' }, help: { en: 'Players, their tries, who watches, and how many boards show their letters here (a watcher sees them all).', tr: 'Oyuncular, denemeleri, kim izliyor ve burada kaç tahtanın harfleri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Duel table first', tr: 'önce bir Düello masası aç' }, where: { en: 'at a Five Frames Duel table', tr: 'Beş Kare Düellosu masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, players: s.players.map((p) => p && { name: p.name, ready: p.ready, tries: p.marks.length, solved: p.solved, place: p.place ?? 0, points: p.points, gained: p.gained ?? null, timeUp: !!p.timeUp }), time: s.time, left: s.left ?? null, seats: s.players.length, ranks: s.ranks ?? null, watchers: s.watchers.map((w) => w.name), boardsWithLetters: s.players.filter((p) => (p?.words?.length ?? 0) > 0).length }); } },
       {
         id: 'duel.answer',
         title: { en: 'Five Frames Duel: show the word (this tab)', tr: 'Beş Kare Düellosu: kelimeyi göster (bu sekmede)' },
@@ -774,6 +835,14 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         tab: 'games' as const, available: () => (!!state && state.seat >= 0 && state.phase !== 'play') || { en: 'only between games (in the lobby)', tr: 'sadece iki oyun arasında (lobide)' },
         where,
         run: () => send({ t: 'settings', bestOf: 3, hard: true }),
+      },
+      {
+        id: 'duel.timeup',
+        title: { en: 'Five Frames Duel: run out of time now', tr: 'Beş Kare Düellosu: süreyi şimdi bitir' },
+        help: { en: 'Local lab server only: the game’s time runs out at once; whoever hasn’t found the word is out, points are given.', tr: 'Sadece yerel test sunucusunda: oyunun süresi hemen biter; kelimeyi bulamayan oyun dışı kalır, puanlar verilir.' },
+        tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase === 'play' && state.seat >= 0) || { en: 'only during the race (both pressed Ready)', tr: 'sadece yarış sırasında (ikisi de Hazır’a bastı)' },
+        where,
+        run: () => send({ t: 'lab', op: 'timeup' }),
       },
       {
         id: 'duel.win',
@@ -806,6 +875,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     setGameLive(false);
     close();
     clearInterval(ping);
+    clearInterval(clockTimer);
     link.stop();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
