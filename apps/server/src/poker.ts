@@ -12,6 +12,7 @@ import {
   blindsFor,
   newPokerData,
   parsePokerMessage,
+  pokerTurnKey,
   type PokerClientMessage,
   type PokerData,
   type PokerPlayer,
@@ -291,10 +292,11 @@ export class Poker extends DurableObject<Env> {
         return;
       }
       case 'move': {
+        const turn = pokerTurnKey(t);
         const result = engine.move(key, message.m, message.target);
         if (!result.ok) return this.sendTo(ws, { t: 'error', code: result.why });
         if (result.peek && message.target) this.sendTo(ws, { t: 'peek', target: message.target, card: result.peek.card });
-        await this.changed();
+        await this.changed(turn);
         return;
       }
       default:
@@ -302,11 +304,16 @@ export class Poker extends DurableObject<Env> {
     }
   }
 
-  /** After every change: timers, storage, everyone's view, and the private cards when a hand was dealt. */
-  private async changed(): Promise<void> {
+  /**
+   * After every change: timers, storage, everyone's view, and the private cards when a hand was dealt. `turnBefore`
+   * (LH4): a special move's turn key; when the turn is still the same one, its clock runs on (a move out of turn used to
+   * give the player to act a fresh 30 s each time).
+   */
+  private async changed(turnBefore?: string): Promise<void> {
     const t = this.data.table;
     const handBefore = this.dealtHand;
-    this.data.endsAt = this.deadline();
+    const sameTurn = turnBefore !== undefined && turnBefore === pokerTurnKey(t) && this.data.endsAt !== null;
+    if (!sameTurn) this.data.endsAt = this.deadline();
     await this.save();
     if (t.hand !== handBefore && t.phase === 'preflop') for (const s of t.seats) this.sendCards(s.key);
     this.dealtHand = t.hand;
@@ -404,6 +411,7 @@ export class Poker extends DurableObject<Env> {
         ...(shown ? { cards: shown.cards, best: shown.best, hand: shown.hand } : {}),
         ...(result?.won[s.key] ? { won: result.won[s.key] } : {}),
         ...(result?.shielded[s.key] ? { shielded: result.shielded[s.key] } : {}),
+        ...(result?.net?.[s.key] !== undefined ? { net: result.net[s.key] } : {}),
       };
     });
     const seated = new Set(t.seats.map((s) => s.key));

@@ -187,12 +187,14 @@ export interface PokerSeat {
 }
 
 export interface HandResult {
-  /** What each key won (net of what came back). */
+  /** What each key took from the middle (their own share included; `net` is the change in life). */
   won: Record<string, number>;
   /** Hands shown at the showdown: key → best five + name. */
   shown: Record<string, { cards: Card[]; best: Card[]; hand: HandName }>;
   /** Shield refunds. */
   shielded: Record<string, number>;
+  /** LH4: what each player's life changed by over the hand (won + shield − put in; special moves not counted). */
+  net?: Record<string, number>;
 }
 
 export interface PokerData {
@@ -224,6 +226,14 @@ const freshUsed = (): Record<PokerMove, boolean> => ({ dq: false, free: false, s
 
 export function newPokerData(jokers = false): PokerData {
   return { phase: 'lobby', seats: [], dealer: -1, toAct: -1, board: [], deck: [], currentBet: 0, minRaise: 0, hand: 0, jokers, result: null, last: null };
+}
+
+/**
+ * LH4: whose turn it is, as a key. The turn clock restarts only when this changes (someone acted, a new street or hand);
+ * a special move out of turn (a shield, a peek, a disqualify of someone else) leaves it, so it can't stretch a turn.
+ */
+export function pokerTurnKey(d: Pick<PokerData, 'hand' | 'phase' | 'toAct'>): string {
+  return `${d.hand}:${d.phase}:${d.toAct}`;
 }
 
 export function blindsFor(hand: number): [number, number] {
@@ -532,6 +542,12 @@ export class PokerEngine {
         }
       });
     }
+    // LH4: "+8" read as the change in life while it was the pot taken: the hand's net per player goes with the result.
+    result.net = {};
+    for (const s of this.seats) {
+      const change = (result.won[s.key] ?? 0) + (result.shielded[s.key] ?? 0) - s.paid;
+      if (s.paid > 0 || change !== 0) result.net[s.key] = change;
+    }
     for (const s of this.seats) {
       s.bet = 0;
       s.paid = 0;
@@ -580,6 +596,8 @@ export interface PokerPlayer {
   hand?: HandName;
   won?: number;
   shielded?: number;
+  /** LH4: the showdown's change in life over the hand (won + shield − put in). */
+  net?: number;
 }
 
 export type PokerClientMessage =
