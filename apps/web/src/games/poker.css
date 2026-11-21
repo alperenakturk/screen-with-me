@@ -218,3 +218,6 @@
 }
 /* The hand's result is the status strip's own line now (no toast over it): on a phone it may take two lines. */
 #game-stage.in-tab .pk-status.result .pk-status-text { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.2; }
+/* First look (LH4): on a phone the "Peek: tap a rival" line was hidden with the moves' label; it shows while a move
+   waits for its target. */
+#game-stage.in-tab .pk-moves:has(.pk-move.armed) .pk-moves-label { display: block; grid-column: 1 / -1; font-size: 13px; color: var(--danger); }
