@@ -453,10 +453,11 @@ const constant = (file, name) => Number(new RegExp(`const ${name} = ([\\d_ *]+);
     // 400" with 395).
     const i18n = fs.readFileSync(path.join(ROOT, 'apps/web/src/i18n.ts'), 'utf8');
     const topics = (/QUIZ_CATEGORIES = \[([^\]]+)\]/.exec(fs.readFileSync(path.join(ROOT, 'packages/shared/src/games/quiz-categories.ts'), 'utf8'))?.[1] ?? '').split(',').length;
-    // The real bank, loaded the way the server does (Node strips the types).
+    // The real bank, loaded the way the server does (Node strips the types); QZ5: only questions still asked count
+    // (retired true / false and typed-word entries keep their ids but are never asked).
     const entries = Number(
       require('child_process')
-        .spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', '--input-type=module', '-e', `import { QUIZ_BANK } from ${JSON.stringify('file://' + path.join(ROOT, 'packages/shared/src/games/quiz-questions.ts'))}; console.log(QUIZ_BANK.length);`], { encoding: 'utf8' })
+        .spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings', '--input-type=module', '-e', `import { QUIZ_BANK, isRetired } from ${JSON.stringify('file://' + path.join(ROOT, 'packages/shared/src/games/quiz-questions.ts'))}; console.log(QUIZ_BANK.filter((e) => !isRetired(e)).length);`], { encoding: 'utf8' })
         .stdout.trim(),
     );
     const quizLines = [...i18n.matchAll(/'games\.quiz\.text': '([^']+)'/g)].map((m) => m[1]);

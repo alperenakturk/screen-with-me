@@ -14,6 +14,7 @@ export { QUIZ_CATEGORIES, type QuizCategory };
 import { QUIZ_BANK_2 } from './quiz-questions-2.ts';
 import { QUIZ_BANK_3 } from './quiz-questions-3.ts';
 import { QUIZ_BANK_4 } from './quiz-questions-4.ts';
+import { QUIZ_BANK_5 } from './quiz-questions-5.ts';
 
 
 export type QuizOptions = readonly [correct: string, wrong1: string, wrong2: string, wrong3: string];
@@ -36,11 +37,32 @@ export interface QuizEntry {
   /** Difficulty: 1 easy, 2 medium, 3 hard (the first bank's come from `QUIZ_LEVELS_1`). */
   d?: 1 | 2 | 3;
   /** QZ4: the question's kind when it is not a plain four-option one (true / false is `tf`, typed is `typed`):
-   * `first` = which came first (two options), `odd` = odd one out, `year` = guess the year (four years). */
+   * `first` = which came first (two options), `odd` = odd one out, `year` = guess the year (four years). QZ5: `guess` =
+   * a closest-guess question: no options, the number `n` (the same in both languages); the closest guess wins. */
   k?: QuizKind;
+  /** QZ5: a closest-guess question's answer. */
+  n?: number;
 }
 
-export type QuizKind = 'first' | 'odd' | 'year';
+export type QuizKind = 'first' | 'odd' | 'year' | 'guess';
+
+/** A plain number as an old typed answer wrote it ("206", "-40", "3.14"). */
+const plainNumber = (text: string | undefined): number | null => (text !== undefined && /^-?\d+(\.\d+)?$/.test(text.trim()) ? Number(text) : null);
+
+/**
+ * QZ5: the number a closest-guess question wants, or null when the entry is not one. Besides the fifth bank's `guess`
+ * entries, an old typed question whose first accepted answer is the same plain number in both languages counts as one.
+ */
+export function guessValue(entry: QuizEntry): number | null {
+  if (entry.k === 'guess') return typeof entry.n === 'number' && Number.isFinite(entry.n) ? entry.n : null;
+  if (!entry.typed) return null;
+  const values = [entry.en, entry.tr].filter((t) => !!t).map((t) => plainNumber(t!.a?.[0]));
+  return values.length && values.every((v) => v !== null && v === values[0]) ? values[0]! : null;
+}
+
+/** QZ5 (owner, 21 Nov 2026): true / false statements and typed (word) answers are no longer asked; their ids stay so
+ * browsers' seen lists keep meaning the same questions. A typed number became a closest guess (`guessValue`). */
+export const isRetired = (entry: QuizEntry): boolean => entry.tf !== undefined || (!!entry.typed && guessValue(entry) === null);
 
 type Opts = readonly [string, string, string, string];
 
@@ -519,4 +541,5 @@ export const QUIZ_BANK: readonly QuizEntry[] = [
   ...QUIZ_BANK_2,
   ...QUIZ_BANK_3,
   ...QUIZ_BANK_4,
+  ...QUIZ_BANK_5,
 ];

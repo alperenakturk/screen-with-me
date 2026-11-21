@@ -102,8 +102,8 @@ export function sitFriend(kind: FriendTable, table: string): string {
       }
       if (s.phase === 'question' && mine && !mine.answered && done !== key && Array.isArray(s.options)) {
         done = key;
-        // QZ2: a typed question gets a typed guess.
-        if (s.typed) later(2500 + Math.random() * 3000, () => send({ t: 'answer', n: s.n, text: s.lang === 'tr' ? 'Bilmiyorum' : 'No idea' }));
+        // QZ5: a closest-guess question gets a random number.
+        if (s.guess) later(2500 + Math.random() * 3000, () => send({ t: 'answer', n: s.n, num: Math.floor(Math.random() * 2000) }));
         else later(1500 + Math.random() * 2500, () => send({ t: 'answer', n: s.n, pick: Math.floor(Math.random() * s.options.length) }));
       }
     } else if (kind === 'draw') {

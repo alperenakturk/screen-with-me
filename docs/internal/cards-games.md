@@ -32,15 +32,6 @@ leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness 
   accepts; the "?" explains what kinds of words are not used.
 - Done when: ranking bug fixed with a test; timer and points server-checked; levels; e2e with 3 players.
 
-### QZ5. Quiz: no true / false, "closest guess" numbers, a guess round (owner, 21 Nov 2026; Game Studio "Quiz")
-- What: (1) remove true / false questions; turn the good ones into normal multiple-choice; (2) replace typed answers
-  with numeric "closest guess" questions (years, amounts, calculations by topic); no first-answer bonus; ×2, 50:50 and
-  second chance don't work on them; in the classic game 1–3 of them by game length; (3) Tournament: after every
-  topic round, a 5-question closest-guess finale, no jokers: closest 200, next 100, third 50, others 0 (2 players:
-  200 / 0; 3 players: 200 / 100 / 0); (4) more fun topics (films and series without naming specific pirated titles,
-  games, travel …).
-- Done when: no true / false left (test); closest scoring unit-tested; finale e2e; texts EN + TR.
-
 ### LH4. Last Heart: review, smooth animations, sounds, design (owner, 21 Nov 2026; Game Studio "Last Heart")
 - What: a detailed play-through review (bugs, rules, layout at 3 sizes), then fixes; smooth card / chip animations
   and sounds if missing; a nicer table design. Report findings to the Planner before big redesigns.

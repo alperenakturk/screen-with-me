@@ -3098,6 +3098,13 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
 
+### EMO1. A hands emoji page (owner, 21 Nov 2026; lane A2)
+- Why: the owner wants hand / finger gestures (👍 👏 🙌 👋 🤞 🫶 …) as their own page in the reaction picker.
+- What: a new "Hands" tab in the reactions / emoji picker (👍 👏 🙌 👋 🤞 🫶 ✌️ 👌 🤙 🤘 👊 🙏 …), skin-tone choice if cheap;
+  EN + TR names. Owner's pick: "El işaretleri sayfası" (Planner chat, 21 Nov 2026).
+- Done when: the tab shows and sends; Test Lab hook; harness step.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/578 (lane A2): two hand pages of 8, six skin tones.
+
 ### RAIL2. The rail beside the video stays put; hide it from the rail itself (owner, 21 Nov 2026; lane A2, first)
 - Why: the vertical control column that slides in at the video's right edge should be fixed by default; hiding it
   lives in the ⋯ menu today.
@@ -3106,12 +3113,23 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   YouTube keeps its own rules (nothing over the YouTube player).
 - Done when: fixed by default, toggle works and persists; Test Lab `rail.pin`; harness; first look.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/573
+
 ### GN1. A chat message when someone opens a game table (owner, 21 Nov 2026; lane A2)
 - Why: when a game is already open, a new table or a newcomer is easy to miss.
 - What: opening a shared table posts a system line in the chat: the game's cover, "Alex opened Sea Battle", a Join
   button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
 - Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/575 (lane A2). No "full" state: tables take watchers, so they never fill.
+
+### QZ5. Quiz: no true / false, "closest guess" numbers, a guess round (owner, 21 Nov 2026; Game Studio "Quiz")
+- What: (1) remove true / false questions; turn the good ones into normal multiple-choice; (2) replace typed answers
+  with numeric "closest guess" questions (years, amounts, calculations by topic); no first-answer bonus; ×2, 50:50 and
+  second chance don't work on them; in the classic game 1–3 of them by game length; (3) Tournament: after every
+  topic round, a 5-question closest-guess finale, no jokers: closest 200, next 100, third 50, others 0 (2 players:
+  200 / 0; 3 players: 200 / 100 / 0); (4) more fun topics (films and series without naming specific pirated titles,
+  games, travel …).
+- Done when: no true / false left (test); closest scoring unit-tested; finale e2e; texts EN + TR.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/579 (Game Studio "Quiz"). The finale counts as a round (its winner gets a round win, its points add up). Filling the video's place (GFIT1 `data-fill`) follows in a small second PR.
 
 ### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
 - Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.

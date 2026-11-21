@@ -202,7 +202,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
   for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
   to it says the browser blocked it and how to allow it.
-- [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
+- [ ] 27aj. [QZ5, QZ4, QZ3] Quiz: no true / false or typed words; a number field (closest wins 200/100/50);
+  tournament ends with a 5-guess finale; Film & TV, Games, Travel topics; ×2 after answering doubles a right one.
 - [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
   visible and work (in voice too). Put the game away (✕): the full card comes back.
 - [ ] 27al. [PH4] Phone, a video playing, turn it: video, ⛶, 💬, 🎙 as before. Turn it in Oyunlar, Ara, Ben, a game,
@@ -213,6 +214,12 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27ap. [GPH1] Phone: chess still at start, XOX # lines, quiz bar clear, Beş Kare picker by 🔥. PC: Büfe note off art.
 - [ ] 27aq. [RAIL2] Computer, a video playing: the rail beside it stays. Its last small button: the rail now opens at
   the right edge only; pressed again it stays; a reload remembers. ⋯ has no such item. YouTube ⛶: the rail waits for the edge.
+- [ ] 27dg. [DG2] Draw & Guess with 2+ friends: results after each drawing fit and the game keeps its size; big canvas,
+  tools beside it; on a phone too.
+- [ ] 27gn. [GN1] With a friend: open a Sea Battle table. The friend sees a chat line with its picture and Join; Join
+  takes them to the table. Close it: the line greys out with "The table closed".
+- [ ] 27em. [EMO1] Phone: 😀 React → Hands → pick a skin tone → send 🫶. The friend sees it in that tone; the tone stays
+  after a reload.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
@@ -269,42 +276,5 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
 - **Small leftovers (Planner, 20 Nov):** upright-tablet Shorts bar has no ⋯ More; the feed drawer cuts room text
   mid-word; live e2e `quota.mjs` flake (shards share one address); `side-games-polish` harness stale since GW5.
 
-## Testing in the cloud (verified 28 Oct 2026)
-Order matters: the server wants `apps/web/dist`, so build first.
-```bash
-npm ci && npm run typecheck && npm test           # 165 unit tests
-npm run build                                     # extension + site (apps/web/dist)
-(cd apps/server && npx wrangler dev --port 8787 > /tmp/wrangler.log 2>&1 &)   # local server
-npm run e2e                                       # all pass except room.mjs when YouTube is blocked
-npm run dev -w @swm/web &                         # site only (5173); `npm run dev` also starts the server and clashes on 8787
-npm run build:extension:dev                       # extension that talks to the local server
-ffmpeg -loglevel error -f lavfi -i testsrc2=size=640x360:rate=10:duration=660 \
-  -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -b:v 200k /tmp/film.webm      # 11 min video, ~25 s
-FILM_VIDEO=/tmp/film.webm node scripts/harness/embed/film-server.mjs &
-CHROME=/opt/pw-browsers/chromium node scripts/harness/embed/run.mjs apps/extension/dist http://localhost:5173 ws://localhost:8787 /tmp/shell-test
-# Voice: two different fake microphones are required (same beep = removed by echo cancellation)
-ffmpeg -loglevel error -f lavfi -i "sine=frequency=330:duration=20,tremolo=f=3:d=0.7,volume=4" -ac 1 -ar 48000 /tmp/a.wav  # volume=4: loud enough for the speech detector (film ducking in voice/shell.mjs)
-ffmpeg -loglevel error -f lavfi -i "anoisesrc=color=pink:amplitude=0.4:duration=20,tremolo=f=2:d=0.8" -ac 1 -ar 48000 /tmp/b.wav
-VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/run.mjs http://localhost:5173
-VOICE_A=/tmp/a.wav VOICE_B=/tmp/b.wav CHROME=/opt/pw-browsers/chromium node scripts/harness/voice/shell.mjs
-NODE_PATH=$(npm root -g) node scripts/harness/phone/run.cjs   # phones; needs the film-server's video on :5300
-bash scripts/harness/run-all.sh                   # every run.cjs harness in one go (needs a video on :5300; see its header)
-# Pre-roll ad test: 12 s short video, FILM_AD=/tmp/ad.webm for film-server, FILM_AD=1 for run.mjs
-```
-- Chromium: `/opt/pw-browsers/chromium` (as root `cdp.mjs` adds `--no-sandbox`).
-- Network: in the default environment `www.youtube.com` and `upload.wikimedia.org` are blocked (proxy 403), so
-  `room.mjs` waits for "title" forever (not a code bug) and the film video is generated with ffmpeg. To allow them:
-  environment settings → Network access → Allowed domains.
-- Voice tests pass without STUN (two Chromes on one machine connect with local candidates).
-- Screenshots go to `/tmp/...png` (voice harness writes some into `scripts/harness/voice/`); never commit them.
-- Careful: `pkill -f vite`-style commands kill your own shell too (the command line matches); find processes with
-  `ps` + `awk`.
-- When a new file is added to a package's `exports` (`@swm/shared/...`), restart Vite.
-- Security headers (CSP…) come from `apps/web/public/_headers` and are only sent by the Worker (`wrangler dev` on
-  8787 / live), **not by Vite on 5173**. To test the CSP, use 8787, or put a small 5173 → 8787 proxy in front so the
-  dev extension loads the built site (the embed harness then misses 3 dev-only checks, see the 0.9.86 test pass).
-- The server allows WebSockets only from its own origin and `localhost` (`index.ts` `guardSocket`) and at most 60 new
-  connections per IP and minute (`CONNECT_LIMIT`, also simulated by `wrangler dev`): a test that opens many
-  connections in a burst gets `429`.
-- GitHub: no `gh`; use the GitHub MCP tools for PRs; `git push` works.
-- Deploys from the cloud go through GitHub Actions (no `wrangler login`); deploy keys are `production` environment secrets (`TAG_TOKEN` is the only repository secret).
+## Testing in the cloud
+The tested sequence moved to `docs/internal/cloud-testing.md` (21 Nov 2026).
