@@ -305,7 +305,8 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   distributed or used without written permission. Every `package.json`: `"license": "UNLICENSED"` + `"private": true`.
   Third-party parts keep their licences (`apps/web/public/third-party-notices.txt`); shipped code has no third-party
   package code; a new runtime dependency needs a licence check (MIT / Apache / BSD fine) and a line there.
-- **The repo is public** (free Actions minutes): never commit secrets, tokens, private e-mails or hidden addresses.
+- **The repo is public** (free Actions minutes): never commit secrets, tokens, private e-mails, hidden addresses
+  (push protection on, `github-playbook.md`)
 - `apps/web/public/privacy.html` and `terms.html` (TR + EN, `?lang=en|tr` via `lang.js`; `data-terms-link` links get
   `?lang=` from `i18n.ts` `translate`; the old `gizlilik.html` redirects). Abuse / takedown: `terms.html#abuse`
   (e-mail "Report", 72 hours; `SECURITY.md` and help `#report` point there). A change adds a dated "Changes" line in
