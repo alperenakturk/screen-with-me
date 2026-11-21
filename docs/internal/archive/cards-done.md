@@ -3112,3 +3112,19 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
 - Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/575 (lane A2). No "full" state: tables take watchers, so they never fill.
+
+### CAM3. Camera: start framed, resize from any edge, a real grid (owner, 21 Nov 2026; lane A, first)
+- Why: some browsers start in the free camera mode (an old saved choice); the framed window resizes only from its
+  bottom-right corner; with 4 people the tiles sat 3 in a row + 1 alone below, wasting space; heads were cut.
+- What: (1) reset everyone's saved camera mode once (new storage key or migration): every browser, old or new, starts
+  in the framed mode; free mode stays a choice. (2) The framed window (and free tiles) resize from every edge and
+  corner, keeping the ratio. (3) Grid like Google Meet, done better: never more tiles in a lower row than an upper
+  one, rows fill top-left first and shrink downwards (2 = side by side or stacked by the window's shape; 3 = a row or
+  a column; 4 = 2×2; 5 = 3+2; 6 = 3+3 or 2+2+2 …), the layout picked from the window's aspect ratio to give each tile
+  the biggest size; faces never cut (object-fit cover with a centre-top focus, or contain when a tile is very off-ratio).
+  Read how Meet / Zoom / Discord tile first and note it in the reference.
+- Done when: 1–8 cameras at 3 window shapes give the rule above (a unit test over the layout function); resize from
+  all 8 handles; a fresh and an old profile both start framed; Test Lab `camera.grid` (fake cameras 1–8); harness in
+  `site`; first look.
+- Owner's pick: his message (Planner chat, 21 Nov 2026).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/577 (lane A). The window's shape is free (the grid re-rows); tiles keep 4:3 (Planner, 21 Nov).
