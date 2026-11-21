@@ -157,12 +157,15 @@
    full height on the left; the bar, Stub's line and the buttons stand in a column on the right. */
 @container game (min-aspect-ratio: 16 / 10) {
   #game-stage .sea {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 250px); grid-template-rows: auto auto auto minmax(0, 1fr);
-    grid-template-areas: 'seas bar' 'seas ref' 'seas actions' 'seas .'; gap: 10px 18px;
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--game-side, 250px); grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-areas: 'seas bar' 'seas ref' 'seas actions' 'seas .'; gap: 10px var(--game-gap, 18px);
   }
   #game-stage .sea-bar { grid-area: bar; }
   #game-stage .sea-switch { display: none; }
   #game-stage .sea-seas { grid-area: seas; height: 100%; }
+  /* GFIT1: the sea in play takes the height; the other one stands beside it, smaller. */
+  #game-stage .sea:not(.watching, [data-phase='place']) .sea-seas { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  #game-stage .sea.following .sea-seas { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); }
   #game-stage .sea-ref { grid-area: ref; justify-content: flex-start; }
   #game-stage .sea-status { text-align: left; }
   #game-stage .sea-actions { grid-area: actions; justify-content: flex-start; }

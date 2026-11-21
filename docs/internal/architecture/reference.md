@@ -1538,6 +1538,8 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   tab's own (`sea:theme` in storage, nothing sent): while I place, my sea's head shows the picker (`.sea-themes`, three
   small boats, `aria-pressed`) instead of the ships-left pips. Lab `sea.theme` (next theme); `seaBattle.state` adds
   `theme`, `shipsDrawn`. Sea harness: five drawn ships in Navy, Pirates redraws and is remembered.
+  GFIT1: the root carries `data-fill`; in the video's place the side column is `var(--game-side)` and, in battle, the
+  sea in play takes two thirds of the width (the full height), the other sea one third (swapped while `.following`).
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),

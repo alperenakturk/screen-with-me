@@ -222,6 +222,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const root = el('div', { class: 'sea', 'data-phase': 'place' });
   // The table's id, for the harnesses (GMP b: the games sweep seats five more players at it).
   root.dataset.table = gameId;
+  // GFIT1: in the video's place the seas fill the box beside the one narrow side column (`--game-side`, stage.css).
+  root.dataset.fill = '';
   app.replaceChildren(root);
 
   let state: State | null = null;
