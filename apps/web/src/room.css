@@ -3331,7 +3331,6 @@ html.shorts-view .footer {
 
 .voice-on {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
@@ -6982,6 +6981,20 @@ html.in-room .topbar-right > .lang {
   gap: 8px;
 }
 
+/* TG2: the voice icons and Share in one row of the narrow side panel (a stream's line still takes its own place). */
+html:not(.phone) .together-actions:not(:has(.live-card.active)) {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+html:not(.phone) .together-actions .voice-on {
+  gap: 4px;
+}
+
+html:not(.phone) .together-actions :is(.voice-on .small-btn, .live-share) {
+  padding-inline: 8px;
+}
+
 .together-actions .live-card {
   padding-top: 0;
   border-top: 0;
@@ -7010,7 +7023,7 @@ html:not(.phone) .together-card:has(.live-card.active) > * {
 
 html:not(.phone) .together-card:has(.live-card.active) > .together-strip {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 1;
 }
 
 html:not(.phone) .together-card:has(.live-card.active) > .together-actions {
@@ -7023,7 +7036,7 @@ html:not(.phone) .together-card:has(.live-card.active) .together-actions > .voic
 
 html:not(.phone) .together-actions .live-card.active {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   align-self: center;
   min-width: 0;
   padding: 0 0 0 10px;
@@ -10085,7 +10098,8 @@ html.phone .speed-pop .speed {
   }
 
   .voice-ptt,
-  .ptt-key {
+  .ptt-key,
+  .ptt-key-row {
     display: none !important;
   }
 }
@@ -11694,11 +11708,12 @@ html:not(.phone) .together-card.compact > .together-actions {
   grid-column: 1 / -1;
   grid-row: 2;
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 html:not(.phone) .together-card.compact .voice-on {
   flex-wrap: nowrap;
+  gap: 4px;
 }
 
 html:not(.phone) .together-card.compact :is(.together-name, .voice-hint) {
@@ -11720,7 +11735,7 @@ html:not(.phone) .together-card.compact .together-more {
 }
 
 html:not(.phone) .together-card.compact .voice-on {
-  gap: 6px;
+  gap: 4px;
 }
 
 /* In voice the compact card's one row is the voice buttons and Share: Share shows its icon only (its name is kept for

@@ -79,7 +79,7 @@ const buttons = (page) =>
   page.evaluate(() => {
     const card = document.getElementById('together');
     const c = card.getBoundingClientRect();
-    const ids = document.getElementById('voice-on').hidden ? ['voice-join', 'live-share'] : ['voice-mic', 'voice-deaf', 'voice-cam', 'voice-leave', 'live-share'];
+    const ids = document.getElementById('voice-on').hidden ? ['voice-join', 'live-share'] : ['voice-mic', 'voice-deaf', 'voice-cam', 'voice-sound', 'voice-leave', 'live-share'];
     const bad = [];
     for (const id of ids) {
       const b = document.getElementById(id);
