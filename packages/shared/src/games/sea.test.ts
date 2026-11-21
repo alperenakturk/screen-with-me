@@ -163,6 +163,17 @@ describe('sea battle messages', () => {
 });
 
 // GMP (owner, 15 Nov 2026): watchers see every ship live; a player only their own; everyone at the end.
+describe('SB2: the shooter\'s live aim', () => {
+  it('copies an aim (a cell or none) and refuses a bad one', () => {
+    expect(parseSeaMessage(JSON.stringify({ t: 'aim', target: 2, cell: 37, x: 1 }))).toEqual({ t: 'aim', target: 2, cell: 37 });
+    expect(parseSeaMessage(JSON.stringify({ t: 'aim', target: 0, cell: null }))).toEqual({ t: 'aim', target: 0, cell: null });
+    expect(parseSeaMessage(JSON.stringify({ t: 'aim', target: 6, cell: 1 }))).toBeNull();
+    expect(parseSeaMessage(JSON.stringify({ t: 'aim', target: 1, cell: 100 }))).toBeNull();
+    expect(parseSeaMessage(JSON.stringify({ t: 'aim', target: 1 }))).toBeNull();
+    expect(parseSeaMessage(JSON.stringify({ t: 'aim', target: '1', cell: 3 }))).toBeNull();
+  });
+});
+
 describe('who sees the ships', () => {
   it('a player sees only their own sea\'s ships while the game goes on', () => {
     expect(seaShipsVisible(0, 0, false, false)).toBe(true);
