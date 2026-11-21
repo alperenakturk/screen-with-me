@@ -1512,7 +1512,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
   `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
   `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
-  wins, both used up = draw; `practiceWord`); the word lists moved to `packages/shared/src/games/words/` (the server
+  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); the word lists moved to `packages/shared/src/games/words/` (the server
   unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
   → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
   day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
@@ -2351,6 +2351,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     / "Alex (host) deleted Sam's message", not a `.chat-line`, so unread counters skip it) and breaks bubble grouping.
     Test Lab `chat.delete` (deletes my newest message, no question). e2e `chat-delete.mjs`; harness
     `scripts/harness/chat-delete` (CI `site`); shots screen `chat-delete`.
+  - **A game table in the chat (card GN1, 21 Nov 2026):** a `tables` message with `opened` posts `li.chat-game`
+    (`ui/chat.ts` `gameOpened`, a `Line` of kind `game`, local to the tab like activity lines and capped with them, but
+    never hidden by "Hide activity"; it counts as unread except for the opener): the game's cover (`games/gallery.ts`
+    `coverOf`, loaded lazily with the hall's chunk; 🎮 until then), "Alex opened a Sea Battle table" (`hub.opened`) and
+    Join (`hub.join`, `games.join(id)` → stage `join`, the same open as the invite card; not on the opener's own line).
+    Every `tables` / `welcome` calls `gameTables(ids)`: a line whose table is gone redraws greyed with "The table
+    closed" and no Join. One line per table id. Tables have no seat limit (others watch), so there is no "full" state.
+    Test Lab `chat.gameInvite` (JSON of the lines). Harness `scripts/harness/game-chat` (CI `games-more`: open, the line on a
+    computer and a phone, Join from it, greyed on close).
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count

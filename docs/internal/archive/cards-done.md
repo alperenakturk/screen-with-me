@@ -3098,9 +3098,16 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
 
+### GN1. A chat message when someone opens a game table (owner, 21 Nov 2026; lane A2)
+- Why: when a game is already open, a new table or a newcomer is easy to miss.
+- What: opening a shared table posts a system line in the chat: the game's cover, "Alex opened Sea Battle", a Join
+  button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
+- Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
+- Done: PR claude/gn1-game-chat (lane A2). No "full" state: tables take watchers, so they never fill.
+
 ### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
 - Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.
 - What: the shared stage rule above (`stage.ts`, shared lobby / side column CSS: one narrow side width for all
   games), always open in the video's place; then Classics (chess, dama, backgammon, reversi, XOX, Four) fills it.
 - Done when: every table opens in the video's place; Classics' board is the biggest square that fits; sweep shots.
-- Done: https://github.com/alperenakturk/screen-with-me/pull/571 (stage) + the Classics PR (this branch, claude/gfit1-classics).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/571 (stage) + https://github.com/alperenakturk/screen-with-me/pull/583 (Classics).
