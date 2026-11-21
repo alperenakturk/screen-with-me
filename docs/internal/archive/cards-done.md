@@ -3120,3 +3120,13 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
 - Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/575 (lane A2). No "full" state: tables take watchers, so they never fill.
+
+### QZ5. Quiz: no true / false, "closest guess" numbers, a guess round (owner, 21 Nov 2026; Game Studio "Quiz")
+- What: (1) remove true / false questions; turn the good ones into normal multiple-choice; (2) replace typed answers
+  with numeric "closest guess" questions (years, amounts, calculations by topic); no first-answer bonus; ×2, 50:50 and
+  second chance don't work on them; in the classic game 1–3 of them by game length; (3) Tournament: after every
+  topic round, a 5-question closest-guess finale, no jokers: closest 200, next 100, third 50, others 0 (2 players:
+  200 / 0; 3 players: 200 / 100 / 0); (4) more fun topics (films and series without naming specific pirated titles,
+  games, travel …).
+- Done when: no true / false left (test); closest scoring unit-tested; finale e2e; texts EN + TR.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/579 (Game Studio "Quiz"). The finale counts as a round (its winner gets a round win, its points add up). Filling the video's place (GFIT1 `data-fill`) follows in a small second PR.
