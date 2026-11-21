@@ -1,1 +1,2 @@
 - Classics in the video's place: the board is now as big as the space allows, with the score, players and buttons in a narrow column beside it.
+- On a phone, the "opened a table" card over the video now shortens a long line with "…" instead of cutting it off.

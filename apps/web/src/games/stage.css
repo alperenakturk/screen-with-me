@@ -26,3 +26,9 @@ html:not(.phone) .theater.side-rail.dock-mode .player-wrap:has(> #game-stage.sta
 @container game (max-width: 720px) {
   #game-stage .game-fit > * { --game-side: 248px; --game-gap: 12px; }
 }
+
+/* GFIT1 (Planner, seen on a phone): the invite card over the video ("Alex opened a Sea Battle table") shortens its words
+   with "…" when the screen is narrow; the icon, Join and Later stay whole. */
+.game-invite .game-invite-text { min-width: 0; flex: 0 1 auto; }
+.game-invite .game-invite-words { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-invite .game-invite-text .ico, .game-invite .btn { flex: none; }

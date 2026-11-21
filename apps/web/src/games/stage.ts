@@ -1407,7 +1407,10 @@ export function createGameStage(opts: StageOptions) {
     document.getElementById('game-invite')?.remove();
     const join = el('button', { type: 'button', class: 'btn small-btn primary' }, t('hub.join'));
     const later = el('button', { type: 'button', class: 'btn small-btn' }, t('game.later'));
-    const text = el('span', { class: 'game-invite-text' }, gameIcon(table.kind), t('hub.opened', { name: table.by.name, game: titleOf(table.kind) }));
+    // GFIT1 (Planner): the words in their own span, so a narrow phone shortens them with "…" (a flex box's bare text
+    // was cut with no ellipsis).
+    const words = t('hub.opened', { name: table.by.name, game: titleOf(table.kind) });
+    const text = el('span', { class: 'game-invite-text', title: words }, gameIcon(table.kind), el('span', { class: 'game-invite-words' }, words));
     const card = el('div', { id: 'game-invite', class: 'home-ask game-invite', role: 'status', 'data-table': table.id }, text, join, later);
     join.addEventListener('click', () => void open(table));
     later.addEventListener('click', () => card.remove());
