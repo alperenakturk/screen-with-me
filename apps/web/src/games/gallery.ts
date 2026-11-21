@@ -88,6 +88,11 @@ function cover(kind: string, fallback: () => Node): HTMLElement {
   return box;
 }
 
+/** GN1: a room game's cover for the chat's "opened a table" line (null: no cover drawn for it). */
+export function coverOf(kind: RoomGameKind): HTMLElement | null {
+  return COVERS[kind] ? cover(kind, () => document.createTextNode('')) : null;
+}
+
 type SideKind = 'snack' | 'garden' | 'word';
 /** Solo games in the gallery: the ones built so far open, the others are announced. */
 const SIDE_GAMES: readonly { kind: SideKind; solo: SoloKind | null }[] = [
