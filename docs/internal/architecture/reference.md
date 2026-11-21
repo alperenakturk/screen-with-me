@@ -1583,6 +1583,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   an overdue phase on (`overdue` / `advance`; Quiz the same): live alarms ran > 25 s late right after a deploy. The drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).
   Guessers/drawer chat privately with `secret`. Piece `games/draw.ts`. Test: `scripts/e2e/draw.mjs`. Ctrl+Z / Ctrl+Y
   send one undo / redo per press, never per key-repeat (KEYREP, 0.9.97.94).
+  **DG2 layout (21 Nov 2026):** Draw's own styles are `games/draw.css` (its chunk), scoped to `.dg-page` (Draw's page
+  only; Quiz shares the `draw-*` classes and keeps room.css / lobby.css). A computer (the video's place and the free
+  window): `.draw-left` is a grid `tools | top, bar, canvas`; the canvas sits in `.draw-canvas-cell`, a size container
+  (`dgcanvas`), as the biggest 4 : 3 that fits (`min(100cqw, 100cqh * 4 / 3)`); the drawer's tools are a 104 px column
+  beside it (icons only, 4 × 5 colours of 24 px); a running game carries `data-fill` (GFIT1: laid out at the video's
+  place itself) and the side column is `var(--game-side)` (players compact, two columns from five players without
+  avatars / badges; the chat takes the rest at 15 px). The lobby and podium drop `data-fill` (a filled card stood small)
+  and keep the catalog's design scale; Draw's `wide` is 820 × 500 (was 440: an empty band). The reveal's results are wrapping chips in an overlay that can never
+  overflow (`.draw-gains` shrinks and clips): an overflowing `.draw-overlay` (stage.ts `FIT_INSIDE`) made `refit` divide
+  the scale by the overflow four times, the "results shrink the game to ~10 %" bug. A phone's Games tab: players a grid
+  whose columns follow the width (a score or ✅ never adds a row), five+ results without faces or the big word, the
+  guesses ≥ 44 px. Test Lab `draw.reveal8` (eight made-up players' results for one reveal's time, this screen only);
+  harness `draw-layout` (3 players: page + two `GameSocket` guests; 1366, 1920, iPhone; CI `games-more`).
   **Quiz (0.9.74):** object `Quiz` (`apps/server/src/quiz.ts`, binding `QUIZZES`, migration `v4`, `/api/quiz/:id/ws`),
   `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` + `quiz-questions-2.ts` (P9: 1175 questions, the second bank with a difficulty `d` 1–3; a game goes from easy to hard; the browser keeps the last 600 question ids it saw (`quiz:seen`) and sends them as a base64 bitmap in its hello (`encodeSeen`), the table avoids them and its own recent ones; the stars show the difficulty) (general knowledge, TR/EN, no film/series names; options
   shuffled every game). 2–8 players, 10 questions × 15 s, correct = 100–200 points (faster = more), reveal when everyone
@@ -2182,6 +2195,28 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `blocked` / `system` / `busy` / `none`), 📊 "Camera refused" / "Camera window: folded". Harness
   `scripts/harness/cam-laptop/run.cjs` (1366 and 1920, `site` job); `scripts/shots.cjs` screens `camera-on`,
   `camera-refused` (the shots' browser has a fake microphone and camera).
+- **Camera window: start framed, any edge, a real grid (card CAM3, owner 21 Nov 2026):** (1) the layout switch is
+  saved under a new key `opt:camView` (`free` / `group`); the old `opt:camLayout` is no longer read, so every browser,
+  old or new, starts in the one window ("framed") and the free layout stays one press away. (2) Eight resize handles
+  (`handles()` in `ui/cam-float.ts`, `data-edge` n / s / e / w / ne / nw / se / sw): on the one window `.cam-edge`
+  (the "se" one keeps the old `.cam-resize` grip), on free tiles `.cam-tile-edge` (the "se" one is `.cam-tile-resize`).
+  The opposite edge stays put (`resized`); a side handle of the one window changes only its width, a handle with a
+  top or bottom sets its height (`.sized`). A free tile always keeps 4:3 (its larger pull leads; a saved `h` from
+  before is ignored), so only `x`, `y`, `w` are saved. A redraw during a pull no longer puts the piece back (`apply`
+  returns while `drag` is set). The default width rule (`ROW_TILE_W`) applies only to the never-moved default.
+  (3) The grid: `packages/shared/src/cam-grid.ts` `camGrid(n, w, h, gap, ratio)` tries every row count, splits the
+  tiles as evenly as possible with the extra ones on top (`splitRows`: 5 = 3 + 2, 7 = 3 + 2 + 2, never 3 + 3 + 1) and
+  keeps the count that gives the biggest 4:3 tile (ties: fewer rows); `camGridBoxes` centres each row and the grid.
+  `layoutGrid` in `cam-float.ts` places the tiles absolutely in `.cam-grid` (no set height: the grid is as tall as it
+  needs at most ¾ of its width; a set height: it fills it). A pinned camera (spotlight) takes the left ¾ and the
+  others form their own grid in the right strip (the old CSS spotlight rules are gone). Videos use `object-position:
+  50% 30%` so a crop takes the sides and the bottom first. How others tile (read 21 Nov 2026): Google Meet's auto /
+  tiled view picks the column count from the window's shape for the biggest tile and centres a shorter last row;
+  Zoom's gallery fills equal rows and centres the last; Discord packs equal 16:9 tiles row by row; all keep every tile
+  the same size and shape. Unit test `cam-grid.test.ts` (1–8 cameras, three shapes); Test Lab `camera.grid` (🎬, 0–8
+  drawn cameras with no one in voice: `labGrid`, answers the rows and tile sizes); harness
+  `scripts/harness/cam-grid/run.cjs` (`site` job: fresh and old profile start framed, 1–8 cameras at three shapes,
+  all eight handles, free tile edges keep 4:3); `scripts/shots.cjs` screens `camera-grid`, `camera-grid-4`.
 - **Streaming / screen share (0.9.64, `packages/shared/src/live-p2p.ts`, site `ui/live.ts`, plan + decisions
   `docs/internal/yayin.md`):** bottom part of the "Birlikte" card (`#live-card`): "🖥️ Ekranını paylaş"
   (`getDisplayMedia`, 720p/30, tab audio) / "📹 Kamerayla yayın" (720p); one stream per room (`live_busy`), at most
