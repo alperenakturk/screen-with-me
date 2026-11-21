@@ -1809,3 +1809,22 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 ## Owner's to-do done 21 Nov 2026 (Secret Protection + Push protection on, auto-merge and head-branch deletion on)
 - [x] GitHub (21 Nov): Code security → Secret scanning + Push protection on. Auto-merge and "Automatically delete head
   branches" are on; `github-playbook.md` lists the rest.
+
+## Owner's hand tests superseded by later releases (moved 21 Nov 2026, Planner)
+These describe layouts that GW3 (games only in the video's place or a free frame), GW5, GFIT1 and PH4 (a sideways
+phone shows only the video) replaced; the newer tests cover the same screens. Verbatim:
+- [ ] 16c. [QW1–QW5, 0.9.97.124] Tablet upright and sideways, a video playing: Snack Bar never covers the video
+  (sideways the right column down to the message box, upright the column beside the chat); the rail's 🎮 hall shows
+  whole; a sideways phone's hall shows all six tables in a row. Laptop, chess with a video playing: "Video paused for
+  the game" under the window's top bar, its buttons read "Game hall · Leave table · Close table · Back to video".
+  Phone upright, a table: one top row (the small video with "‹" = back, the name, ?, 🎙, 🎮, ⋯ holding Leave / Close,
+  Close asks first); sideways Leave / Close sit in that row. Cinema mode (T) then Snack Bar: cinema mode ends, the
+  window sits off the video.
+- [ ] 17. [W121, 0.9.97.121] Snack Bar on a laptop and a big screen: its window covers the chat column from the top to
+  just above the message box and you can still type; drag, resize, double-click the top bar: back to the column.
+- [ ] 21. [Q1–Q2, 0.9.97.114; P2–P4, 0.9.97.112; W1–W5, 0.9.97.111] Game windows: a side game keeps the video playing,
+  a table pauses it for everyone with a note; side games open as a window on the right; the hall slides out of the
+  window's left; hovering the corner moves nothing; drag, resize, reopen and reload keep each game's spot; no ⛶.
+- [ ] 26. [L1–L3, 0.9.97.96] Phone sideways: a game fills the screen; a stream's small picture top right; a big
+  monitor's bigger Snack Bar keeps its size.
+

@@ -3254,3 +3254,12 @@ Security and Research suggestions: `docs/internal/cards-proposed.md`.
   a real-YouTube check as a non-required step); find the Sea zoom race; document cam-phone's container limit.
 - Done when: 10 CI runs in a row without a first-attempt failure on these steps.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/608 (lane A, 21 Nov 2026): `scripts/harness/fake-youtube.cjs` stands in for YouTube's player in every harness except yt-focus (continue-on-error, the one real-YouTube step); Sea zoom check waits for the zoom-out; cam-phone's container limit in `cloud-testing.md`. New harnesses use `fakeYouTube(ctx)` unless the test is about YouTube. The 10-run count starts at #608; the Planner watches it.
+
+### QZ5b. Quiz fills the video's place; shared-stage leftovers (Planner, 21 Nov 2026; a fresh Game Studio session)
+- Why: QZ5 left Quiz on its design shape (empty bands in the video's place); GFIT1's sweep left `tabup/tr/word` (the
+  solo Five Frames legend at 12.8 px on an upright tablet in Turkish) below the 13 px rule; the topic chip wraps on a
+  tablet; low disabled-button contrast and a small 🏆 count in Quiz.
+- What: Quiz opts into `data-fill` + `var(--game-side)` (its own rules in room.css / lobby.css only); fix the three
+  sweep findings.
+- Done when: 1366 / 1920 / tablet / phone shots; games sweep green; first look.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/609, https://github.com/alperenakturk/screen-with-me/pull/612 (Game Studio "Quiz fill", 21 Nov 2026; v0.9.97.197): Quiz fills the video's place (`games/quiz.css`, `data-fill`), compact player rows (8 fit), sweep leftovers fixed (topic chip "…", grey jokers, 🏆 pill, Five Frames legend 14 px); Test Lab hook `quiz.fill`; #612: the lab `quiz.toEnd` step stopped skipping into a rematch (harness-only, not a player bug), quiz-click checks it.
