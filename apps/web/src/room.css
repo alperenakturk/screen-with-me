@@ -3245,31 +3245,72 @@ html.shorts-view .footer {
 
 /* ---- "Birlikte" kartı: odadakiler (seste olanlar yeşil halkalı), ses/kamera düğmeleri, ekran paylaşımı ---- */
 .together-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px;
 }
 
-.together-head {
+/* Card TG2: 🔊 sound settings, a small window under the voice buttons (push-to-talk, talk window, volume, devices). */
+.sound-pop {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  z-index: 30;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+}
+
+.sound-pop[hidden],
+.sound-pop [hidden] {
+  display: none !important;
+}
+
+.sound-pop-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.together-card .together-title {
+.sound-pop-head h4 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  text-transform: none;
-  letter-spacing: 0;
+  font-size: 15px;
 }
 
-.together-head .voice-limit {
-  flex-basis: auto;
-  text-align: right;
+.sound-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 14px;
+}
+
+.sound-volume input {
+  flex: 1 1 auto;
+  max-width: 55%;
+}
+
+.sound-pop .talk-window-btn,
+.sound-pop .sound-devices {
+  align-self: stretch;
+  justify-content: center;
+}
+
+.sound-note {
+  margin: 0;
+}
+
+.voice-sound.on {
+  border-color: var(--accent);
 }
 
 .voice-row[hidden] {
@@ -11634,28 +11675,18 @@ html:not(.phone) .together-card.compact {
   padding: 10px 12px;
 }
 
-html:not(.phone) .together-card.compact > :is(.together-head, .together-strip) {
+html:not(.phone) .together-card.compact > .together-strip {
   display: contents;
 }
 
-html:not(.phone) .together-card.compact .together-title {
-  grid-column: 1;
-  grid-row: 1;
-}
-
 html:not(.phone) .together-card.compact .voice-people {
-  grid-column: 2;
+  grid-column: 1 / -1;
   grid-row: 1;
   flex-wrap: nowrap;
   gap: 4px;
   min-width: 0;
   overflow: hidden;
   padding: 3px;
-}
-
-html:not(.phone) .together-card.compact .voice-limit {
-  grid-column: 3;
-  grid-row: 1;
 }
 
 html:not(.phone) .together-card.compact > .together-actions {

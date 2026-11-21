@@ -575,11 +575,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       </div>
 
       <aside class="side">
-        <section class="card together-card" id="together">
-          <div class="together-head">
-            <h3 class="together-title" data-i18n="together"></h3>
-            <span id="voice-limit" class="voice-limit muted small"></span>
-          </div>
+        <section class="card together-card" id="together" data-i18n-title="together">
           <div class="together-strip">
             <div id="voice-people" class="voice-people"></div>
           </div>
@@ -590,15 +586,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="voice-mic" type="button" class="btn small-btn voice-mic"></button>
                 <button id="voice-deaf" type="button" class="btn small-btn voice-deaf" aria-pressed="false"></button>
                 <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden></button>
-                <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
-                <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
-                <button id="voice-ptt-key" type="button" class="btn small-btn ptt-key" hidden></button>
-                <button id="voice-talk-window" type="button" class="btn small-btn talk-window-btn" aria-pressed="false" hidden><span aria-hidden="true">🪟</span> <span data-i18n="voice.talkWin"></span></button>
+                <button id="voice-sound" type="button" class="btn small-btn voice-sound" data-i18n-title="voice.sound" aria-haspopup="dialog" aria-expanded="false" aria-controls="sound-pop"></button>
+                <button id="voice-leave" type="button" class="btn small-btn voice-leave" data-i18n-title="voice.leaveVoice"></button>
               </div>
             </div>
             <div class="live-card" id="live-card" hidden>
               <div class="live-share-wrap" id="live-share-wrap">
-                <button id="live-share" type="button" class="btn live-share" aria-haspopup="true" aria-expanded="false"><span data-i18n="live.share"></span> <span class="live-caret" aria-hidden="true">▾</span></button>
+                <button id="live-share" type="button" class="btn live-share" data-i18n-title="live.share" aria-haspopup="true" aria-expanded="false"></button>
                 <div id="live-menu" class="live-menu" role="menu" hidden>
                   <button id="live-screen" type="button" class="live-menu-item" role="menuitem"><span class="live-menu-icon" aria-hidden="true"></span><b data-i18n="live.screen"></b><span class="muted small" data-i18n="live.screenD"></span></button>
                   <label class="live-menu-check" id="live-with-cam-row"><span class="live-menu-icon" aria-hidden="true"></span><span class="live-check-text" data-i18n="live.withCam"></span><input type="checkbox" class="switch" id="live-with-cam" /></label>
@@ -620,6 +614,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <span id="live-limit" class="voice-limit muted small"></span>
               </div>
             </div>
+          </div>
+          <div id="sound-pop" class="sound-pop" role="dialog" data-i18n-title="voice.sound" data-island hidden>
+            <div class="sound-pop-head"><h4 data-i18n="voice.sound"></h4><button id="sound-pop-close" type="button" class="icon-btn" data-i18n-title="close">✕</button></div>
+            <label class="sound-row voice-ptt"><span data-i18n="voice.ptt"></span><input type="checkbox" class="switch" id="voice-ptt" /></label>
+            <div class="sound-row ptt-key-row"><span data-i18n="voice.pttKeyLabel"></span><button id="voice-ptt-key" type="button" class="btn small-btn ptt-key"></button></div>
+            <button id="voice-talk-window" type="button" class="btn small-btn talk-window-btn" aria-pressed="false" hidden><span aria-hidden="true">🪟</span> <span data-i18n="voice.talkWin"></span></button>
+            <label class="sound-row sound-volume"><span data-i18n="voice.voicesVolume"></span><input type="range" id="voice-out-volume" min="0" max="100" step="5" /></label>
+            <button id="voice-devices" type="button" class="btn small-btn sound-devices"><span aria-hidden="true">🎛</span> <span data-i18n="voice.devicesAll"></span></button>
+            <p class="muted small sound-note" data-i18n="voice.soundNote"></p>
           </div>
           <div id="voice-cams" class="voice-cams" hidden>
           </div>

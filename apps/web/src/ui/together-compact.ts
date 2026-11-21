@@ -72,6 +72,42 @@ export function watchTogetherCompact(card: HTMLElement): void {
           return { en: text, tr: text };
         },
       },
+      {
+        // Card TG2: every visible control of the Together card with its name and size, whether one spills out of the
+        // card or wraps, and (`sound`) the 🔊 sound settings window opened with what it holds.
+        id: 'together.layout',
+        tab: 'video',
+        run: async (arg?: string) => {
+          if (arg?.trim() === 'sound') {
+            const sound = document.getElementById('voice-sound');
+            const pop = document.getElementById('sound-pop');
+            if (sound && !sound.hidden && pop?.hidden) sound.click();
+            await new Promise((r) => requestAnimationFrame(r));
+          }
+          const box = card.getBoundingClientRect();
+          const shown = (e: Element) => (e as HTMLElement).offsetParent !== null && e.getBoundingClientRect().width > 0;
+          const controls = [...card.querySelectorAll<HTMLElement>('button, input, select')].filter(shown).map((e) => {
+            const r = e.getBoundingClientRect();
+            return {
+              id: e.id || e.className.split(' ')[0],
+              name: e.getAttribute('aria-label') || e.title || e.textContent?.trim() || (e.closest('label')?.textContent?.trim() ?? ''),
+              size: `${Math.round(r.width)}x${Math.round(r.height)}`,
+              ...(r.right > box.right + 1 || r.left < box.left - 1 ? { outside: true } : {}),
+            };
+          });
+          const pop = document.getElementById('sound-pop');
+          const p = pop && !pop.hidden ? pop.getBoundingClientRect() : null;
+          const text = JSON.stringify({
+            title: !!card.querySelector('.together-title'),
+            counter: !!card.querySelector('#voice-limit'),
+            cardHeight: Math.round(box.height),
+            controls,
+            unnamed: controls.filter((c) => !c.name).map((c) => c.id),
+            soundPop: p ? { open: true, fits: p.top >= 0 && p.bottom <= innerHeight && p.left >= 0 && p.right <= innerWidth } : { open: false },
+          });
+          return { en: text, tr: text };
+        },
+      },
     ],
   }));
 }
