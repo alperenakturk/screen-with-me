@@ -6284,6 +6284,29 @@ html.in-room .topbar-right > .lang {
   max-width: 80%;
 }
 
+/* VC4 first look: the crowd note is read once, so it is a soft card in the text colour, not a faint divider line. */
+.chat-list .chat-system.chat-note {
+  display: block;
+  margin: 10px 4px 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.chat-list .chat-system.chat-note::before,
+.chat-list .chat-system.chat-note::after {
+  content: none;
+}
+
+.chat-list .chat-system.chat-note > span {
+  max-width: none;
+}
+
 /* Yazma kutusu: gönder oku kutunun içinde */
 .chat-form {
   position: relative;
