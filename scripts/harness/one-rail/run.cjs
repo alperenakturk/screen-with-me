@@ -33,6 +33,8 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
     localStorage.setItem('tipsSeen', '1');
     localStorage.setItem('lang', 'en');
     localStorage.setItem('opt:autoInvite', '0');
+    // Card RAIL2: the rail is fixed by default; these checks are about the edge (the rail's hide button).
+    localStorage.setItem('opt:railAuto', '1');
   });
   await page.goto(`${SITE}/r/${room}`);
   await page.fill('#name', 'Alex');
@@ -72,9 +74,8 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   check(!overlap(dock1, player1), 'video file: the rail is beside the video, never on it', JSON.stringify({ dock1, player1 }));
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/file.png` });
 
-  // BH10 (owner): "Keep the controls open" keeps the rail out in the window too while the video plays, also when the
+  // BH10 (owner): the rail's pin (since RAIL2 its own last button) keeps the rail out in the window too while the video plays, also when the
   // mouse leaves the video (it rested there with the player's bar; only fullscreen kept it).
-  await page.click('#dock-more');
   await page.click('#rail-pin');
   const chat = await rect(page, '.chat-panel');
   await page.mouse.move(wrap.l + wrap.w / 2, wrap.t + wrap.h / 2, { steps: 3 });
@@ -85,7 +86,7 @@ const overlap = (a, b) => a && b && a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b 
   check(playing && pinDock.shown && !(await page.evaluate(() => document.querySelector('#theater').classList.contains('dock-idle'))), 'pinned, window: the video plays, the mouse is away for 3 s, the rail stays open', JSON.stringify({ playing, pinDock }));
   check(!overlap(pinDock, await rect(page, '.player')), 'pinned, window: the rail is still beside the video');
   await page.evaluate(() => {
-    localStorage.setItem('opt:railPin', '0');
+    localStorage.setItem('opt:railAuto', '1');
     dispatchEvent(new Event('swm-railpin'));
   });
 

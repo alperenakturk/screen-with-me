@@ -1784,3 +1784,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 
 ## Game Studio handoff line, archived 20 Nov 2026 (GPH1 done; no Game Studio branch left)
 - [x] Game Studio (handoff 20 Nov): GPH1 done (#566, #567); leftovers in `design/games/phone-review-gph1.md`.
+
+## B2 CI note, archived 21 Nov 2026 (lane A2, RAIL2: STATUS size limit)
+  - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
+    `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.

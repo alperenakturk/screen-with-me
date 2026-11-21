@@ -2496,9 +2496,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   hover)`, `<html class="has-mouse">`) keeps the edge mode and the resting rail wherever a mouse exists (the touch-only
   rules are `html.is-touch:not(.has-mouse)`), a button's focus holds the rail only for keyboard users in every mode, and
   `hoveringControls` is double-checked with `dock.matches(':hover')`. Tests: `yt-room` (a simulated touch-screen
-  laptop: fails on 0.9.93.6), `embed/run.mjs` (film page: after a focused rail button the dock still rests). "Keep the controls
-  open" (`opt:railPin`, `.rail-pin`; ⋯ `#rail-pin` and Settings → My screen `#opt-railpin`, `RAIL_PIN_EVENT` keeps
-  both in step) never lets it rest. "Hide the controls" (`opt:railOff`, `#rail-show`) is gone and no longer read. Since 0.9.93.9 (card 2,
+  laptop: fails on 0.9.93.6), `embed/run.mjs` (film page: after a focused rail button the dock still rests). **Card RAIL2 (owner,
+  21 Nov 2026): the rail is fixed by default** (`.rail-pin`, never rests). Its own last button `#rail-pin` (`.rail-hide`,
+  a short button under the last group, 26–28 px, a panel-with-arrow icon; `aria-pressed` = fixed; label `rail.hide` / `rail.keep`) and
+  Settings → My screen `#opt-railpin` switch it to waiting for the edge: `opt:railAuto` = '1' (a new key, so everyone
+  starts fixed; the old `opt:railPin` is no longer read), `RAIL_PIN_EVENT` keeps both in step. It is no longer in ⋯.
+  Fullscreen YouTube keeps its own rules: there the rail always waits for the edge (`pinWanted`, re-checked on the
+  theater's class changes and `fullscreenchange`). Touch screens without a mouse have no edge and no button. Test Lab
+  `rail.pin` (saved choice, fixed now, edge mode, resting). Harnesses `yt-room` (fresh = fixed, the button on the rail,
+  nothing in ⋯, pinned yet resting in YouTube fullscreen), `rail-speed`; `one-rail`, `embed` start with `opt:railAuto`
+  = '1' for their edge checks. "Hide the controls" (`opt:railOff`, `#rail-show`) is gone and no longer read. Since 0.9.93.9 (card 2,
   "one rail everywhere") every docked theater is `side-rail`: video files and the sync test use the same column, the
   empty room gets it too (`rail-bare`, always out, 📌 / ⛶ dimmed) and the film page has no toolbar either: its rail is
   a column beside the film, the hole being `#player` left of it (`reportLayout`). **Card 2b (0.9.93.17, owner's B):** the
@@ -2863,9 +2870,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `requestRate` fits every request; `showRates` paints all pickers and the ⋯ row; one delegated click handles − / +
   and the ready speeds outside the rail (the rail's own handler closes its pop). The engine plays and shares a custom
   rate once (scenario in `sync-engine.test.ts`). Phones: targets ≥ 44 px; the speed is in the sideways / fullscreen
-  rail only (the toolbar is hidden in the phone room). "Keep the controls open" (`opt:railPin`) is off unless someone
-  turns it on: nothing sets it by itself. Test Lab `rail.speed` (speed, ready / ± values for this media, picker open,
-  ⋯ height, `opt:railPin`). Harness `scripts/harness/rail-speed` (CI games-more).
+  rail only (the toolbar is hidden in the phone room). The rail is fixed unless someone presses its hide button (card RAIL2,
+  `opt:railAuto`). Test Lab `rail.speed` (speed, ready / ± values for this media, picker open, ⋯ height, rail fixed or
+  not). Harness `scripts/harness/rail-speed` (CI games-more).
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
 - **"Video ended" card (card EC1):** `ui/end-card.ts` `showNextCard` (from the engine's `onEnded` and the film page's

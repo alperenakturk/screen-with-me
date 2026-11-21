@@ -90,10 +90,11 @@ export function createSettingsPanel(
   // "Keep the controls open" (0.9.93): the rail beside the video stays instead of waiting for the mouse at the edge.
   const railPin = root.querySelector<HTMLInputElement>('#opt-railpin');
   if (railPin) {
-    const drawPin = () => (railPin.checked = load('opt:railPin') === '1');
+    // Card RAIL2: on unless the rail's own button switched it to waiting for the edge (`opt:railAuto`).
+    const drawPin = () => (railPin.checked = load('opt:railAuto') !== '1');
     drawPin();
     railPin.addEventListener('change', () => {
-      save('opt:railPin', railPin.checked ? '1' : '0');
+      save('opt:railAuto', railPin.checked ? '0' : '1');
       dispatchEvent(new Event(RAIL_PIN_EVENT));
     });
     addEventListener(RAIL_PIN_EVENT, drawPin);
