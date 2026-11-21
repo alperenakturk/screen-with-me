@@ -3164,3 +3164,78 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done when: ranking bug fixed with a test; timer and points server-checked; levels; e2e with 3 players.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/574, https://github.com/alperenakturk/screen-with-me/pull/584,
   https://github.com/alperenakturk/screen-with-me/pull/588 (v0.9.97.186–189; levels, GeoNames cities CC BY 4.0).
+
+### VC4. Voice 8, cameras 6, a chat note past that (owner, 21 Nov 2026; lane A, with CAM3)
+- Why: 5 in voice and 4 cameras ran without trouble; the owner wants more room.
+- What: voice limit 6 → 8, camera limit 4 → 6 (server + client constants); when a room goes past what we
+  recommend, one plain chat note says the connection may suffer with many cameras and how many we recommend. The
+  "Seste 1/6 · 📷 0/4" counter leaves the Together card (TG2).
+- Done when: 8 voices / 6 cameras accepted, the 9th / 7th refused with the existing message; the note once per room;
+  e2e; reference updated.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/591 (v0.9.97.190).
+
+### PTT1. Push-to-talk: any key, and research talking from another tab (owner, 21 Nov 2026; lane A, with CAM3)
+- Why: a friend's push-to-talk stopped when he switched tabs; the key is fixed to V.
+- What: (1) the push-to-talk key can be changed (press-a-key picker in the voice settings, saved per browser, Esc
+  cancels, common shortcuts refused). (2) Research and write in the reference: browsers never see keys of an
+  unfocused tab (Discord's web app has the same limit; its desktop app has global keys). Options: the extension's
+  `chrome.commands` global shortcut (toggle only, no key-up), a Document Picture-in-Picture mini window with a
+  hold-to-talk button. Build the best one that is safe, or put the finding to the Planner if it needs a pick.
+- Done when: the key changes and works; Test Lab `voice.pttKey`; e2e or harness; the research note in the reference.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/599 (any key; 🪟 talk window via Document Picture-in-Picture; no new extension permission; the global `chrome.commands` toggle is a later idea).
+
+### TG2. A cleaner Together card + a sound settings icon (owner, 21 Nov 2026; lane A, with CAM3)
+- Why: the owner finds the card wordy (screenshot 21 Nov: "Birlikte" title, "Seste 1/6 · 📷 0/4", "Ayrıl" in
+  text, "Bas-konuş (V)" checkbox wrapping, "Paylaş ▾").
+- What: no "Together" title; no voice / camera counter (VC4's chat note replaces it); Leave as an icon button with
+  a name (tooltip + aria); Share as an icon only; push-to-talk moves into a new 🔊 sound settings button (Discord-like
+  popover: push-to-talk on/off and key, input / output device, mic volume, noise suppression if we have it). Keep
+  44 px targets on phones and the TG1 compact layout. The profile menu keeps avatar and name; Developer decides what
+  else stays there and tells the Planner.
+- Done when: the new card at 1366 / 1920 / phone; all actions reachable by keyboard; Test Lab `together.layout`;
+  first look with the old and new screenshot.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/604.
+
+### RC2. Session recap: quiet sound, cinema look, a button after 2 hours (owner, 21 Nov 2026; lane A2)
+- Why: the recap starts terribly loud; the owner wants a more cinema-like design; it should not appear by itself.
+- What: (1) volume: start low (−18 dB or so) with a fade-in; (2) offer 3–4 royalty-free, licence-checked music
+  options (short previews in the PR) and send them to the Planner: the owner picks; (3) a cinema look (curtains,
+  marquee lights, film grain, credits roll) with 2–3 directions as images to the Planner before building; (4) after 2
+  hours together a "✨ Session recap" button shows for the host and everyone; it can be played once per session;
+  pressing it prepares and starts (no second press if preparing is fast). Ideas for later (not now): film data, see LB1.
+- Done when: the button rule, the once-per-session rule, the volume; Test Lab `recap.button` (fake 2 h); e2e; the
+  owner's picks recorded.
+- Owner's pick: music and look (Planner asks with the options).
+- Done: https://github.com/alperenakturk/screen-with-me/pull/581 + https://github.com/alperenakturk/screen-with-me/pull/593 (v0.9.97.191; look C marquee, music 1).
+
+### FR1. Rate the film together (host, extension) (owner, 21 Nov 2026; lane A2, after RC2)
+- Why: while watching a film through the extension, the host can start a short fun poll that gets people talking.
+- What: a "⭐ Rate the film" button in the rail, host only, film page (extension) only. Everyone gets the same few
+  fixed questions one after another: stars 0.5–5 (half stars, Letterboxd-like), "Who liked it most?", "Who liked it
+  least?", and 1–2 more conversation starters; then a results card (average stars, picks with names) that invites
+  "why?" in chat. Nice design; EN + TR; no film title is sent anywhere outside the room.
+- Done when: two people on a demo film page answer and see the results; Test Lab `film.rate`; e2e; first look.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/595 (v0.9.97.191).
+
+### LB1. Research: Letterboxd / film data (owner, 21 Nov 2026; Research)
+- Question: can users connect Letterboxd (or we read film data) for recap comments and film suggestions? Check
+  Letterboxd's API terms (access is by application), TMDB / Wikidata as alternatives, privacy, and what we may show.
+  Output: `docs/internal/research/film-data.md` + a Proposed card.
+
+
+Security and Research suggestions: `docs/internal/cards-proposed.md`.
+- Done: research `docs/internal/research/film-data.md`, https://github.com/alperenakturk/screen-with-me/pull/605 (Letterboxd API closed to us; TMDB recommended; proposed card FILM1).
+
+### DG2. Draw & Guess: a big canvas, a small side, the results bug (owner, 21 Nov 2026; Game Studio "Draw")
+- Bug: when a drawing ends, the results view shrinks the play area to ~10 % (screenshot 21 Nov).
+- What: canvas large like draw.io, players list compact, chat readable below or beside; results fit without shrinking.
+- Done when: results keep the canvas size; layout at 3 sizes; e2e round with 3 players.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/582 (v0.9.97.188).
+
+### SB2. Sea Battle: ship themes, drag to place, watch the attacker, a fun sinking (owner, 21 Nov 2026; Game Studio "Sea")
+- What: (1) pick a ship theme (2–3 drawn sets, not plain squares); (2) place ships by dragging them straight onto the
+  board (snap to the nearest valid spot, rotate with a tap / R); (3) with 3+ players: my own sea big, plus a second
+  view that follows the current attacker: whose sea they aim at and where their pointer is (live, throttled); (4)
+  when a player's fleet is gone: a short explosion, "ALEX SANK!" in a playful tone, their chip crossed out.
+- Done when: all four at 2 and 4 players; e2e; first look; art licence-clean.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/576, https://github.com/alperenakturk/screen-with-me/pull/585, https://github.com/alperenakturk/screen-with-me/pull/589 (v0.9.97.187 / .191; Navy / Pirates / Bath toys).
