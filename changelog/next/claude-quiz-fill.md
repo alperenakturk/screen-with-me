@@ -1,0 +1,3 @@
+- Quiz in the video's place now fills it: the question and its answers grow with the space, and the players stand in a narrow column beside them.
+- Quiz: the topic stays on one line, used jokers are easier to read, and a tournament's 🏆 round wins are bigger.
+- Five Frames: the colour legend reads a little bigger in its window on a tablet.

@@ -1,0 +1,60 @@
+/* QZ5b (Planner, 21 Nov 2026): Quiz's own layout for filling the video's place, loaded with its chunk. GFIT1 gave every
+   table a fill mode (`data-fill` on the root, stage.ts lays it out at the box itself, `#game-stage.fill`); Quiz kept its
+   design shape and left empty bands above and below the card. Now the question card takes the box's whole height and
+   what is left of its width, the players stand in the one narrow side column every game shares (`--game-side`,
+   stage.css), and the question and its answers grow into the card. The lobby and the podium keep lobby.css's card,
+   centred in the box. The older Quiz rules stay in room.css (`.quiz-*`) and lobby.css. */
+
+/* ---- A question, its reveal and a tournament's topic pick: card | side column, both the box's full height ---- */
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-main {
+  height: 100%; display: flex; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: var(--game-gap);
+}
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .quiz-main {
+  flex: 1 1 0; min-width: 0; min-height: 0; box-sizing: border-box; gap: 12px;
+}
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-side {
+  flex: 0 0 var(--game-side); max-width: none; min-width: 0; min-height: 0; box-sizing: border-box; padding: 10px; gap: 8px;
+}
+/* The question and the answers stand in the card's middle and grow with the card (its own size container: a taller
+   box, a bigger question and taller buttons), up to a size that still reads as buttons. */
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .quiz-body { container: quizbody / size; justify-content: safe center; gap: clamp(10px, 4cqh, 22px); }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .quiz-question { font-size: clamp(22px, 8cqh, 40px); text-wrap: balance; }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .quiz-options:not(.quiz-pick) { gap: clamp(8px, 2.5cqh, 14px); }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .quiz-option { min-height: clamp(56px, 24cqh, 150px); font-size: clamp(17px, 5cqh, 26px); padding: 8px 16px; }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .quiz-letter { width: 36px; height: 36px; font-size: 18px; }
+
+/* ---- The lobby and the podium in a short box (an upright tablet's video's place, ≈ 590 × 300): tighter gaps, so the
+   card fits at full size and no label falls under 13 px (games sweep `tabup`) ---- */
+@container game (max-height: 380px) {
+  #game-stage.fill .quiz-page.draw-lobby .quiz-main { padding-block: 10px; }
+  #game-stage.fill .quiz-page.draw-lobby :is(.quiz-body, .quiz-center, .quiz-intro, .quiz-setup) { gap: 8px; }
+  #game-stage.fill .quiz-page.draw-lobby .quiz-intro > h3::before { width: 44px; height: 44px; }
+}
+
+/* ---- The side column: one compact row per player, all eight fit its height (two columns cut the names to "Al…" once
+   the 🏆 count stood beside them: first look, five at a tournament) ---- */
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-players { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-player { gap: 6px; padding: 3px 8px 3px 3px; min-width: 0; font-size: 15px; }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-player .draw-avatar { width: 28px; height: 28px; font-size: 17px; }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-pname { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-badge:empty { display: none; }
+/* Six players or more in a short box: slimmer rows, the faces go (the names and scores stay). */
+@container game (max-height: 480px) {
+  #game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-players:has(> li:nth-child(6)) { gap: 2px; }
+  #game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-players:has(> li:nth-child(6)) .draw-player { padding-block: 4px; padding-left: 8px; }
+  #game-stage.fill .quiz-page[data-fill]:not(.draw-lobby) .draw-players:has(> li:nth-child(6)) .draw-avatar { display: none; }
+}
+
+/* ---- The top bar: "Question 1/10", the topic chip, the jokers and the timer on one line ---- */
+/* The topic chip shortens with "…" instead of wrapping to a second line (an upright tablet's box, first look). */
+.quiz-page .quiz-cat { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-sizing: border-box; }
+.quiz-page .draw-top { grid-template-columns: auto minmax(0, 1fr) auto; }
+.quiz-page #quiz-n { font-size: 14px; }
+
+/* ---- Readability (games sweep, 21 Nov) ---- */
+/* A used or unavailable joker read at 40 % (the icon was barely there): it stays readable;
+   a plain grey button says it can't be pressed (first look: a dashed rim read as an empty slot). */
+.quiz-page .quiz-joker:disabled { opacity: 1; color: var(--muted); background: var(--surface-2); border-color: var(--border); }
+/* The tournament's 🏆 count was 11 px beside a 15 px name: it reads like the score now, in a gold pill so "🏆 0" and the score never run together. */
+.quiz-page .quiz-wins { font-size: 14px; white-space: nowrap; padding: 1px 6px; border-radius: 999px; background: color-mix(in srgb, var(--warn) 16%, transparent); }
+.quiz-page :is(.quiz-streak, .quiz-joker-used) { font-size: 13px; white-space: nowrap; }

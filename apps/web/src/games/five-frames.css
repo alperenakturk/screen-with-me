@@ -281,3 +281,8 @@ html:not(.phone) .ff-head button.htp-open:not(.htp-head) { width: 24px; height: 
   #game-stage.in-tab .ff:not(.duel) .ff-cat:not(.ff-level) { flex: 1 1 0; }
   #game-stage.in-tab .ff:not(.duel) .ff-level { flex: none; field-sizing: content; min-width: 5.2em; max-width: none; }
 }
+
+/* QZ5b (games sweep `tabup/tr/word`): a free window a little smaller than its design (an upright tablet's column) scales
+   the game by ≈ 0.98, so the legend's 13 px read as 12.8 px. The legend's words are 14 px in the window (they wrap
+   to two lines there anyway); the swatches keep their size. */
+html:not(.phone) #game-stage .ff:not(.duel) .ff-legend-item { font-size: 14px; }
