@@ -53,7 +53,7 @@ const where = (page) =>
     const yt = await until(() => page.evaluate(() => document.getElementById('theater')?.classList.contains('yt-rail')), 15000);
     check(!!yt, `${label}: the room plays a YouTube video`);
     // GW3 (owner, 17 Nov 2026): a table opens in the video's place the first time (the video paused, the page around it
-    // usable, never the browser's full screen), and in the mode used last after that. In the 🪟 frame its home keeps
+    // usable, never the browser's full screen), every time (GFIT1). In the 🪟 frame its home keeps
     // clear of the player; a frame I drag onto the player stays there (CLAUDE.md §7: only a frame the user drags there).
     await page.evaluate(() => window.__swmLab.run('games.open.classics'));
     await until(async () => (await where(page)).shown);

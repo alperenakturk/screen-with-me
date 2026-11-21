@@ -42,8 +42,12 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
   },
   'react.hands': {
-    title: { en: 'Emojis: the hands page', tr: 'Emojiler: eller sayfası' },
-    help: { en: 'Writes the chosen skin tone, the page the emoji picker shows and the eight hands as they would be sent into the log.', tr: 'Seçili ten rengini, emoji seçicinin gösterdiği sayfayı ve gönderilecek sekiz eli kayda yazar.' },
+    title: { en: 'Emojis: the hand signs pages', tr: 'Emojiler: el işaretleri sayfaları' },
+    help: { en: 'Writes the chosen skin tone, the page the emoji picker shows and the hand signs as they would be sent into the log.', tr: 'Seçili ten rengini, emoji seçicinin gösterdiği sayfayı ve gönderilecek el işaretlerini kayda yazar.' },
+  },
+  'chat.gameInvite': {
+    title: { en: 'Chat: game table lines', tr: 'Sohbet: oyun masası satırları' },
+    help: { en: 'Writes the chat\'s "opened a table" lines into the log: the table, the game, who opened it, closed or not, and whether Join shows.', tr: 'Sohbetteki "masa açtı" satırlarını kayda yazar: masa, oyun, açan kişi, kapandı mı ve Katıl görünüyor mu.' },
   },
   'rail.speed': {
     title: { en: 'Speed picker', tr: 'Hız seçici' },

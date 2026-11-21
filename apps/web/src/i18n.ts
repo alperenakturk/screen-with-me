@@ -1212,7 +1212,7 @@ const en = {
   reactTray: 'React',
   'reactTray.add': 'Add',
   'reactTray.ready': 'Emojis',
-  'reactTray.hands': 'Hands',
+  'reactTray.hands': 'Hand signs',
   'reactTray.tone': 'Skin tone',
   'reactTray.tone0': 'Default skin tone',
   'reactTray.tone1': 'Light skin tone',

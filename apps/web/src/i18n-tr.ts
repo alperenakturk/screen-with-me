@@ -1214,7 +1214,7 @@ export const tr: Record<I18nKey, string> = {
   reactTray: 'Tepki',
   'reactTray.add': 'Ekle',
   'reactTray.ready': 'Emojiler',
-  'reactTray.hands': 'Eller',
+  'reactTray.hands': 'El işaretleri',
   'reactTray.tone': 'Ten rengi',
   'reactTray.tone0': 'Varsayılan ten rengi',
   'reactTray.tone1': 'Açık ten rengi',

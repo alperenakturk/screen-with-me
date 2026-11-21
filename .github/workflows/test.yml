@@ -465,6 +465,9 @@ jobs:
       # Card GP1: every game opens with one click on its card, Classics and Snack Bar in ≤ 300 ms (hall open, CI machine).
       - name: Games open at once
         run: node scripts/harness/game-open/run.cjs http://localhost:8787
+      # Card GN1: a table opened shows in the chat (cover, Join for the others, greyed once it closes).
+      - name: Game table in the chat
+        run: node scripts/harness/game-chat/run.cjs http://localhost:8787
 
       # Lane W: the game window's head and free window (W1–W5, 0.9.97.112–114): no ⛶, 🎮 opens the hall, drag / resize /
       # each game's own spot, never over a YouTube player, side games only in the free window, a table pausing the video

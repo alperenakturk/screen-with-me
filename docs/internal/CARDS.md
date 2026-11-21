@@ -101,11 +101,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   YouTube keeps its own rules (nothing over the YouTube player).
 - Done when: fixed by default, toggle works and persists; Test Lab `rail.pin`; harness; first look.
 
-### GN1. A chat message when someone opens a game table (owner, 21 Nov 2026; lane A2)
-- Why: when a game is already open, a new table or a newcomer is easy to miss.
-- What: opening a shared table posts a system line in the chat: the game's cover, "Alex opened Sea Battle", a Join
-  button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
-- Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
 
 ### RC2. Session recap: quiet sound, cinema look, a button after 2 hours (owner, 21 Nov 2026; lane A2)
 - Why: the recap starts terribly loud; the owner wants a more cinema-like design; it should not appear by itself.

@@ -1,4 +1,4 @@
-import { HANDS_PAGE, REACTION_PAGES, SKIN_TONES, stickerId, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
+import { HANDS_PAGE, HAND_PAGES, REACTION_PAGES, SKIN_TONES, handInTone, stickerId, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 import { load, save } from '../storage.ts';
@@ -70,9 +70,10 @@ export function createReactions(
   root.append(fileInput);
 
   /** Üç emoji sayfası, sonra (varsa) 8'erli özel emoji sayfaları. Ekleme 🖼️ düğmesiyle. */
+  const isHands = (i: number) => i >= HANDS_PAGE && i < HANDS_PAGE + HAND_PAGES.length;
   let tone = Math.min(SKIN_TONES.length - 1, Math.max(0, Number(load(TONE_KEY) ?? '0') || 0));
   function pages(): Item[][] {
-    const list: Item[][] = REACTION_PAGES.map((p, i) => p.map((emoji) => ({ emoji: i === HANDS_PAGE ? emoji + SKIN_TONES[tone] : emoji })));
+    const list: Item[][] = REACTION_PAGES.map((p, i) => p.map((emoji) => ({ emoji: isHands(i) ? handInTone(emoji, SKIN_TONES[tone]!) : emoji })));
     const ids = [...stickers.keys()];
     for (let i = 0; i < ids.length; i += SLOTS) list.push(ids.slice(i, i + SLOTS).map((sticker) => ({ sticker })));
     return list;
@@ -229,7 +230,7 @@ export function createReactions(
       'div',
       { class: 'tray-head' },
       kind(t('reactTray.ready'), 0, !collectionOpen && !roomEmptyOpen && page < HANDS_PAGE),
-      kind(t('reactTray.hands'), HANDS_PAGE, !collectionOpen && !roomEmptyOpen && page === HANDS_PAGE),
+      kind(t('reactTray.hands'), HANDS_PAGE, !collectionOpen && !roomEmptyOpen && isHands(page)),
       kind(t('reactTray.mine'), ownFirst, !collectionOpen && (roomEmptyOpen || page >= ownFirst)),
       collectionChip,
     );
@@ -244,7 +245,7 @@ export function createReactions(
       : roomEmptyOpen
       ? [el('p', { class: 'tray-empty muted small' }, t('stickers.roomEmpty')), addFoot()]
       : [
-          ...(page === HANDS_PAGE ? [toneRow()] : []),
+          ...(isHands(page) ? [toneRow()] : []),
           el('div', { class: 'tray-grid' }, ...slots),
           el('div', { class: 'tray-foot' }, prev, el('span', { class: 'tray-count' }, `${page + 1}/${all.length}`), next, el('span', { class: 'tray-gap' }), add),
         ];
@@ -391,7 +392,7 @@ export function createReactions(
       {
         id: 'react.hands',
         tab: 'status',
-        run: () => JSON.stringify({ tone, page, handsPage: page === HANDS_PAGE, hands: pages()[HANDS_PAGE]!.map((item) => ('emoji' in item ? item.emoji : '')) }),
+        run: () => JSON.stringify({ tone, page, handsPage: isHands(page), hands: HAND_PAGES.flatMap((_, n) => pages()[HANDS_PAGE + n]!.map((item) => ('emoji' in item ? item.emoji : ''))) }),
       },
     ],
   }));

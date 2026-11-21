@@ -1,5 +1,5 @@
-// Card EMO1 (owner, 21 Nov 2026): a "Hands" page in the emoji picker (👍 👏 🙌 👋 🤞 🫶 👌 🤟) with a skin tone.
-// Sam on a phone opens 😀 React, picks Hands, a medium tone and 🫶: Alex (computer) sees 🫶🏽 rise. The tray fits the
+// Card EMO1 (owner, 21 Nov 2026): "Hand signs" (two pages of eight) in the emoji picker with a skin tone.
+// Sam on a phone opens 😀 React, picks Hand signs, a medium tone and 🫶: Alex (computer) sees 🫶🏽 rise. The tray fits the
 // phone with no scrollbar, the tone is remembered after a reload, Test Lab `react.hands` reports it, and on the
 // computer the rail's 😀 window reaches the same page with ▼. Turkish names on the second phone.
 //
@@ -46,11 +46,11 @@ const check = (ok, label, extra = '') => {
   await sam.evaluate(() => document.querySelector('.toolbar .react-open')?.click());
   await sam.waitForTimeout(300);
   const chips = await sam.evaluate((s) => [...document.querySelectorAll(`${s} .tray-chip`)].map((c) => c.textContent), tray);
-  check(chips.includes('Hands'), 'phone: the picker has a Hands tab', JSON.stringify(chips));
-  await sam.evaluate((s) => [...document.querySelectorAll(`${s} .tray-chip`)].find((c) => c.textContent === 'Hands').click(), tray);
+  check(chips.includes('Hand signs'), 'phone: the picker has a Hand signs tab', JSON.stringify(chips));
+  await sam.evaluate((s) => [...document.querySelectorAll(`${s} .tray-chip`)].find((c) => c.textContent === 'Hand signs').click(), tray);
   await sam.waitForTimeout(200);
   const shown = await sam.evaluate((s) => [...document.querySelectorAll(`${s} .tray-grid .reaction-btn`)].map((b) => b.textContent), tray);
-  check(shown.join('') === '👍👏🙌👋🤞🫶👌🤟', 'Hands: the eight hands', shown.join(' '));
+  check(shown.join('') === '👍👏🙌👋🤞🫶✌️👌', 'Hand signs: the first eight', shown.join(' '));
   const tones = await sam.evaluate((s) => [...document.querySelectorAll(`${s} .tray-tone`)].map((b) => b.getAttribute('aria-label')), tray);
   check(tones.length === 6 && tones[3] === 'Medium skin tone', 'Hands: six skin tones, named', JSON.stringify(tones));
   await sam.evaluate((s) => document.querySelectorAll(`${s} .tray-tone`)[3].click(), tray);
@@ -82,10 +82,10 @@ const check = (ok, label, extra = '') => {
   // Kai (Turkish phone): Eller and the tone names.
   await kai.evaluate(() => document.querySelector('.toolbar .react-open')?.click());
   await kai.waitForTimeout(300);
-  await kai.evaluate((s) => [...document.querySelectorAll(`${s} .tray-chip`)].find((c) => c.textContent === 'Eller')?.click(), tray);
+  await kai.evaluate((s) => [...document.querySelectorAll(`${s} .tray-chip`)].find((c) => c.textContent === 'El işaretleri')?.click(), tray);
   await kai.waitForTimeout(200);
   const tr = await kai.evaluate((s) => document.querySelector(`${s} .tray-tone`)?.getAttribute('aria-label') ?? null, tray);
-  check(tr === 'Varsayılan ten rengi', 'Turkish: Eller, tone names in Turkish', tr);
+  check(tr === 'Varsayılan ten rengi', 'Turkish: El işaretleri, tone names in Turkish', tr);
   if (SHOTS) await kai.screenshot({ path: `${SHOTS}/hands-phone-tr.png` });
 
   // Alex (computer): the rail's 😀 window pages to the hands with ▼.
@@ -98,7 +98,7 @@ const check = (ok, label, extra = '') => {
     }
     return [...document.querySelectorAll('#dock-react-pop .reaction-btn:not(.sticker-open)')].map((b) => b.textContent).join('');
   });
-  check(rail === '👍👏🙌👋🤞🫶👌🤟', 'computer: the rail\'s 😀 window reaches the hands page with ▼', rail);
+  check(rail === '👍👏🙌👋🤞🫶✌️👌', 'computer: the rail\'s 😀 window reaches the hands page with ▼', rail);
   if (SHOTS) await alex.screenshot({ path: `${SHOTS}/hands-laptop-en.png` });
 
   await browser.close();
