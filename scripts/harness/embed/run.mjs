@@ -1190,6 +1190,31 @@ check(
   JSON.stringify(names),
 );
 
+// Card FR1: "⭐ Rate the film" on the film page: only the host's rail has it; Riley answers too; both see the results.
+{
+  const shown = await until(() => a.evalFrame('shell=1', `!document.getElementById('dock-rate').hidden`), 5000);
+  check(!!shown, 'FR1: the host sees ⭐ Rate the film on the film page rail');
+  riley.clear();
+  await a.evalFrame('shell=1', `document.getElementById('dock-rate').click(); 1`);
+  const poll = await riley.wait((m) => m.t === 'rate' && m.rate && !m.rate.results, 6000);
+  check(!!poll, 'FR1: the poll reaches the room');
+  const asked = await until(() => a.evalFrame('shell=1', `!!document.querySelector('.fr-card.fr-ask')`), 5000);
+  check(!!asked, 'FR1: the questions open on the film page');
+  await a.sleep(500);
+  await a.shot('fr1-rate-ask');
+  if (poll) riley.send({ t: 'rate-answer', id: poll.rate.id, stars: 4 });
+  // Three stars (the sixth half; the page may be in Turkish), then skip the four other questions (the last skip sends).
+  await a.evalFrame('shell=1', `(() => { document.querySelectorAll('.fr-half')[5].click(); document.querySelector('.fr-next').click(); for (let i = 0; i < 4; i++) document.querySelector('.fr-skip').click(); return 1; })()`);
+  const res = await riley.wait((m) => m.t === 'rate' && m.rate?.results, 6000);
+  check(res?.rate.results.votes === 2 && res.rate.results.stars === 3.5, 'FR1: both answered: the results (3.5 from 2) reach everyone', JSON.stringify(res?.rate.results));
+  const card = await until(() => a.evalFrame('shell=1', `!!document.querySelector('.fr-card.fr-results')`), 5000);
+  check(!!card, 'FR1: the results card shows on the film page');
+  await a.sleep(500);
+  await a.shot('fr1-rate-results');
+  await a.evalFrame('shell=1', `document.querySelector('.fr-results .fr-nav .btn:not(.primary)').click(); 1`);
+  check(!!(await riley.wait((m) => m.t === 'rate' && m.rate === null, 5000)), 'FR1: the host closes it for everyone');
+}
+
 riley.close();
 a.close();
 console.log(failed ? `\n✗ ${failed} kontrol başarısız` : '\n✓ Tüm kontroller geçti');

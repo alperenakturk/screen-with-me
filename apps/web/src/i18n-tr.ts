@@ -543,6 +543,7 @@ export const tr: Record<I18nKey, string> = {
   'error.recap_not_ready': 'Özet, birlikte 30 dakika izledikten sonra hazır olur.',
   'error.tv_code': 'Bu kodla bekleyen bir TV yok. TV ekranındaki kodu kontrol et (kod 10 dakikada bir yenilenir).',
   'error.tv_token': "Bu TV'nin bağlantısı sona erdi. TV'de yeni kod çıktı, telefondan tekrar bağla.",
+  'rate.title': 'Filmi puanla',
   'recap.title': 'Oturum özeti',
   'recap.savedTitle': 'Kaydedilen özetler',
   'recap.saved': '✓ Kaydedildi',

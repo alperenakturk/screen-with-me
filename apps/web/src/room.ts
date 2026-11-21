@@ -83,6 +83,7 @@ import { confirmDialog } from './ui/confirm.ts';
 import { openExternalLink } from './ui/links.ts';
 import { createSearch } from './ui/search.ts';
 import { createSources } from './ui/sources.ts';
+import type { FilmRate } from '@swm/shared/film-rate';
 import { RECAP_READY_MS, type Recap, type RecapShow, type RecapStatus } from '@swm/shared/recap';
 import { forgetSaved, rememberSaved } from './saved-rooms.ts';
 import { createSettingsPanel } from './ui/settings.ts';
@@ -421,6 +422,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-pin" type="button" class="dock-btn"></button>
                 <button id="dock-game" type="button" class="dock-btn" aria-haspopup="true" aria-expanded="false"></button>
                 <button id="dock-recap" type="button" class="dock-btn" aria-haspopup="dialog" data-i18n-title="recap.title" hidden>✨</button>
+                <button id="dock-rate" type="button" class="dock-btn" aria-haspopup="dialog" data-i18n-title="rate.title" hidden>⭐</button>
               </div>
               <div id="dock-voice" class="dock-group" hidden>
                 <button id="dock-mic" type="button" class="dock-btn"></button>
@@ -1633,6 +1635,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         recapStatus = message.recapStatus ?? null;
         if (message.recapShow) startRecapShow(message.recapShow);
         else endRecapShow();
+        filmRate = message.rate ?? null;
+        applyRate();
         send({ t: 'recaps' });
         tvRoom?.reportState();
         // Opened from a TV's QR (or a code typed before the room was open): pair it now.
@@ -1708,6 +1712,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'members':
         setMembers(message.members, message.hostId, true);
         games.membersChanged();
+        renderRateButton();
         break;
       case 'tv':
         tvRoom?.message(message);
@@ -1788,6 +1793,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'recap-show':
         if (message.show) startRecapShow(message.show);
         else endRecapShow();
+        break;
+      case 'rate':
+        filmRate = message.rate;
+        applyRate();
         break;
       case 'recap-ask':
         if (amHost()) void recapChunk().then((m) => m?.askToast(message.name, () => send({ t: 'recap-show' })));
@@ -4357,6 +4366,54 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
   let recapShowId: string | null = null;
   /** The gold dot on ✨ until someone here opened it this session. */
   let recapOpenedFor: number | null = null;
+  // Card FR1: "⭐ Rate the film": on the film page's rail (the extension's shell), for the host only. Everyone gets the
+  // questions and the results card (`ui/film-rate.ts`, a lazy chunk); Test Lab `film.rate` starts it anywhere.
+  let filmRate: FilmRate | null = null;
+  let rateLoaded = false;
+  const rateChunk = () => loadChunk(() => import('./ui/film-rate.ts'));
+  function renderRateButton(): void {
+    $('#dock-rate').hidden = !(isShell && amHost());
+  }
+  function applyRate(): void {
+    renderRateButton();
+    if (!filmRate && !rateLoaded) return;
+    rateLoaded = true;
+    // The latest poll when the chunk is in (messages may arrive while it loads).
+    void rateChunk().then((m) =>
+      m?.showRate(filmRate, {
+        myId: () => myId,
+        host: amHost,
+        send,
+        showNow: () => send({ t: 'rate-end' }),
+        closeAll: () => send({ t: 'rate-end' }),
+        toChat: () => {
+          document.querySelector<HTMLElement>('.tab[data-tab="chat"]')?.click();
+          const input = $<HTMLInputElement>('#chat-input');
+          if (input.getBoundingClientRect().width > 0) input.focus();
+          else $('#dock-chat').click();
+        },
+      }),
+    );
+  }
+  $('#dock-rate').addEventListener('click', () => send({ t: 'rate-start' }));
+  debugHooks.register('film-rate', () => ({
+    commands: [
+      {
+        id: 'film.rate',
+        tab: 'screen',
+        run: () => {
+          if (!amHost()) return 'not host';
+          send({ t: 'rate-start' });
+          return 'asked';
+        },
+      },
+      {
+        id: 'film.rate.state',
+        tab: 'status',
+        run: async () => JSON.stringify({ button: !$('#dock-rate').hidden, ...((await rateChunk())?.rateState() ?? {}) }),
+      },
+    ],
+  }));
   const recapChunk = () => loadChunk(() => import('./ui/recap.ts'));
   /** Seconds watched together, with the time since the server's last word while the room plays with two or more. */
   const recapSec = () => {

@@ -1,0 +1,339 @@
+/* Card FR1: "Rate the film" (ui/film-rate.ts, a lazy chunk): a ticket-like window in the night-and-gold of the recap's
+   marquee. Fits a phone without scrolling; targets ≥ 44 px; cream text on night ≥ 12:1, night text on gold ≥ 9:1. */
+.fr-card {
+  --fr-gold: #ffc65a;
+  --fr-cream: #fff3d6;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 16px 18px 14px;
+  border: 2px solid var(--fr-gold);
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 50% 120%, #2a2a6a, transparent 65%), linear-gradient(180deg, #151542, #07071a);
+  color: var(--fr-cream);
+  box-shadow: 0 0 0 6px rgb(255 198 90 / 0.12), 0 18px 50px rgb(0 0 0 / 0.5);
+}
+
+/* The ticket's notches on both sides. */
+.fr-card::before,
+.fr-card::after {
+  content: '';
+  position: absolute;
+  top: 64px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--fr-gold);
+  border-radius: 50%;
+  background: #0d0d2a;
+}
+
+.fr-card::before {
+  left: -11px;
+  clip-path: inset(0 0 0 50%);
+}
+
+.fr-card::after {
+  right: -11px;
+  clip-path: inset(0 50% 0 0);
+}
+
+.fr-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed rgb(255 198 90 / 0.45);
+}
+
+.fr-head > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fr-head b {
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fr-gold);
+}
+
+.fr-ticket {
+  font-size: 26px;
+}
+
+.fr-by,
+.fr-step,
+.fr-hint {
+  font-size: 13px;
+  color: rgb(255 243 214 / 0.82);
+}
+
+.fr-hint {
+  margin: 0;
+  text-align: center;
+}
+
+.fr-card .fr-x {
+  flex: none;
+  min-width: 40px;
+  min-height: 40px;
+  color: var(--fr-cream);
+}
+
+.fr-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.fr-dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(255 243 214 / 0.25);
+}
+
+.fr-dots i.done {
+  background: rgb(255 198 90 / 0.6);
+}
+
+.fr-dots i.on {
+  width: 22px;
+  border-radius: 4px;
+  background: var(--fr-gold);
+}
+
+.fr-card .fr-q {
+  margin: 0;
+  color: var(--fr-cream);
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.fr-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+}
+
+.fr-star-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fr-stars {
+  display: flex;
+  gap: 4px;
+}
+
+/* A star is drawn by its mask; --fill (0–100 %) paints it gold from the left. */
+.fr-star {
+  --fill: 0%;
+  position: relative;
+  display: flex;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(90deg, var(--fr-gold) var(--fill), rgb(255 243 214 / 0.22) var(--fill));
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.8l3.1 6.6 7.1.8-5.3 4.9 1.5 7.1L12 17.6l-6.4 3.6 1.5-7.1L1.8 9.2l7.1-.8z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.fr-show .fr-star {
+  width: 22px;
+  height: 22px;
+}
+
+/* The halves sit on top of the star (they are the buttons; the mask would clip their focus ring, so it is drawn on the row). */
+.fr-half {
+  flex: 1 1 50%;
+  min-width: 24px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.fr-stars:has(.fr-half:focus-visible) {
+  border-radius: 8px;
+  outline: 2px solid var(--fr-gold);
+  outline-offset: 4px;
+}
+
+.fr-value {
+  min-width: 4.2em;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--fr-gold);
+}
+
+.fr-choices {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fr-chip {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid rgb(255 198 90 / 0.55);
+  border-radius: 999px;
+  background: rgb(255 243 214 / 0.08);
+  color: var(--fr-cream);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fr-chip:hover,
+.fr-chip.on {
+  border-color: var(--fr-gold);
+  background: var(--fr-gold);
+  color: #2a1606;
+}
+
+.fr-chip:focus-visible,
+.fr-card .btn:focus-visible {
+  outline: 2px solid var(--fr-cream);
+  outline-offset: 2px;
+}
+
+.fr-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 2px dashed rgb(255 198 90 / 0.45);
+}
+
+.fr-nav .btn {
+  min-height: 44px;
+}
+
+.fr-big {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.fr-count {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.fr-score {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.fr-score > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fr-avg {
+  font-size: 52px;
+  line-height: 1;
+  color: var(--fr-gold);
+}
+
+.fr-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.fr-hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 36px;
+}
+
+.fr-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgb(255 243 214 / 0.82);
+}
+
+.fr-hist i {
+  flex: 1 1 0;
+  border-radius: 3px 3px 0 0;
+  background: rgb(255 243 214 / 0.18);
+}
+
+.fr-hist i.on {
+  background: var(--fr-gold);
+}
+
+.fr-res {
+  align-items: stretch;
+}
+
+.fr-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgb(255 243 214 / 0.12);
+}
+
+.fr-label {
+  flex: none;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(255 243 214 / 0.82);
+}
+
+.fr-pick {
+  min-width: 0;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.fr-why {
+  margin: 4px 0 0;
+  font-weight: 700;
+  text-align: center;
+  color: var(--fr-gold);
+}
+
+@media (max-width: 420px), (max-height: 560px) {
+  .fr-card {
+    gap: 8px;
+    padding: 12px 14px 10px;
+  }
+
+  .fr-card .fr-q {
+    font-size: 19px;
+  }
+
+  .fr-star {
+    width: 48px;
+    height: 48px;
+  }
+
+  .fr-star-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

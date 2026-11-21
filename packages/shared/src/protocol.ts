@@ -1,4 +1,5 @@
 import type { Recap, RecapShow, RecapStatus } from './recap.ts';
+import { cleanRateAnswer, type FilmRate, type RateAnswer } from './film-rate.ts';
 import { cleanFeedIn, type FeedIn, type FeedInfo } from './feed.ts';
 
 // Sunucu ile istemciler (site ve ileride eklenti) arasındaki mesaj formatı.
@@ -508,6 +509,12 @@ export type ClientMessage =
   | { t: 'recap-end' }
   /** Card RC1: a guest asks the host to show the recap (one per person per 10 min, never stored). */
   | { t: 'recap-ask' }
+  /** Card FR1: the host starts "Rate the film" for everyone (film page only; one poll at a time). */
+  | { t: 'rate-start' }
+  /** Card FR1: my answers to the poll `id` (sent once, after the last question). */
+  | ({ t: 'rate-answer'; id: string } & RateAnswer)
+  /** Card FR1: the host shows the results now (still running) or closes the poll for everyone (results out). */
+  | { t: 'rate-end' }
   /** Card CH1: one older page of the room's chat (the number from `welcome.chatMore` or the last `chat-older`). */
   | { t: 'chat-older'; page: number }
   /** Card MSG1: delete a chat message for everyone (my own, or anyone's when I am the (acting) host). */
@@ -665,6 +672,8 @@ export type ServerMessage =
       /** Card RC1: the recap showing now (absent: none) and how close this session is to its recap. */
       recapShow?: RecapShow;
       recapStatus?: RecapStatus;
+      /** Card FR1: the film poll running or showing its results (absent: none). */
+      rate?: FilmRate;
     }
   | { t: 'pong'; c: number; s: number }
   | { t: 'state'; state: PlaybackState; action: PlaybackAction; by: Member; /** Kayıtlı odada video kaldığı yerden açıldıysa o saniye. */ resumed?: number }
@@ -723,6 +732,8 @@ export type ServerMessage =
   | { t: 'recap-status'; status: RecapStatus }
   /** Card RC1: to the host's tabs only: someone asks to see the recap (display name only). */
   | { t: 'recap-ask'; name: string }
+  /** Card FR1: the room's film poll changed (started, someone answered, results out) or closed (`null`). */
+  | { t: 'rate'; rate: FilmRate | null }
   /** Card CH1: an older page of the chat (oldest first); `more`: the page before it, if any. */
   | { t: 'chat-older'; page: number; messages: ChatMessage[]; more?: number }
   /** Card SH2: the room's feed changed (null: it stopped). */
@@ -1102,6 +1113,13 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return Number.isInteger(m.page) && (m.page as number) >= 0 && (m.page as number) < 1e9 ? { t: 'chat-older', page: m.page as number } : null;
     case 'recap-show':
       return m.lab === true ? { t: 'recap-show', lab: true } : { t: 'recap-show' };
+    case 'rate-answer': {
+      if (typeof m.id !== 'string' || m.id.length === 0 || m.id.length > 40) return null;
+      const answer = cleanRateAnswer(m);
+      return answer ? { t: 'rate-answer', id: m.id, ...answer } : null;
+    }
+    case 'rate-start':
+    case 'rate-end':
     case 'recap':
     case 'recap-save':
     case 'recaps':
