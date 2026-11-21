@@ -3097,3 +3097,12 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   tall phones; Quiz top bar, Five Frames picker in the head row; side-game notes off the art in a computer's window.
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
+
+### RAIL2. The rail beside the video stays put; hide it from the rail itself (owner, 21 Nov 2026; lane A2, first)
+- Why: the vertical control column that slides in at the video's right edge should be fixed by default; hiding it
+  lives in the ⋯ menu today.
+- What: the rail is always shown (fixed) by default; a hide button on the rail itself switches it to auto-hide (slides
+  in on hover / tap as today); pressing it again pins it. Remove "hide frame" from ⋯. Saved per browser. Fullscreen
+  YouTube keeps its own rules (nothing over the YouTube player).
+- Done when: fixed by default, toggle works and persists; Test Lab `rail.pin`; harness; first look.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/573
