@@ -6,11 +6,10 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (cameras, voice; handoff 21 Nov 13:40). Tag `v0.9.97.113` (8ce4385) missing. Live: CAM3 (#577,
-  v0.9.97.188). VC4 #591 (merging). Next (fresh session): PTT1 → TG2. DM1 waits for the owner's Player ID; UI2
-  `rail-speed` flake: if it fails again, add a `sync-engine.test.ts` scenario.
-- [ ] Lane A2 (fresh session 21 Nov): RC2 part 2 (look C marquee + music 1 own pad; `design/recap-cinema/`), then FR1.
-- [ ] Game Studio: LH4 (Last Heart; table look A picked) running; SB2 finishing #589; then QZ5b + CI4.
+- [ ] Lane A (fresh session 21 Nov): PTT1 (#599) + TG2 (#604) merged; then CI4 (flaky steps). Tag `v0.9.97.113`
+  (8ce4385) missing. DM1 waits for the owner's Player ID; UI2 `rail-speed` flake: if it fails again, add a
+  `sync-engine.test.ts` scenario. FILM1 waits for the owner's pick.
+- [ ] Game Studio: LH4 (Last Heart, round table #601) finishing; QZ5b (Quiz fill) in a fresh session.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -228,6 +227,18 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27lh. [LH4] Last Heart, 3 players: Shield out of turn doesn't reset the other player's 30 s; the showdown says
   "takes N from the middle", each seat shows +/−, only the winner's cards are gold.
 
+- [ ] 27vc. [VC4] With 5+ friends with cameras: 6 cameras fit, the 7th says it's full; the chat shows one note
+  recommending 4 cameras / 6 people (once per room), even with room activity hidden.
+- [ ] 27pt. [PTT1] In voice, push-to-talk on, the key button, press B: holding B talks, V doesn't; M is refused with a
+  hint. Chrome on a computer: "🪟 Talk window" opens a small window; in another tab hold its button: friends hear you.
+- [ ] 27tg. [TG2] Together card at 1366 and on a phone: no title or counter, icons in one row; 🔊 opens sound settings;
+  the voices slider changes how loud friends are.
+- [ ] 27rc2. [RC2] After 2 h (or Test Lab `recap.button`) press ✨: the sign's lights chase, the first sign reads "Now
+  showing / Our movie night", the music starts quiet; with the system's "reduce motion" the lights stay still.
+- [ ] 27fr. [FR1] Chrome + extension, a film page with 2 people: the host presses ⭐ on the rail, both answer (try a
+  half star), both see the same results card; the guest has no ⭐.
+- [ ] 27sb. [SB2] Sea Battle with a friend: drag a ship (gold outline = where it lands, R turns), pick Pirates / Bath
+  toys; sink a fleet: the explosion + "ALEX SANK!". With 3 players: the big box follows whose sea the shooter aims at.
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
   screens in step (and stands still with "reduce motion" on).
@@ -279,6 +290,8 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
 - **Screenshot on failure for the feed harness:** `scripts/harness/feed/run.cjs` failed once on main (the friend's
   `#feed-row-pause` never visible) and CI kept no picture (B2, 16 Nov).
 - **Old game layout points (16 Nov):** tablet: an empty band above the game; Draw & Guess rounds "1 / 2 / 3" vs "1 tur".
+- **Later ideas (21 Nov):** an extension shortcut to toggle the mic from any tab (`chrome.commands`, toggle only,
+  needs a store update); a noise-suppression switch; Sea Battle's pirate sails and paper boat redrawn.
 - **Game leftovers (21 Nov):** Test Lab 🤖 friends can share the player's name (`lab-table-friend.ts`); room.css's
   global `.slot` rule hits any game element with class `slot`.
 - **Small leftovers (Planner, 20 Nov):** upright-tablet Shorts bar has no ⋯ More; the feed drawer cuts room text

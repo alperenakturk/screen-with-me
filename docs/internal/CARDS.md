@@ -58,55 +58,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   sent to the Planner; the owner submits.
 - Owner's pick: "Hemen gönder" (Planner chat, 21 Nov 2026).
 
-### VC4. Voice 8, cameras 6, a chat note past that (owner, 21 Nov 2026; lane A, with CAM3)
-- Why: 5 in voice and 4 cameras ran without trouble; the owner wants more room.
-- What: voice limit 6 → 8, camera limit 4 → 6 (server + client constants); when a room goes past what we
-  recommend, one plain chat note says the connection may suffer with many cameras and how many we recommend. The
-  "Seste 1/6 · 📷 0/4" counter leaves the Together card (TG2).
-- Done when: 8 voices / 6 cameras accepted, the 9th / 7th refused with the existing message; the note once per room;
-  e2e; reference updated.
-
-### PTT1. Push-to-talk: any key, and research talking from another tab (owner, 21 Nov 2026; lane A, with CAM3)
-- Why: a friend's push-to-talk stopped when he switched tabs; the key is fixed to V.
-- What: (1) the push-to-talk key can be changed (press-a-key picker in the voice settings, saved per browser, Esc
-  cancels, common shortcuts refused). (2) Research and write in the reference: browsers never see keys of an
-  unfocused tab (Discord's web app has the same limit; its desktop app has global keys). Options: the extension's
-  `chrome.commands` global shortcut (toggle only, no key-up), a Document Picture-in-Picture mini window with a
-  hold-to-talk button. Build the best one that is safe, or put the finding to the Planner if it needs a pick.
-- Done when: the key changes and works; Test Lab `voice.pttKey`; e2e or harness; the research note in the reference.
-
-### TG2. A cleaner Together card + a sound settings icon (owner, 21 Nov 2026; lane A, with CAM3)
-- Why: the owner finds the card wordy (screenshot 21 Nov: "Birlikte" title, "Seste 1/6 · 📷 0/4", "Ayrıl" in
-  text, "Bas-konuş (V)" checkbox wrapping, "Paylaş ▾").
-- What: no "Together" title; no voice / camera counter (VC4's chat note replaces it); Leave as an icon button with
-  a name (tooltip + aria); Share as an icon only; push-to-talk moves into a new 🔊 sound settings button (Discord-like
-  popover: push-to-talk on/off and key, input / output device, mic volume, noise suppression if we have it). Keep
-  44 px targets on phones and the TG1 compact layout. The profile menu keeps avatar and name; Developer decides what
-  else stays there and tells the Planner.
-- Done when: the new card at 1366 / 1920 / phone; all actions reachable by keyboard; Test Lab `together.layout`;
-  first look with the old and new screenshot.
-
-
-
-### RC2. Session recap: quiet sound, cinema look, a button after 2 hours (owner, 21 Nov 2026; lane A2)
-- Why: the recap starts terribly loud; the owner wants a more cinema-like design; it should not appear by itself.
-- What: (1) volume: start low (−18 dB or so) with a fade-in; (2) offer 3–4 royalty-free, licence-checked music
-  options (short previews in the PR) and send them to the Planner: the owner picks; (3) a cinema look (curtains,
-  marquee lights, film grain, credits roll) with 2–3 directions as images to the Planner before building; (4) after 2
-  hours together a "✨ Session recap" button shows for the host and everyone; it can be played once per session;
-  pressing it prepares and starts (no second press if preparing is fast). Ideas for later (not now): film data, see LB1.
-- Done when: the button rule, the once-per-session rule, the volume; Test Lab `recap.button` (fake 2 h); e2e; the
-  owner's picks recorded.
-- Owner's pick: music and look (Planner asks with the options).
-
-### FR1. Rate the film together (host, extension) (owner, 21 Nov 2026; lane A2, after RC2)
-- Why: while watching a film through the extension, the host can start a short fun poll that gets people talking.
-- What: a "⭐ Rate the film" button in the rail, host only, film page (extension) only. Everyone gets the same few
-  fixed questions one after another: stars 0.5–5 (half stars, Letterboxd-like), "Who liked it most?", "Who liked it
-  least?", and 1–2 more conversation starters; then a results card (average stars, picks with names) that invites
-  "why?" in chat. Nice design; EN + TR; no film title is sent anywhere outside the room.
-- Done when: two people on a demo film page answer and see the results; Test Lab `film.rate`; e2e; first look.
-
 ### YTQ1. PRIORITY: a bigger YouTube API quota through YouTube's audit (owner, 15 Nov 2026; Research + B2, owner submits)
 - Why: the default quota is 10,000 units a day. One `search.list` costs 100 units, so roughly 100 searches a day across
   every room. The video and Shorts feeds (SH2), search and the Sources picker all depend on it. YouTube grants more
@@ -148,13 +99,15 @@ Two sessions never edit the same lines; the Planner splits work by files.
 - Owner's pick: "Dailymotion ekleyelim" (Planner chat, 17 Nov 2026).
 
 ## Proposed
-### LB1. Research: Letterboxd / film data (owner, 21 Nov 2026; Research)
-- Question: can users connect Letterboxd (or we read film data) for recap comments and film suggestions? Check
-  Letterboxd's API terms (access is by application), TMDB / Wikidata as alternatives, privacy, and what we may show.
-  Output: `docs/internal/research/film-data.md` + a Proposed card.
-
-
-Security and Research suggestions: `docs/internal/cards-proposed.md`.
+### FILM1. Film details from TMDB, host opt-in (Research LB1, 21 Nov 2026; lane A; owner's pick pending)
+- Why: the recap and "Rate the film" could show a poster, year, genres and "3 films like this"; Letterboxd's API is
+  closed to us, TMDB is free for non-commercial use with attribution (`research/film-data.md`).
+- What: the host presses "🔎 Find film details" (off by default); the Worker cleans the page title, searches TMDB (key
+  = Worker secret), the host confirms the match; the room keeps the TMDB id; RC2 / FR1 show poster + genres, the recap
+  ends with 3 suggestions; KV cache ≤ 30 days; TMDB attribution (help, third-party notices, cards); `_headers`
+  img-src; `privacy.html` dated line EN + TR; never on YouTube. Before donations go live the owner asks TMDB in writing.
+- Done when: opt-in, confirm step, cache, attribution on a demo film page; no TMDB call without the host's press (e2e);
+  Test Lab `film.details` with a fake response; privacy page; first look. Owner: a free TMDB account + API key.
 
 ## Done
 
