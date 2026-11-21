@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boardDone, boardSolved, duelGuess, duelOutcome, duelPlace, duelRanks, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
+import { boardDone, boardSolved, duelGuess, duelOutcome, duelPlace, duelPoints, duelRanks, duelTimeUp, duelWordsVisible, parseDuelMessage, practiceWord, type DuelBoard } from './duel.ts';
 import { MAX_TRIES } from './five-frames.ts';
 
 const ANSWER = 'crane';
@@ -75,6 +75,32 @@ describe('Five Frames Duel judging', () => {
     expect(duelPlace(solved, 1)).toBe(1);
     expect(duelPlace(solved, 0)).toBe(2);
     expect(duelPlace(solved, 2)).toBe(0);
+  });
+
+  it('FW2: points are 7 → 1 by the guess it took, plus 3 for the first to find it', () => {
+    const boards: (DuelBoard | null)[] = [{ guesses: ['slate', 'pious', 'crane'] }, null, { guesses: ['crane'] }, { guesses: [...wrong] }];
+    // Seat 0 found it first (on the third guess), seat 2 second (on the first), seat 3 never.
+    expect(duelPoints(boards, ANSWER, [0, 2])).toEqual([5 + 3, 0, 7, 0]);
+    const seventh: DuelBoard = { guesses: [...wrong.slice(0, 6), 'crane'] };
+    expect(duelPoints([seventh], ANSWER, [])).toEqual([1]);
+  });
+
+  it('FW2: when the time runs out every unfinished board is out; first solver wins, or a draw', () => {
+    const boards: DuelBoard[] = [{ guesses: ['slate'] }, { guesses: ['crane'] }, { guesses: [] }];
+    expect(duelTimeUp(boards, ANSWER, [1])).toBe(1);
+    expect(boards.map((b) => boardDone(b, ANSWER))).toEqual([true, true, true]);
+    expect(boards[1]!.timeUp).toBeUndefined();
+    expect(duelRanks(boards, ANSWER, [1])).toEqual([2, 1, 2]);
+    const two: DuelBoard[] = [{ guesses: [] }, { guesses: ['slate'] }];
+    expect(duelTimeUp(two, ANSWER, [])).toBe('draw');
+    expect(duelGuess(two[0]!, 'slate', ANSWER, 'en', allowed)).toBe('done');
+  });
+
+  it('FW2: a time limit is only one of the offered ones', () => {
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', time: 120 }))).toEqual({ t: 'settings', time: 120 });
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', time: 0 }))).toEqual({ t: 'settings', time: 0 });
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', time: 7 }))).toBeNull();
+    expect(parseDuelMessage(JSON.stringify({ t: 'settings', time: '120' }))).toBeNull();
   });
 
   it('GMP b: six players, nobody solves: a draw, everyone shares the first place', () => {
