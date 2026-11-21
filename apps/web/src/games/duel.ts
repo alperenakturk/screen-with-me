@@ -41,8 +41,8 @@ const TEXT = {
     oneGame: 'One game',
     bestOf3: 'Best of three',
     hardMode: 'Hard mode',
-    hardOff: 'Hard mode: off',
-    hardOn: 'Hard mode: on',
+    hardOff: 'Normal mode',
+    hardOn: 'Hard mode',
     hardTitle: 'Letters you found must be used in your next guesses.',
     hardMiss: 'Hard mode: use {letter}',
     hardMissAt: 'Hard mode: {letter} goes in place {n}',
@@ -115,16 +115,16 @@ const TEXT = {
     lobbyTime: 'Time limit',
     lobbyLevel: 'Words',
     levelTitle: 'Easy: everyday words. Medium: everyday and known words, no odd ones. Hard: known and rare words. Mixed: all of them.',
-    level_easy: 'Easy words',
-    level_medium: 'Medium words',
-    level_hard: 'Hard words',
-    level_mixed: 'Mixed words',
+    level_easy: '📚 Easy',
+    level_medium: '📚 Medium',
+    level_hard: '📚 Hard',
+    level_mixed: '📚 Mixed',
     levelTag_easy: 'Easy',
     levelTag_medium: 'Medium',
     levelTag_hard: 'Hard',
     levelTag_mixed: 'Mixed',
-    timeOff: 'No time limit',
-    timeMinutes: '{n} min a game',
+    timeOff: '⏱ No limit',
+    timeMinutes: '⏱ {n} min',
     timeTitle: 'When the time runs out, everyone who hasn’t found the word is out.',
     timeLeft: 'Time left: {t}',
     timeUp: 'Time is up!',
@@ -144,8 +144,8 @@ const TEXT = {
     oneGame: 'Tek oyun',
     bestOf3: 'Üçte iki',
     hardMode: 'Zor mod',
-    hardOff: 'Zor mod: kapalı',
-    hardOn: 'Zor mod: açık',
+    hardOff: 'Normal mod',
+    hardOn: 'Zor mod',
     hardTitle: 'Bulduğun harfleri sonraki tahminlerinde kullanmalısın.',
     hardMiss: 'Zor mod: {letter} harfini kullan',
     hardMissAt: 'Zor mod: {letter} {n}. yerde olmalı',
@@ -217,16 +217,16 @@ const TEXT = {
     lobbyTime: 'Süre sınırı',
     lobbyLevel: 'Kelimeler',
     levelTitle: 'Kolay: günlük kelimeler. Orta: günlük ve bilinen kelimeler, tuhafları yok. Zor: bilinen ve nadir kelimeler. Karışık: hepsi.',
-    level_easy: 'Kolay kelimeler',
-    level_medium: 'Orta kelimeler',
-    level_hard: 'Zor kelimeler',
-    level_mixed: 'Karışık kelimeler',
+    level_easy: '📚 Kolay',
+    level_medium: '📚 Orta',
+    level_hard: '📚 Zor',
+    level_mixed: '📚 Karışık',
     levelTag_easy: 'Kolay',
     levelTag_medium: 'Orta',
     levelTag_hard: 'Zor',
     levelTag_mixed: 'Karışık',
-    timeOff: 'Süre sınırı yok',
-    timeMinutes: 'Oyun başı {n} dk',
+    timeOff: '⏱ Sınırsız',
+    timeMinutes: '⏱ {n} dk',
     timeTitle: 'Süre bitince kelimeyi bulamayan herkes oyun dışı kalır.',
     timeLeft: 'Kalan süre: {t}',
     timeUp: 'Süre doldu!',
@@ -361,7 +361,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const tray = el('div', { class: 'ff-tray' });
   // The table id is no secret (the room lists it); harnesses join it as a second player.
   const refRow = el('div', { class: 'duel-ref' }, referee, clock2, status);
-  const box = el('div', { class: 'ff duel', 'data-table': gameId }, bar, main, lobby, refRow, actions, tray);
+  // GFIT1 / FW2: in the video's place the race fills the box (stage.ts lays it out at the box, not a design shape).
+  const box = el('div', { class: 'ff duel', 'data-table': gameId, 'data-fill': '' }, bar, main, lobby, refRow, actions, tray);
   app.replaceChildren(box);
   const result = resultCard(main, stubArt('plain', 'duel-glow'), (moved) => actions.prepend(...moved));
   // Buttons never keep the focus (the room's keys stay the room's).
@@ -592,6 +593,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       p.label.textContent = p.text();
       p.label.title = p.title();
       p.select.title = p.title() || p.text();
+      p.select.setAttribute('aria-label', p.text());
       const now = p.now(s);
       if (p.select.options.length !== p.values.length || p.select.dataset.lang !== pageLang()) {
         p.select.replaceChildren(...p.values.map((v) => el('option', {}, p.name(v))));

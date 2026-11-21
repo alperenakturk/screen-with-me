@@ -277,4 +277,7 @@ html:not(.phone) .ff-head button.htp-open:not(.htp-head) { width: 24px; height: 
   #game-stage.in-tab .ff:not(.duel) .ff-day { display: none; }
   #game-stage.in-tab .ff:not(.duel) > .ff-cat-row { min-width: 0; }
   #game-stage.in-tab .ff:not(.duel) .ff-cat { padding-inline: 6px; min-width: 0; max-width: 100%; font-size: 13px; }
+  /* FW2: the level keeps its whole word ("Medium", "Orta"); the category gives way (its emoji still shows which). */
+  #game-stage.in-tab .ff:not(.duel) .ff-cat:not(.ff-level) { flex: 1 1 0; }
+  #game-stage.in-tab .ff:not(.duel) .ff-level { flex: none; field-sizing: content; min-width: 5.2em; max-width: none; }
 }

@@ -240,9 +240,9 @@ html.phone .duel.watching.many .duel-side .duel-mini-grid { gap: 2px; }
   #game-stage .ff.duel:not(:has(.duel-lobby:not([hidden]))) { grid-template-columns: minmax(0, max-content) minmax(280px, 1fr); column-gap: 14px; }
   #game-stage .ff.duel[data-lang='tr']:not(:has(.duel-lobby:not([hidden]))) { grid-template-columns: minmax(0, max-content) minmax(312px, 1fr); }
   #game-stage .ff.duel .duel-side { flex: none; }
-  #game-stage .ff.duel .duel-board .ff-row { height: auto; flex: 0 1 50px; min-height: 0; grid-template-columns: 28px minmax(0, 1fr); }
-  #game-stage .ff.duel .duel-board .ff-cells { height: 100%; grid-template-columns: repeat(5, minmax(26px, 46px)); grid-auto-rows: minmax(0, 1fr); gap: 5px; padding: 3px 4px; }
-  #game-stage .ff.duel .duel-board .ff-cell { font-size: 26px; }
+  #game-stage .ff.duel .duel-board .ff-row { height: auto; flex: 0 1 64px; min-height: 0; grid-template-columns: 28px minmax(0, 1fr); }
+  #game-stage .ff.duel .duel-board .ff-cells { height: 100%; grid-template-columns: repeat(5, minmax(26px, 58px)); grid-auto-rows: minmax(0, 1fr); gap: 5px; padding: 3px 4px; }
+  #game-stage .ff.duel .duel-board .ff-cell { font-size: 28px; }
   #game-stage .ff.duel .duel-board .ff-stub { font-size: 14px; }
   #game-stage .ff.duel:not(.many) .duel-mini { width: 132px; }
   #game-stage .ff.duel:not(.many) .duel-mini-row { grid-template-columns: repeat(5, 18px); gap: 3px; }
@@ -261,7 +261,7 @@ html.phone .duel.watching.many .duel-side .duel-mini-grid { gap: 2px; }
 
 /* FW2: the settings after the word language are selects (games, time, hard mode, level). On a phone or a narrow box
    they stand two a row (everywhere since GFIT1 stacks the lobby), each one saying what it is. */
-.duel-select { min-height: 32px; }
+.duel-select { min-height: 32px; padding-inline: 8px 4px; text-overflow: ellipsis; }
 html.phone .duel-select { min-height: 44px; font-size: 15px; }
 #game-stage .duel-lobby.lobby-card .game-settings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 #game-stage .duel-lobby.lobby-card .game-setting:not(.duel-pick) { display: flex; grid-column: 1 / -1; align-items: center; gap: 10px; }
