@@ -2288,6 +2288,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `recapLast:<room>`); never in the Shorts view, never over the video (under it in `#theater`). Test Lab `recap.show`
   / `recap.state`; e2e `scripts/e2e/recap.mjs` (RC1 part); harness `scripts/harness/recap/run.cjs` (`site` job);
   shots `recap-show`, `recap-summary`.
+  **Card RC2 rules (21 Nov 2026, owner: "too loud, and it should not appear by itself"):** `RECAP_READY_MS` = 2 h
+  together (was 30 min). No nudges any more: `room.ts` no longer calls `recapNudge` (late, end of queue) or the N4
+  "last time" chip, so the recap never offers itself; ✨ (`#dock-recap` / `#shorts-recap`) shows for everyone once
+  ready and **one press** starts it: the host's sends `recap-show` straight away (no `recapCard`), a guest's sends
+  `recap-ask` with a "✓ Asked" hint (`recap.asked`). Once per session as before (`shownAt`). Music: RC1 multiplied
+  the pad by `soundVolume()` as if 0–1 (it is 0–100: gain 3.5 at the default 70, clipping); now
+  `RECAP_MUSIC_LEVEL` (0.035) × volume / 100, faded in from silence over `RECAP_FADE_S` (3 s); `state().level`
+  reports it. Lab `{t:'lab', op:'recap-together'}` sets `togetherMs` to 2 h (Test Lab `recap.button`). The cinema look
+  and the music track are the owner's pick (`design/recap-cinema/`). Harness `scripts/harness/recap` (CI `site`).
 - **Simpler room (0.9.93.13, card 6, owner's picks C + D):** `ui/room-more.ts` `roomMoreItems` = the room's "⋯ More"
   list (games (phones), film time (host), save, recap, shortcuts (computer), sync test (dimmed while something plays),
   rules; R9, 0.9.97.16: nothing else, Help · Feedback · Privacy are one small line at the foot of the profile menu,

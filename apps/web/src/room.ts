@@ -1384,7 +1384,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       // (İstatistikler video sonunda değil, ayarlardaki oturum özetinde.)
       const item = roomState?.item;
       const loop = roomSettings.loop === true && isShortItem(item);
-      if (queue.length === 0) recapNudge('end');
+      // RC2 (owner): the recap never offers itself; the end-of-queue nudge is gone.
       if (roomSettings.autoNext !== false || loop) send({ t: 'next', from: itemId, end: true });
       else if (item && item.id === itemId && queue.length > 0) {
         showNextCard($('.player-wrap'), itemTitle(item), mediaUrl(item.media), () => send({ t: 'next', from: itemId }));
@@ -1764,7 +1764,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       case 'recaps':
         recaps = message.recaps;
         void recapChunk().then((m) => m?.renderRecapHistory($('#recap-history'), recaps, playRecapAlone));
-        lastTimeNudge();
         break;
       case 'recap-status':
         recapStatus = message.status;
@@ -4355,38 +4354,10 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       b.hidden = !ready;
       b.classList.toggle('rc-new', fresh);
     }
-    // N2: late and long (≥ 90 min together after 23:00, or 3 h at any time), once per person per session.
-    const sec = recapSec();
-    const hour = new Date().getHours();
-    if (ready && (sec >= 3 * 3600 || (sec >= 90 * 60 && (hour >= 23 || hour < 4)))) recapNudge('late');
   }
   setInterval(renderRecap, 20_000);
-  /** A nudge under the video (never over it), at most one per person per session, never after "Don't remind me". */
-  function recapNudge(kind: 'late' | 'end'): void {
-    if (!recapReady() || nudgesOff() || shortsOn || !recapStatus) return;
-    const key = `recapNudge:${roomId}`;
-    if (load(key) === String(recapStatus.since)) return;
-    save(key, String(recapStatus.since));
-    void recapChunk().then((m) =>
-      m?.nudge($('#theater'), kind === 'late' ? { kind: 'late', sec: recapSec() } : { kind: 'end', host: amHost() }, {
-        open: () => (amHost() ? send({ t: 'recap-show' }) : send({ t: 'recap-ask' })),
-        never: () => save('opt:recapNudges', '0'),
-        ms: kind === 'late' ? 12_000 : 60_000,
-      }),
-    );
-  }
-  /** N4: the last session ended without a show: for 10 min into the next one, a chip replays it alone. */
-  let lastTimeChecked = false;
-  function lastTimeNudge(): void {
-    if (lastTimeChecked || !recapStatus || nudgesOff()) return;
-    lastTimeChecked = true;
-    const last = recaps.at(-1);
-    if (!last || last.shown || last.to > recapStatus.since || clock.now() - recapStatus.since > 10 * 60_000) return;
-    const key = `recapLast:${roomId}`;
-    if (load(key) === last.id) return;
-    save(key, last.id);
-    void recapChunk().then((m) => m?.nudge($('#theater'), { kind: 'last', recap: last }, { open: () => playRecapAlone(last), never: () => save('opt:recapNudges', '0'), ms: 10 * 60_000 }));
-  }
+  // Card RC2 (owner, 21 Nov 2026): no nudges (late, end of queue, last time) any more: the recap never appears by
+  // itself; ✨ shows after 2 h together and starts with one press.
   function openRecapFlow(anchor: HTMLElement): void {
     recapOpenedFor = recapStatus?.since ?? null;
     if (!recapReady()) {
@@ -4394,9 +4365,13 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       send({ t: 'recap' });
       return;
     }
-    const sec = recapSec();
+    // RC2: one press: the host's starts the show for the room (preparing is the 3-2-1), a guest's asks the host.
     renderRecap();
-    void recapChunk().then((m) => m?.recapCard(anchor, { host: amHost(), readySec: sec, ask: () => send({ t: 'recap-ask' }), show: () => send({ t: 'recap-show' }) }));
+    if (amHost()) send({ t: 'recap-show' });
+    else {
+      send({ t: 'recap-ask' });
+      flashHint(anchor, t('recap.asked'));
+    }
   }
   for (const sel of ['#dock-recap', '#shorts-recap', '#recap-open']) $(sel).addEventListener('click', (event) => openRecapFlow(event.currentTarget as HTMLElement));
   function playRecapAlone(recap: Recap): void {
@@ -4448,6 +4423,15 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         run: () => {
           if (!amHost()) return 'not host';
           send({ t: 'recap-show', lab: true });
+          return 'asked';
+        },
+      },
+      {
+        // RC2: this session counts 2 h together now (lab server only): the ✨ button shows.
+        id: 'recap.button',
+        tab: 'screen',
+        run: () => {
+          send({ t: 'lab', op: 'recap-together' });
           return 'asked';
         },
       },

@@ -104,8 +104,8 @@ ok(after.recap.people.find((p) => p.name === 'Robin')?.reactions === 6 && after.
 p3.ws.close();
 
 // Card RC1: the host shows the session's recap to everyone, once per session. A guest asks; the host's tabs hear it.
-// Live (no lab powers): it is not ready before 30 min together, and only the host may show it. On a local lab server
-// (`LAB_SERVER=1`) `lab: true` skips the 30 min: the show reaches everyone with the same scenes, pauses the video, a
+// Live (no lab powers): it is not ready before 2 h together (RC2), and only the host may show it. On a local lab server
+// (`LAB_SERVER=1`) `lab: true` skips the 2 h: the show reaches everyone with the same scenes, pauses the video, a
 // second show in the same session is refused, and after a 4 h gap (lab `recap-gap`) the next session may show it again.
 {
   const lab = process.env.LAB_SERVER === '1' && /^ws:\/\/(localhost|127\.0\.0\.1)/.test(base);
@@ -129,7 +129,7 @@ p3.ws.close();
   g.send({ t: 'chat', text: 'what a scene' });
   h.send({ t: 'recap-show' });
   await h.wait((m) => m.t === 'error' && m.code === 'recap_not_ready', 'not ready');
-  ok(true, 'RC1: before 30 min together the recap is not ready');
+  ok(true, 'RC1: before 2 h together the recap is not ready (RC2)');
   g.send({ t: 'recap-show', lab: true });
   await g.wait((m) => m.t === 'error' && m.code === 'not_host', 'guest show refused');
   ok(true, 'RC1: a guest cannot show it');

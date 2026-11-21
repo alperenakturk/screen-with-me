@@ -539,6 +539,7 @@ const en = {
   'error.recap_not_ready': 'The recap is ready after 30 minutes of watching together.',
   'error.tv_code': 'No TV is waiting with this code. Check the code on the TV screen (it changes every 10 minutes).',
   'error.tv_token': "This TV's link has ended. The TV shows a new code; connect it again from your phone.",
+  'recap.asked': '✓ Asked. The host decides.',
   'recap.title': 'Session recap',
   'recap.savedTitle': 'Saved recaps',
   'recap.saved': '✓ Saved',

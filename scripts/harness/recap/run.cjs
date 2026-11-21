@@ -1,3 +1,4 @@
+// Card RC2: ✨ only after 2 h together (Test Lab `recap.button`), one press, once per session, a quiet start.
 // Card RC1: the session recap for everyone. The host shows it (Test Lab `recap.show`: the lab server skips the 30 min
 // together): after a 3-2-1 both people see the same scene in the video's place, inside the player box, the player
 // hidden (never covered), nothing scrolling; only the host has "▶ Back to the video"; "✕ Close for me" closes it for
@@ -69,10 +70,23 @@ const stageBox = (page) =>
     await a.waitForTimeout(1500);
     const short = label === 'Short';
     if (short) check(await a.evaluate(() => document.documentElement.classList.contains('shorts-view')), `${label}: the Short opens the Shorts view`);
-    check((await state(a)).ready === false, `${label}: ✨ is not ready before 30 min together`);
-    await lab(a, 'recap.show');
+    check((await state(a)).ready === false && (await state(a)).button === false, `${label}: ✨ is not there before 2 h together (RC2)`);
+    // Card RC2: Test Lab `recap.button` counts 2 h together; ✨ shows for the host and the guest, nothing offers itself.
+    await lab(a, 'recap.button');
+    await s.waitForFunction(() => [...document.querySelectorAll('#dock-recap, #shorts-recap')].some((b) => !b.hidden), null, { timeout: 8000 }).catch(() => {});
+    const [ra, rs] = [await state(a), await state(s)];
+    check(ra.ready && ra.button && rs.ready && rs.button, `${label}: after 2 h together ✨ shows for the host and the guest`, [ra.button, rs.button]);
+    const press = (page) => page.evaluate(() => [...document.querySelectorAll('#dock-recap, #shorts-recap')].find((b) => !b.hidden && b.getBoundingClientRect().width > 0)?.click() ?? [...document.querySelectorAll('#dock-recap, #shorts-recap')].find((b) => !b.hidden)?.click());
+    await press(s);
+    await s.waitForTimeout(600);
+    check(!(await s.isVisible('.rc-stage')) && !(await a.isVisible('.rc-stage')), `${label}: the guest's ✨ asks the host, nothing starts`);
+    check(!(await a.isVisible('.rc-nudge')) && !(await s.isVisible('.rc-nudge')), `${label}: no recap nudge appears by itself`);
+    await press(a);
     await s.waitForSelector('.rc-stage', { timeout: 10000 });
     await a.waitForSelector('.rc-stage', { timeout: 10000 });
+    check(true, `${label}: one press of the host's ✨ starts the show for both`);
+    const level = (await state(a)).stage?.level;
+    check(typeof level === 'number' && level > 0 && level <= 0.035, `${label}: the music is quiet (gain ≤ 0.035; RC1 played at 3.5)`, level);
     if (short) check(await a.evaluate(() => !document.documentElement.classList.contains('shorts-view')), `${label}: the show switches to the normal view`);
     await a.waitForTimeout(3600);
     const sa = await state(a);
@@ -93,6 +107,7 @@ const stageBox = (page) =>
     await a.waitForTimeout(800);
     check(!(await a.isVisible('.rc-stage')), `${label}: "Back to the video" ends it`);
     check((await state(a)).status?.shown === true && (await state(s)).status?.shown === true, `${label}: the session's recap is marked shown for everyone`);
+    check((await state(a)).button === false && (await state(s)).button === false, `${label}: once shown, ✨ is gone for the session (once per session)`);
     if (short) {
       await a.waitForFunction(() => document.documentElement.classList.contains('shorts-view'), null, { timeout: 5000 }).catch(() => {});
       check(await a.evaluate(() => document.documentElement.classList.contains('shorts-view')), `${label}: the Shorts view comes back after the show`);
