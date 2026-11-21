@@ -38,12 +38,12 @@ Two sessions never edit the same lines; the Planner splits work by files.
 (see `STATUS.md` "Task queue")
 
 ## Ready
-### STORE1. PRIORITY: Chrome Web Store submission by ~25 Nov (owner, 21 Nov 2026; lane B, owner submits)
+### STORE2. PRIORITY: Chrome Web Store submission by ~25 Nov (owner, 21 Nov 2026; lane B, owner submits)
 - Why: the owner wants the extension in the store before Spotify Wrapped (~3 Dec); review can take days to 3 weeks.
   This moves the store step ahead of 1.0 (ROADMAP "Then"), owner's pick.
 - What: bring `docs/internal/web-store.md` and `npm run store` up to date with the live version (listing texts EN +
   TR, screenshots from `store/src/`, permissions justification, privacy fields, the public-text rules of CLAUDE.md §6);
-  a pre-submission check (manifest, permissions, no remote code, privacy page, support contact); a step-by-step
+  a pre-submission check redone from `docs/internal/store-checklist.md` (STORE1 dry run, 7 Nov) (manifest, permissions, no remote code, privacy page, support contact); a step-by-step
   Turkish list for the owner (Developer Dashboard → upload zip → fields to paste → submit), including the Brave / Edge
   hand test right before. No `PROTOCOL_VERSION` bump while the review runs (CLAUDE.md §7).
 - Done when: the store zip + screenshots + texts are ready on `main`, the checklist passes, the owner's steps are
