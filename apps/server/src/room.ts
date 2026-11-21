@@ -50,7 +50,7 @@ import {
 import { readMemory, rememberPlayed, sameFeed, type FeedInfo, type FeedMemoryEntries } from '@swm/shared/feed';
 import { applyRoomAction, freshItem, freshRoom, initialRoom, setItemTitle, TITLE_MAX_AGE_MS, type RoomAction, type RoomData } from '@swm/shared/room-logic';
 import { WAIT_MAX_MS, WaitTracker, type WaitSnapshot } from '@swm/shared/waiting';
-import { chooseFacts, freshRecaps, RECAP_ASK_GAP_MS, RECAP_COUNTDOWN_MS, RECAP_MAX_AGE_MS, recapShowEnd, RECAPS_KEEP, RECAPS_KEEP_SAVED, SESSION_GAP_MS, StatsTracker, type Recap, type RecapShow, type StatsData } from '@swm/shared/recap';
+import { chooseFacts, freshRecaps, RECAP_ASK_GAP_MS, RECAP_COUNTDOWN_MS, RECAP_READY_MS, RECAP_MAX_AGE_MS, recapShowEnd, RECAPS_KEEP, RECAPS_KEEP_SAVED, SESSION_GAP_MS, StatsTracker, type Recap, type RecapShow, type StatsData } from '@swm/shared/recap';
 import { PollHub, readCapped } from './fallback.ts';
 import { IP_HEADER, ROOM_HEADER } from './ip.ts';
 import { labOnRequest, labRemembered } from './lab.ts';
@@ -719,6 +719,13 @@ export class Room extends DurableObject<Env> {
           await this.saveStats(true);
           return;
         }
+        if (message.op === 'recap-together') {
+          // RC2: this session counts 2 h together now (Test Lab `recap.button`): the ✨ button shows for everyone.
+          this.stats.data.togetherMs = Math.max(this.stats.data.togetherMs ?? 0, RECAP_READY_MS);
+          await this.saveStats(true);
+          this.tellRecapStatus(true);
+          return;
+        }
         if (message.op === 'chat-fill') {
           // CH1: 250 numbered messages at once (lab only), to check that a long chat stays and pages back in.
           const base = this.chatStore.count;
@@ -851,9 +858,10 @@ export class Room extends DurableObject<Env> {
         return;
       }
       case 'recap-show': {
-        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        // Card RC2 (owner's pick A, 21 Nov 2026): anyone in the room starts it once it is ready, once per session (the
+        // `shownAt` lock below). Only the host's Test Lab may skip the 2 h.
         this.statsTick();
-        const lab = message.lab === true && (this.lab ||= await labRemembered(this.ctx.storage, this.env));
+        const lab = message.lab === true && this.isHost(ws) && (this.lab ||= await labRemembered(this.ctx.storage, this.env));
         if (this.stats.data.shownAt) return this.sendTo(ws, { t: 'error', code: 'recap_shown' });
         if (!lab && !this.stats.ready()) return this.sendTo(ws, { t: 'error', code: 'recap_not_ready' });
         const now = Date.now();

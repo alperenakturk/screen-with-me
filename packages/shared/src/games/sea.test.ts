@@ -7,6 +7,7 @@ import {
   checkFleet,
   fleetSunk,
   knownEmpty,
+  nearestPlace,
   parseSeaMessage,
   randomFleet,
   shipCells,
@@ -58,6 +59,17 @@ describe('sea battle rules', () => {
     expect(checkFleet(R, ROWS.slice(1))).toBeNull();
   });
 
+  it('SB2: a dragged ship snaps to the nearest spot that fits, or nowhere', () => {
+    // The 2-ship let go half off the right edge: one cell back onto the sea.
+    expect(nearestPlace(R, ROWS, 4, 8, 9, false)).toEqual({ at: 88, down: false });
+    // Turned down at the right edge: it fits where it is.
+    expect(nearestPlace(R, ROWS, 4, 7, 9, true)).toEqual({ at: 79, down: true });
+    // Squeezed between the first two ships: nothing fits within reach.
+    expect(nearestPlace(R, ROWS, 4, 1, 0, false)).toBeNull();
+    // Every answer is a valid fleet.
+    const p = nearestPlace(R, ROWS, 2, 5, 5, true)!;
+    expect(checkFleet(R, ROWS.map((q, i) => (i === 2 ? p : q)))).not.toBeNull();
+  });
   it('always makes a valid random fleet', () => {
     const random = seeded(7);
     for (let i = 0; i < 200; i++) expect(checkFleet(R, randomFleet(R, random))).not.toBeNull();
