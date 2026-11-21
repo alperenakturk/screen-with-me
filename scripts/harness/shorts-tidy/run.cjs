@@ -6,7 +6,7 @@
 // Test Lab `shorts.tidy` / `shorts.note` report it. YouTube's answers are faked (no quota, no network).
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-tidy/run.cjs [site]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -38,7 +38,7 @@ const lab = async (page, id) => (await page.evaluate(async (c) => (await window.
   for (const [name, options, kind] of sizes) {
     const room = `shtidy${Math.random().toString(36).slice(2, 7)}`;
     const ctx = await browser.newContext(options);
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));

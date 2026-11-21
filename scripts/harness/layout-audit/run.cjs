@@ -12,7 +12,7 @@
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const VIDEO = process.argv[3] || 'http://localhost:5300/video.webm';
@@ -106,7 +106,7 @@ function measure(selectors) {
     const touch = phone || /ipad/.test(device);
     const sideways = phone && /-side$/.test(device);
     const ctx = await browser.newContext({ ...DEVICES[device], permissions: ['camera', 'microphone'] });
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     await ctx.addInitScript(() => {
       for (const [k, v] of Object.entries({
         lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', 'opt:voiceCheck': 'skip',

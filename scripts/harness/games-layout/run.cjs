@@ -8,7 +8,7 @@
 //   node scripts/harness/games-layout/run.cjs [site] [video]
 //   SIZES=1366 GAMES=word,sea VIDEOS=file narrow it.
 const { chromium, devices } = require('playwright');
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
 const FILM = process.argv[3] || 'http://localhost:5300/video.webm';
@@ -33,7 +33,7 @@ const check = (ok, label, extra) => {
 
 async function roomPage(browser, size, video) {
   const ctx = await browser.newContext({ ...SIZES[size].ctx });
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   await ctx.addInitScript(() => {
     const seen = { lang: 'en', name: 'Robin', avatar: 'wizard', 'opt:autoInvite': '0', tipsSeen: '1', extUpdateSeen: '9' };
     for (const g of ['snackBar', 'windowGarden', 'fiveFrames', 'classics:xox', 'sea', 'duel', 'quiz', 'draw', 'poker']) seen[`${g}:howSeen`] = '1';

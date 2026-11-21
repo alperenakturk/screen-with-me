@@ -5,7 +5,7 @@
 // Settings) pins it, and an old "hide the controls" choice no longer hides it. The YouTube player only has to be
 // created, not to play (the cloud's headless Chromium can't decode it). Needs Playwright and `npm run dev`:
 //   NODE_PATH=$(npm root -g) node scripts/harness/yt-room/run.cjs [http://localhost:5173]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium } = require('playwright');
 const SITE = process.argv[2] || 'http://localhost:5173';
 let fails = 0;
@@ -49,7 +49,7 @@ const box = (page, selector) =>
   const room = `yt${Math.random().toString(36).slice(2, 7)}`;
   async function enter(name) {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     const page = await ctx.newPage();
     await page.addInitScript(() => {
       localStorage.setItem('tipsSeen', '1');
@@ -348,7 +348,7 @@ const box = (page, selector) =>
   // queries the way such a laptop does.
   {
     const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     const page = await ctx.newPage();
     await page.addInitScript(() => {
       localStorage.setItem('tipsSeen', '1');

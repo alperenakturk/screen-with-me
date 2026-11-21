@@ -8,7 +8,7 @@
 // each time the player keeps the full width beside the rail.
 //
 //   npm run dev, then: node scripts/harness/yt-fs-side/run.cjs [site]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium } = require('playwright');
 
 const SITE = process.argv[2] ?? 'http://localhost:5173';
@@ -39,7 +39,7 @@ async function run(browser, { width, height, font }) {
   console.log(`\n— ${width} × ${height}`);
   const mid = { x: Math.round(width * 0.35), y: Math.round(height / 2) };
   const ctx = await browser.newContext({ viewport: { width, height }, permissions: ['microphone', 'camera'] });
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   const page = await ctx.newPage();
   await page.addInitScript(() => {
     for (const [k, v] of Object.entries({ name: 'Alex', avatar: 'wizard', lang: 'en', 'opt:autoInvite': '0', tipsSeen: '1', 'opt:voiceCheck': 'skip', 'opt:ipNotice:voice': '1' })) localStorage.setItem(k, v);

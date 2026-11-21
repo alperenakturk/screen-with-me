@@ -2,10 +2,10 @@
 // paste order on a computer (EN) and a phone (TR). A TikTok app share link (vm.tiktok.com) is looked up by the server
 // (stubbed here: the cloud can't reach tiktok.com) and keeps its place in the list; TikTok's player is a fake page
 // that speaks its postMessage protocol (as in scripts/harness/tiktok). While a TikTok plays, the ♾ window says TikTok
-// has no feed and points to links; on a YouTube Short that note is gone. Needs YouTube (the Shorts play for real).
+// has no feed and points to links; on a YouTube Short that note is gone. YouTube's player is the test stand-in (fake-youtube.cjs, card CI4).
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787)
 //   NODE_PATH=$(npm root -g) node scripts/harness/shorts-mixed/run.cjs [http://localhost:8787] [out-dir]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
@@ -70,7 +70,7 @@ const playing = (page) =>
     ['phone', { ...devices['Pixel 7'] }, 'tr'],
   ]) {
     const ctx = await browser.newContext(options);
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     await ctx.route('https://www.tiktok.com/player/v1/**', (r) => r.fulfill({ contentType: 'text/html', body: FAKE }));
     let lookups = 0;
     await ctx.route('**/api/tiktok/resolve?**', (r) => {

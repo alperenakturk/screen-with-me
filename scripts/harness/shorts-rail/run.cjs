@@ -4,7 +4,7 @@
 // is folded and brings it back, Enter / 💬 open the chat panel (SH3); on a phone the phone bar stays under the video.
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-rail/run.cjs [site]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { phoneReady } = require('../phone-ready.cjs');
 const { chromium, devices } = require('playwright');
 
@@ -58,7 +58,7 @@ const box = (page, sel) =>
   ];
   for (const [name, width, height, folded] of sizes) {
     const ctx = await browser.newContext({ viewport: { width, height } });
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     const { page, errors, sent } = await openShort(ctx);
     const video = await box(page, '.player-wrap');
     const bar = await box(page, '#shorts-bar');
@@ -144,7 +144,7 @@ const box = (page, sel) =>
     await ctx.close();
   }
   const phone = await browser.newContext({ ...devices['Pixel 7'] });
-  await viaYouTube(phone);
+  await fakeYouTube(phone);
   const { page, errors } = await openShort(phone);
   const video = await box(page, '.player-wrap');
   // Phones have their own slim bar under the video (0.9.92.4, `ui/phone-room.ts`), not the rail.
@@ -181,7 +181,7 @@ const box = (page, sel) =>
     });
   for (const [name, opts] of [['laptop', { viewport: { width: 1366, height: 768 } }], ['phone', { ...devices['Pixel 7'] }]]) {
     const ctx = await browser.newContext(opts);
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     const { page: p } = await openShort(ctx, '?debug=1');
     await p.waitForSelector('.debug-fab', { timeout: 8000 }).catch(() => {});
     await showWait(p);

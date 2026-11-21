@@ -4,7 +4,7 @@
 // the chat back in the side panel. Test Lab `shorts.chat` reports it.
 //
 //   npm run dev, then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-chat/run.cjs [site]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:5173';
@@ -51,7 +51,7 @@ const say = async (page, text) => {
   for (const [name, options] of sizes) {
     const room = `shchat${Math.random().toString(36).slice(2, 7)}`;
     const ctx = await browser.newContext(options);
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     const friendCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     const alex = await join(ctx, room, 'Alex', true);
     const sam = await join(friendCtx, room, 'Sam');

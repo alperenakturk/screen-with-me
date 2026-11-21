@@ -1,10 +1,10 @@
 // Card GW3 (owner, 17 Nov 2026): switching the room view ↔ the Shorts view with a table open keeps the game, its mode and
 // its connection. A table in the video's place becomes a free window in the Shorts view (no ▣ / 🪟 there) and goes back
 // to the video's place in the room view; a frame stays a frame. No game or room socket closes or reopens on the way,
-// opening a game never drops the room's connection, and nothing is ever in the browser's full screen. Needs YouTube.
+// opening a game never drops the room's connection, and nothing is ever in the browser's full screen. YouTube's player is the test stand-in (fake-youtube.cjs, card CI4).
 //   npm run build && (cd apps/server && npx wrangler dev --port 8787 --var SWM_LOCAL_UNPACED:1 --var SWM_LAB_SERVER:1)
 //   NODE_PATH=$(npm root -g) node scripts/harness/games-shorts/run.cjs [http://localhost:8787]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
@@ -26,7 +26,7 @@ const shortsView = (page) => page.evaluate(() => document.documentElement.classL
   const browser = await chromium.launch();
   for (const [label, viewport] of [['1366', { width: 1366, height: 768 }], ['1920', { width: 1920, height: 1080 }]]) {
     const ctx = await browser.newContext({ viewport });
-    await viaYouTube(ctx);
+    await fakeYouTube(ctx);
     await ctx.addInitScript(() => {
       for (const [k, v] of Object.entries({ lang: 'en', name: 'Alex', avatar: 'wizard', tipsSeen: '1', 'opt:autoInvite': '0', 'classics:chess:howSeen': '1' })) localStorage.setItem(k, v);
     });

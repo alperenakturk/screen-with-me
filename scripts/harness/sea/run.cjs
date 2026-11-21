@@ -262,14 +262,20 @@ async function unnamed(page) {
   check(clear, 'phone: "Whole sea" sits outside the zoomed grid, so every cell can be shot');
   check(!(await cellsWith(alex.page, 'mine', 'miss')).includes(other), 'phone: nothing is fired by an aim');
   await sam.page.click('#game-stage .sea-whole');
-  await until(async () => !(await zoom()).zoomed, 4000);
+  // CI4: wait for the zoom-out itself to end (the grid back to full size), not only the class: a tap during the
+  // 0.25 s transition on a busy runner landed while the cells were still moving.
+  await until(async () => {
+    const z = await zoom();
+    return !z.zoomed && z.scale > 0 && z.scale < 1.05;
+  }, 4000);
+  await wait(150);
   const z2 = await zoom();
   check(!z2.zoomed && !z2.whole && (await sam.page.evaluate(() => !document.querySelector('#game-stage .sea-theirs .sea-cell.aimed'))), '"Whole sea" goes back to the whole sea (no aim)', z2);
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);
   await until(async () => {
     const z = await zoom();
     return z.zoomed && z.q === '3';
-  }, 4000);
+  }, 6000);
   const z3 = await zoom();
   check(z3.zoomed && z3.q === '3', 'phone: a tap in another corner zooms into that quarter', z3);
   await sam.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${samMiss}"]`);

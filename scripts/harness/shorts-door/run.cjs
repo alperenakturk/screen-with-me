@@ -4,7 +4,7 @@
 // filled, and a room made with plain "Create room" asks for no Shorts. The pool answer is faked (no YouTube key here).
 //
 //   npm run build && wrangler dev (8787), then: NODE_PATH=$(npm root -g) node scripts/harness/shorts-door/run.cjs [site]
-const { viaYouTube } = require('../via-youtube.cjs');
+const { fakeYouTube } = require('../fake-youtube.cjs');
 const { chromium, devices } = require('playwright');
 
 const SITE = process.argv[2] || 'http://localhost:8787';
@@ -17,7 +17,7 @@ const check = (ok, label, detail) => {
 const POOL = Array.from({ length: 12 }, (_, i) => ({ id: i === 0 ? 'aqz-KE-bpKQ' : `doorShort${String(i).padStart(2, '0')}`, title: `Short ${i}`, channel: 'C', duration: 30, live: false, short: true }));
 
 async function setup(ctx, lang) {
-  await viaYouTube(ctx);
+  await fakeYouTube(ctx);
   const asked = [];
   await ctx.route('**/api/youtube/pool**', (route) => {
     asked.push(route.request().url());

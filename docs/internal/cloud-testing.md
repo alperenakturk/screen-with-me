@@ -39,3 +39,14 @@ bash scripts/harness/run-all.sh                   # every run.cjs harness in one
   connections in a burst gets `429`.
 - GitHub: no `gh`; use the GitHub MCP tools for PRs; `git push` works.
 - Deploys from the cloud go through GitHub Actions (no `wrangler login`); deploy keys are `production` environment secrets (`TAG_TOKEN` is the only repository secret).
+- **YouTube in harnesses (card CI4, 21 Nov 2026):** every harness except `yt-focus` loads
+  `scripts/harness/fake-youtube.cjs`: the page's `https://www.youtube.com/iframe_api` is answered with a small stand-in
+  `YT.Player` (keeps time like the real one: buffering → playing, pause, seek, rate, volume, end) and the embed pages
+  with a black page. So they pass with YouTube blocked or slow (here and on CI). `yt-focus` clicks inside YouTube's own
+  player, so it still needs real YouTube; in CI it is `continue-on-error` (reports, doesn't block). A new harness that
+  only needs "a YouTube video in the room" uses `fakeYouTube(ctx)`; one that tests YouTube itself uses `viaYouTube`.
+- **`cam-phone` in a cloud container (card CI4):** part 5 ("a stopped picture says waiting for the picture…" and
+  "📊 Status lists the camera pictures and their state") fails here every time and passes on GitHub's runners: after
+  `voice.camPause`, the receiving Chrome in this container keeps reporting the picture as playing for longer than the
+  check's 5 s (fake camera + software video on a throttled CPU). Not a product bug; trust the `site` job for it.
+
