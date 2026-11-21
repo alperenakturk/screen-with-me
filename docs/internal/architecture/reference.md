@@ -1539,6 +1539,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   an overdue phase on (`overdue` / `advance`; Quiz the same): live alarms ran > 25 s late right after a deploy. The drawing only in memory (1000×750 grid, 50 ms chunks, latecomers get `strokes`).
   Guessers/drawer chat privately with `secret`. Piece `games/draw.ts`. Test: `scripts/e2e/draw.mjs`. Ctrl+Z / Ctrl+Y
   send one undo / redo per press, never per key-repeat (KEYREP, 0.9.97.94).
+  **DG2 layout (21 Nov 2026):** Draw's own styles are `games/draw.css` (its chunk), scoped to `.dg-page` (Draw's page
+  only; Quiz shares the `draw-*` classes and keeps room.css / lobby.css). A computer (the video's place and the free
+  window): `.draw-left` is a grid `tools | top, bar, canvas`; the canvas sits in `.draw-canvas-cell`, a size container
+  (`dgcanvas`), as the biggest 4 : 3 that fits (`min(100cqw, 100cqh * 4 / 3)`); the drawer's tools are a 104 px column
+  beside it (icons only, 4 × 5 colours); the side column is `clamp(200px, 27%, 280px)` (players compact, two columns from
+  five players without avatars / badges; the chat takes the rest at 14 px). Draw's catalog `wide` is 820 × 500 (was 440:
+  the design box matched no stage, an empty band). The reveal's results are wrapping chips in an overlay that can never
+  overflow (`.draw-gains` shrinks and clips): an overflowing `.draw-overlay` (stage.ts `FIT_INSIDE`) made `refit` divide
+  the scale by the overflow four times, the "results shrink the game to ~10 %" bug. A phone's Games tab: players a grid
+  whose columns follow the width (a score or ✅ never adds a row), five+ results without faces or the big word, the
+  guesses ≥ 44 px. Test Lab `draw.reveal8` (eight made-up players' results for one reveal's time, this screen only);
+  harness `draw-layout` (3 players: page + two `GameSocket` guests; 1366, 1920, iPhone; CI `games-more`).
   **Quiz (0.9.74):** object `Quiz` (`apps/server/src/quiz.ts`, binding `QUIZZES`, migration `v4`, `/api/quiz/:id/ws`),
   `packages/shared/src/games/quiz.ts` + `quiz-questions.ts` + `quiz-questions-2.ts` (P9: 1175 questions, the second bank with a difficulty `d` 1–3; a game goes from easy to hard; the browser keeps the last 600 question ids it saw (`quiz:seen`) and sends them as a base64 bitmap in its hello (`encodeSeen`), the table avoids them and its own recent ones; the stars show the difficulty) (general knowledge, TR/EN, no film/series names; options
   shuffled every game). 2–8 players, 10 questions × 15 s, correct = 100–200 points (faster = more), reveal when everyone

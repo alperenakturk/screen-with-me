@@ -3097,3 +3097,9 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   tall phones; Quiz top bar, Five Frames picker in the head row; side-game notes off the art in a computer's window.
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
+
+### DG2. Draw & Guess: a big canvas, a small side, the results bug (owner, 21 Nov 2026; Game Studio "Draw")
+- Bug: when a drawing ends, the results view shrinks the play area to ~10 % (screenshot 21 Nov).
+- What: canvas large like draw.io, players list compact, chat readable below or beside; results fit without shrinking.
+- Done when: results keep the canvas size; layout at 3 sizes; e2e round with 3 players.
+- Done: <PR link> (21 Nov 2026).

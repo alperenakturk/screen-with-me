@@ -1,0 +1,90 @@
+/* DG2 (owner, 21 Nov 2026): Draw & Guess's own layout, loaded with its chunk. A big 4 : 3 canvas like a drawing app's,
+   the drawer's tools in a slim column beside it, a narrow side column (compact players list, the chat under it), and the
+   round's results laid over the canvas so they always fit it: an overlay taller than the canvas made the stage shrink
+   the whole game again and again (stage.ts `FIT_INSIDE`, ~10 % of the box with a few players). `.dg-page` is this game's
+   page only (Quiz shares the `draw-*` classes); the lobby and the podium (`.draw-lobby`) keep lobby.css's card. */
+
+/* ---- The round's results over the canvas: compact chips that wrap, never taller than the canvas ---- */
+#game-stage .dg-page .draw-overlay:not(.lobby-card) { justify-content: center; gap: 8px; padding: 14px; }
+#game-stage .dg-page .draw-overlay:not(.lobby-card) > p { flex: none; }
+#game-stage .dg-page .draw-reveal { flex: none; font-size: 32px !important; line-height: 1.1; overflow-wrap: anywhere; }
+#game-stage .dg-page .draw-gains {
+  flex: 0 1 auto; min-height: 0; overflow: hidden; width: min(100%, 560px);
+  display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 6px;
+}
+#game-stage .dg-page .draw-gains li { display: inline-flex; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; max-width: 100%; }
+#game-stage .dg-page .draw-gains li > span { min-width: 0; max-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#game-stage .dg-page .draw-gains .draw-avatar { width: 26px; height: 26px; font-size: 16px; }
+#game-stage .dg-page .draw-choices .btn { min-height: 44px; }
+
+/* ---- A computer (the video's place and the free window): tools | canvas | side ---- */
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-main {
+  display: flex; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 12px; height: 100%; min-height: 0;
+}
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-left {
+  flex: 1 1 0; width: auto; min-width: 0; min-height: 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas: 'tools top' 'tools bar' 'tools canvas'; gap: 6px 0;
+}
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-top { grid-area: top; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-bar { grid-area: bar; }
+/* The canvas is the biggest 4 : 3 that fits what is left (a size container of its own: its width and height are known). */
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-canvas-cell {
+  grid-area: canvas; min-width: 0; min-height: 0; container: dgcanvas / size; display: grid; place-items: center;
+}
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-canvas-wrap { width: min(100cqw, 100cqh * 4 / 3); aspect-ratio: 4 / 3; box-sizing: border-box; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) #draw-canvas { width: 100%; height: 100%; aspect-ratio: auto; }
+
+/* The drawer's tools: a slim column left of the canvas (✏️ 🧽 🪣, the 20 colours, the sizes, ↶ ↷ 🗑). */
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-tools:not([hidden]) {
+  grid-area: tools; align-self: center; margin-right: 10px; width: 104px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+}
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-tool-pick { justify-content: space-between; gap: 4px; }
+#game-stage:not(.in-tab) .dg-page .draw-tools :is(.draw-tool, .btn, .draw-color, .draw-size) { box-sizing: border-box; min-width: 0; }
+#game-stage:not(.in-tab) .dg-page .draw-tools :is(.draw-tool, .btn):not(.draw-color-open) { width: 32px; height: 32px; min-height: 0; padding: 0; display: grid; place-items: center; font-size: 16px; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-tool-word { display: none; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-colors { grid-template-columns: repeat(4, 22px); justify-content: space-between; gap: 4px; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-color { width: 22px; height: 22px; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-sizes { gap: 4px; justify-content: flex-start; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-size { width: 32px; height: 28px; }
+
+/* The side column: narrow, the players compact (two columns from five players), the chat takes the rest. */
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-side {
+  flex: 0 0 clamp(200px, 27%, 280px); max-width: none; min-width: 0; min-height: 0; box-sizing: border-box;
+  padding: 10px; gap: 8px;
+}
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players:has(> li:nth-child(5)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-player { gap: 6px; padding: 3px 8px 3px 3px; min-width: 0; font-size: 14px; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-player .draw-avatar { width: 26px; height: 26px; font-size: 16px; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-badge:empty { display: none; }
+/* Two columns (five players or more): the ✏️ / ✅ badge goes (the row's outline and green say the same), the name keeps its room. */
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players:has(> li:nth-child(5)) :is(.draw-badge, .draw-avatar) { display: none; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players:has(> li:nth-child(5)) .draw-player { padding: 5px 8px; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-feed { flex: 1 1 0; height: auto; min-height: 60px; font-size: 14px; line-height: 1.35; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-form { flex: none; gap: 6px; flex-wrap: nowrap; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-form .btn { flex: none; padding-inline: 12px; }
+
+/* ---- A phone's Games tab (lobby.css lays it out): the new canvas box keeps the canvas's place in the column ---- */
+#game-stage.in-tab .dg-page:not(.draw-lobby) .draw-canvas-cell { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+/* Its canvas is small: the word is already in the line above it, so the results are the word and small chips. */
+#game-stage.in-tab .dg-page .draw-overlay:not(.lobby-card) { padding: 8px; gap: 6px; }
+#game-stage.in-tab .dg-page .draw-overlay:not(.lobby-card) > p.muted { display: none; }
+#game-stage.in-tab .dg-page .draw-reveal { font-size: 24px !important; }
+#game-stage.in-tab .dg-page .draw-gains { gap: 4px; }
+#game-stage.in-tab .dg-page .draw-gains li { gap: 4px; padding: 2px 8px 2px 2px; font-size: 13px; }
+#game-stage.in-tab .dg-page .draw-gains .draw-avatar { width: 20px; height: 20px; font-size: 13px; }
+/* Its players are small cells in a grid (eight players were four rows of big chips and left the canvas a stamp). The
+   columns follow the width, not the names or scores, so a score or a ✅ never adds a row and shrinks the canvas; the
+   row's outline (drawer) and green (guessed) say what the badge said. */
+#game-stage.in-tab .dg-page.draw-page:not(.draw-lobby) .draw-players { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 3px; }
+#game-stage.in-tab .dg-page.draw-page:not(.draw-lobby) .draw-player { gap: 4px; padding: 2px 8px 2px 2px; font-size: 13px; min-width: 0; }
+#game-stage.in-tab .dg-page.draw-page:not(.draw-lobby) .draw-player .draw-avatar { width: 22px; height: 22px; font-size: 14px; }
+#game-stage.in-tab .dg-page.draw-page:not(.draw-lobby) .draw-badge { display: none; }
+/* Five players or more on that small canvas: the chips lose their faces and the big word (it is in the line above). */
+#game-stage.in-tab .dg-page .draw-gains:has(> li:nth-child(5)) .draw-avatar,
+#game-stage.in-tab .dg-page .draw-overlay:has(> .draw-gains > li:nth-child(5)) > .draw-reveal { display: none; }
+#game-stage.in-tab .dg-page .draw-gains:has(> li:nth-child(5)) li { padding: 3px 8px; }
+/* The guesses keep two lines at least, even with eight players listed. */
+#game-stage.in-tab .dg-page.draw-page:not(.draw-lobby):not(.quiz-page) .draw-feed { min-height: 44px; }

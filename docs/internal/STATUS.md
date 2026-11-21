@@ -213,6 +213,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27an. [FW1] Five Frames: odd words refused; 🌍 Countries: gold hint, a country is a guess.
 - [ ] 27ao. [GPH1] Phone: Son Kalp shows all 5 🤖; Büfe / Bahçe "closed" note below art.
 - [ ] 27ap. [GPH1] Phone: chess still at start, XOX # lines, quiz bar clear, Beş Kare picker by 🔥. PC: Büfe note off art.
+- [ ] 27dg. [DG2] Draw & Guess with 2+ friends: results after each drawing fit, game keeps its size; big canvas.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
