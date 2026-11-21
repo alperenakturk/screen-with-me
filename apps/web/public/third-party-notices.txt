@@ -52,9 +52,15 @@ word lists, built by scripts/words/build-words.py.
 4. Real-word filter (2026): FrequencyWords by Hermit Dave (https://github.com/hermitdave/FrequencyWords, word
    frequencies from OpenSubtitles 2018, content licensed under CC BY-SA 4.0). Used only while building the lists, as a
    yes / no filter (a word must appear in film subtitles to stay a guess or an answer); nothing of it is shipped: no
-   counts, no ranks and no word that is not already in the lists above. Credited here with thanks.
+   counts, no ranks and no word that is not already in the lists above. Since the levels (Easy / Medium / Hard,
+   2026) the same filter also sorts each answer into one of three bands by two thresholds; only that band (1, 2 or 3)
+   ships. Credited here with thanks.
 
-5. The Five Frames category lists (countries, cities, animals, food, jobs, nature, at home) are our own.
+5. City names (2026): GeoNames (https://www.geonames.org/, cities15000, via https://github.com/datasets/world-cities),
+   licensed under Creative Commons Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/). Used to
+   find well-known five-letter city names; the "Cities" category lists are our own picks from it (names only).
+
+6. The Five Frames category lists (countries, cities, animals, food, jobs, nature, at home) are our own.
 
 ------------------------------------------------------------------------------------------------------------------
 

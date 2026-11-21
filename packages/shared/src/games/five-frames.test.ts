@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ALPHABET, FRAMES_VERSION, MAX_TRIES,
   CATEGORY_IDS, answerFor, categoryAnswer, dayNumber, decodeCategories, freshFrames, isCategory, todayIn, liveStreak, guess, loadFrames, normalize, record, saveFrames, score, seeded, shareLine,
-  solved, today, trayMarks, upper, wellFormed, type DayGame,
+  solved, today, trayMarks, upper, wellFormed, type DayGame, levelWords, levelAnswer, DEFAULT_LEVEL, LEVELS, isLevel,
 } from './five-frames.ts';
 
 const allowAll = { allowed: () => true };
@@ -238,3 +238,46 @@ describe('categories', () => {
   });
 });
 
+
+describe('Five Frames levels (FW2)', () => {
+  const words = ['apple', 'bread', 'cider', 'dough', 'egret', 'fjord'];
+  const bands = '112233';
+  it('Easy plays common words, Medium common and known, Hard known and rare, Mixed all', () => {
+    expect(levelWords(words, bands, 'easy')).toEqual(['apple', 'bread']);
+    expect(levelWords(words, bands, 'medium')).toEqual(['apple', 'bread', 'cider', 'dough']);
+    expect(levelWords(words, bands, 'hard')).toEqual(['cider', 'dough', 'egret', 'fjord']);
+    expect(levelWords(words, bands, 'mixed')).toEqual(words);
+    // No bands (or the wrong length): every word, never an empty list.
+    expect(levelWords(words, undefined, 'easy')).toEqual(words);
+    expect(levelWords(words, '12', 'easy')).toEqual(words);
+    expect(levelWords(words, '333333', 'easy')).toEqual(words);
+  });
+  it('each level has its own word of the day, the same for everyone', () => {
+    for (let day = 1; day < 40; day++) {
+      expect(['apple', 'bread']).toContain(levelAnswer(day, words, bands, 'en', 'easy'));
+      expect(['cider', 'dough', 'egret', 'fjord']).toContain(levelAnswer(day, words, bands, 'en', 'hard'));
+      expect(levelAnswer(day, words, bands, 'en', 'hard')).toBe(levelAnswer(day, words, bands, 'en', 'hard'));
+    }
+    expect(DEFAULT_LEVEL).toBe('medium');
+    expect(LEVELS.every(isLevel)).toBe(true);
+    expect(isLevel('expert')).toBe(false);
+  });
+  it('a category plays its level too', () => {
+    for (let day = 1; day < 20; day++) expect(['apple', 'bread']).toContain(categoryAnswer(day, words, 'en', 'food', 'easy', bands));
+  });
+  it('keeps a game per level and the level picked across a reload; Medium is the save from before levels', () => {
+    const save = freshFrames();
+    today(save, 'en', 5).guesses.push('apple');
+    today(save, 'en', 5, 'hard').guesses.push('egret');
+    todayIn(save, 'tr', 'food', 5, 'easy').guesses.push('elmas');
+    save.level = 'hard';
+    const back = loadFrames(saveFrames(save));
+    expect(back.level).toBe('hard');
+    expect(today(back, 'en', 5).guesses).toEqual(['apple']);
+    expect(today(back, 'en', 5, 'hard').guesses).toEqual(['egret']);
+    expect(todayIn(back, 'tr', 'food', 5, 'easy').guesses).toEqual(['elmas']);
+    const junk = loadFrames(JSON.stringify({ ...JSON.parse(saveFrames(save)), level: 'expert', lv: { 'xx:easy': { day: 5, guesses: [] }, 'en:nope': { day: 5, guesses: [] }, 'en:moon:hard': { day: 5, guesses: [] } } }));
+    expect(junk.level).toBeUndefined();
+    expect(junk.lv).toBeUndefined();
+  });
+});

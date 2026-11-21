@@ -9,9 +9,9 @@
 
 import './five-frames.css';
 import {
-  ALPHABET, CATEGORY_IDS, FRAMES_KEY, MAX_TRIES, WORD_LENGTH, answerFor, categoryAnswer, dayNumber, decodeCategories, decodeWords, finished,
+  ALPHABET, CATEGORY_IDS, DEFAULT_LEVEL, FRAMES_KEY, LEVELS, MAX_TRIES, WORD_LENGTH, categoryAnswer, levelAnswer, levelWords, dayNumber, decodeCategories, decodeWords, finished,
   isCategory, liveStreak, guess, letters, loadFrames, normalize, record, saveFrames, score, shareLine, solved, today, todayIn, trayMarks, upper,
-  type Category, type FramesSave, type Lang, type Mark,
+  type Category, type FramesSave, type Lang, type Level, type Mark,
 } from '@swm/shared/games/five-frames';
 import { el } from '../dom.ts';
 import { lang as pageLang } from '../i18n.ts';
@@ -32,6 +32,8 @@ const TEXT = {
     how2: 'A solid frame ✓ right place, a dashed frame • in the word, a faded × not in it.',
     how3Title: 'Seven tries, one word a day',
     how3: 'Everyone gets the same word; a new one every day.',
+    how4Title: 'Which words count',
+    how4: 'Real, everyday words only: no names of people or places (like Fırat), abbreviations, slang or rude words. An answer is a base form, never a plural or another ending. Easy, Medium or Hard sets how rare the words get.',
     title: 'Five Frames',
     day: '#{n}',
     streak: '🔥 {n}',
@@ -58,6 +60,11 @@ const TEXT = {
     played: '{won}/{played} won · best run {best}',
     catTitle: 'Which word: the daily word, or a word from a category (the category is your hint)',
     catDaily: '🎟️ Daily word',
+    levelTitle: 'How hard the words are. Easy: everyday words. Medium: everyday and known words, no odd ones. Hard: known and rare words. Mixed: all of them. Each level has its own word of the day.',
+    level_easy: 'Easy',
+    level_medium: 'Medium',
+    level_hard: 'Hard',
+    level_mixed: 'Mixed',
     countries: '🌍 Countries',
     cities: '🏙️ Cities',
     animals: '🐾 Animals',
@@ -74,6 +81,8 @@ const TEXT = {
     how2: 'Düz çerçeve ✓ doğru yerde, kesik çerçeve • kelimede var, soluk × kelimede yok.',
     how3Title: 'Yedi hak, günde bir kelime',
     how3: 'Herkese aynı kelime; her gün yenisi.',
+    how4Title: 'Hangi kelimeler geçerli',
+    how4: 'Sadece gerçek, günlük kelimeler: kişi ya da yer adları (Fırat gibi), kısaltmalar, argo ve kaba sözler yok. Cevap her zaman kelimenin yalın hâlidir, çoğul ya da ekli hâli değil. Kolay, Orta ya da Zor, kelimelerin ne kadar nadir olacağını seçer.',
     title: 'Beş Kare',
     day: '#{n}',
     streak: '🔥 {n}',
@@ -100,6 +109,11 @@ const TEXT = {
     played: '{won}/{played} kazandın · en uzun seri {best}',
     catTitle: 'Hangi kelime: günün kelimesi ya da bir kategoriden kelime (kategori senin ipucun)',
     catDaily: '🎟️ Günün kelimesi',
+    levelTitle: 'Kelimeler ne kadar zor. Kolay: günlük kelimeler. Orta: günlük ve bilinen kelimeler, tuhafları yok. Zor: bilinen ve nadir kelimeler. Karışık: hepsi. Her seviyenin kendi günlük kelimesi var.',
+    level_easy: 'Kolay',
+    level_medium: 'Orta',
+    level_hard: 'Zor',
+    level_mixed: 'Karışık',
     countries: '🌍 Ülkeler',
     cities: '🏙️ Şehirler',
     animals: '🐾 Hayvanlar',
@@ -126,12 +140,15 @@ interface List {
   allowed: Set<string>;
   answers: string[];
   cats: Record<Category, string[]>;
+  /** FW2: the level band of each answer and each category word. */
+  bands: string;
+  catBands: Record<string, string>;
 }
 const lists = new Map<Lang, Promise<List>>();
 function wordList(lang: Lang): Promise<List> {
   let list = lists.get(lang);
   if (!list) {
-    list = (lang === 'tr' ? import('@swm/shared/games/words/tr') : import('@swm/shared/games/words/en')).then(({ WORDS, ANSWERS, CATEGORIES }) => ({ ...decodeWords(WORDS, ANSWERS), cats: decodeCategories(CATEGORIES) }));
+    list = (lang === 'tr' ? import('@swm/shared/games/words/tr') : import('@swm/shared/games/words/en')).then(({ WORDS, ANSWERS, CATEGORIES, BANDS, CATEGORY_BANDS }) => ({ ...decodeWords(WORDS, ANSWERS), cats: decodeCategories(CATEGORIES), bands: BANDS, catBands: CATEGORY_BANDS }));
     lists.set(lang, list);
   }
   return list;
@@ -182,6 +199,25 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     return o;
   });
   catPick.addEventListener('change', () => setMode(isCategory(catPick.value) ? catPick.value : 'daily'));
+  // FW2: the words' level (Medium by default), kept in the save; each level has its own word of the day.
+  let level: Level = state.level ?? DEFAULT_LEVEL;
+  const levelPick = el('select', { class: 'ff-cat ff-level', 'data-level': '' }) as HTMLSelectElement;
+  const levelOptions = LEVELS.map((l) => {
+    const o = el('option', { value: l }) as HTMLOptionElement;
+    levelPick.append(o);
+    return o;
+  });
+  levelPick.addEventListener('change', () => setLevel(LEVELS.find((l) => l === levelPick.value) ?? DEFAULT_LEVEL));
+  function setLevel(next: Level): void {
+    if (next === level) return;
+    level = next;
+    state.level = level;
+    save(FRAMES_KEY, saveFrames(state));
+    typed = '';
+    clearFlip();
+    pickAnswer();
+    draw();
+  }
   function setMode(next: Mode): void {
     if (next === mode) return;
     mode = next;
@@ -192,7 +228,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     draw();
   }
   const head = el('div', { class: 'ff-head' }, title, dayLabel, streak, el('span', { class: 'ff-gap' }), el('span', { class: 'ff-langs', role: 'group' }, ...langButtons));
-  const catRow = el('div', { class: 'ff-cat-row' }, catPick);
+  const catRow = el('div', { class: 'ff-cat-row' }, catPick, levelPick);
 
   const board = el('div', { class: 'ff-board', tabindex: '0', role: 'group', 'data-takes-keys': '' });
   const rows = Array.from({ length: MAX_TRIES }, (_, i) => {
@@ -233,6 +269,8 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     { art: how1, title: t('how1Title'), line: t('how1') },
     { art: how2, title: t('how2Title'), line: t('how2') },
     { art: how3, title: t('how3Title'), line: t('how3') },
+    // FW2: what kinds of words are not used (a name such as Fırat is refused).
+    { art: how1, title: t('how4Title'), line: t('how4') },
   ]);
   head.append(how.button);
   box.addEventListener('mousedown', (event) => {
@@ -248,14 +286,16 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     if (ms) messageTimer = setTimeout(() => draw(), ms);
   }
 
-  const game = () => (mode === 'daily' ? today(state, wordLang, day) : todayIn(state, wordLang, mode, day));
+  const game = () => (mode === 'daily' ? today(state, wordLang, day, level) : todayIn(state, wordLang, mode, day, level));
   /** Today's answer for the language and mode (a category with no words falls back to the daily word). */
   function pickAnswer(): void {
     if (!list) return;
     const words = mode === 'daily' ? [] : list.cats[mode];
-    answer = mode !== 'daily' && words.length ? categoryAnswer(day, words, wordLang, mode) : answerFor(day, list.answers, wordLang);
+    answer = mode !== 'daily' && words.length ? categoryAnswer(day, words, wordLang, mode, level, list.catBands[mode]) : levelAnswer(day, list.answers, list.bands, wordLang, level);
   }
   const catLabel = (): string => (mode === 'daily' ? '' : t(mode));
+  /** FW2: the share line names the level (and the category) unless it is Medium's daily word. */
+  const shareLabel2 = (): string => [catLabel(), level === DEFAULT_LEVEL ? '' : t(`level_${level}`)].filter(Boolean).join(' · ');
 
   // ---- The turn of a scored row (Design's `side-games-polish.md` §4) ----
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -395,6 +435,10 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     catPick.setAttribute('aria-label', mode === 'daily' ? t('catTitle') : t('hint', { cat: catLabel() }));
     catOptions.forEach((o) => (o.textContent = o.value === 'daily' ? t('catDaily') : t(o.value as Category)));
     catPick.value = mode;
+    levelPick.title = t('levelTitle');
+    levelPick.setAttribute('aria-label', t('levelTitle'));
+    levelOptions.forEach((o) => (o.textContent = t(`level_${o.value as Level}`)));
+    levelPick.value = level;
     catPick.classList.toggle('hinted', mode !== 'daily');
     streak.title = `${t('streakTitle')} · ${t('played', { won: stats.won, played: stats.played, best: stats.best })}`;
     langButtons.forEach((b) => {
@@ -457,7 +501,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
   }
 
   share.addEventListener('click', () => {
-    const text = shareLine(t('title'), game(), answer, catLabel() || undefined);
+    const text = shareLine(t('title'), game(), answer, shareLabel2() || undefined);
     void navigator.clipboard?.writeText(text).then(
       () => setShare(true),
       // No clipboard: show the line itself, to copy by hand.
@@ -532,6 +576,25 @@ export function mountFiveFrames(root: HTMLElement): () => void {
           return `${wordLang} ${mode}: ${words.length} words, hint "${catLabel() || '-'}", today ${answer}`;
         },
         undo: () => setMode('daily'),
+      },
+      {
+        // FW2: the words' level; reports how many words the level plays in the shown mode and today's answer.
+        id: 'fiveFrames.level',
+        title: { en: 'Five Frames: change the level', tr: 'Beş Kare: seviyeyi değiştir' },
+        help: {
+          en: `Switches the level (arg: ${LEVELS.join(', ')}; empty = the next one) and writes how many words it plays and today's answer.`,
+          tr: `Seviyeyi değiştirir (${LEVELS.join(', ')} yaz; boş = sıradaki) ve kaç kelimeyle oynandığını ve bugünün cevabını yazar.`,
+        },
+        tab: 'games',
+        where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
+        available: () => !!list || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
+        run: (arg) => {
+          const asked = String(arg ?? '').trim();
+          setLevel(LEVELS.find((l) => l === asked) ?? LEVELS[(LEVELS.indexOf(level) + 1) % LEVELS.length]!);
+          const words = mode === 'daily' ? levelWords(list!.answers, list!.bands, level) : levelWords(list!.cats[mode], list!.catBands[mode], level);
+          return `${wordLang} ${mode} ${level}: ${words.length} words, today ${answer}`;
+        },
+        undo: () => setLevel(DEFAULT_LEVEL),
       },
       {
         // Owner bug (0.9.97.126): T on the board switched on cinema mode. The board is `[data-takes-keys]`, so the room's

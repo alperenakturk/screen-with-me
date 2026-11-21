@@ -1,0 +1,3 @@
+- Five Frames: pick how hard the words are: Easy, Medium (the usual), Hard or Mixed. It works for the word of the day, the categories and the Duel; each level has its own word of the day, and odd or rare words now come only in Hard and Mixed.
+- Five Frames: more cities in the "Cities" category (Amman, Busan, Haifa, Ibiza and more).
+- Five Frames: the "?" now says which words count: no names of people or places, abbreviations, slang or rude words, and answers are never plurals.

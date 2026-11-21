@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CATEGORY_IDS, decodeCategories, decodeWords, normalize, wellFormed } from './five-frames.ts';
+import { CATEGORY_IDS, LEVELS, decodeCategories, decodeWords, levelWords, normalize, wellFormed } from './five-frames.ts';
 import * as EN from './words/en.ts';
 import * as TR from './words/tr.ts';
 import { BLOCKED_EN, BLOCKED_TR } from './words/blocked.ts';
@@ -89,4 +89,23 @@ describe('word lists', () => {
     expect(right.split(' ').filter((w) => !allowed.has(w))).toEqual([]);
     expect(wrong.split(' ').filter((w) => allowed.has(w))).toEqual([]);
   });
+});
+
+describe('word list levels (FW2)', () => {
+  for (const [lang, mod] of [['en', EN], ['tr', TR]] as const) {
+    it(`${lang}: a band per answer and per category word; every level big enough`, () => {
+      const { answers } = decodeWords(mod.WORDS, mod.ANSWERS);
+      expect(mod.BANDS).toMatch(/^[123]+$/);
+      expect(mod.BANDS.length).toBe(answers.length);
+      const sizes = Object.fromEntries(LEVELS.map((l) => [l, levelWords(answers, mod.BANDS, l).length]));
+      // A year of daily words at least, Easy and Hard each without the other's words.
+      for (const l of LEVELS) expect(sizes[l]).toBeGreaterThanOrEqual(365);
+      expect(levelWords(answers, mod.BANDS, 'easy').some((w) => levelWords(answers, mod.BANDS, 'hard').includes(w))).toBe(false);
+      const cats = decodeCategories(mod.CATEGORIES);
+      for (const cat of CATEGORY_IDS) {
+        expect(mod.CATEGORY_BANDS[cat]!.length).toBe(cats[cat].length);
+        expect(levelWords(cats[cat], mod.CATEGORY_BANDS[cat], 'easy').length).toBeGreaterThanOrEqual(10);
+      }
+    });
+  }
 });

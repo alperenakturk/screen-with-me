@@ -17,7 +17,8 @@ Sources and licences (also in apps/web/public/third-party-notices.txt and docs/i
 - FrequencyWords (OpenSubtitles 2018, Hermit Dave, content CC BY-SA 4.0): used **only here, offline, as a filter** (card
   FW1, "real words only"): a guess must be seen at least GUESS_SEEN times in the subtitles, a general answer at least
   ANSWER_SEEN times, a category word CATEGORY_SEEN times (or be in `<lang>-keep.txt`). Nothing of it is shipped: no counts, no ranks, no word that is not in
-  the dictionaries above.
+  the dictionaries above. FW2: two more thresholds sort each answer into a level band (BANDS); only the band ships.
+- GeoNames (CC BY 4.0, via datasets/world-cities): where the FW2 city picks in `<lang>-cat-cities.txt` came from.
 Category lists (`<lang>-cat-<id>.txt`, hand-written, card FW1) become CATEGORIES in the same module: every word of a
 category is an answer of that category and an allowed guess while playing it.
 
@@ -58,6 +59,11 @@ CATEGORY_SEEN = 3
 # The categories, in the order the game lists them. Each needs at least this many words (three weeks of daily play).
 CATEGORY_IDS = ['countries', 'cities', 'animals', 'food', 'jobs', 'nature', 'home']
 CATEGORY_MIN = 21
+# FW2 (owner: Easy / Medium / Hard / Mixed): every answer gets a band from two thresholds on how often the subtitles use
+# it: 1 = common (at least EASY_SEEN), 2 = known (at least KNOWN_SEEN, or kept by hand), 3 = rare. Easy plays band 1,
+# Medium 1-2, Hard 2-3, Mixed all. Only the band ships (no counts, no ranks), like the yes / no filter above. A category
+# is short, so its words are split by their order instead: the most used half band 1, the next 30 % band 2, the rest 3.
+BAND_SEEN = {'en': (3000, 400), 'tr': (1200, 180)}
 CHECK = {'on': False, 'problems': []}
 
 
@@ -110,12 +116,29 @@ def categories(lang, counts, bad, alphabet, keep):
     return out
 
 
+def band(lang, counts, keep, w):
+    easy, known = BAND_SEEN[lang]
+    n = counts.get(w, 0)
+    return '1' if n >= easy else '2' if n >= known or w in keep else '3'
+
+
+def category_bands(cats, counts):
+    """FW2: per category, a band per word in the category's (sorted) order: by use, half / 30 % / the rest."""
+    out = {}
+    for cat, words in cats.items():
+        order = sorted(words, key=lambda w: (-counts.get(w, 0), w))
+        rank = {w: i for i, w in enumerate(order)}
+        n = len(words)
+        out[cat] = ''.join('1' if rank[w] < n * 0.5 else '2' if rank[w] < n * 0.8 else '3' for w in words)
+    return out
+
+
 def problem(text):
     CHECK['problems'].append(text)
     print(f'PROBLEM: {text}')
 
 
-def write(lang, guesses, answers, header, cats):
+def write(lang, guesses, answers, header, cats, bands, cat_bands):
     words = sorted(set(guesses) | set(answers))
     index = {w: i for i, w in enumerate(words)}
     answers = sorted(set(answers), key=lambda w: index[w])
@@ -128,11 +151,18 @@ def write(lang, guesses, answers, header, cats):
         f.write(f"export const WORDS = '{packed}';\n\n")
         f.write('/** The answers: positions in WORDS, base 36, comma-separated (not plain text, so the list is no spoiler). */\n')
         f.write(f"export const ANSWERS = '{positions}';\n\n")
+        f.write('/** FW2: each answer\'s level band, in ANSWERS order: 1 common, 2 known, 3 rare (Easy 1, Medium 1-2, Hard 2-3). */\n')
+        f.write(f"export const BANDS = '{''.join(bands[w] for w in answers)}';\n\n")
         f.write('/**\n * The categories (card FW1): five-letter words glued together, per category. A category\'s words are its answers\n')
         f.write(' * and, while playing it, allowed guesses too (country and city names are not in WORDS).\n */\n')
         f.write('export const CATEGORIES: Record<string, string> = {\n')
         for cat in CATEGORY_IDS:
             f.write(f"  {cat}: '{''.join(cats[cat])}',\n")
+        f.write('};\n\n')
+        f.write('/** FW2: each category word\'s level band, in its category\'s order (as BANDS). */\n')
+        f.write('export const CATEGORY_BANDS: Record<string, string> = {\n')
+        for cat in CATEGORY_IDS:
+            f.write(f"  {cat}: '{cat_bands[cat]}',\n")
         f.write('};\n')
     print(f'{lang}: {len(words)} guesses, {len(answers)} answers, {sum(len(v) for v in cats.values())} category words -> {os.path.relpath(path, ROOT)}')
 
@@ -248,7 +278,7 @@ def build_en(cache):
         '// that are really in use (FW1). Answers: our own picks of common words from them, stored as base-36 indices (not\n'
         '// plain text). Categories: our own hand-written lists.\n'
     )
-    write('en', guesses, answers, header, cats)
+    write('en', guesses, answers, header, cats, {w: band('en', counts, keep, w) for w in answers}, category_bands(cats, counts))
 
 
 VOWELS = 'aeıioöuü'
@@ -348,7 +378,7 @@ def build_tr(cache):
         '// lemmas, the ones really in use (FW1). Answers: our own picks of common lemmas, stored as base-36 indices (not\n'
         '// plain text). Categories: our own hand-written lists.\n'
     )
-    write('tr', guesses, answers, header, cats)
+    write('tr', guesses, answers, header, cats, {w: band('tr', counts, keep, w) for w in answers}, category_bands(cats, counts))
 
 
 def main():
