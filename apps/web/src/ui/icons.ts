@@ -19,6 +19,8 @@ export type IconName =
   | 'chat'
   | 'smile'
   | 'pin'
+  | 'rail-hide'
+  | 'rail-keep'
   | 'skip'
   | 'fs-exit'
   | 'gamepad'
@@ -94,6 +96,10 @@ const ICONS: Record<IconName, Shape[]> = {
     ['line', { x1: 15, y1: 9.5, x2: 15, y2: 10 }],
   ],
   pin: [['path', { d: 'M9 3.5h6l-1 5 3.5 3.5v1.5h-11V12L10 8.5z' }], ['line', { x1: 12, y1: 13.5, x2: 12, y2: 20.5 }]],
+  // Card RAIL2: the rail's own hide / keep toggle: a panel with its right column, an arrow sending it off the edge /
+  // bringing it back (first look: plain » read as "next").
+  'rail-hide': [['rect', { x: 3.5, y: 4.5, width: 17, height: 15, rx: 2 }], ['line', { x1: 15.5, y1: 4.5, x2: 15.5, y2: 19.5 }], ['path', { d: 'M8 9.5l2.5 2.5L8 14.5' }]],
+  'rail-keep': [['rect', { x: 3.5, y: 4.5, width: 17, height: 15, rx: 2 }], ['line', { x1: 15.5, y1: 4.5, x2: 15.5, y2: 19.5 }], ['path', { d: 'M11 9.5L8.5 12l2.5 2.5' }]],
   skip: [['path', { d: 'M5.5 5.5v13l9.5-6.5z' }], ['line', { x1: 18.5, y1: 5.5, x2: 18.5, y2: 18.5 }]],
   'fs-exit': [['path', { d: 'M9 3.5V9H3.5' }], ['path', { d: 'M15 3.5V9h5.5' }], ['path', { d: 'M9 20.5V15H3.5' }], ['path', { d: 'M15 20.5V15h5.5' }]],
   'fs-enter': [['path', { d: 'M3.5 9V3.5H9' }], ['path', { d: 'M15 3.5h5.5V9' }], ['path', { d: 'M3.5 15v5.5H9' }], ['path', { d: 'M20.5 15v5.5H15' }]],

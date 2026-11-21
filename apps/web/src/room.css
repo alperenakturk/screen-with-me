@@ -9862,22 +9862,34 @@ html.phone .speed-picker button {
   background: rgb(255 255 255 / 0.1);
 }
 
-/* "Keep the controls open" (0.9.93): a small box, ticked while the rail is pinned. */
-.rail-pin-box {
-  flex: none;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgb(255 255 255 / 0.6);
-  border-radius: 4px;
+/* Card RAIL2: the rail's own hide / keep toggle, a short faint button under its last group. Pressed = fixed (the
+   default); unpressed = waits for the edge. Touch screens without a mouse have no edge, so no toggle. */
+.fs-dock .rail-hide {
+  height: 28px;
+  margin-top: 2px;
+  color: rgb(255 255 255 / 0.8);
 }
 
-.rail-pin-item[aria-pressed='true'] .rail-pin-box {
-  border-color: var(--accent, #7c5cff);
-  background: var(--accent, #7c5cff) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 8.5l3 3 6-7' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat;
+.fs-dock .rail-hide:hover,
+.fs-dock .rail-hide:focus-visible {
+  color: #fff;
 }
 
-html.shell .rail-pin-item,
-html.is-touch:not(.has-mouse) .rail-pin-item,
+.theater.dock-window .fs-dock .rail-hide {
+  height: 26px;
+}
+
+.fs-dock .rail-hide .ico {
+  width: 18px;
+  height: 18px;
+}
+
+.theater.dock-window .fs-dock .rail-hide .ico {
+  width: 17px;
+  height: 17px;
+}
+
+html.is-touch:not(.has-mouse) .rail-hide,
 html.is-touch .desk-only {
   display: none;
 }

@@ -3098,12 +3098,20 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
 
+### RAIL2. The rail beside the video stays put; hide it from the rail itself (owner, 21 Nov 2026; lane A2, first)
+- Why: the vertical control column that slides in at the video's right edge should be fixed by default; hiding it
+  lives in the ⋯ menu today.
+- What: the rail is always shown (fixed) by default; a hide button on the rail itself switches it to auto-hide (slides
+  in on hover / tap as today); pressing it again pins it. Remove "hide frame" from ⋯. Saved per browser. Fullscreen
+  YouTube keeps its own rules (nothing over the YouTube player).
+- Done when: fixed by default, toggle works and persists; Test Lab `rail.pin`; harness; first look.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/573
 ### GN1. A chat message when someone opens a game table (owner, 21 Nov 2026; lane A2)
 - Why: when a game is already open, a new table or a newcomer is easy to miss.
 - What: opening a shared table posts a system line in the chat: the game's cover, "Alex opened Sea Battle", a Join
   button (one per table, not repeated; gone or greyed when the table closes or is full). Replaces nothing else.
 - Done when: two people: one opens a table, the other joins from the chat line; Test Lab `chat.gameInvite`; e2e.
-- Done: PR claude/gn1-game-chat (lane A2). No "full" state: tables take watchers, so they never fill.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/575 (lane A2). No "full" state: tables take watchers, so they never fill.
 
 ### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
 - Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.
