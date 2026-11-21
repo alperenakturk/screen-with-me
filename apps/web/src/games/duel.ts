@@ -494,7 +494,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
       if (s.phase === 'play') {
         if (seat < 0) return tx('watchGo');
         if (mine?.out) return tx('youOutMany');
-        if (mine?.solved) return tx('youSolvedWait', { place: placeName(s.players.filter((p) => p?.solved).length) });
+        if (mine?.solved) return tx('youSolvedWait', { place: placeName(mine.place ?? s.players.filter((p) => p?.solved).length) });
         return tx('raceGo', { n: seated().length });
       }
       const word = s.answer ? tx('theWord', { word: upper(s.answer, s.lang) }) : '';

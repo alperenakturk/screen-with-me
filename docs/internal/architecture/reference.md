@@ -1497,7 +1497,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
   `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
   `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
-  wins, both used up = draw; `practiceWord`); the word lists moved to `packages/shared/src/games/words/` (the server
+  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); the word lists moved to `packages/shared/src/games/words/` (the server
   unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
   → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
   day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
