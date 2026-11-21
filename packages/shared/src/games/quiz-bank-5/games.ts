@@ -2,7 +2,6 @@
 import type { QuizEntry } from '../quiz-questions.ts';
 
 export const Q5_GAMES: readonly QuizEntry[] = [
-  {"c":"games","d":1,"en":{"q":"On a standard die, opposite faces always add up to…","o":["7","6","8","12"]},"tr":{"q":"Standart bir zarda karşılıklı yüzler toplamda hep kaç eder?","o":["7","6","8","12"]}},
   {"c":"games","d":1,"en":{"q":"Which chess piece moves any distance straight, but never diagonally?","o":["Rook","Bishop","Knight","Pawn"]},"tr":{"q":"Satrançta hangi taş düz çizgide istediği kadar gider ama hiç çapraz gitmez?","o":["Kale","Fil","At","Piyon"]}},
   {"c":"games","d":1,"en":{"q":"In chess, how many squares does the king usually move at a time?","o":["One","Two","Three","Any number"]},"tr":{"q":"Satrançta şah genellikle bir hamlede kaç kare gider?","o":["Bir","İki","Üç","İstediği kadar"]}},
   {"c":"games","d":1,"en":{"q":"In hide-and-seek, what does the seeker do first?","o":["Counts with eyes closed","Hides behind a tree","Rolls a die","Draws a card"]},"tr":{"q":"Saklambaçta ebe önce ne yapar?","o":["Gözünü kapatıp sayar","Ağacın arkasına saklanır","Zar atar","Kart çeker"]}},

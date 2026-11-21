@@ -8,7 +8,9 @@ describe('Quiz', () => {
     for (const lang of ['tr', 'en'] as const) {
       const pool = quizPool(lang);
       expect(pool.length).toBeGreaterThanOrEqual(380);
-      const texts = pool.map((id) => QUIZ_BANK[id]![lang]!.q);
+      // A question with the same right answer is asked once (QZ5: generic texts such as "Which of these came first?"
+      // ask different things, told apart by their options).
+      const texts = pool.map((id) => `${QUIZ_BANK[id]![lang]!.q} → ${QUIZ_BANK[id]![lang]!.o![0]}`);
       expect(new Set(texts).size).toBe(texts.length);
       for (const category of QUIZ_CATEGORIES) expect(quizPool(lang, category).length).toBeGreaterThanOrEqual(20);
     }
