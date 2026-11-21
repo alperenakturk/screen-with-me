@@ -91,7 +91,7 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   },
   'recap.state': {
     title: { en: 'Recap: status, ready, scene', tr: 'Özet: durum, hazır mı, sahne' },
-    help: { en: 'Writes this session\'s recap status into the log: minutes watched together, whether it was shown, whether ✨ is ready, the show running and which scene the stage is on.', tr: 'Bu oturumun özet durumunu kayda yazar: birlikte izlenen dakikalar, gösterildi mi, ✨ hazır mı, açık gösteri ve sahnenin hangi sahnede olduğu.' },
+    help: { en: 'Writes this session\'s recap status into the log: minutes watched together, whether it was shown, whether ✨ is ready, the show running, which scene the stage is on and its marquee sign (bulbs, whether they chase, the three lines).', tr: 'Bu oturumun özet durumunu kayda yazar: birlikte izlenen dakikalar, gösterildi mi, ✨ hazır mı, açık gösteri, sahnenin hangi sahnede olduğu ve ışıklı tabelası (ampuller, yanıp akıyorlar mı, üç satır).' },
   },
   'shorts.tidy': {
     title: { en: 'Shorts view: rail groups, labels, pill, overlaps', tr: 'Shorts görünümü: ray grupları, etiketler, şerit, çakışmalar' },

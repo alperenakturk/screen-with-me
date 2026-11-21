@@ -197,8 +197,8 @@ const SCREENS = {
   // 30 min together). The first scene (time), then the summary poster.
   ...Object.fromEntries(
     [
-      ['recap-show', 'the first scene (night sky, the time watched, our logo and its light cone, Glowbeam), the filmstrip and the controls under it; the host sees "▶ Back to the video"', 0],
-      ['recap-summary', 'the last scene (the poster: every number, "⬇ Save image")', 1],
+      ['recap-show', 'the first scene: a theatre marquee sign under the night sky (RC2 look C: gold frame, chasing bulbs, cream board reading "Now showing · Our movie night · <time> · <people>"), our logo top left, Glowbeam bottom right, the filmstrip and the controls under it; the host sees "▶ Back to the video"', 0],
+      ['recap-summary', 'the last scene on the same marquee sign (every number, "⬇ Save image")', 1],
     ].map(([id, what, steps]) => [
       id,
       {

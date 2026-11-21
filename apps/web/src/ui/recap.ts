@@ -12,6 +12,8 @@ import './recap.css';
  * under it. In a room show everyone sees the same scene at the same moment (`show.at` on the server's clock); a click
  * on a frame or ← / → moves only me ("for yourself"). "Earlier recaps" replay the same way, alone. Never over the
  * YouTube player: the player is hidden while the stage is up (the video is paused by the server, not covered).
+ * Card RC2 (owner's picks, 21 Nov 2026): look C "marquee sign" (each fact on a theatre sign with chasing bulbs under
+ * the night sky) and music 1 (our own pad re-voiced: quieter, slower, warmer, a soft piano pluck).
  */
 
 /** This chunk's own words (EN + TR; `check-game-text.mjs` checks the keys match). */
@@ -35,20 +37,12 @@ const TEXT = {
     one: { videos: '1 video', chat: '1 message', reactions: '1 reaction', pins: '1 pin', people: '1 person' },
     many: { videos: '{n} videos', chat: '{n} messages', reactions: '{n} reactions', pins: '{n} pins', people: '{n} people' },
     timeSub: '{videos} · {people}',
-    askTitle: '✨ The recap is ready ({time})',
-    askBody: 'The host shows it to everyone in the video\'s place.',
-    ask: '🙋 Ask the host to show it',
-    asked: '✓ Asked. The host decides.',
+    nowShowing: 'Now showing',
+    ourNight: 'Our movie night',
     asksOne: '🙋 {names} asks to see the recap',
     asksMany: '🙋 {names} ask to see the recap',
     showAll: '✨ Show to everyone',
     notNow: 'Not now',
-    alone: 'Watch it alone',
-    nudge: 'Long night! The recap of these {time} is ready under ✨ whenever you like.',
-    lastTime: '✨ Last time\'s recap ({when}, {time}) ▸',
-    dontRemind: 'Don\'t remind me',
-    endHost: '✨ Show this session\'s recap to everyone',
-    endGuest: '🙋 Ask the host to show the recap',
   },
   tr: {
     title: 'Oturum özeti',
@@ -69,20 +63,12 @@ const TEXT = {
     one: { videos: '1 video', chat: '1 mesaj', reactions: '1 tepki', pins: '1 pin', people: '1 kişi' },
     many: { videos: '{n} video', chat: '{n} mesaj', reactions: '{n} tepki', pins: '{n} pin', people: '{n} kişi' },
     timeSub: '{videos} · {people}',
-    askTitle: '✨ Özet hazır ({time})',
-    askBody: 'Yönetici onu videonun yerinde herkese gösterir.',
-    ask: '🙋 Yöneticiden göstermesini iste',
-    asked: '✓ İstendi. Karar yöneticinin.',
+    nowShowing: 'Şimdi gösterimde',
+    ourNight: 'Bizim film gecemiz',
     asksOne: '🙋 {names} özeti görmek istiyor',
     asksMany: '🙋 {names} özeti görmek istiyor',
     showAll: '✨ Herkese göster',
     notNow: 'Şimdi değil',
-    alone: 'Tek başına izle',
-    nudge: 'Uzun gece! Bu {time} izlemenin özeti ✨ altında hazır, ne zaman istersen.',
-    lastTime: '✨ Geçen seferin özeti ({when}, {time}) ▸',
-    dontRemind: 'Bana hatırlatma',
-    endHost: '✨ Bu oturumun özetini herkese göster',
-    endGuest: '🙋 Yöneticiden özeti göstermesini iste',
   },
 };
 type Count = keyof (typeof TEXT)['en']['one'];
@@ -197,6 +183,29 @@ export function dateText(at: number): string {
   return new Date(at).toLocaleString(lang() === 'tr' ? 'tr-TR' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
+/** RC2: a fact's three lines on the sign: a small kicker, the big red headline, a small line under it. */
+function signLines(fact: Fact, text: { big: string; title: string; sub: string }, r: Recap): { kicker: string; big: string; sub: string } {
+  if (fact.kind === 'time') return { kicker: tx().nowShowing, big: tx().ourNight, sub: `${duration(r.watchSec)} · ${count('people', Math.max(r.peak, r.people.length, 1))}` };
+  return { kicker: text.title, big: text.big, sub: text.sub };
+}
+
+/** How many bulbs run along the sign's top and bottom, and down each side. */
+export const MARQUEE_BULBS = { across: 22, down: 6 };
+/** RC2: the theatre sign: a gold frame, bulbs chasing round it (still with "reduce motion"), the cream letter board. */
+function marquee(board: HTMLElement): HTMLElement {
+  let n = 0;
+  // Every third bulb lights together; the rows run clockwise, so the light chases round the frame.
+  const bulb = () => el('i', { class: 'rc-bulb', style: `animation-delay:${((n++ % 3) * 0.3).toFixed(1)}s` });
+  const row = (cls: string, count: number) => el('div', { class: `rc-bulbs ${cls}`, 'aria-hidden': 'true' }, ...Array.from({ length: count }, bulb));
+  const top = row('rc-b-top', MARQUEE_BULBS.across);
+  const right = row('rc-b-right', MARQUEE_BULBS.down);
+  const bottom = row('rc-b-bottom', MARQUEE_BULBS.across);
+  const left = row('rc-b-left', MARQUEE_BULBS.down);
+  bottom.style.flexDirection = 'row-reverse';
+  left.style.flexDirection = 'column-reverse';
+  return el('div', { class: 'rc-sign' }, el('div', { class: 'rc-sign-frame' }, top, left, el('div', { class: 'rc-board' }, board), right, bottom), el('div', { class: 'rc-post', 'aria-hidden': 'true' }));
+}
+
 /** Decorations for a scene's background (aria-hidden; still when the person prefers less motion). */
 function decor(scene: Scene, fact: Fact, r: Recap): HTMLElement {
   const box = el('div', { class: 'rc-deco', 'aria-hidden': 'true' });
@@ -230,9 +239,14 @@ function decor(scene: Scene, fact: Fact, r: Recap): HTMLElement {
 }
 
 /** RC2: the recap music's peak gain at full room volume (the room's 0–100 volume scales it) and its fade-in. */
-export const RECAP_MUSIC_LEVEL = 0.035;
+export const RECAP_MUSIC_LEVEL = 0.025;
 export const RECAP_FADE_S = 3;
-/** A soft pad of our own (Web Audio, the "warm pad" family in F major): no file, no licence. Low; off with room sounds off. */
+/** RC2 (owner's pick: music 1): one chord's length in seconds; slow on purpose. */
+export const RECAP_CHORD_S = 5.2;
+/**
+ * Our own soft pad (Web Audio, F major), re-voiced for RC2: quieter, slower, warmer (sine + triangle under a low
+ * filter) with a soft piano-like pluck on each chord. No file, no licence. Off with room sounds off.
+ */
 function createMusic(): { start(): void; stop(): void; muted: boolean; setMuted(m: boolean): void } {
   let ctx: AudioContext | null = null;
   let master: GainNode | null = null;
@@ -245,9 +259,16 @@ function createMusic(): { start(): void; stop(): void; muted: boolean; setMuted(
     [116.54, 146.83, 174.61],
     [130.81, 164.81, 196],
   ];
+  /** The pluck's two notes per chord (an octave up, the chord's top then its middle). */
+  const PLUCKS = [
+    [523.25, 440],
+    [440, 349.23],
+    [349.23, 293.66],
+    [392, 329.63],
+  ];
   // RC2 (owner: "it starts terribly loud"): RC1 multiplied by soundVolume() as if it were 0–1, but it is 0–100, so the
-  // pad played at 70× its level (gain 3.5, clipping). Now the room's volume as a fraction, a little under RC1's
-  // intended level, faded in from silence over RECAP_FADE_S.
+  // pad played at 70× its level (gain 3.5, clipping). Now the room's volume as a fraction, faded in from silence over
+  // RECAP_FADE_S.
   const level = () => (RECAP_MUSIC_LEVEL * soundVolume()) / 100;
   const music = {
     muted: !soundsOn(),
@@ -262,29 +283,59 @@ function createMusic(): { start(): void; stop(): void; muted: boolean; setMuted(
         master.gain.linearRampToValueAtTime(level(), audio.currentTime + RECAP_FADE_S);
         const lp = audio.createBiquadFilter();
         lp.type = 'lowpass';
-        lp.frequency.value = 900;
+        lp.frequency.value = 1800;
         master.connect(lp).connect(audio.destination);
+        // The pad under its own darker filter: the warmth; the pluck goes past it, a little brighter.
+        const warm = audio.createBiquadFilter();
+        warm.type = 'lowpass';
+        warm.frequency.value = 620;
+        warm.connect(master);
         next = audio.currentTime + 0.05;
+        const pluck = (at: number, f: number) => {
+          if (!ctx) return;
+          for (const [mult, peak] of [
+            [1, 0.16],
+            [2, 0.035],
+          ] as const) {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine';
+            o.frequency.value = f * mult;
+            g.gain.setValueAtTime(0, at);
+            g.gain.linearRampToValueAtTime(peak, at + 0.012);
+            g.gain.exponentialRampToValueAtTime(0.0008, at + 2.6);
+            o.connect(g).connect(master!);
+            o.start(at);
+            o.stop(at + 2.7);
+          }
+        };
         const plan = () => {
           if (!ctx || !master) return;
-          while (next < ctx.currentTime + 1.5) {
-            for (const f of CHORDS[step % CHORDS.length]!) {
-              for (const detune of [-5, 5]) {
+          while (next < ctx.currentTime + 2) {
+            const chord = step % CHORDS.length;
+            for (const f of CHORDS[chord]!) {
+              for (const [type, detune] of [
+                ['sine', -4],
+                ['triangle', 4],
+              ] as const) {
                 const o = ctx.createOscillator();
                 const g = ctx.createGain();
-                o.type = 'triangle';
+                o.type = type;
                 o.frequency.value = f;
                 o.detune.value = detune;
                 g.gain.setValueAtTime(0, next);
-                g.gain.linearRampToValueAtTime(0.18, next + 1.2);
-                g.gain.linearRampToValueAtTime(0, next + 3.1);
-                o.connect(g).connect(master);
+                g.gain.linearRampToValueAtTime(0.14, next + 2.2);
+                g.gain.linearRampToValueAtTime(0, next + RECAP_CHORD_S + 0.8);
+                o.connect(g).connect(warm);
                 o.start(next);
-                o.stop(next + 3.2);
+                o.stop(next + RECAP_CHORD_S + 0.9);
               }
             }
+            const [hi, mid] = PLUCKS[chord]!;
+            pluck(next + 0.4, hi!);
+            pluck(next + RECAP_CHORD_S / 2 + 0.2, mid!);
             step++;
-            next += 2.8;
+            next += RECAP_CHORD_S;
           }
         };
         plan();
@@ -330,7 +381,7 @@ export interface StageOptions {
 export interface Stage {
   close(): void;
   refresh(): void;
-  state(): { scene: number; scenes: number; kind: string; paused: boolean; mine: boolean; music: boolean; level: number };
+  state(): { scene: number; scenes: number; kind: string; paused: boolean; mine: boolean; music: boolean; level: number; sign: { bulbs: number; chasing: boolean; lines: string[] } | null };
 }
 
 let current: Stage | null = null;
@@ -423,21 +474,25 @@ export function playRecap(box: HTMLElement, options: StageOptions): Stage {
     const fact = facts[i]!;
     const scene = sceneOf(fact);
     const text = sceneText(fact, show.recap);
+    // RC2 (owner's pick C, "marquee sign"): every fact is lettered on a theatre sign with chasing bulbs over the night
+    // sky; the scene's own decoration (emoji rain, seats, the reel …) plays around it.
+    const lines = signLines(fact, text, show.recap);
     const body = el('div', { class: 'rc-body' });
     if (fact.kind === 'summary') {
       const save = el('button', { type: 'button', class: 'btn primary' }, tx().save);
       save.addEventListener('click', () => downloadImage(show.recap));
       body.append(
+        el('p', { class: 'rc-kicker' }, tx().nowShowing),
         el('h2', { class: 'rc-title' }, text.title),
         el('div', { class: 'rc-grid' }, ...summaryLines(show.recap).map((line) => el('span', {}, line))),
         el('div', { class: 'rc-actions' }, save),
       );
     } else {
-      body.append(el('div', { class: 'rc-big' }, text.big), el('h2', { class: 'rc-title' }, text.title), el('p', { class: 'rc-sub' }, text.sub));
+      body.append(el('p', { class: 'rc-kicker' }, lines.kicker), el('h2', { class: 'rc-big' }, lines.big), el('p', { class: 'rc-sub' }, lines.sub));
     }
-    const node = el('div', { class: `rc-scene rc-bg-${scene}${reduced ? '' : ' rc-enter'}` }, el('div', { class: 'rc-cone', 'aria-hidden': 'true' }), decor(scene, fact, show.recap), body);
+    const node = el('div', { class: `rc-scene rc-marquee rc-at-${scene}${reduced ? '' : ' rc-enter'}` }, el('div', { class: 'rc-sky', 'aria-hidden': 'true' }), el('div', { class: 'rc-cone', 'aria-hidden': 'true' }), decor(scene, fact, show.recap), marquee(body));
     sceneBox.replaceChildren(node);
-    live.textContent = [text.big, text.title, text.sub].filter(Boolean).join('. ');
+    live.textContent = fact.kind === 'summary' ? text.title : [lines.kicker, lines.big, lines.sub].filter(Boolean).join('. ');
     step.textContent = `${i + 1} / ${facts.length}`;
     frames.forEach((f, j) => {
       f.classList.toggle('on', j === i);
@@ -491,10 +546,22 @@ export function playRecap(box: HTMLElement, options: StageOptions): Stage {
     options.onClose();
   }
 
+  /** RC2 for Test Lab `recap.state`: the sign's bulbs, whether they chase (not with "reduce motion") and its lines. */
+  function signState(): { bulbs: number; chasing: boolean; lines: string[] } | null {
+    const sign = sceneBox.querySelector('.rc-sign');
+    if (!sign) return null;
+    const bulb = sign.querySelector('.rc-bulb');
+    return {
+      bulbs: sign.querySelectorAll('.rc-bulb').length,
+      chasing: !!bulb && getComputedStyle(bulb).animationName !== 'none',
+      lines: [...sign.querySelectorAll('.rc-board p, .rc-board h2')].map((n) => n.textContent ?? ''),
+    };
+  }
+
   const handle: Stage = {
     close,
     refresh: () => draw(),
-    state: () => ({ scene: sceneNow(), scenes: facts.length, kind: facts[Math.max(0, sceneNow())]!.kind, paused, mine: mine !== null, music: !music.muted, level: (RECAP_MUSIC_LEVEL * soundVolume()) / 100 }),
+    state: () => ({ scene: sceneNow(), scenes: facts.length, kind: facts[Math.max(0, sceneNow())]!.kind, paused, mine: mine !== null, music: !music.muted, level: (RECAP_MUSIC_LEVEL * soundVolume()) / 100, sign: signState() }),
   };
   current = handle;
   box.classList.add('rc-on');
@@ -524,43 +591,6 @@ export function renderRecapHistory(container: HTMLElement, recaps: Recap[], open
   );
 }
 
-/** A small card by the ✨ button: a guest asks the host; the host shows or watches alone. */
-export function recapCard(anchor: HTMLElement, o: { host: boolean; readySec: number; ask: () => void; show: () => void }): void {
-  document.querySelector('.rc-card')?.remove();
-  const close = el('button', { type: 'button', class: 'icon-btn rc-card-x', 'aria-label': t('close'), title: t('close') }, '✕');
-  const action = el('button', { type: 'button', class: 'btn primary' }, o.host ? tx().showAll : tx().ask);
-  const card = el('div', { class: 'rc-card card', role: 'dialog', 'aria-label': tx().title }, el('div', { class: 'rc-card-head' }, el('b', {}, fill(tx().askTitle, { time: duration(o.readySec) })), close), el('p', { class: 'small muted' }, tx().askBody), action);
-  const done = () => {
-    card.remove();
-    document.removeEventListener('pointerdown', outside, true);
-  };
-  const outside = (event: PointerEvent) => {
-    if (!card.contains(event.target as Node) && !anchor.contains(event.target as Node)) done();
-  };
-  action.addEventListener('click', () => {
-    if (o.host) {
-      o.show();
-      done();
-      return;
-    }
-    o.ask();
-    action.textContent = tx().asked;
-    action.setAttribute('disabled', '');
-    setTimeout(done, 1800);
-  });
-  close.addEventListener('click', done);
-  document.addEventListener('pointerdown', outside, true);
-  document.body.append(card);
-  const r = anchor.getBoundingClientRect();
-  const w = card.offsetWidth;
-  const h = card.offsetHeight;
-  // A hidden anchor (a phone's sheet pressed it): the card sits in the middle of the screen.
-  const left = !r.width ? (innerWidth - w) / 2 : r.right + 10 + w < innerWidth ? r.right + 10 : Math.max(8, r.left - 10 - w);
-  card.style.left = `${Math.max(8, Math.min(left, innerWidth - w - 8))}px`;
-  card.style.top = `${!r.width ? (innerHeight - h) / 2 : Math.max(8, Math.min(r.top, innerHeight - h - 8))}px`;
-  action.focus();
-}
-
 /** The host's one toast for asks (names merge while it is up). */
 const askers: string[] = [];
 export function askToast(name: string, show: () => void): void {
@@ -588,38 +618,6 @@ export function askToast(name: string, show: () => void): void {
   setTimeout(done, 30_000);
 }
 
-/** N2 / N4: a quiet line with Glowbeam (under the video), ✕ and "Don't remind me"; it fades by itself. */
-export function nudge(
-  place: HTMLElement,
-  text: { kind: 'late'; sec: number } | { kind: 'last'; recap: Recap } | { kind: 'end'; host: boolean },
-  o: { open: () => void; never: () => void; ms: number },
-): void {
-  document.querySelector('.rc-nudge')?.remove();
-  const line =
-    text.kind === 'late'
-      ? el('span', {}, fill(tx().nudge, { time: duration(text.sec) }))
-      : el(
-          'button',
-          { type: 'button', class: 'rc-nudge-open' },
-          text.kind === 'end' ? (text.host ? tx().endHost : tx().endGuest) : fill(tx().lastTime, { when: dateText(text.recap.from), time: duration(text.recap.watchSec) }),
-        );
-  const x = el('button', { type: 'button', class: 'icon-btn', 'aria-label': t('close'), title: t('close') }, '✕');
-  const never = el('button', { type: 'button', class: 'rc-nudge-never' }, tx().dontRemind);
-  const box = el('div', { class: 'rc-nudge', role: 'status' }, createMascot(document, { torch: true }), line, never, x);
-  const done = () => box.remove();
-  if (text.kind !== 'late') line.addEventListener('click', () => {
-    done();
-    o.open();
-  });
-  x.addEventListener('click', done);
-  never.addEventListener('click', () => {
-    o.never();
-    done();
-  });
-  place.append(box);
-  setTimeout(done, o.ms);
-}
-
 /** Özeti 1200×630 paylaşılabilir görsel olarak indirir (logomuzla, gece paletinde). */
 function downloadImage(recap: Recap): void {
   const canvas = document.createElement('canvas');
@@ -632,6 +630,18 @@ function downloadImage(recap: Recap): void {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 1200, 630);
   const logo = new Image();
+  // RC2: the marquee's gold frame and bulbs round the picture.
+  ctx.strokeStyle = '#d6a447';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(20, 20, 1160, 590);
+  ctx.fillStyle = '#ffd76a';
+  const bulb = (x: number, y: number) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  for (let x = 44; x <= 1156; x += 37) [36, 594].forEach((y) => bulb(x, y));
+  for (let y = 73; y <= 557; y += 37) [36, 1164].forEach((x) => bulb(x, y));
   logo.onload = () => {
     ctx.drawImage(logo, 70, 60, 84, 84);
     ctx.fillStyle = '#fff3d6';

@@ -2412,6 +2412,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `RECAP_MUSIC_LEVEL` (0.035) × volume / 100, faded in from silence over `RECAP_FADE_S` (3 s); `state().level`
   reports it. Lab `{t:'lab', op:'recap-together'}` sets `togetherMs` to 2 h (Test Lab `recap.button`). Owner's picks: look C (marquee sign) and music 1 (our own pad, re-voiced), built in part 2
   (`design/recap-cinema/`). Harness `scripts/harness/recap` (CI `site`).
+  **RC2 part 2 (look + music, 21 Nov 2026):** every scene is `.rc-scene.rc-marquee` (night sky `.rc-sky`, the cone,
+  the scene's own `decor`) with `marquee(board)`: `.rc-sign` > `.rc-sign-frame` (a 3 × 3 grid: bulb rows
+  `.rc-b-top` / `.rc-b-bottom` of `MARQUEE_BULBS.across` (22), columns `.rc-b-left` / `.rc-b-right` of `.down` (6),
+  rows run clockwise; every third `.rc-bulb` lights together, `rc-chase` 0.9 s, so the light runs round; still and lit
+  with reduced motion) round the cream `.rc-board`, plus `.rc-post`. `signLines` gives each fact a kicker, a big red
+  headline and a small line: the time fact reads "Now showing · Our movie night · <time> · <people>" (`TEXT`
+  `nowShowing` / `ourNight`), the others title · big · sub; the summary keeps its grid and "⬇ Save image" (the kicker
+  hides in a narrow box). Under a 520 px box the sign is 92 % wide below the logo pill, every other bulb hides. The
+  saved image gets the gold frame and bulbs. Music 1: `createMusic` re-voiced: `RECAP_MUSIC_LEVEL` 0.025, one chord
+  per `RECAP_CHORD_S` (5.2 s), sine + triangle pairs under a 620 Hz low-pass (warm), two soft sine "piano" plucks per
+  chord (an octave up, 12 ms attack, 2.6 s decay) past it, all under an 1.8 kHz low-pass. `recapCard`, `nudge` and
+  their texts are deleted (unused since part 1). `state().sign` = `{ bulbs, chasing, lines }` (Test Lab
+  `recap.state`); the harness checks the sign, the first sign's words, reduced motion and gain ≤ 0.025.
 - **Simpler room (0.9.93.13, card 6, owner's picks C + D):** `ui/room-more.ts` `roomMoreItems` = the room's "⋯ More"
   list (games (phones), film time (host), save, recap, shortcuts (computer), sync test (dimmed while something plays),
   rules; R9, 0.9.97.16: nothing else, Help · Feedback · Privacy are one small line at the foot of the profile menu,
