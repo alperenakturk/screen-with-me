@@ -5,6 +5,7 @@
 // closest-guess finale). Jokers (QZ2): 50:50, Double and Second chance, each once a game, never on a guess.
 
 import './lobby.css';
+import './quiz.css';
 import { gameHint } from './hint.ts';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
@@ -175,7 +176,7 @@ const tq = (key: keyof (typeof TEXT)['en'], vars: Record<string, string | number
 
 export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar: Avatar): () => void {
   app.innerHTML = `
-    <div class="xox-page draw-page quiz-page">
+    <div class="xox-page draw-page quiz-page" data-fill>
       <div class="draw-main">
         <section class="card quiz-main">
           <div class="draw-top">
@@ -712,6 +713,18 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       { id: 'quiz.level', title: { en: 'Quiz: next level', tr: 'Bilgi yarışması: sonraki seviye' }, help: { en: 'Sets the table’s level to the next one (Mixed, Easy, Medium, Hard); the next game asks only that level, shown as stars beside the topic.', tr: 'Masanın seviyesini bir sonrakine geçirir (Karışık, Kolay, Orta, Zor); sonraki oyun yalnızca o seviyeden sorar, konunun yanında yıldızlarla görünür.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host sets the level', tr: 'seviyeyi sadece masanın yöneticisi seçer' } : true), run: () => { const now = QUIZ_LEVELS.indexOf(state?.level ?? 'mix'); send({ t: 'settings', level: QUIZ_LEVELS[(now + 1) % QUIZ_LEVELS.length]! }); } },
       // QZ3 (card hook): ×2 on this question now (after my answer it doubles that answer's points if it is right).
       { id: 'quiz.joker.double', title: { en: 'Quiz: press ×2 now', tr: 'Bilgi yarışması: şimdi ×2’ye bas' }, help: { en: 'Plays the ×2 Double joker on the current question, as the button does. Answer first: a right answer then scores double (the scoreboard shows it at the reveal), a wrong one 0.', tr: '×2 Çift puan jokerini şu anki soruda oynar, düğme gibi. Önce cevapla: doğruysa puan iki katına çıkar (cevap görününce tabloda), yanlışsa 0.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => { const b = jokerButtons.find((j) => j.kind === 'double')!.b; return !state || state.phase !== 'question' ? { en: 'only while a question is open', tr: 'sadece bir soru açıkken' } : b.disabled ? { en: '×2 is used up or not allowed on this question', tr: '×2 kullanıldı ya da bu soruda olmaz' } : true; }, run: () => jokerButtons.find((j) => j.kind === 'double')!.b.click() },
+      // QZ5b (card hook): does the table fill the video's place? The card and the side column against the box (a band
+      // above or below the card is the bug QZ5b fixed); a thrown error is a red line in the lab's log.
+      { id: 'quiz.fill', title: { en: 'Quiz: check it fills the video’s place', tr: 'Bilgi yarışması: videonun yerini dolduruyor mu' }, help: { en: 'During a question: the question card and the players column must take the whole height of the video’s place, the column at the shared narrow width.', tr: 'Soru sırasında: soru kartı ve oyuncular sütunu videonun yerinin bütün yüksekliğini almalı, sütun ortak dar genişlikte.' }, tab: 'games' as const, where: { en: 'at a Quiz table in the video’s place', tr: 'videonun yerindeki Bilgi yarışması masasında' }, available: () => (!state || state.phase === 'lobby' || state.phase === 'over' ? { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' } : !app.closest('#game-stage.fill') ? { en: 'only in the video’s place on a computer or tablet', tr: 'sadece bilgisayar ya da tablette videonun yerinde' } : true), run: () => {
+        const box = app.closest<HTMLElement>('.game-fit')!.getBoundingClientRect();
+        const card = $('.quiz-main').getBoundingClientRect();
+        const side = $('.draw-side').getBoundingClientRect();
+        const fit = Number(app.closest<HTMLElement>('#game-stage')!.style.getPropertyValue('--fit')) || 1;
+        const band = Math.round((box.height - card.height) / fit);
+        const line = `card ${Math.round(card.width / fit)} × ${Math.round(card.height / fit)} · column ${Math.round(side.width / fit)} · box ${Math.round(box.width / fit)} × ${Math.round(box.height / fit)} · spare height ${band}px`;
+        if (band > 40 || Math.abs(card.height - side.height) > 2) throw new Error(`Quiz does not fill the video’s place: ${line}`);
+        return `Quiz fills the video’s place: ${line}`;
+      } },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).
       { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel test sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
     ],

@@ -547,6 +547,11 @@ async function windowPasses(page, label, g, phone) {
           try { verdict = JSON.parse(lab.text.slice(lab.text.indexOf('{'))); } catch {}
           check(!!verdict?.ok, `${label}: the Test Lab's games.phoneSweep passes`, verdict ? JSON.stringify(verdict) : lab.text);
         }
+        // QZ5b: a running Quiz in the video's place fills it (the Test Lab's own check, `quiz.fill`).
+        if (!phone && g.table === 'quiz' && g.start) {
+          const lab = await run('quiz.fill').catch((e) => ({ text: String(e) }));
+          check(/Quiz fills/.test(lab.text || ''), `${label}: Quiz fills the video's place (quiz.fill)`, lab.text);
+        }
         // Card GW passes: computers only (phones play full screen); GW_LANGS narrows them (CI: Turkish, the longer texts).
         if (!phone && !g.busy && pick('GW_LANGS', ['en', 'tr']).includes(lang)) await windowPasses(page, label, g, phone);
       }

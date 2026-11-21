@@ -1716,6 +1716,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   in any pool or game, the ladder, ties, `parseGuess`, placement), e2e `quiz.mjs` (the 5th of 5 is a guess; lab part:
   200 / 0, hidden until the reveal, jokers and picks refused) and `quiz-tournament.mjs` (the finale: 200 / 100 / 0 five
   times, a round win, +1000 / +500 / 0).
+  **QZ5b: Quiz fills the video's place (21 Nov 2026).** `.quiz-page` carries `data-fill` (quiz.ts, always: the lobby
+  and podium keep lobby.css's card, centred in the box). Its own chunk stylesheet `games/quiz.css` (the older `.quiz-*`
+  rules stay in room.css / lobby.css): in a question, reveal or topic pick the card (`.quiz-main`) takes the box's whole
+  height and what `var(--game-side)` leaves of its width; `.quiz-body` is a size container (`quizbody`), so the question
+  and the four answers grow with the card (clamped `cqh` sizes; a box under 480 px steps them down). The side column is
+  one compact row per player (eight fit; six or more in a short box drop the faces). A short box (≤ 380 px, an upright
+  tablet) tightens the lobby's gaps so it fits at full size. Readability: the topic chip shortens with "…" (never a
+  second line), an unavailable joker is a plain grey button at full opacity (was 40 %), the 🏆 round wins are 14 px in
+  a gold pill, 🔥 / jokers used 13 px. Test Lab `quiz.fill` (during a game in the video's place: card and column the
+  box's full height, else a red line); the games sweep runs it on `quizPlay` (computers and tablets). Five Frames' solo
+  legend words are 14 px in a free window (`tabup/tr/word` read 12.8 px at the window's 0.98 scale).
 - **Players thrown out of tables (card GD1, 19 Nov 2026):** three causes found and fixed. (1) **The room's "at
   this table" mark** lives on the room connection's attachment (`{t:'at', table}`, `setAt`); a new room connection
   (a deploy, a phone wake, a Wi-Fi switch) started without it, and the client re-sent it only when it reopened the
