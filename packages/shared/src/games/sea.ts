@@ -246,6 +246,11 @@ export type SeaClientMessage =
   | { t: 'bot'; level: SeaBotLevel | 0 }
   | { t: 'sit' }
   | { t: 'rematch' }
+  /**
+   * SB2: with three or more players the shooter's aim, live (throttled by the page): the sea picked and the cell under
+   * the pointer (null = off the sea). Never stored; the server passes it on to everyone else at the table.
+   */
+  | { t: 'aim'; target: number; cell: number | null }
   | { t: 'lab'; op: 'oneLeft' | 'reveal' };
 
 export interface SeaPlayer {
@@ -291,6 +296,8 @@ export type SeaServerMessage =
       rules: { size: number; fleet: number[]; again: boolean; touch: boolean };
     }
   | { t: 'reveal'; seat: number; ships: number[][] }
+  /** SB2: the shooter `by` aims at seat `target`'s sea, at `cell` (null = not over a cell). */
+  | { t: 'aim'; by: number; target: number; cell: number | null }
   | { t: 'error'; code: string };
 
 const isBool = (v: unknown): v is boolean => typeof v === 'boolean';
@@ -337,6 +344,11 @@ export function parseSeaMessage(raw: string): SeaClientMessage | null {
       if (!isInt(m.cell, cells)) return null;
       if (m.target === undefined) return { t: 'shot', cell: m.cell };
       return isInt(m.target, SEA_MAX_SEATS) ? { t: 'shot', cell: m.cell, target: m.target } : null;
+    }
+    case 'aim': {
+      if (!isInt(m.target, SEA_MAX_SEATS)) return null;
+      if (m.cell === null) return { t: 'aim', target: m.target, cell: null };
+      return isInt(m.cell, cells) ? { t: 'aim', target: m.target, cell: m.cell } : null;
     }
     case 'bot':
       return m.level === 0 || m.level === 1 || m.level === 2 ? { t: 'bot', level: m.level } : null;

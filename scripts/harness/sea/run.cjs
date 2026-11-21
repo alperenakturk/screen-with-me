@@ -325,6 +325,72 @@ async function unnamed(page) {
   check(!!(await until(async () => (await phase(robin.page)) === 'place')), 'Play again starts a new game (placing)');
   await robin.ctx.close();
 
+  // SB2: three players. Kim (computer) with Lee and Max (sockets, like other pages) and a watcher socket that sees every
+  // fleet. On Kim's turn his pointer over their sea reaches the others; on Lee's turn Kim's own sea is the big one and
+  // the second view follows Lee: the sea he aims at, his live pointer, "Lee aims at you!" when it is Kim's sea.
+  {
+    const { GameSocket } = await import('../../e2e/game-socket.mjs');
+    const kim = await person(browser, room + 'f', 'Kim', 'wizard');
+    await run(kim.page, 'games.open.sea');
+    const tableId = await until(() => kim.page.evaluate(() => document.querySelector('#game-stage .sea')?.dataset.table ?? null));
+    const wsBase = SITE.replace(/^http/, 'ws');
+    const sock = (name, cid) => {
+      const ws = new GameSocket(`${wsBase}/api/sea/${tableId}/ws`);
+      const c = { ws, inbox: [], state: null, send: (m) => ws.send(JSON.stringify(m)) };
+      ws.addEventListener('message', (e) => {
+        const m = JSON.parse(e.data);
+        c.inbox.push(m);
+        if (m.t === 'state') c.state = m;
+      });
+      ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 1, name, cid })));
+      return c;
+    };
+    const lee = sock('Lee', 'l'.repeat(32));
+    await until(async () => lee.state?.seat === 1);
+    const max = sock('Max', 'm'.repeat(32));
+    await until(async () => max.state?.seat === -1);
+    max.send({ t: 'sit' });
+    await until(async () => max.state?.seat === 2);
+    const eye = sock('Ari', 'w'.repeat(32));
+    await until(async () => eye.state?.seat === -1);
+    lee.send({ t: 'ready', on: true });
+    max.send({ t: 'ready', on: true });
+    await until(() => kim.page.evaluate(() => !!document.querySelector('#game-stage .sea-ready-btn')));
+    await click(kim.page, '#game-stage .sea-ready-btn');
+    check(!!(await until(async () => (await phase(kim.page)) === 'play' && lee.state?.phase === 'play')), 'SB2 three players: the battle starts');
+    const kimSeat = await kim.page.evaluate(() => window.__swmLab.run('seaBattle.state').then((l) => JSON.parse(l.text.slice(l.text.indexOf('{'))).seat));
+    // Kim shoots first (seat 1 of 3); his pointer over their sea goes to the others.
+    const target = await kim.page.evaluate(() => window.__swmLab.run('seaBattle.state').then((l) => JSON.parse(l.text.slice(l.text.indexOf('{'))).target));
+    const hover = await kim.page.locator('#game-stage .sea-theirs .sea-cell[data-cell="44"]').boundingBox();
+    await kim.page.mouse.move(hover.x + hover.width / 2, hover.y + hover.height / 2, { steps: 3 });
+    check(!!(await until(async () => [lee, max, eye].every((c) => c.inbox.some((m) => m.t === 'aim' && m.by === kimSeat && m.target === target && m.cell === 44)), 4000)), "SB2: Kim's pointer over their sea reaches the others live (sea + cell)", JSON.stringify(lee.inbox.filter((m) => m.t === 'aim').slice(-2)));
+    // Kim misses (the watcher knows the water) and the turn passes to Lee.
+    const ships = new Set(eye.state.seas[target].ships.flat());
+    const miss = [...Array(100).keys()].find((c) => !ships.has(c));
+    await kim.page.click(`#game-stage .sea-theirs .sea-cell[data-cell="${miss}"]`);
+    check(!!(await until(async () => lee.state?.turn === 1, 4000)), 'SB2: Kim misses, Lee shoots next');
+    const view = () => kim.page.evaluate(() => {
+      const root = document.querySelector('#game-stage .sea');
+      const w = (sel) => document.querySelector(`#game-stage ${sel}`)?.getBoundingClientRect().width ?? 0;
+      return window.__swmLab.run('seaBattle.state').then((l) => ({ ...JSON.parse(l.text.slice(l.text.indexOf('{'))), cls: root.className, mine: w('.sea-mine .sea-grid'), theirs: w('.sea-theirs .sea-grid'), status: document.querySelector('#game-stage .sea-status')?.textContent ?? '' }));
+    });
+    lee.send({ t: 'aim', target: kimSeat, cell: 33 });
+    const atMe = await until(async () => {
+      const v = await view();
+      return v.peerAim.includes('mine:33') ? v : null;
+    }, 4000);
+    check(!!atMe && atMe.following && /Lee aims at you!/.test(atMe.status) && atMe.mine > atMe.theirs, 'SB2: Lee aims at Kim: his pointer on Kim\'s own sea (the big one), "Lee aims at you!"', JSON.stringify(atMe ?? (await view())));
+    lee.send({ t: 'aim', target: 2, cell: 5 });
+    const atMax = await until(async () => {
+      const v = await view();
+      return v.peerAim.includes('theirs:5') ? v : null;
+    }, 4000);
+    check(!!atMax && atMax.target === 2 && atMax.theirs > atMax.mine && /Lee aims at Max/.test(atMax.status), "SB2: Lee aims at Max: the second view turns to Max's sea with Lee's pointer, now the big one", JSON.stringify(atMax ?? (await view())));
+    await axeStage(kim.page, 'SB2 following (computer)');
+    for (const c of [lee, max, eye]) c.ws.close();
+    await kim.ctx.close();
+  }
+
   await browser.close();
   if (problems.length) console.log('\n' + problems.join('\n'));
   console.log(fails ? `\n✗ ${fails} check(s) failed` : '\n✓ Sea Battle harness passed');

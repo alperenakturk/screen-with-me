@@ -303,3 +303,17 @@ html.phone .sea-bot-label { flex-basis: auto; }
 @media (prefers-reduced-motion: reduce) {
   .sea-cell.sinking, .sea-sank.go, .sea-sank.go *, .sea-sank.go .sea-sank-boom::before, .sea-target.just-out, .sea-head.just-out .sea-out { animation: none !important; }
 }
+
+/* SB2: three or more, someone else shoots: my own sea is the big one and the second view follows the shooter (the
+   sea they aim at, their live pointer as a pulsing crosshair). */
+.sea.following .sea-seas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+.sea-cell.peer-aim { z-index: 2; box-shadow: inset 0 0 0 2px #ff9a7a, 0 0 12px rgb(255 122 90 / 0.6); }
+.sea-cell.peer-aim .sea-mark::after {
+  content: ''; position: absolute; inset: 15%; border-radius: 50%; border: 2px solid #ff9a7a; box-sizing: border-box;
+  background: linear-gradient(#ff9a7a, #ff9a7a) center / 2px 100% no-repeat, linear-gradient(#ff9a7a, #ff9a7a) center / 100% 2px no-repeat;
+  animation: sea-peer 1s ease-in-out infinite;
+}
+@keyframes sea-peer { 50% { transform: scale(0.8); } }
+@media (prefers-reduced-motion: reduce) { .sea-cell.peer-aim .sea-mark::after { animation: none; } }
+/* A narrow window shows one sea at a time: the follow view takes the whole width. */
+@container game (max-width: 560px) { .sea.following .sea-seas { grid-template-columns: minmax(0, 1fr); } }

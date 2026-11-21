@@ -1510,6 +1510,17 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `aria-live`), its chip / head pops its ✕ (`.just-out`), and the result card waits until it is over (`sankUntil`).
   Lab `sea.sank` plays it in this tab; `seaBattle.state` adds `sank` and `dragging`. Sea harness: ghost mid-drag, R
   turns it, the drop lands on the ghost, a tap turns the picked ship, the end's moment before the card.
+  SB2 part 2 (three or more): the shooter's page sends its live aim `aim {target, cell|null}` (a mouse over their sea,
+  a phone's first tap, a chip pick; at most one per 150 ms, only on change: `queueAim`). The server (`Sea.aim`) passes
+  it as `aim {by, target, cell}` to every other connection that said hello, only from the seat whose turn it is, at a
+  fleet afloat that isn't its own; never stored or saved, its own budget (`RateLimiter(10, 8)`, extra ones dropped
+  silently), no error answers. On someone else's turn the page follows the shooter (`following()`, `follow`): the big
+  box shows the sea they aim at (else the sea they last shot at), their pointer pulses on that cell (`.peer-aim`, on my
+  own sea when they aim at me), the status says "Lee aims at Max's sea" / "Lee aims at you!"; aimed at me, my own sea
+  is the big box (`.sea.following` swaps the columns). A chip picked by hand wins until the turn changes; my own turn
+  brings back my last target (`myTarget`). Lab `seaBattle.state` adds `following`, `follow`, `peerAim`. Tests: unit
+  (`aim` parsing), e2e `sea-many.mjs` (relayed to players and the watcher, not to the shooter; out of turn / own sea
+  dropped), sea harness (Kim's hover reaches the sockets; Lee's aim at Kim and at Max on Kim's page).
   **FW2 levels:** `packages/shared/src/games/five-frames.ts` `LEVELS` (`easy` / `medium` default / `hard` / `mixed`),
   `levelWords(words, bands, level)` (bands 1 / 1–2 / 2–3 / all; missing bands = all), `levelAnswer` (each level its own
   salt, Medium 0), `categoryAnswer(…, level, bands)`; the word modules carry `BANDS` (one digit per answer) and
