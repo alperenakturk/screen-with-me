@@ -1500,6 +1500,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`nextAlive`, `seaRanks`, target parsing), e2e `sea-many.mjs` (3 and 6 players: targets required, own sea refused,
   hidden fleets, a sunk fleet never gets the turn, places; a seventh can't sit; the driver reads ship cells from a
   watcher so the live run stays short), `games-sweep` `seaSix` (five players join from the script).
+  SB2 part 1 (card SB2): a ship is dragged straight onto the sea with pointer capture on my grid (`drag`: ship, held
+  cell, `down`; 6 px before it counts as a drag); while it moves its old cells get `.lifting` and a ghost
+  (`.ghost`, `.ghost.bad` when nothing fits within 2 cells) shows the nearest valid spot (`nearestPlace(rules, places,
+  ship, row, col, down, reach)` in the shared rules, unit tested); letting go puts it there (`place`), R mid-drag turns
+  it. A tap on the picked ship turns it (Turn / R as before; when it can't turn in place, the nearest spot within 2
+  cells). A ship that sinks wobbles under (`.sinking`, 0.9 s); a fleet whose last ship goes (`left` 1+ → 0 between two
+  states) gets the "ALEX SANK!" moment (`.sea-sank`: a burst, the name in capitals, "YOUR FLEET SANK!" for me, 2.2 s,
+  `aria-live`), its chip / head pops its ✕ (`.just-out`), and the result card waits until it is over (`sankUntil`).
+  Lab `sea.sank` plays it in this tab; `seaBattle.state` adds `sank` and `dragging`. Sea harness: ghost mid-drag, R
+  turns it, the drop lands on the ghost, a tap turns the picked ship, the end's moment before the card.
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),

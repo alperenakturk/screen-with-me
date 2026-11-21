@@ -164,10 +164,38 @@ async function unnamed(page) {
   await alex.page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
   await alex.page.mouse.down();
   await alex.page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 6 });
+  // SB2: while dragging, the ship's old cells fade and a ghost shows where it lands (gold, or red when nothing fits).
+  const mid = await alex.page.evaluate(() => ({
+    lifting: document.querySelectorAll('#game-stage .sea-mine .sea-cell.lifting').length,
+    ghost: [...document.querySelectorAll('#game-stage .sea-mine .sea-cell.ghost')].map((c) => Number(c.dataset.cell)),
+    bad: document.querySelectorAll('#game-stage .sea-mine .sea-cell.ghost.bad').length,
+  }));
+  check(mid.lifting >= 2 && mid.ghost.length === mid.lifting, 'SB2: mid-drag the ship lifts and a ghost of the same length shows where it lands', JSON.stringify(mid));
+  // R mid-drag turns the ghost (one row ↔ one column).
+  const line = (cells) => (cells.length < 2 ? 'dot' : cells[1] - cells[0] === 1 ? 'row' : 'col');
+  await alex.page.keyboard.press('r');
+  await wait(150);
+  const turnedGhost = await cellsWith(alex.page, 'mine', 'ghost');
+  check(turnedGhost.length < 2 || line(turnedGhost) !== line(mid.ghost) || turnedGhost.length !== mid.ghost.length, 'SB2: R mid-drag turns the dragged ship', `${mid.ghost} → ${turnedGhost}`);
+  await alex.page.keyboard.press('r');
+  await wait(150);
+  const landing = await alex.page.evaluate(() => ({ cells: [...document.querySelectorAll('#game-stage .sea-mine .sea-cell.ghost')].map((c) => Number(c.dataset.cell)), bad: document.querySelectorAll('#game-stage .sea-mine .sea-cell.ghost.bad').length > 0 }));
   await alex.page.mouse.up();
   await wait(600);
   const afterDrag = await cellsWith(alex.page, 'mine', 'ship');
   check(afterDrag.join(',') !== shipsNow.join(',') || (await alex.page.evaluate(() => /fit/.test(document.querySelector('#game-stage .sea-status').textContent))), 'a drag moves a ship (or says it does not fit)');
+  check(landing.bad || landing.cells.every((c) => afterDrag.includes(c)), 'SB2: the ship lands exactly where the ghost showed (snapped to the nearest spot that fits)', JSON.stringify(landing));
+  check(await alex.page.evaluate(() => !document.querySelector('#game-stage .sea-mine .sea-cell.ghost, #game-stage .sea-mine .sea-cell.lifting')), 'SB2: after the drop no ghost is left');
+  // SB2: a tap on the picked ship turns it (the dropped ship is picked).
+  const pickedNow = await cellsWith(alex.page, 'mine', 'picked');
+  if (pickedNow.length >= 2) {
+    await alex.page.click(`#game-stage .sea-mine .sea-cell[data-cell="${pickedNow[0]}"]`);
+    const turnedTap = await until(async () => {
+      const p = await cellsWith(alex.page, 'mine', 'picked');
+      return p.join(',') !== pickedNow.join(',') ? p : null;
+    }, 2000);
+    check(!!turnedTap || (await alex.page.evaluate(() => /fit/.test(document.querySelector('#game-stage .sea-status').textContent))), 'SB2: a tap on the picked ship turns it (or says it does not fit)', JSON.stringify(turnedTap));
+  }
   await click(alex.page, '#game-stage .sea-shuffle');
   check(!!(await until(async () => (await cellsWith(alex.page, 'mine', 'ship')).join(',') !== afterDrag.join(','))), 'Shuffle lays a new fleet');
   check((await cellsWith(alex.page, 'mine', 'ship')).length === 17, 'the fleet still has 17 ship cells');
@@ -273,6 +301,13 @@ async function unnamed(page) {
     await wait(shot ? 180 : 300);
   }
   check((await phase(robin.page)) === 'over', 'the game against Stub ends');
+  // SB2: the fleet that went under gets its moment first ("STUB SANK!" / "YOUR FLEET SANK!"); the card waits for it.
+  const sank = await robin.page.evaluate(() => {
+    const b = document.querySelector('#game-stage .sea-sank');
+    return { shown: !!b && !b.hidden, text: b?.querySelector('.sea-sank-title')?.textContent ?? '', card: !document.querySelector('#game-stage .gr-layer')?.hidden };
+  });
+  check(sank.shown && /^(STUB SANK!|YOUR FLEET SANK!)$/.test(sank.text) && !sank.card, 'SB2: the end shows "STUB SANK!" (or "YOUR FLEET SANK!") before the result card', JSON.stringify(sank));
+  check(!!(await until(() => robin.page.evaluate(() => document.querySelector('#game-stage .sea-sank')?.hidden && !document.querySelector('#game-stage .gr-layer')?.hidden), 4000)), 'SB2: then the moment goes and the result card comes');
   check((await cellsWith(robin.page, 'mine', 'miss')).length + (await cellsWith(robin.page, 'mine', 'hit')).length > 0, 'Stub fired at my sea');
   check((await cellsWith(robin.page, 'theirs', 'ship')).length === 17, "after the end Stub's fleet shows");
   check(!!(await until(async () => (await sounds(robin.page)).some((s) => s === 'win' || s === 'lose'))), 'the end plays a win or lose sound');
