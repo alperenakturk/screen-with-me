@@ -334,12 +334,18 @@ export interface MemberVoice {
 /** Sesli sohbette aynı anda en fazla bu kadar kişi (SFU'da herkes herkesi çeker; maliyet ve kalabalık). */
 export const VOICE_MAX = 10;
 /** Eşler arası seste en fazla bu kadar kişi: herkes herkese ayrı akış yollar, ev internetinin yükleme hızı yetmez. */
-export const VOICE_MAX_P2P = 6;
+export const VOICE_MAX_P2P = 8;
 /**
  * Aynı anda en fazla bu kadar kamera: her kamera seste olan herkese ayrı kopya yollar, her izleyici de hepsini çözer
  * (dizüstü ısınır, yavaş internet yetmez).
  */
-export const CAM_MAX = 4;
+export const CAM_MAX = 6;
+/**
+ * Card VC4 (owner, 21 Nov 2026: 5 in voice and 4 cameras ran without trouble): what we recommend. Past it (more cameras
+ * or more people in voice) the room's chat says once that slow connections may struggle.
+ */
+export const CAM_RECOMMENDED = 4;
+export const VOICE_RECOMMENDED = 6;
 
 /**
  * Sesli sohbetin taşınma yolu. `p2p`: eşler arası (kartsız, ücretsiz; sunucu sadece bağlantı mesajlarını

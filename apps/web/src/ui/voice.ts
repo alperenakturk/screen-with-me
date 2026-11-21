@@ -1,4 +1,4 @@
-import { CAM_MAX, VOICE_MAX, VOICE_MAX_P2P, personOf, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
+import { CAM_MAX, CAM_RECOMMENDED, VOICE_MAX, VOICE_MAX_P2P, VOICE_RECOMMENDED, personOf, type ClientMessage, type Member, type RtcRequest, type RtcResult, type ServerMessage, type Signal, type VoiceMode } from '@swm/shared/protocol';
 import { isPushToTalkKey } from '@swm/shared/embed';
 import type { VoiceDown } from '@swm/shared/shell';
 import { VoiceClient, type Voice } from '@swm/shared/voice';
@@ -74,6 +74,8 @@ export interface VoiceRoom {
   report?: (member: Member) => void;
   /** The cameras on screen right now (member → picture; hidden ones and "hide myself" left out): Shorts seats. */
   onCams?: (cams: Map<string, MediaStream>) => void;
+  /** VC4: a grey chat line everyone should read (shown even while room activity lines are hidden). */
+  note?: (text: () => string) => void;
 }
 
 export function createVoice(root: HTMLElement, send: (message: ClientMessage) => void, myId: () => string | null, roomId: string, isShell: boolean, room: VoiceRoom, Ext: typeof ExtVoice | null = null) {
@@ -350,6 +352,25 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         },
       },
       {
+        // VC4: the "many cameras" chat note as if the room had this many cameras (and people in voice); `reset`
+        // forgets that it was already shown in this room.
+        id: 'voice.crowdNote',
+        tab: 'status',
+        run: (arg?: string) => {
+          const [a, b] = (arg?.trim() || '').split(/\s+/);
+          if (a === 'reset') {
+            save(crowdKey, '');
+            return { en: 'the note may show again in this room', tr: 'not bu odada yeniden çıkabilir' };
+          }
+          const cams = Number(a || CAM_RECOMMENDED + 1);
+          const voices = Number(b || cams);
+          if (!Number.isFinite(cams) || !Number.isFinite(voices)) throw labFail({ en: 'use: [cameras] [people in voice], or reset', tr: 'kullanım: [kamera] [seste kişi], ya da reset' });
+          const shown = crowdNote({ cams, voices });
+          const text = `${cams} cams, ${voices} in voice → ${shown ? 'note shown' : load(crowdKey) === '1' ? 'already shown in this room' : 'within what we recommend, no note'}`;
+          return { en: text, tr: text };
+        },
+      },
+      {
         // CAM3: 1–8 drawn cameras in the camera window (no one needs to be in voice): the grid rule can be seen and
         // read; 0 takes them away.
         id: 'camera.grid',
@@ -424,6 +445,21 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       return rows;
     },
   }));
+  /**
+   * Card VC4: past what we recommend (CAM_RECOMMENDED cameras or VOICE_RECOMMENDED people in voice) the chat says once
+   * per room, in this browser, that slow connections may struggle and what we recommend. The limits themselves
+   * (CAM_MAX, VOICE_MAX_P2P) stay on the server.
+   */
+  const crowdKey = `voiceCrowd:${roomId}`;
+  function crowdNote(counts?: { cams: number; voices: number }): boolean {
+    const cams = counts?.cams ?? members.filter((m) => m.voice?.cam).length;
+    const voices = counts?.voices ?? members.filter((m) => m.voice).length;
+    if (cams <= CAM_RECOMMENDED && voices <= VOICE_RECOMMENDED) return false;
+    if (load(crowdKey) === '1' || !room.note) return false;
+    save(crowdKey, '1');
+    room.note(() => t('voice.crowdNote', { cams: CAM_RECOMMENDED, voices: VOICE_RECOMMENDED }));
+    return true;
+  }
   /** Sunucu sesi destekliyor mu / eklenti katmanda sesi destekliyor mu (sadece kabukta gerekir). */
   let serverVoice = false;
   let extVoice = false;
@@ -1348,6 +1384,7 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
       client.sync(members, myId());
       applyVolumes();
       render();
+      crowdNote();
     },
     rtc(message: Extract<ServerMessage, { t: 'rtc' }>): void {
       const waiting = pending.get(message.id);

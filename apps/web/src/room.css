@@ -2520,7 +2520,7 @@ html.phone .feed-qrow :is(.btn, .icon-btn) {
   border-color: var(--accent);
 }
 
-.chat-list.hide-events .chat-system {
+.chat-list.hide-events .chat-system:not(.chat-note) {
   display: none;
 }
 
@@ -2529,7 +2529,7 @@ html.phone .feed-qrow :is(.btn, .icon-btn) {
   display: none;
 }
 
-.chat-list.hide-events > .chat-empty:not(:has(~ .chat-line, ~ .chat-game)) {
+.chat-list.hide-events > .chat-empty:not(:has(~ .chat-line, ~ .chat-game, ~ .chat-note)) {
   display: block;
 }
 

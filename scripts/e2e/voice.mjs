@@ -60,9 +60,9 @@ if (wa.voice !== true) {
   a.send({ t: 'voice', on: true, mic: true });
   const back = await c.wait((m) => m.t === 'members' && m.members.some((x) => x.id === wa.you && x.voice && !x.voice.deaf), 'undeafened');
   ok(back.members.find((x) => x.id === wa.you).voice.mic === true, 'Undeafened: the 🎧 mark goes, the mic is on again');
-  // Sınır: 6 kişi doluysa 7. reddedilir.
+  // Limit (VC4): with 8 in voice the 9th is refused.
   const extra = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 6; i++) {
     const e = client({ name: `K${i}`, cid: `voiceK${i}00000` });
     await e.wait((m) => m.t === 'welcome', 'welcome extra');
     e.send({ t: 'voice', on: true });
@@ -71,19 +71,19 @@ if (wa.voice !== true) {
   await sleep(600);
   c.send({ t: 'voice', on: true });
   const full = await c.wait((m) => m.t === 'error', 'voice full');
-  ok(full.code === 'voice_full', 'Seste 6 kişi varken 7. kişi reddedildi (voice_full)');
-  // Kamera: aynı anda en fazla 4; beşinci reddedilir, kapatınca biri yer açar.
+  ok(full.code === 'voice_full', 'With 8 in voice the 9th is refused (voice_full)');
+  // Cameras (VC4): at most 6 at once; the 7th is refused, one turned off makes room.
   for (const e of extra) e.send({ t: 'voice', on: true, mic: true, cam: true });
-  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 4, 'four cams');
-  ok(true, '4 kamera açık, üyelerde görünüyor');
+  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 6, 'six cams');
+  ok(true, '6 cameras on, shown in the members');
   a.send({ t: 'voice', on: true, mic: true, cam: true });
   const camFull = await a.wait((m) => m.t === 'error', 'cam full');
-  ok(camFull.code === 'cam_full', '5. kamera reddedildi (cam_full)');
+  ok(camFull.code === 'cam_full', 'The 7th camera is refused (cam_full)');
   // Kutularda kameralar tek tek açılırken gelen eski mesajlar var (K0'ın kamerası henüz kapalıyken olanlar da): boşalt,
   // sonra K0'ın gerçekten kapattığı mesajı bekle (canlıda gecikme yüzünden Alex'in isteği önce gidiyordu).
   for (const x of [a, b]) x.inbox.length = 0;
   extra[0].send({ t: 'voice', on: true, mic: true, cam: false });
-  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 3, 'cam off');
+  await b.wait((m) => m.t === 'members' && m.members.filter((x) => x.voice?.cam).length === 5, 'cam off');
   a.send({ t: 'voice', on: true, mic: true, cam: true });
   const alexCam = await b.wait((m) => m.t === 'members' && m.members.some((x) => x.name === 'Alex' && x.voice?.cam), 'alex cam');
   ok(!!alexCam, 'Biri kamerasını kapatınca Alex açabildi');

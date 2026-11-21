@@ -1199,6 +1199,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
     },
     makeHost: (member) => void askMakeHost(member),
     messagePrivately: (member) => openPrivate(member),
+    note: (text) => chat.note(text),
     ...safety,
   }, extVoiceModule?.ExtVoice ?? null);
   // Settings → Sound & camera (card SIMP1): the devices window and "check before joining voice" (`opt:voiceCheck`, the
