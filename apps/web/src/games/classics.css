@@ -560,8 +560,14 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
   }
   /* The narrow column: score and 👁 on the bar's first line, Stub and its levels on a line of their own (they ran past
      the column), and the status gets three lines before it shortens. */
-  #game-stage.fill .mt .mt-bar { row-gap: 6px; }
-  #game-stage.fill .mt .cl-bot { order: 1; flex-basis: 100%; flex-wrap: wrap; justify-content: center; row-gap: 6px; }
+  /* A grid, not a wrapping flex row: the bar's row was sized for one line while Stub's row wrapped to two, so the
+     seat below covered Easy / Medium (an upright tablet's 714 × 433 box, games-sweep). */
+  /* A short box: the rows never shrink below what they hold (they overlapped), so the table overflows and stage.ts
+     `refit` scales the whole game down a little instead. */
+  #game-stage.fill .xox-page.mt > .mt-table > :not(.xox-board-wrap, .xox-players, .mt-watch-pop) { min-height: min-content; }
+  #game-stage.fill .mt .mt-bar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 6px; }
+  #game-stage.fill .mt .mt-bar > .mt-watch-open { grid-column: 3; }
+  #game-stage.fill .mt .cl-bot { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap; justify-content: center; row-gap: 6px; }
   #game-stage.fill .mt .cl-bot:not(:has(.cl-bot-leave)) .cl-bot-label { flex-basis: 100%; justify-content: center; white-space: normal; text-align: center; }
   #game-stage.fill .mt .xox-status { -webkit-line-clamp: 3; text-wrap: balance; }
 }
