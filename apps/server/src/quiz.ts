@@ -10,12 +10,13 @@ import {
   QUIZ_RECENT,
   QUIZ_REVEAL_MS,
   fiftyFifty,
-  matchTyped,
+  guessPoints,
   parseQuizMessage,
   quizAnswerMs,
   quizLevelBonus,
   roundWinners,
-  typedHint,
+  quizGuessCount,
+  QUIZ_FINALE_QUESTIONS,
   QUIZ_PICK_MS,
   QUIZ_ROUND_QUESTIONS,
   QUIZ_DOUBLE_GRACE_MS,
@@ -78,8 +79,9 @@ interface Saved {
   questions: QuizQuestion[];
   /** Şu anki soru (0'dan). */
   index: number;
-  /** Bu sorudaki cevaplar: anahtar → şık, puan ve (doğruysa) kaçıncı doğru. */
-  answers: Record<string, { pick: number; gained: number; rank?: number; said?: string }>;
+  /** This question's answers: key → option, points and (when right) which right answer it was; on a closest-guess
+   * question (QZ5) the number, and from the reveal on its place as `rank`. */
+  answers: Record<string, { pick: number; gained: number; rank?: number; guess?: number }>;
   endsAt: number | null;
   emptySince: number | null;
   /** Since when fewer than two players are online in a running game (`FEW_GRACE_MS`). */
@@ -102,7 +104,7 @@ interface Saved {
    * what is armed on the current question (Double; Second chance with the first wrong answer once tried). */
   used: Record<string, QuizJoker[]>;
   jokerAt: Record<string, number>;
-  armed: Record<string, { double?: boolean; second?: boolean; tried?: { pick: number; said?: string } }>;
+  armed: Record<string, { double?: boolean; second?: boolean; tried?: { pick: number } }>;
   /** Tournament: the round (1-based) of `rounds`, who picks in turn, the current offer, this round's points, rounds
    * won, and who won the last finished round. */
   round: number;
@@ -112,8 +114,13 @@ interface Saved {
   roundPts: Record<string, number>;
   wins: Record<string, number>;
   roundWin: string[];
-  /** Test Lab (QZ2): the next game asks only typed questions (local lab server only). */
-  labTyped?: boolean;
+  /** QZ5: the round number of the tournament's closest-guess finale (the last of `rounds`; absent in Classic and in
+   * tournaments saved before QZ5). */
+  finale?: number;
+  /** Test Lab (QZ5, local lab server only): the next classic game asks only closest-guess questions; the next
+   * tournament goes straight to its finale. */
+  labGuess?: boolean;
+  labFinale?: boolean;
 }
 
 const fresh = (): Saved => ({
@@ -309,7 +316,7 @@ export class Quiz extends DurableObject<Env> {
     const fifty = d.fifty[key];
     if (d.phase === 'question' && fifty && fifty.n === this.qn()) this.sendTo(ws, { t: 'fifty', ...fifty });
     const tried = d.armed[key]?.tried;
-    if (d.phase === 'question' && tried && !d.answers[key]) this.sendTo(ws, { t: 'again', n: this.qn(), ...(tried.said ? {} : { wrong: tried.pick }) });
+    if (d.phase === 'question' && tried && !d.answers[key]) this.sendTo(ws, { t: 'again', n: this.qn(), wrong: tried.pick });
     this.broadcastState();
     // GHOST: the alarm also watches this connection for silence.
     await this.scheduleAlarm();
@@ -327,8 +334,9 @@ export class Quiz extends DurableObject<Env> {
         // Test Lab (DL3b): the current phase ends now, on a local lab server only (`lab.ts`).
         this.lab ||= await labRemembered(this.ctx.storage, this.env);
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
-        if (message.op === 'typed') {
-          this.data.labTyped = true;
+        if (message.op === 'guess' || message.op === 'finale') {
+          if (message.op === 'guess') this.data.labGuess = true;
+          else this.data.labFinale = true;
           await this.save();
           return;
         }
@@ -365,17 +373,21 @@ export class Quiz extends DurableObject<Env> {
         d.roundWin = [];
         d.roundPts = {};
         if (d.mode === 'tournament') {
-          // QZ2: every player picks a round's category in turn, once or twice round the table.
+          // QZ2: every player picks a round's category in turn, once or twice round the table; QZ5: then the finale.
           d.pickers = this.onlineKeys();
-          d.rounds = d.pickers.length * d.laps;
+          d.rounds = (d.labFinale ? 0 : d.pickers.length * d.laps) + 1;
+          d.finale = d.rounds;
+          d.labFinale = false;
           d.round = 0;
           await this.startRound();
           return;
         }
         d.round = 0;
         d.rounds = 0;
-        d.questions = this.choose(d.count, d.labTyped ? 'mix' : d.topic);
-        d.labTyped = false;
+        d.finale = 0;
+        // QZ5: 1–3 of them are closest-guess questions (all of them after the lab's `guess`).
+        d.questions = this.choose(d.count, d.topic, d.labGuess ? d.count : quizGuessCount(d.count));
+        d.labGuess = false;
         d.index = -1;
         await this.next();
         return;
@@ -391,15 +403,16 @@ export class Quiz extends DurableObject<Env> {
         if (d.phase !== 'question' || message.n !== this.qn() || (answered && kind !== 'double') || d.armed[key]?.tried) return;
         if ((d.used[key] ?? []).includes(kind) || (kind === 'fifty' && d.jokers.includes(key)) || d.jokerAt[key] === message.n) return;
         const q = d.questions[d.index]!;
+        // QZ5: no joker works on a closest-guess question (nor, so, in the tournament's finale).
+        if (q.guess) return;
         if (kind === 'fifty') {
           // One hidden pair per question for everyone: a fresh pair per person let two identities' jokers together
-          // show the answer (security review 2, L6). On a typed question: the first letter and the length.
-          const hint = q.typed ? typedHint(q.accept?.[0] ?? '') : undefined;
-          const hide = q.typed ? [] : (Object.values(d.fifty).find((f) => f.n === message.n)?.hide ?? fiftyFifty(q));
-          if (!hide.length && !hint) return;
+          // show the answer (security review 2, L6).
+          const hide = Object.values(d.fifty).find((f) => f.n === message.n)?.hide ?? fiftyFifty(q);
+          if (!hide.length) return;
           d.jokers.push(key);
-          d.fifty[key] = { n: message.n, hide, ...(hint ? { hint } : {}) };
-          this.sendTo(ws, { t: 'fifty', n: message.n, hide, ...(hint ? { hint } : {}) });
+          d.fifty[key] = { n: message.n, hide };
+          this.sendTo(ws, { t: 'fifty', n: message.n, hide });
         } else if (answered) answered.gained = doubledAfter(answered);
         else d.armed[key] = { ...d.armed[key], [kind]: true };
         d.used[key] = [...(d.used[key] ?? []), kind];
@@ -411,41 +424,40 @@ export class Quiz extends DurableObject<Env> {
       case 'answer': {
         if (d.phase !== 'question' || message.n !== this.qn() || d.answers[key]) return;
         const q = d.questions[d.index]!;
-        // A typed question takes only text, an option question only a pick (QZ2).
-        let right: boolean;
-        let pick: number;
-        let said: string | undefined;
-        const armed = d.armed[key];
-        if ('text' in message) {
-          if (!q.typed) return;
-          right = matchTyped(message.text, q.accept ?? []);
-          pick = right ? 0 : 1;
-          said = message.text;
-        } else {
-          if (q.typed || message.pick >= q.options.length || d.fifty[key]?.n === message.n && d.fifty[key]!.hide.includes(message.pick)) return;
-          // Second chance: the second try must be another option.
-          if (armed?.tried && armed.tried.pick === message.pick) return;
-          right = message.pick === q.correct;
-          pick = message.pick;
+        // A closest-guess question takes only a number, an option question only a pick (QZ5). A guess is scored at the
+        // reveal, by its place among the others (`guessPoints`): no speed or first-answer bonus, no streak.
+        if ('num' in message) {
+          if (!q.guess) return;
+          d.answers[key] = { pick: 0, gained: 0, guess: message.num };
+          if (this.onlineKeys().every((k) => d.answers[k])) return this.reveal();
+          await this.save();
+          this.broadcastState();
+          return;
         }
+        if (q.guess || message.pick >= q.options.length || d.fifty[key]?.n === message.n && d.fifty[key]!.hide.includes(message.pick)) return;
+        const armed = d.armed[key];
+        // Second chance: the second try must be another option.
+        if (armed?.tried && armed.tried.pick === message.pick) return;
+        const right = message.pick === q.correct;
+        const pick = message.pick;
         // QZ2 Second chance: a first wrong answer is kept aside and only this player hears "try again".
         if (!right && armed?.second && !armed.tried) {
-          armed.tried = { pick, ...(said ? { said } : {}) };
+          armed.tried = { pick };
           await this.save();
-          this.sendTo(ws, { t: 'again', n: message.n, ...(said ? {} : { wrong: pick }) });
+          this.sendTo(ws, { t: 'again', n: message.n, wrong: pick });
           return;
         }
         if (right) {
           const rank = Object.values(d.answers).filter((a) => a.rank).length + 1;
           const streak = (d.streak[key] ?? 0) + 1;
           // QZ3: ×2 armed before answering costs the first-answer bonus.
-          const base = quizPoints((d.endsAt ?? Date.now()) - Date.now(), quizAnswerMs(q.typed), rank, streak, !armed?.double);
-          // QZ2: a hard question (and a typed answer) is worth more; Double ×2, a second try half.
-          let gained = Math.round(base * quizLevelBonus(q.level ?? QUIZ_BANK[q.id]?.d, q.typed));
+          const base = quizPoints((d.endsAt ?? Date.now()) - Date.now(), quizAnswerMs(false), rank, streak, !armed?.double);
+          // QZ2: a hard question is worth more; Double ×2, a second try half.
+          let gained = Math.round(base * quizLevelBonus(q.level ?? QUIZ_BANK[q.id]?.d));
           if (armed?.double) gained *= 2;
           if (armed?.tried) gained = Math.round(gained / 2);
-          d.answers[key] = { pick, gained, rank, ...(said ? { said } : {}) };
-        } else d.answers[key] = { pick, gained: 0, ...(said ? { said } : {}) };
+          d.answers[key] = { pick, gained, rank };
+        } else d.answers[key] = { pick, gained: 0 };
         // Everyone answered: reveal now, or (QZ3) after a short wait while someone who answered can still press ×2.
         if (this.onlineKeys().every((k) => d.answers[k])) {
           const doubleLeft = this.onlineKeys().some((k) => !(d.used[k] ?? []).includes('double') && d.jokerAt[k] !== message.n);
@@ -478,10 +490,10 @@ export class Quiz extends DurableObject<Env> {
   }
 
   /** Fresh questions, avoiding what this table asked lately and what the players' browsers have seen (P9). */
-  private choose(count: number, topic: QuizTopic): QuizQuestion[] {
+  private choose(count: number, topic: QuizTopic, guesses = 0): QuizQuestion[] {
     const d = this.data;
     const seen = this.onlineKeys().flatMap((k) => d.people[k]?.seen ?? []);
-    const questions = pickQuestions(d.lang, count, Math.random, topic, [...new Set([...d.recent, ...seen])], d.labTyped ? (e) => !!e.typed : undefined, d.level ?? 'mix');
+    const questions = pickQuestions(d.lang, count, Math.random, topic, [...new Set([...d.recent, ...seen])], undefined, d.level ?? 'mix', guesses);
     d.recent = [...questions.map((q) => q.id), ...d.recent.filter((id) => !questions.some((q) => q.id === id))].slice(0, QUIZ_RECENT);
     return questions;
   }
@@ -500,12 +512,21 @@ export class Quiz extends DurableObject<Env> {
       await this.scheduleAlarm();
       return;
     }
-    d.offer = quizOffer(d.lang, Math.random, d.level ?? 'mix');
-    d.phase = 'pick';
     d.questions = [];
     d.index = -1;
     d.answers = {};
     d.armed = {};
+    // QZ5: the finale: five closest-guess questions from every topic, nobody picks.
+    if (d.finale && d.round === d.finale) {
+      d.offer = [];
+      d.questions = this.choose(QUIZ_FINALE_QUESTIONS, 'mix', QUIZ_FINALE_QUESTIONS);
+      d.roundPts = {};
+      d.roundWin = [];
+      await this.next();
+      return;
+    }
+    d.offer = quizOffer(d.lang, Math.random, d.level ?? 'mix');
+    d.phase = 'pick';
     // A picker who is away: the round starts at once with a random category.
     const picker = d.pickers[(d.round - 1) % d.pickers.length]!;
     if (!this.online(picker)) return this.beginRound(d.offer[Math.floor(Math.random() * d.offer.length)] ?? 'general');
@@ -519,7 +540,6 @@ export class Quiz extends DurableObject<Env> {
   private async beginRound(cat: QuizCategory): Promise<void> {
     const d = this.data;
     d.questions = this.choose(QUIZ_ROUND_QUESTIONS, cat);
-    d.labTyped = false;
     d.roundPts = {};
     d.roundWin = [];
     d.offer = [];
@@ -547,7 +567,7 @@ export class Quiz extends DurableObject<Env> {
       d.phase = 'question';
       d.answers = {};
       d.armed = {};
-      d.endsAt = Date.now() + quizAnswerMs(d.questions[d.index]!.typed);
+      d.endsAt = Date.now() + quizAnswerMs(d.questions[d.index]!.guess);
     }
     await this.save();
     this.broadcastState();
@@ -557,13 +577,22 @@ export class Quiz extends DurableObject<Env> {
   private async reveal(): Promise<void> {
     const d = this.data;
     // A Second chance whose second try never came: the first (wrong) answer stands.
-    for (const [key, armed] of Object.entries(d.armed)) if (armed.tried && !d.answers[key]) d.answers[key] = { pick: armed.tried.pick, gained: 0, ...(armed.tried.said ? { said: armed.tried.said } : {}) };
+    for (const [key, armed] of Object.entries(d.armed)) if (armed.tried && !d.answers[key]) d.answers[key] = { pick: armed.tried.pick, gained: 0 };
+    const q = d.questions[d.index];
+    // QZ5: closest guesses get their place and points now (the players in the game count, answered or not).
+    if (q?.guess && q.value !== undefined) {
+      const guesses: Record<string, number> = {};
+      for (const [key, a] of Object.entries(d.answers)) if (a.guess !== undefined) guesses[key] = a.guess;
+      const players = new Set([...this.onlineKeys(), ...Object.keys(guesses)]).size;
+      for (const [key, r] of Object.entries(guessPoints(guesses, q.value, players))) Object.assign(d.answers[key]!, { gained: r.points, rank: r.place });
+    }
     for (const [key, answer] of Object.entries(d.answers)) {
       if (d.people[key]) d.people[key]!.score += answer.gained;
       if (d.rounds > 0) d.roundPts[key] = (d.roundPts[key] ?? 0) + answer.gained;
     }
-    // Streaks move at the reveal (earlier they would tell who was right): a wrong or missing answer breaks it.
-    for (const key of d.order) d.streak[key] = d.answers[key]?.rank ? (d.streak[key] ?? 0) + 1 : 0;
+    // Streaks move at the reveal (earlier they would tell who was right): a wrong or missing answer breaks it. A
+    // closest-guess question leaves them as they are (QZ5).
+    if (!q?.guess) for (const key of d.order) d.streak[key] = d.answers[key]?.rank ? (d.streak[key] ?? 0) + 1 : 0;
     d.phase = 'reveal';
     d.endsAt = Date.now() + QUIZ_REVEAL_MS;
     await this.save();
@@ -654,7 +683,7 @@ export class Quiz extends DurableObject<Env> {
         ...(p.avatar ? { avatar: p.avatar } : {}),
         score: p.score,
         answered: !!answer,
-        ...(reveal && answer ? { pick: answer.pick, gained: answer.gained, ...(answer.rank ? { rank: answer.rank } : {}), ...(answer.said ? { said: answer.said } : {}) } : {}),
+        ...(reveal && answer ? { pick: answer.pick, gained: answer.gained, ...(answer.rank ? { rank: answer.rank } : {}), ...(answer.guess !== undefined ? { guess: answer.guess } : {}) } : {}),
         streak: d.streak[k] ?? 0,
         joker: d.jokers.includes(k),
         ...(d.used[k]?.length ? { jokers: d.used[k] } : {}),
@@ -668,10 +697,11 @@ export class Quiz extends DurableObject<Env> {
       phase: d.phase,
       players,
       n: d.phase === 'lobby' ? 0 : this.base() + Math.min(d.index + 1, d.questions.length),
-      total: d.rounds > 0 ? d.rounds * QUIZ_ROUND_QUESTIONS : d.questions.length || d.count,
-      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id, lv: q.level ?? QUIZ_BANK[q.id]?.d ?? 2, ...(q.typed ? { typed: true } : {}) } : {}),
-      // The accepted answers stay here; the reveal shows the first one.
-      ...(q && reveal ? { correct: q.correct, ...(q.typed ? { answer: q.accept?.[0] ?? '' } : {}) } : {}),
+      total: d.rounds > 0 ? (d.finale ? (d.rounds - 1) * QUIZ_ROUND_QUESTIONS + QUIZ_FINALE_QUESTIONS : d.rounds * QUIZ_ROUND_QUESTIONS) : d.questions.length || d.count,
+      ...(q ? { question: q.question, options: q.options, cat: q.cat, qid: q.id, lv: q.level ?? QUIZ_BANK[q.id]?.d ?? 2, ...(q.guess ? { guess: true } : {}) } : {}),
+      // The right option / number only in the reveal.
+      ...(q && reveal ? (q.guess ? { value: q.value } : { correct: q.correct }) : {}),
+      ...(d.finale && d.round === d.finale && d.phase !== 'over' && d.phase !== 'lobby' ? { finale: true } : {}),
       endsAt: d.endsAt,
       mode: d.mode,
       laps: d.laps,
@@ -679,7 +709,7 @@ export class Quiz extends DurableObject<Env> {
         ? {
             round: Math.min(d.round, d.rounds),
             rounds: d.rounds,
-            ...(d.pickers.length ? { picker: d.people[d.pickers[(Math.min(d.round, d.rounds) - 1 + d.pickers.length) % d.pickers.length]!]?.pid } : {}),
+            ...(d.pickers.length && d.round !== d.finale ? { picker: d.people[d.pickers[(Math.min(d.round, d.rounds) - 1 + d.pickers.length) % d.pickers.length]!]?.pid } : {}),
             ...(d.phase === 'pick' ? { offer: d.offer } : {}),
             roundWin: d.roundWin.map((k) => d.people[k]?.pid).filter((id): id is string => !!id),
           }

@@ -206,7 +206,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the rail beside the video: you join with the camera on, and your friend sees you within a second. Block the camera
   for the site (the lock icon at the left of the address bar → Camera → Block), press the camera button: a message next
   to it says the browser blocked it and how to allow it.
-- [ ] 27aj. [QZ4, QZ3] Quiz: Level row; new topics, kinds; ×2 after answering (glows) doubles a right one.
+- [ ] 27aj. [QZ5, QZ4, QZ3] Quiz: no true / false or typed words; a number field (closest wins 200/100/50);
+  tournament ends with a 5-guess finale; Film & TV, Games, Travel topics; ×2 after answering doubles a right one.
 - [ ] 27ak. [TG1] At 1366 open Five Frames beside the chat: the Together card gets short, "Join voice" and "Share" stay
   visible and work (in voice too). Put the game away (✕): the full card comes back.
 - [ ] 27al. [PH4] Phone, a video playing, turn it: video, ⛶, 💬, 🎙 as before. Turn it in Oyunlar, Ara, Ben, a game,
