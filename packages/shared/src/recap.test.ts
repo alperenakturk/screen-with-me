@@ -92,16 +92,16 @@ describe('freshRecaps', () => {
 // Card RC1: the session rule with Design's improvements (a: ≥ 4 h, b: 30 min together, c: shown locks, d: ended kept).
 describe('RC1 session rule', () => {
   const H = 3600_000;
-  it('counts only watching together toward the 30 minutes', () => {
+  it('counts only watching together toward the 2 hours (RC2)', () => {
     const s = new StatsTracker(null, 0, () => 0);
     s.tick(0, true, 1, true, false);
-    s.tick(40 * 60_000, true, 1, true, false); // 40 min alone
+    s.tick(150 * 60_000, true, 1, true, false); // 2.5 h alone
     expect(s.ready()).toBe(false);
-    s.tick(60 * 60_000, true, 1, true, true); // 20 min together
+    s.tick(240 * 60_000, true, 1, true, true); // 90 min together
     expect(s.ready()).toBe(false);
-    s.tick(70 * 60_000, true, 1, true, true); // 30 min together
+    s.tick(270 * 60_000, true, 1, true, true); // 2 h together
     expect(s.ready()).toBe(true);
-    expect(s.status(70 * 60_000)).toEqual({ sec: 1800, at: 70 * 60_000, shown: false, since: 0 });
+    expect(s.status(270 * 60_000)).toEqual({ sec: 7200, at: 270 * 60_000, shown: false, since: 0 });
   });
   it('locks once shown, and a gap of exactly 4 h starts a new session that keeps the old one whole', () => {
     let now = 0;

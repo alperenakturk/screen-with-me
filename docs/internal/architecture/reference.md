@@ -1500,6 +1500,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   (`nextAlive`, `seaRanks`, target parsing), e2e `sea-many.mjs` (3 and 6 players: targets required, own sea refused,
   hidden fleets, a sunk fleet never gets the turn, places; a seventh can't sit; the driver reads ship cells from a
   watcher so the live run stays short), `games-sweep` `seaSix` (five players join from the script).
+  SB2 part 1 (card SB2): a ship is dragged straight onto the sea with pointer capture on my grid (`drag`: ship, held
+  cell, `down`; 6 px before it counts as a drag); while it moves its old cells get `.lifting` and a ghost
+  (`.ghost`, `.ghost.bad` when nothing fits within 2 cells) shows the nearest valid spot (`nearestPlace(rules, places,
+  ship, row, col, down, reach)` in the shared rules, unit tested); letting go puts it there (`place`), R mid-drag turns
+  it. A tap on the picked ship turns it (Turn / R as before; when it can't turn in place, the nearest spot within 2
+  cells). A ship that sinks wobbles under (`.sinking`, 0.9 s); a fleet whose last ship goes (`left` 1+ → 0 between two
+  states) gets the "ALEX SANK!" moment (`.sea-sank`: a burst, the name in capitals, "YOUR FLEET SANK!" for me, 2.2 s,
+  `aria-live`), its chip / head pops its ✕ (`.just-out`), and the result card waits until it is over (`sankUntil`).
+  Lab `sea.sank` plays it in this tab; `seaBattle.state` adds `sank` and `dragging`. Sea harness: ghost mid-drag, R
+  turns it, the drop lands on the ghost, a tap turns the picked ship, the end's moment before the card.
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
@@ -2296,6 +2306,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `recapLast:<room>`); never in the Shorts view, never over the video (under it in `#theater`). Test Lab `recap.show`
   / `recap.state`; e2e `scripts/e2e/recap.mjs` (RC1 part); harness `scripts/harness/recap/run.cjs` (`site` job);
   shots `recap-show`, `recap-summary`.
+  **Card RC2 rules (21 Nov 2026, owner: "too loud, and it should not appear by itself"):** `RECAP_READY_MS` = 2 h
+  together (was 30 min). No nudges any more: `room.ts` no longer calls `recapNudge` (late, end of queue) or the N4
+  "last time" chip, so the recap never offers itself; ✨ (`#dock-recap` / `#shorts-recap`) shows for everyone once
+  ready and **one press by anyone** starts it for the whole room (owner's pick A): `recap-show` straight away (no
+  `recapCard`); the server no longer requires the host for it (only the host's `lab: true` skips the 2 h; `recap-end`
+  stays the host's). Once per session as before (`shownAt`). Music: RC1 multiplied
+  the pad by `soundVolume()` as if 0–1 (it is 0–100: gain 3.5 at the default 70, clipping); now
+  `RECAP_MUSIC_LEVEL` (0.035) × volume / 100, faded in from silence over `RECAP_FADE_S` (3 s); `state().level`
+  reports it. Lab `{t:'lab', op:'recap-together'}` sets `togetherMs` to 2 h (Test Lab `recap.button`). Owner's picks: look C (marquee sign) and music 1 (our own pad, re-voiced), built in part 2
+  (`design/recap-cinema/`). Harness `scripts/harness/recap` (CI `site`).
 - **Simpler room (0.9.93.13, card 6, owner's picks C + D):** `ui/room-more.ts` `roomMoreItems` = the room's "⋯ More"
   list (games (phones), film time (host), save, recap, shortcuts (computer), sync test (dimmed while something plays),
   rules; R9, 0.9.97.16: nothing else, Help · Feedback · Privacy are one small line at the foot of the profile menu,
@@ -2344,6 +2364,15 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     / "Alex (host) deleted Sam's message", not a `.chat-line`, so unread counters skip it) and breaks bubble grouping.
     Test Lab `chat.delete` (deletes my newest message, no question). e2e `chat-delete.mjs`; harness
     `scripts/harness/chat-delete` (CI `site`); shots screen `chat-delete`.
+  - **A game table in the chat (card GN1, 21 Nov 2026):** a `tables` message with `opened` posts `li.chat-game`
+    (`ui/chat.ts` `gameOpened`, a `Line` of kind `game`, local to the tab like activity lines and capped with them, but
+    never hidden by "Hide activity"; it counts as unread except for the opener): the game's cover (`games/gallery.ts`
+    `coverOf`, loaded lazily with the hall's chunk; 🎮 until then), "Alex opened a Sea Battle table" (`hub.opened`) and
+    Join (`hub.join`, `games.join(id)` → stage `join`, the same open as the invite card; not on the opener's own line).
+    Every `tables` / `welcome` calls `gameTables(ids)`: a line whose table is gone redraws greyed with "The table
+    closed" and no Join. One line per table id. Tables have no seat limit (others watch), so there is no "full" state.
+    Test Lab `chat.gameInvite` (JSON of the lines). Harness `scripts/harness/game-chat` (CI `games-more`: open, the line on a
+    computer and a phone, Join from it, greyed on close).
   - **⚙️ Settings dialog** (`ui/settings-dialog.ts`, `#settings-dialog`): not a tab; a centered dialog with its
     categories on the left, the same order on every device (card SIMP1, 0.9.97.107): 👤 Me (`me`: open the profile menu,
     📲 Move to another device) · 🖥️ My screen (`view`) · 🏠 Room (`room`: the room's name and people count
@@ -2504,9 +2533,16 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   hover)`, `<html class="has-mouse">`) keeps the edge mode and the resting rail wherever a mouse exists (the touch-only
   rules are `html.is-touch:not(.has-mouse)`), a button's focus holds the rail only for keyboard users in every mode, and
   `hoveringControls` is double-checked with `dock.matches(':hover')`. Tests: `yt-room` (a simulated touch-screen
-  laptop: fails on 0.9.93.6), `embed/run.mjs` (film page: after a focused rail button the dock still rests). "Keep the controls
-  open" (`opt:railPin`, `.rail-pin`; ⋯ `#rail-pin` and Settings → My screen `#opt-railpin`, `RAIL_PIN_EVENT` keeps
-  both in step) never lets it rest. "Hide the controls" (`opt:railOff`, `#rail-show`) is gone and no longer read. Since 0.9.93.9 (card 2,
+  laptop: fails on 0.9.93.6), `embed/run.mjs` (film page: after a focused rail button the dock still rests). **Card RAIL2 (owner,
+  21 Nov 2026): the rail is fixed by default** (`.rail-pin`, never rests). Its own last button `#rail-pin` (`.rail-hide`,
+  a short button under the last group, 26–28 px, a panel-with-arrow icon; `aria-pressed` = fixed; label `rail.hide` / `rail.keep`) and
+  Settings → My screen `#opt-railpin` switch it to waiting for the edge: `opt:railAuto` = '1' (a new key, so everyone
+  starts fixed; the old `opt:railPin` is no longer read), `RAIL_PIN_EVENT` keeps both in step. It is no longer in ⋯.
+  Fullscreen YouTube keeps its own rules: there the rail always waits for the edge (`pinWanted`, re-checked on the
+  theater's class changes and `fullscreenchange`). Touch screens without a mouse have no edge and no button. Test Lab
+  `rail.pin` (saved choice, fixed now, edge mode, resting). Harnesses `yt-room` (fresh = fixed, the button on the rail,
+  nothing in ⋯, pinned yet resting in YouTube fullscreen), `rail-speed`; `one-rail`, `embed` start with `opt:railAuto`
+  = '1' for their edge checks. "Hide the controls" (`opt:railOff`, `#rail-show`) is gone and no longer read. Since 0.9.93.9 (card 2,
   "one rail everywhere") every docked theater is `side-rail`: video files and the sync test use the same column, the
   empty room gets it too (`rail-bare`, always out, 📌 / ⛶ dimmed) and the film page has no toolbar either: its rail is
   a column beside the film, the hole being `#player` left of it (`reportLayout`). **Card 2b (0.9.93.17, owner's B):** the
@@ -2871,9 +2907,9 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `requestRate` fits every request; `showRates` paints all pickers and the ⋯ row; one delegated click handles − / +
   and the ready speeds outside the rail (the rail's own handler closes its pop). The engine plays and shares a custom
   rate once (scenario in `sync-engine.test.ts`). Phones: targets ≥ 44 px; the speed is in the sideways / fullscreen
-  rail only (the toolbar is hidden in the phone room). "Keep the controls open" (`opt:railPin`) is off unless someone
-  turns it on: nothing sets it by itself. Test Lab `rail.speed` (speed, ready / ± values for this media, picker open,
-  ⋯ height, `opt:railPin`). Harness `scripts/harness/rail-speed` (CI games-more).
+  rail only (the toolbar is hidden in the phone room). The rail is fixed unless someone presses its hide button (card RAIL2,
+  `opt:railAuto`). Test Lab `rail.speed` (speed, ready / ± values for this media, picker open, ⋯ height, rail fixed or
+  not). Harness `scripts/harness/rail-speed` (CI games-more).
 - **Queue:** `settings.autoNext` (on by default); when off, the next item does not start when the video ends and the
   end card shows "▶ Sıradakini başlat" (in the extension `RoomInfo.autoNext`). Voting note in the queue panel.
 - **"Video ended" card (card EC1):** `ui/end-card.ts` `showNextCard` (from the engine's `onEnded` and the film page's

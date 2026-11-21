@@ -104,6 +104,30 @@ export function checkFleet(rules: SeaRules, places: readonly ShipPlace[]): numbe
   return ships;
 }
 
+/**
+ * SB2: the valid spot nearest to where a dragged (or turned) ship was let go. `row` / `col` = the cell its first (top /
+ * left) cell would sit on, may be off the sea; the ship keeps `down`. Searches spots up to `reach` cells away (nearest
+ * first, then the top-left one) with every other ship where it is; null when none fits.
+ */
+export function nearestPlace(rules: SeaRules, places: readonly ShipPlace[], ship: number, row: number, col: number, down: boolean, reach = 3): ShipPlace | null {
+  const { size } = rules;
+  const len = rules.fleet[ship]!;
+  let best: ShipPlace | null = null;
+  let bestD = Infinity;
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const d = Math.hypot(r - row, c - col);
+      if (d > reach || d >= bestD) continue;
+      if (down ? r + len > size : c + len > size) continue;
+      const place = { at: r * size + c, down };
+      if (!checkFleet(rules, places.map((p, i) => (i === ship ? place : p)))) continue;
+      best = place;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
 /** A random valid fleet. */
 export function randomFleet(rules: SeaRules, random: () => number = Math.random): ShipPlace[] {
   for (let attempt = 0; attempt < 200; attempt++) {

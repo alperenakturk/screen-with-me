@@ -97,11 +97,27 @@ const box = (page, selector) =>
   const hits1 = await overPlayer(alex);
   check(hits1.length === 0, 'room view: nothing of ours over the YouTube player', hits1.join(' | '));
 
-  // The right edge (0.9.93): the rail shows for a moment with a new video, then waits for the mouse at the edge.
   const idle = () => alex.evaluate(() => document.querySelector('#theater').classList.contains('dock-idle'));
   const playerRight = async () => (await box(alex, '.player')).r;
   const wrapBox = await box(alex, '.player-wrap');
   check(await alex.evaluate(() => !document.querySelector('#theater').classList.contains('rail-off') && !document.querySelector('#rail-show')), 'an old "hide the controls" no longer hides the rail');
+  // Card RAIL2 (owner): a fresh browser has the rail fixed beside the video; its own last button switches it to
+  // waiting for the edge, and nothing about it is in ⋯ any more.
+  await alex.mouse.move(wrapBox.x, wrapBox.y);
+  await alex.waitForTimeout(3000);
+  const toggle = await box(alex, '#rail-pin');
+  const dockFixed = await box(alex, '#fs-dock');
+  check(!(await idle()) && (await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-pressed'))) === 'true', 'RAIL2: fresh browser, mouse in the middle for 3 s: the rail stays (fixed)');
+  check(toggle && dockFixed && toggle.w >= 24 && toggle.b - toggle.t >= 24 && toggle.l >= dockFixed.l && toggle.r <= dockFixed.r && toggle.b <= dockFixed.b + 1, 'RAIL2: the hide button is on the rail itself (≥ 24 px)', JSON.stringify({ toggle, dockFixed }));
+  check(await alex.evaluate(() => !document.querySelector('#dock-more-pop #rail-pin')), 'RAIL2: no rail toggle in ⋯');
+  check((await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-label'))) === 'Hide the controls: they open when the mouse reaches the right edge', 'RAIL2: the button says what it does');
+  const fixedHits = await overPlayer(alex);
+  check(fixedHits.length === 0, 'RAIL2: fixed, nothing of ours over the YouTube player', fixedHits.join(' | '));
+  await alex.click('#rail-pin');
+  check(await alex.evaluate(() => localStorage.getItem('opt:railAuto') === '1' && document.querySelector('#rail-pin').getAttribute('aria-pressed') === 'false'), 'RAIL2: pressed: it waits for the edge, remembered');
+  check(await alex.evaluate(() => !document.querySelector('#opt-railpin').checked), 'RAIL2: Settings shows it off');
+
+  // The right edge (0.9.93): the rail shows for a moment with a new video, then waits for the mouse at the edge.
   await alex.mouse.move(wrapBox.x, wrapBox.y);
   await alex.waitForTimeout(3000);
   check(await idle(), 'mouse in the middle: the rail rests');
@@ -152,14 +168,13 @@ const box = (page, selector) =>
   const outHits = await goingOut;
   check(inHits.length === 0 && outHits.length === 0, 'the rail never covers the player while it slides in or out (every frame)', [...inHits, ...outHits].slice(0, 4).join(' | '));
 
-  // Pin it from ⋯.
+  // Pin it again with the rail's own button (card RAIL2).
   await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });
   await alex.waitForTimeout(350);
-  await alex.click('#dock-more');
   await alex.click('#rail-pin');
   await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 4 });
   await alex.waitForTimeout(3200);
-  check(!(await idle()) && (await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-pressed'))) === 'true', 'pinned from ⋯: it stays open');
+  check(!(await idle()) && (await alex.evaluate(() => document.querySelector('#rail-pin').getAttribute('aria-pressed'))) === 'true', 'pinned from the rail: it stays open');
   check(await alex.evaluate(() => document.querySelector('#opt-railpin').checked), 'Settings shows it pinned');
   // BH10 (owner): pinned, it stays open in the window too when the mouse leaves the video (it used to rest with the
   // player's bar on mouseleave; only fullscreen kept it).
@@ -180,7 +195,7 @@ const box = (page, selector) =>
   await alex.mouse.move(wrapBox.x + 20, wrapBox.y, { steps: 2 });
   await alex.waitForTimeout(800);
   check(await idle(), 'unpinned in Settings: it rests again');
-  check(await alex.evaluate(() => localStorage.getItem('opt:railPin') === '0'), 'remembered');
+  check(await alex.evaluate(() => localStorage.getItem('opt:railAuto') === '1'), 'remembered');
 
   // 0.9.93.2 (owner: "in fullscreen it opens at the right but doesn't go away when I move left"): a window of the
   // rail (😀) closes when the mouse goes off onto the video, or when the video is clicked, and the rail goes with it.
@@ -203,9 +218,12 @@ const box = (page, selector) =>
     check(!(await popOpen()) && (await idle()), `${where}: a click on the video closes them too`);
   }
   await leaveWithWindow('window', wrapBox.x, wrapBox.y, wrapBox.r);
-  // Fullscreen with the rail's ⛶.
+  // Fullscreen with the rail's ⛶. Card RAIL2: pinned first, since fullscreen YouTube keeps its own rules (the rail
+  // waits for the edge there all the same): every resting check below runs with the rail pinned.
   await alex.mouse.move(wrapBox.r - 12, wrapBox.y, { steps: 4 });
   await alex.waitForTimeout(350);
+  await alex.click('#rail-pin');
+  check(await alex.evaluate(() => localStorage.getItem('opt:railAuto') === '0'), 'RAIL2: pinned again before fullscreen');
   await alex.click('#dock-exit');
   await alex.waitForTimeout(1200);
   const inFs = await alex.evaluate(() => document.fullscreenElement?.id === 'theater');
@@ -291,6 +309,9 @@ const box = (page, selector) =>
     await alex.waitForTimeout(3200);
     await alex.evaluate(() => document.exitFullscreen());
     await alex.waitForTimeout(800);
+    await alex.mouse.move(wrapBox.x, wrapBox.y, { steps: 4 });
+    await alex.waitForTimeout(3000);
+    check(!(await idle()), 'RAIL2: back in the window, pinned: the rail is fixed again');
   }
 
   // Cinema mode (card 14, the old "side panel hidden"): the note sits under the video at the strip's left end, never on
@@ -332,6 +353,8 @@ const box = (page, selector) =>
     await page.addInitScript(() => {
       localStorage.setItem('tipsSeen', '1');
       localStorage.setItem('lang', 'en');
+      // Card RAIL2: the rail is fixed by default; this checks the edge (the rail's hide button).
+      localStorage.setItem('opt:railAuto', '1');
       const real = window.matchMedia.bind(window);
       window.matchMedia = (q) => {
         const answer = q === '(pointer: coarse)' || q === '(any-pointer: fine) and (any-hover: hover)' ? true : null;

@@ -1705,6 +1705,13 @@ export function createGameStage(opts: StageOptions) {
       opts.hint(t(code === 'game_busy' ? 'game.busy' : `error.${code}`));
     },
     isOpen: () => !stage.hidden,
+    /** GN1: Join from the chat's game line (like the invite card's); false when the table is gone. */
+    join(id: string): boolean {
+      const table = tables.find((x) => x.id === id);
+      if (!table) return false;
+      if (current?.id !== id) void open(table);
+      return true;
+    },
     /** The Test Lab's game commands: loaded only while the lab is on in this tab (`?debug=1`, `debug-lab.ts`). */
     lab: labIsOn()
       ? void import('./lab-tools.ts').then((m) => {

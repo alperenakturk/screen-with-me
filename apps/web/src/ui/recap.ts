@@ -229,6 +229,9 @@ function decor(scene: Scene, fact: Fact, r: Recap): HTMLElement {
   return box;
 }
 
+/** RC2: the recap music's peak gain at full room volume (the room's 0–100 volume scales it) and its fade-in. */
+export const RECAP_MUSIC_LEVEL = 0.035;
+export const RECAP_FADE_S = 3;
 /** A soft pad of our own (Web Audio, the "warm pad" family in F major): no file, no licence. Low; off with room sounds off. */
 function createMusic(): { start(): void; stop(): void; muted: boolean; setMuted(m: boolean): void } {
   let ctx: AudioContext | null = null;
@@ -242,7 +245,10 @@ function createMusic(): { start(): void; stop(): void; muted: boolean; setMuted(
     [116.54, 146.83, 174.61],
     [130.81, 164.81, 196],
   ];
-  const level = () => 0.05 * soundVolume();
+  // RC2 (owner: "it starts terribly loud"): RC1 multiplied by soundVolume() as if it were 0–1, but it is 0–100, so the
+  // pad played at 70× its level (gain 3.5, clipping). Now the room's volume as a fraction, a little under RC1's
+  // intended level, faded in from silence over RECAP_FADE_S.
+  const level = () => (RECAP_MUSIC_LEVEL * soundVolume()) / 100;
   const music = {
     muted: !soundsOn(),
     start() {
@@ -252,7 +258,8 @@ function createMusic(): { start(): void; stop(): void; muted: boolean; setMuted(
         ctx = audio;
         master = audio.createGain();
         master.gain.value = 0;
-        master.gain.linearRampToValueAtTime(level(), audio.currentTime + 1.5);
+        master.gain.setValueAtTime(0, audio.currentTime);
+        master.gain.linearRampToValueAtTime(level(), audio.currentTime + RECAP_FADE_S);
         const lp = audio.createBiquadFilter();
         lp.type = 'lowpass';
         lp.frequency.value = 900;
@@ -323,7 +330,7 @@ export interface StageOptions {
 export interface Stage {
   close(): void;
   refresh(): void;
-  state(): { scene: number; scenes: number; kind: string; paused: boolean; mine: boolean; music: boolean };
+  state(): { scene: number; scenes: number; kind: string; paused: boolean; mine: boolean; music: boolean; level: number };
 }
 
 let current: Stage | null = null;
@@ -487,7 +494,7 @@ export function playRecap(box: HTMLElement, options: StageOptions): Stage {
   const handle: Stage = {
     close,
     refresh: () => draw(),
-    state: () => ({ scene: sceneNow(), scenes: facts.length, kind: facts[Math.max(0, sceneNow())]!.kind, paused, mine: mine !== null, music: !music.muted }),
+    state: () => ({ scene: sceneNow(), scenes: facts.length, kind: facts[Math.max(0, sceneNow())]!.kind, paused, mine: mine !== null, music: !music.muted, level: (RECAP_MUSIC_LEVEL * soundVolume()) / 100 }),
   };
   current = handle;
   box.classList.add('rc-on');
