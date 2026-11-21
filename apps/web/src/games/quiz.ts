@@ -209,6 +209,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   /** QZ2 jokers: the question I played one on (one per question) and which; my Second chance's wrong first try. */
   let myJoker: { n: number; kind: QuizJoker } | null = null;
   let retry: { n: number; wrong?: number } | null = null;
+  /** States seen between games (lobby / over): the lab's "jump to the result card" stops once its game is over, even
+   * when a rematch started before its next step (it skipped the new game's first question: quiz-click, CI). */
+  let endings = 0;
   /** The jokers in the top bar: always the same three small buttons in the same place (hidden off a question, the
    * space kept), an icon each with the full name for screen readers and as a tooltip. */
   const jokerRow = $('#quiz-jokers');
@@ -461,6 +464,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     else result.hide();
     const tour = s.mode === 'tournament';
     if (s.phase === 'lobby' || s.phase === 'over') {
+      endings++;
       // A new game numbers its questions from 1 again: what I picked in the last one must not carry over.
       myPick = null;
       myGuess = null;
@@ -726,7 +730,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         return `Quiz fills the video’s place: ${line}`;
       } },
       // LAB2: straight to the result card (the same skip as above, once a phase, until the game is over).
-      { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel test sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const step = () => { if (!state || state.phase === 'over' || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
+      { id: 'quiz.toEnd', title: { en: 'Quiz: jump to the result card', tr: 'Bilgi yarışması: sonuç kartına atla' }, help: { en: 'Local lab server only: every phase is skipped until the game is over and the result card shows (a few seconds).', tr: 'Sadece yerel test sunucusunda: oyun bitene kadar her aşama atlanır ve sonuç kartı görünür (birkaç saniye).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, run: () => { let n = 0; const game = endings; const step = () => { if (!state || state.phase === 'over' || state.phase === 'lobby' || endings !== game || ++n > 80) return; send({ t: 'lab', op: 'skip' }); setTimeout(step, 350); }; step(); } },
     ],
   }));
   // GP2: the same "How to play" cards as every game (first time, and the "?" in the head).

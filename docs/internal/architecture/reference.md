@@ -1727,6 +1727,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   a gold pill, 🔥 / jokers used 13 px. Test Lab `quiz.fill` (during a game in the video's place: card and column the
   box's full height, else a red line); the games sweep runs it on `quizPlay` (computers and tablets). Five Frames' solo
   legend words are 14 px in a free window (`tabup/tr/word` read 12.8 px at the window's 0.98 scale).
+  Test Lab `quiz.toEnd` sends a lab `skip` every 350 ms until the game is over; it stops at the first lobby / over the
+  page sees (`endings` counter), so a rematch started before its next step is left alone (it used to skip the new
+  game's questions too: quiz-click's rematch check failed now and then in CI). quiz-click checks no skip is sent after
+  the end and the rematch stays on question 1.
 - **Players thrown out of tables (card GD1, 19 Nov 2026):** three causes found and fixed. (1) **The room's "at
   this table" mark** lives on the room connection's attachment (`{t:'at', table}`, `setAt`); a new room connection
   (a deploy, a phone wake, a Wi-Fi switch) started without it, and the client re-sent it only when it reopened the
