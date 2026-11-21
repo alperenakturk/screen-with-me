@@ -221,3 +221,19 @@
 /* First look (LH4): on a phone the "Peek: tap a rival" line was hidden with the moves' label; it shows while a move
    waits for its target. */
 #game-stage.in-tab .pk-moves:has(.pk-move.armed) .pk-moves-label { display: block; grid-column: 1 / -1; font-size: 13px; color: var(--danger); }
+
+/* ==== LH4 motion: life flying into the middle and back to the winners (poker.ts `fly`), smooth seat changes ==== */
+.pk-fly {
+  position: absolute; z-index: 7; pointer-events: none; white-space: nowrap;
+  padding: 2px 8px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #fff;
+  background: color-mix(in srgb, var(--pk-life) 70%, #3a0d1f); border: 2px solid var(--pk-life);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.45);
+}
+.pk-fly.win { background: color-mix(in srgb, var(--warn) 55%, #3a2a05); border-color: var(--warn); font-size: 15px; }
+.pk-seat, .pk-me { transition: opacity 0.3s ease, border-color 0.25s ease, box-shadow 0.25s ease; }
+.pk .pk-pot { transition: transform 0.2s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .pk .pk-liquid, .pk .pk-bar i, .pk-seat, .pk-me { transition: none; }
+}
+/* "Sam is thinking…" across my whole actions row (it wrapped into the first button's column). */
+.pk-actions > p { grid-column: 1 / -1; }

@@ -1,0 +1,2 @@
+- Last Heart: cards are dealt from the middle of the table, life flies into the flask with every bet, and the pot flies to the winner at the showdown (all of it off under "reduce motion").
+- Last Heart: new sounds for the deal, a bet, a fold, a new street and every special move.
