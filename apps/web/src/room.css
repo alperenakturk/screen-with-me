@@ -3455,6 +3455,19 @@ html.shorts-view .footer {
   user-select: none;
 }
 
+/* Card PTT1: the push-to-talk key, changed by pressing it */
+.ptt-key {
+  min-width: 32px;
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+}
+
+.ptt-key.waiting {
+  border-color: var(--accent);
+  font-family: inherit;
+  font-weight: 400;
+}
+
 /* Bas-konuş: düğme basılı tutulurken konuşulur (dokunmatikte kaydırma/menü olmasın) */
 .voice-mic.ptt {
   touch-action: none;
@@ -10904,7 +10917,8 @@ html.phone .speed-pop .speed {
     font-size: max(16px, 1em);
   }
 
-  .voice-ptt {
+  .voice-ptt,
+  .ptt-key {
     display: none !important;
   }
 }
@@ -12526,7 +12540,7 @@ html:not(.phone) .together-card.compact > .together-actions {
   gap: 6px;
 }
 
-html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .voice-hint) {
+html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .ptt-key, .voice-hint) {
   display: none;
 }
 

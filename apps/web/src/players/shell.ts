@@ -1,4 +1,4 @@
-import type { EmbedControl, EmbedReply, EmbedStatus } from '@swm/shared/embed';
+import { cleanPttCode, type EmbedControl, type EmbedReply, type EmbedStatus } from '@swm/shared/embed';
 import type { PlayerAdapter } from '@swm/shared/player';
 import type { ClientMessage, PlaybackState } from '@swm/shared/protocol';
 import { onExtensionMessage, postToExtension } from '../storage.ts';
@@ -13,7 +13,8 @@ import { onExtensionMessage, postToExtension } from '../storage.ts';
 export interface ShellOptions {
   /** Film çerçevesindeki motorun odaya göndermek istediği mesaj (site kendi bağlantısından yollar). */
   onSend: (message: ClientMessage) => void;
-  onKey: (key: string, up: boolean) => void;
+  /** `code` (card PTT1): set for the push-to-talk key, which goes by `KeyboardEvent.code`. */
+  onKey: (key: string, up: boolean, code?: string) => void;
   onFullscreen: () => void;
   /** Fare film sayfasında oynadı (tam ekran kontrolleri belirsin). */
   onActivity: (edge?: boolean) => void;
@@ -43,7 +44,7 @@ export function createShellPlayer(options: ShellOptions): ShellPlayer {
         statusAt = performance.now();
         break;
       case 'key':
-        if (typeof reply.key === 'string') options.onKey(reply.key, reply.up === true);
+        if (typeof reply.key === 'string') options.onKey(reply.key, reply.up === true, cleanPttCode(reply.code) ?? undefined);
         break;
       case 'fullscreen':
         options.onFullscreen();

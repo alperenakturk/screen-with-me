@@ -1,5 +1,6 @@
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
+import { pttLabel } from './ptt-key.ts';
 
 /** One row of the card: the keys ('–' and '/' are separators) and what they do (checked against the room's handlers). */
 const ROWS: ReadonlyArray<readonly [keys: string[], what: I18nKey]> = [
@@ -7,7 +8,7 @@ const ROWS: ReadonlyArray<readonly [keys: string[], what: I18nKey]> = [
   [['Enter'], 'keys.chat'],
   [['P'], 'keys.pin'],
   [['M'], 'keys.mic'],
-  [['V'], 'keys.ptt'],
+  [['{ptt}'], 'keys.ptt'],
   [['Space', '/', 'K'], 'keys.play'],
   [['T'], 'keys.cinema'],
   [['←', '/', '→'], 'keys.seek'],
@@ -27,7 +28,7 @@ export function openShortcuts(): void {
     'dl',
     { class: 'shortcuts-list' },
     ...ROWS.flatMap(([keys, what]) => [
-      el('dt', {}, ...keys.map((key) => (key === '–' || key === '/' ? ` ${key} ` : el('kbd', {}, key)))),
+      el('dt', {}, ...keys.map((key) => (key === '–' || key === '/' ? ` ${key} ` : el('kbd', {}, key === '{ptt}' ? pttLabel() : key)))),
       el('dd', {}, t(what)),
     ]),
   );

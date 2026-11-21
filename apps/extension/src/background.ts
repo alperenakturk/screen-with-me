@@ -8,7 +8,7 @@
 // Chrome bu betiği boştayken kapatabilir; hangi sekmenin kabuklu olduğu chrome.storage.session'da
 // saklanır, bağlantılar (shell.html ve çerçeveler) kopunca kendileri yeniden bağlanır.
 
-import { isForwardedKey, isRelayable, type EmbedReply } from '@swm/shared/embed';
+import { cleanPttCode, isForwardedKey, isRelayable, type EmbedReply } from '@swm/shared/embed';
 import { ROOM_ID_PATTERN, type PlaybackState } from '@swm/shared/protocol';
 import { cleanLayout, type ShellLayout } from '@swm/shared/shell';
 import { isSiteOrigin, sitePatterns } from './config.ts';
@@ -240,7 +240,12 @@ async function handleFrame(tabId: number, frameId: number, port: chrome.runtime.
       break;
     case 'key':
       // Odak film sayfasındayken basılan kısayollar (1–8 emoji, Enter mesaj, P pin) sitede işlensin.
-      if (isForwardedKey(message.key)) reply(shell, { type: 'key', key: message.key, ...(message.up ? { up: true } : {}) });
+      // Card PTT1: the push-to-talk key comes with its `code` (any key the site's layout named).
+      if (typeof message.key !== 'string' || message.key.length > 32) break;
+      if (message.ptt) {
+        const code = cleanPttCode(message.code);
+        if (code) reply(shell, { type: 'key', key: message.key, code, ...(message.up ? { up: true } : {}) });
+      } else if (isForwardedKey(message.key)) reply(shell, { type: 'key', key: message.key, ...(message.up ? { up: true } : {}) });
       break;
     case 'fullscreen':
       reply(shell, { type: 'fullscreen' });

@@ -16,6 +16,10 @@ describe('kabuk yerleşimi', () => {
     const full = cleanLayout({ mode: 'full', hole: { x: 0, y: 0, w: 10, h: 10 }, islands: [...many, { x: NaN, y: 0, w: 1, h: 1 }] });
     expect(full?.mode === 'full' && full.islands.length).toBe(12);
     expect(cleanLayout(null)).toBeNull();
+    // PTT1: the push-to-talk key rides along in the full layout, and only a clean key code.
+    const hole = { x: 0, y: 0, w: 10, h: 10 };
+    expect(cleanLayout({ mode: 'full', hole, islands: [], ptt: 'KeyB' })).toEqual({ mode: 'full', hole, islands: [], ptt: 'KeyB' });
+    expect(cleanLayout({ mode: 'full', hole, islands: [], ptt: 'b; x' })).toEqual({ mode: 'full', hole, islands: [] });
   });
 });
 

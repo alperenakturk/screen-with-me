@@ -6,6 +6,7 @@ import { createRoomMoreMenu, roomMoreItems, type MoreItem } from './ui/room-more
 import { ServerClock } from '@swm/shared/clock';
 import { RoomConnection, type ConnectionStatus } from '@swm/shared/connection';
 import { isForwardedKey, isRelayable } from '@swm/shared/embed';
+import { pttLayoutCode } from './ui/ptt-key.ts';
 import { isTikTokShortLink, parseMediaInput, parseMediaList, parsePlaylist, samePage } from '@swm/shared/media';
 import { holePath, mergeRects, type Rect, type ShellLayout } from '@swm/shared/shell';
 import type { PlayerAdapter } from '@swm/shared/player';
@@ -589,6 +590,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="voice-cam" type="button" class="btn small-btn voice-cam" hidden></button>
                 <button id="voice-leave" type="button" class="btn small-btn" data-i18n="voice.leave"></button>
                 <label class="voice-ptt small"><input type="checkbox" id="voice-ptt" /> <span data-i18n="voice.ptt"></span></label>
+                <button id="voice-ptt-key" type="button" class="btn small-btn ptt-key" hidden></button>
               </div>
             </div>
             <div class="live-card" id="live-card" hidden>
@@ -2163,7 +2165,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
         send(message);
       },
       // Film sayfasında basılan kısayol: sitedeki kısayol dinleyicileri (emoji, Enter, P) aynen işlesin.
-      onKey: (key, up) => document.dispatchEvent(new KeyboardEvent(up ? 'keyup' : 'keydown', { key, bubbles: true, cancelable: true })),
+      onKey: (key, up, code) => document.dispatchEvent(new KeyboardEvent(up ? 'keyup' : 'keydown', { key, ...(code ? { code } : {}), bubbles: true, cancelable: true })),
       // EXT1: the film's own ⛶ opens and closes the room's fullscreen, like ours.
       onFullscreen: () => fullscreen.toggle(),
       onActivity: (edge) => fullscreen.poke(edge),
@@ -2332,7 +2334,8 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       root.style.setProperty('--theater-cut', holePath(card.width, card.height, { ...hole, x: hole.x - card.left, y: hole.y - card.top }, []));
       // Sitenin bir penceresi açıksa (avatar, tema, özet, onay) delik tamamen kapanır: pencere videonun önünde görünsün.
       const modal = document.querySelector('.dialog-backdrop:not([hidden]), .recap-backdrop, dialog[open], .profile-pop:not([hidden])') !== null;
-      layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12) };
+      const ptt = pttLayoutCode();
+      layout = { mode: 'full', hole, islands: modal ? [hole] : islands.slice(0, 12), ...(ptt ? { ptt } : {}) };
     }
     // Deliğin içi (sitenin zeminleri) ancak eklenti "delik açıldı" deyince saydam olur: film sayfası o an gizlenmiş olur.
     if (layout.mode !== 'full') holeReady = false;
