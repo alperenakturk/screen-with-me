@@ -24,8 +24,10 @@
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-left {
   flex: 1 1 0; width: auto; min-width: 0; min-height: 0;
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
-  grid-template-areas: 'tools top' 'tools bar' 'tools canvas'; gap: 6px 0;
+  grid-template-areas: '. top' '. bar' 'tools canvas'; gap: 6px 0;
 }
+/* The tools' column exists only for the drawer: kept empty for everyone else it cost the canvas a fifth of its width
+   and left a band (first look, 21 Nov), so the canvas moves a little when my turn starts, behind the word picker. */
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-top { grid-area: top; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-bar { grid-area: bar; }
 /* The canvas is the biggest 4 : 3 that fits what is left (a size container of its own: its width and height are known). */
@@ -37,7 +39,7 @@
 
 /* The drawer's tools: a slim column left of the canvas (✏️ 🧽 🪣, the 20 colours, the sizes, ↶ ↷ 🗑). */
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-tools:not([hidden]) {
-  grid-area: tools; align-self: center; margin-right: 10px; width: 104px;
+  grid-area: tools; align-self: start; margin-right: 10px; width: 104px;
   display: flex; flex-direction: column; align-items: stretch; gap: 8px;
 }
 #game-stage:not(.in-tab) .dg-page .draw-tools .draw-tool-pick { justify-content: space-between; gap: 4px; }
@@ -65,6 +67,9 @@
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-feed { flex: 1 1 0; height: auto; min-height: 60px; font-size: 14px; line-height: 1.35; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-form { flex: none; gap: 6px; flex-wrap: nowrap; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-form .btn { flex: none; padding-inline: 12px; }
+#game-stage .dg-page .draw-form input { text-overflow: ellipsis; }
+/* The revealed word is a word, not the "_ _ a _" hint: the page's own font, like the drawer's. */
+#game-stage .dg-page .draw-hint.revealed { font-family: inherit; letter-spacing: 0; }
 
 /* ---- A phone's Games tab (lobby.css lays it out): the new canvas box keeps the canvas's place in the column ---- */
 #game-stage.in-tab .dg-page:not(.draw-lobby) .draw-canvas-cell { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }

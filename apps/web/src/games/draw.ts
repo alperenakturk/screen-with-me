@@ -423,6 +423,7 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     const hint = $('#draw-hint');
     hint.textContent = s.phase === 'draw' ? (s.word ?? s.hint) : s.phase === 'reveal' ? (s.word ?? '') : '';
     hint.classList.toggle('mine', s.phase === 'draw' && !!s.word);
+    hint.classList.toggle('revealed', s.phase === 'reveal');
     // Araçlar ve tuvalin imleci sadece çizende.
     const drawingNow = s.phase === 'draw' && s.drawer === me;
     tools.hidden = !drawingNow;
