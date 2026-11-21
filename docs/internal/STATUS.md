@@ -6,13 +6,11 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (cameras, voice; 21 Nov; older: `archive/status-history.md`). Tag `v0.9.97.113` (8ce4385) missing.
-  Cards: CAM3 (#577) → VC4 → PTT1 → TG2. DM1 waits for the owner's Player ID; UI2 `rail-speed` flake: if it fails
-  again, add a `sync-engine.test.ts` scenario.
-- [ ] Lane A2 (handoff 21 Nov): open PRs #573, #578, #581.
-  - [ ] RC2 part 2: look C (marquee) + music 1 (own pad), owner's picks; `design/recap-cinema/`.
-  - [ ] FR1 (host-only "Rate the film" poll, film page).
-- [ ] FW2 (Five Frames): [x] 1 places [x] 2 timer, points [x] 3 big board [ ] 4 levels [ ] 5 words
+- [ ] Lane A (cameras, voice; handoff 21 Nov 13:40). Tag `v0.9.97.113` (8ce4385) missing. Live: CAM3 (#577,
+  v0.9.97.188). VC4 #591 (merging). Next (fresh session): PTT1 → TG2. DM1 waits for the owner's Player ID; UI2
+  `rail-speed` flake: if it fails again, add a `sync-engine.test.ts` scenario.
+- [ ] Lane A2 (fresh session 21 Nov): RC2 part 2 (look C marquee + music 1 own pad; `design/recap-cinema/`), then FR1.
+- [ ] Game Studio: LH4 (Last Heart; table look A picked) running; SB2 finishing #589; then QZ5b + CI4.
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -216,9 +214,19 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27gn. [GN1] With a friend: open a Sea Battle table. The friend sees a chat line with its picture and Join; Join
   takes them to the table. Close it: the line greys out with "The table closed".
 - [ ] 27em. [EMO1] Phone: 😀 React → Hands → pick a skin tone → send 🫶. The friend sees it in that tone; the tone stays
-  after a reload.
+  after a reload; the second hand page is reached with >.
 - [ ] 27ar. [CAM3] With 2–5 friends' cameras: the camera window starts framed (one window), tiles same size in rows
   like 3 + 2, faces whole; pull any edge or corner of the window: it resizes and the cameras re-row.
+- [ ] 27aw. [GFIT1] Laptop and a big screen: press 🪟 on a table, then open another table: it opens in the video's place
+  again. Classics there (chess, backgammon, Four in a Row): the board as tall as the box, the score, Stub, players and status in a
+  narrow column beside it, names whole.
+- [ ] 27rc. [RC2a] With a friend, the recap only after 2 h together (or Test Lab `recap.button`): ✨ shows for both,
+  nothing pops up by itself, either person's one press starts it for both, the music starts softly, ✨ is gone after.
+- [ ] 27fw. [FW2] Five Frames Duel, 3 players: the first finder stays "1st"; points show at the end (+10 / +6 …);
+  "⏱ 1 min": the clock counts down, at 0 the rest are out; laptop: my board big, the others smaller. Solo: Easy /
+  Medium / Hard each have their own word and stay after a reload; "?" ends with "Which words count".
+- [ ] 27lh. [LH4] Last Heart, 3 players: Shield out of turn doesn't reset the other player's 30 s; the showdown says
+  "takes N from the middle", each seat shows +/−, only the winner's cards are gold.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
@@ -235,13 +243,10 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 31. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
   bar; `?measure=1` switch times with a friend (then decide on a hidden preload player); TikTok links play and loop;
   a fresh invite opens on one screen; the extension's install card turns into "Go to the film" by itself.
-- [ ] 27aw. [GFIT1] Laptop and a big screen: press 🪟 on a table, then open another table: it opens in the video's place
-  again. Classics there (chess, backgammon, Four in a Row): the board as tall as the box, the score, Stub, players and status in a
-  narrow column beside it, names whole.
 
 ## Owner's to-dos (settings and accounts; tell the Planner when done)
-- [ ] GitHub: the `production` environment holds the deploy secrets and `LAB_CODE`; private vulnerability reporting on;
-  Dependabot alerts and security updates on (Settings → Code security). [0.9.97.49, .69, .3]
+- [ ] GitHub (21 Nov): Code security → Secret scanning + Push protection on; General → Pull Requests → Automatically
+  delete head branches on. Auto-merge is on (21 Nov); `github-playbook.md` lists the rest.
 - [ ] The private feedback repository: Watch → Custom → Issues, so an `outage` issue reaches your phone. [0.9.97.92]
 - [ ] Before the store: the Microsoft Partner Center account for Edge Add-ons (`web-store.md`).
 
@@ -272,6 +277,8 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
 - **Screenshot on failure for the feed harness:** `scripts/harness/feed/run.cjs` failed once on main (the friend's
   `#feed-row-pause` never visible) and CI kept no picture (B2, 16 Nov).
 - **Old game layout points (16 Nov):** tablet: an empty band above the game; Draw & Guess rounds "1 / 2 / 3" vs "1 tur".
+- **Game leftovers (21 Nov):** Test Lab 🤖 friends can share the player's name (`lab-table-friend.ts`); room.css's
+  global `.slot` rule hits any game element with class `slot`.
 - **Small leftovers (Planner, 20 Nov):** upright-tablet Shorts bar has no ⋯ More; the feed drawer cuts room text
   mid-word; live e2e `quota.mjs` flake (shards share one address); `side-games-polish` harness stale since GW5.
 

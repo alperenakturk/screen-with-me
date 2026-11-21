@@ -61,7 +61,7 @@ Each session has one role (first message or session title; none given = **Develo
 | Role | Does | Edits |
 |---|---|---|
 | 🧭 **Planner** (hub, no code; `role:planner`) | Talks to the owner; turns ideas into cards (what, why, done when, tests), orders and routes them, sets the merge order; keeps the owner's board current by itself (a live fix becomes a test, a passed test or answered question goes, one line to the owner); `llm-council` for big decisions | `CLAUDE.md`, `CARDS.md`, `ROADMAP.md` Focus, `STATUS.md` decisions / ideas, the board |
-| 🔨 **Developer: lane A** (room / site), **lane B** (players, Shorts, extension, ops; an extra lane-B session such as "B2" when the Planner opens one) | Top Ready card of its lane → In progress → build + test → PR → merge → deploy and live e2e checked → `Done: <PR link>`. A fresh session per milestone step | Its cards' code and tests, the feature's reference section, its `changelog/next/<branch>.md`, `STATUS.md` task queue / hand tests |
+| 🔨 **Developer: lane A** (room / site), **lane B** (players, Shorts, extension, ops; an extra lane-B session such as "B2" when the Planner opens one) | Top Ready card of its lane → In progress → build + test → PR → merge → deploy and live e2e checked → `Done: <PR link>`. A fresh session per milestone step | Its cards' code and tests, the feature's reference section, its `changelog/next/<branch>.md`; STATUS lines via the Planner |
 | 🎮 **Game Studio** (`role:games`) | The games end to end: tables, side games, art, sounds, tutorials, server objects | Games code and tests, `docs/internal/design/games/`, the games' reference sections, `changelog/next/` files |
 | 🛡️ **Security** (read-only) | Bugs, security, privacy (KVKK / GDPR via `kvkk-gdpr-denetim`'s `SKILL.md`) | `docs/internal/security-review-<n>.md`, "Proposed" cards |
 | 🔎 **Research** (read-only) | Market, competitors, users, technical questions | `docs/internal/research/<topic>.md`, "Proposed" cards |
@@ -95,9 +95,9 @@ Rules for all:
   CI numbers releases, §9), trailing `Co-Authored-By`; never model names.
   Delete a merged branch (`.claude/settings.json` allows `git push origin --delete <branch>`; check first with
   `git merge-base --is-ancestor`).
-- **Finished work leaves the live files in the same PR (DOCS2, 11 Nov 2026):** a card that is done or a hand test that
-  is ticked moves verbatim to `docs/internal/archive/` (`cards-done.md`, `status-history.md`); `check-docs.mjs` keeps
-  STATUS and CARDS small and names anything lost.
+- **Shared docs via the Planner (21 Nov 2026):** building PRs never edit `STATUS.md`, `CARDS.md`, `cards-games.md`,
+  `archive/`; a live PR's session sends the Planner its hand tests + "card X done: <PR>"; the Planner batches them and
+  moves done items verbatim to `docs/internal/archive/` (`cards-done.md`, `status-history.md`). Auto-merge on.
 - **A developer who changes a feature updates its reference section in the same PR**
   (`docs/internal/architecture/reference.md`, or its area file once split).
 
@@ -318,7 +318,7 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   element hides the extension overlay (a fullscreen player container is fine).
 - The extension is not in the store yet (unpacked install, `apps/web/public/extension.html`; the old `eklenti.html`
   redirects); account opened (screenwithme.app@gmail.com, non-trader), package ready (`docs/internal/web-store.md`,
-  `npm run store`); **submitted with 1.0**.
+  `npm run store`); **submitted ~25 Nov 2026** (STORE2).
 - Bans are at the limit of an account-free design (another browser / incognito tab gets around them).
 - Firefox / Safari: the site works, the extension does not (no `offscreen`, the shell needs a `chrome-extension://`
   parent); after 1.0, `docs/internal/browser-support.md`.

@@ -23,16 +23,15 @@ leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness 
   when a player's fleet is gone: a short explosion, "ALEX SANK!" in a playful tone, their chip crossed out.
 - Done when: all four at 2 and 4 players; e2e; first look; art licence-clean.
 
-### FW2. Five Frames Duel / co-op: timer, points, levels, more words (owner, 21 Nov 2026; Game Studio "Five Frames")
-- Bug: two players both showed "2nd" though one finished first.
-- What: (1) a time limit chosen when the table opens; time up = out; (2) points: first to solve +3, plus 7 → 1 by the
-  guess it took (1st guess 7 … 7th guess 1); (3) my own board big, the others smaller; (4) difficulty Easy / Medium
-  (recommended, default) / Hard / Mixed for daily, categories and Duel: odd words like a root form ("Fırat" refused,
-  odd roots asked) go to Hard or out; (5) research more word lists (names, cities …) and add only what the game
-  accepts; the "?" explains what kinds of words are not used.
-- Done when: ranking bug fixed with a test; timer and points server-checked; levels; e2e with 3 players.
-
 ### LH4. Last Heart: review, smooth animations, sounds, design (owner, 21 Nov 2026; Game Studio "Last Heart")
 - What: a detailed play-through review (bugs, rules, layout at 3 sizes), then fixes; smooth card / chip animations
   and sounds if missing; a nicer table design. Report findings to the Planner before big redesigns.
 - Done when: the review file `docs/internal/design/games/last-heart-review.md`, its fixes merged; e2e.
+
+### QZ5b. Quiz fills the video's place; shared-stage leftovers (Planner, 21 Nov 2026; a fresh Game Studio session)
+- Why: QZ5 left Quiz on its design shape (empty bands in the video's place); GFIT1's sweep left `tabup/tr/word` (the
+  solo Five Frames legend at 12.8 px on an upright tablet in Turkish) below the 13 px rule; the topic chip wraps on a
+  tablet; low disabled-button contrast and a small 🏆 count in Quiz.
+- What: Quiz opts into `data-fill` + `var(--game-side)` (its own rules in room.css / lobby.css only); fix the three
+  sweep findings.
+- Done when: 1366 / 1920 / tablet / phone shots; games sweep green; first look.

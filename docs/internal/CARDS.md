@@ -38,6 +38,14 @@ Two sessions never edit the same lines; the Planner splits work by files.
 (see `STATUS.md` "Task queue")
 
 ## Ready
+### CI4. Flaky CI steps that cost a re-run (Planner, 21 Nov 2026; lane A, after TG2)
+- Why: games-more "games-shorts: a Short opens the Shorts view" (a real YouTube Short via `via-youtube.cjs`, 15 s)
+  and Sea "a tap in another corner zooms" fail on the first attempt of many PRs and pass on the re-run: each costs a
+  full ~30 min CI run. cam-phone fails only inside cloud containers.
+- What: no required step depends on a third-party site's response time (stub the player or serve a local Short; keep
+  a real-YouTube check as a non-required step); find the Sea zoom race; document cam-phone's container limit.
+- Done when: 10 CI runs in a row without a first-attempt failure on these steps.
+
 ### STORE2. PRIORITY: Chrome Web Store submission by ~25 Nov (owner, 21 Nov 2026; lane B, owner submits)
 - Why: the owner wants the extension in the store before Spotify Wrapped (~3 Dec); review can take days to 3 weeks.
   This moves the store step ahead of 1.0 (ROADMAP "Then"), owner's pick.

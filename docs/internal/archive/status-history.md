@@ -1801,3 +1801,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 > finished that used to be in this file (old task queue, every per-release hand-test block, the Lab test round, the
 > design sweep, the last full test pass, the short history) is verbatim in `docs/internal/archive/status-history.md`
 > (card DOCS2). Keep this file short: a finished item leaves it in the PR that finishes it.
+
+## Owner's to-do replaced 21 Nov 2026 (Planner; the secrets move was done 17 Nov)
+- [ ] GitHub: the `production` environment holds the deploy secrets and `LAB_CODE`; private vulnerability reporting on;
+  Dependabot alerts and security updates on (Settings → Code security). [0.9.97.49, .69, .3]
