@@ -9,7 +9,7 @@
 
 import './five-frames.css';
 import {
-  ALPHABET, CATEGORY_IDS, DEFAULT_LEVEL, FRAMES_KEY, LEVELS, MAX_TRIES, WORD_LENGTH, categoryAnswer, levelAnswer, dayNumber, decodeCategories, decodeWords, finished,
+  ALPHABET, CATEGORY_IDS, DEFAULT_LEVEL, FRAMES_KEY, LEVELS, MAX_TRIES, WORD_LENGTH, categoryAnswer, levelAnswer, levelWords, dayNumber, decodeCategories, decodeWords, finished,
   isCategory, liveStreak, guess, letters, loadFrames, normalize, record, saveFrames, score, shareLine, solved, today, todayIn, trayMarks, upper,
   type Category, type FramesSave, type Lang, type Level, type Mark,
 } from '@swm/shared/games/five-frames';
@@ -207,8 +207,8 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     levelPick.append(o);
     return o;
   });
-  levelPick.addEventListener('change', () => {
-    const next = LEVELS.find((l) => l === levelPick.value) ?? DEFAULT_LEVEL;
+  levelPick.addEventListener('change', () => setLevel(LEVELS.find((l) => l === levelPick.value) ?? DEFAULT_LEVEL));
+  function setLevel(next: Level): void {
     if (next === level) return;
     level = next;
     state.level = level;
@@ -217,7 +217,7 @@ export function mountFiveFrames(root: HTMLElement): () => void {
     clearFlip();
     pickAnswer();
     draw();
-  });
+  }
   function setMode(next: Mode): void {
     if (next === mode) return;
     mode = next;
@@ -576,6 +576,25 @@ export function mountFiveFrames(root: HTMLElement): () => void {
           return `${wordLang} ${mode}: ${words.length} words, hint "${catLabel() || '-'}", today ${answer}`;
         },
         undo: () => setMode('daily'),
+      },
+      {
+        // FW2: the words' level; reports how many words the level plays in the shown mode and today's answer.
+        id: 'fiveFrames.level',
+        title: { en: 'Five Frames: change the level', tr: 'Beş Kare: seviyeyi değiştir' },
+        help: {
+          en: `Switches the level (arg: ${LEVELS.join(', ')}; empty = the next one) and writes how many words it plays and today's answer.`,
+          tr: `Seviyeyi değiştirir (${LEVELS.join(', ')} yaz; boş = sıradaki) ve kaç kelimeyle oynandığını ve bugünün cevabını yazar.`,
+        },
+        tab: 'games',
+        where: { en: 'Five Frames open', tr: 'Beş Kare açıkken' },
+        available: () => !!list || { en: 'the word list is still loading', tr: 'kelime listesi hâlâ yükleniyor' },
+        run: (arg) => {
+          const asked = String(arg ?? '').trim();
+          setLevel(LEVELS.find((l) => l === asked) ?? LEVELS[(LEVELS.indexOf(level) + 1) % LEVELS.length]!);
+          const words = mode === 'daily' ? levelWords(list!.answers, list!.bands, level) : levelWords(list!.cats[mode], list!.catBands[mode], level);
+          return `${wordLang} ${mode} ${level}: ${words.length} words, today ${answer}`;
+        },
+        undo: () => setLevel(DEFAULT_LEVEL),
       },
       {
         // Owner bug (0.9.97.126): T on the board switched on cinema mode. The board is `[data-takes-keys]`, so the room's

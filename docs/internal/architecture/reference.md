@@ -1517,7 +1517,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   games in `save.lv` (`en:easy`, `en:countries:hard`; Medium daily stays in `games`, Mixed categories in `cats`); its
   level select `.ff-level` sits beside the category select; the share line names a level other than Medium. The Duel's
   `settings` take `level` (state `level`, the tag shows it); the table's day word is the solo game's word at that level.
-  Both "?" guides end with "Which words count".
+  Both "?" guides end with "Which words count". Lab `fiveFrames.level` (arg a level) switches it and reports the word count and today's answer.
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
