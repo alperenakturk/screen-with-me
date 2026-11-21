@@ -434,6 +434,9 @@ export function mountDraw(app: HTMLElement, gameId: string, name: string, avatar
     overlay.classList.toggle('lobby-card', s.phase === 'lobby' || s.phase === 'over');
     // Lobby and podium need no canvas: the card takes the canvas's place at its own height (BHG: it was shrunk to fit).
     app.firstElementChild!.classList.toggle('draw-lobby', s.phase === 'lobby' || s.phase === 'over');
+    // GFIT1 / DG2: a running game fills the video's place (the canvas takes what the narrow side column leaves); the lobby
+    // and podium card keep the design shape's scale (filled, the card stood small in a big box).
+    app.firstElementChild!.toggleAttribute('data-fill', s.phase !== 'lobby' && s.phase !== 'over');
     if (s.phase === 'over') showPointsResult(result, `draw:${gameId}`, s.players, s.host, me, { win: tx('endWin'), lose: tx('endLose'), draw: tx('endDraw'), over: tx('endOver') }, () => send({ t: 'start' }));
     else result.hide();
     if (s.phase === 'lobby' || s.phase === 'over') {

@@ -1551,9 +1551,10 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   only; Quiz shares the `draw-*` classes and keeps room.css / lobby.css). A computer (the video's place and the free
   window): `.draw-left` is a grid `tools | top, bar, canvas`; the canvas sits in `.draw-canvas-cell`, a size container
   (`dgcanvas`), as the biggest 4 : 3 that fits (`min(100cqw, 100cqh * 4 / 3)`); the drawer's tools are a 104 px column
-  beside it (icons only, 4 × 5 colours); the side column is `clamp(200px, 27%, 280px)` (players compact, two columns from
-  five players without avatars / badges; the chat takes the rest at 14 px). Draw's catalog `wide` is 820 × 500 (was 440:
-  the design box matched no stage, an empty band). The reveal's results are wrapping chips in an overlay that can never
+  beside it (icons only, 4 × 5 colours of 24 px); a running game carries `data-fill` (GFIT1: laid out at the video's
+  place itself) and the side column is `var(--game-side)` (players compact, two columns from five players without
+  avatars / badges; the chat takes the rest at 15 px). The lobby and podium drop `data-fill` (a filled card stood small)
+  and keep the catalog's design scale; Draw's `wide` is 820 × 500 (was 440: an empty band). The reveal's results are wrapping chips in an overlay that can never
   overflow (`.draw-gains` shrinks and clips): an overflowing `.draw-overlay` (stage.ts `FIT_INSIDE`) made `refit` divide
   the scale by the overflow four times, the "results shrink the game to ~10 %" bug. A phone's Games tab: players a grid
   whose columns follow the width (a score or ✅ never adds a row), five+ results without faces or the big word, the

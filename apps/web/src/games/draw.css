@@ -19,7 +19,7 @@
 
 /* ---- A computer (the video's place and the free window): tools | canvas | side ---- */
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-main {
-  display: flex; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: 12px; height: 100%; min-height: 0;
+  display: flex; flex-wrap: nowrap; align-items: stretch; justify-content: center; gap: var(--game-gap, 12px); height: 100%; min-height: 0;
 }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-left {
   flex: 1 1 0; width: auto; min-width: 0; min-height: 0;
@@ -39,32 +39,32 @@
 
 /* The drawer's tools: a slim column left of the canvas (✏️ 🧽 🪣, the 20 colours, the sizes, ↶ ↷ 🗑). */
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-tools:not([hidden]) {
-  grid-area: tools; align-self: start; margin-right: 10px; width: 104px;
+  grid-area: tools; align-self: start; margin-right: 10px; width: 108px;
   display: flex; flex-direction: column; align-items: stretch; gap: 8px;
 }
 #game-stage:not(.in-tab) .dg-page .draw-tools .draw-tool-pick { justify-content: space-between; gap: 4px; }
 #game-stage:not(.in-tab) .dg-page .draw-tools :is(.draw-tool, .btn, .draw-color, .draw-size) { box-sizing: border-box; min-width: 0; }
 #game-stage:not(.in-tab) .dg-page .draw-tools :is(.draw-tool, .btn):not(.draw-color-open) { width: 32px; height: 32px; min-height: 0; padding: 0; display: grid; place-items: center; font-size: 16px; }
 #game-stage:not(.in-tab) .dg-page .draw-tools .draw-tool-word { display: none; }
-#game-stage:not(.in-tab) .dg-page .draw-tools .draw-colors { grid-template-columns: repeat(4, 22px); justify-content: space-between; gap: 4px; }
-#game-stage:not(.in-tab) .dg-page .draw-tools .draw-color { width: 22px; height: 22px; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-colors { grid-template-columns: repeat(4, 24px); justify-content: space-between; gap: 4px; }
+#game-stage:not(.in-tab) .dg-page .draw-tools .draw-color { width: 24px; height: 24px; }
 #game-stage:not(.in-tab) .dg-page .draw-tools .draw-sizes { gap: 4px; justify-content: flex-start; }
 #game-stage:not(.in-tab) .dg-page .draw-tools .draw-size { width: 32px; height: 28px; }
 
 /* The side column: narrow, the players compact (two columns from five players), the chat takes the rest. */
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-side {
-  flex: 0 0 clamp(200px, 27%, 280px); max-width: none; min-width: 0; min-height: 0; box-sizing: border-box;
+  flex: 0 0 var(--game-side, clamp(200px, 27%, 280px)); max-width: none; min-width: 0; min-height: 0; box-sizing: border-box;
   padding: 10px; gap: 8px;
 }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players { flex: none; display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players:has(> li:nth-child(5)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-player { gap: 6px; padding: 3px 8px 3px 3px; min-width: 0; font-size: 14px; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-player { gap: 6px; padding: 3px 8px 3px 3px; min-width: 0; font-size: 15px; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-player .draw-avatar { width: 26px; height: 26px; font-size: 16px; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-badge:empty { display: none; }
 /* Two columns (five players or more): the ✏️ / ✅ badge goes (the row's outline and green say the same), the name keeps its room. */
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players:has(> li:nth-child(5)) :is(.draw-badge, .draw-avatar) { display: none; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-players:has(> li:nth-child(5)) .draw-player { padding: 5px 8px; }
-#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-feed { flex: 1 1 0; height: auto; min-height: 60px; font-size: 14px; line-height: 1.35; }
+#game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-feed { flex: 1 1 0; height: auto; min-height: 60px; font-size: 15px; line-height: 1.35; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-form { flex: none; gap: 6px; flex-wrap: nowrap; }
 #game-stage:not(.in-tab) .dg-page.draw-page:not(.draw-lobby) .draw-form .btn { flex: none; padding-inline: 12px; }
 #game-stage .dg-page .draw-form input { text-overflow: ellipsis; }
