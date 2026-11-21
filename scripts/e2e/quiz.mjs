@@ -67,7 +67,7 @@ ok((await sam.wait((m) => m.t === 'error', 'second hello')).code === 'bad', 'A s
 alex.inbox.length = 0;
 alex.send({ t: 'start' });
 const q1 = await alex.wait((m) => m.t === 'state' && m.phase === 'question', 'q1');
-ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && q1.options.length === 4 && !q1.guess && !('correct' in q1), 'First question: general knowledge, four options, right option hidden');
+ok(q1.n === 1 && q1.total === 5 && q1.cat === 'general' && q1.options.length >= 2 && !q1.guess && !('correct' in q1), 'First question: general knowledge, options (four, or two on "which came first"), right option hidden');
 ok(q1.lv === 3 && QUIZ_BANK[q1.qid]?.d === 3, 'QZ4: a Hard game asks a hard question, and says so (lv 3)');
 // The bank's own English text (an ASCII test failed on names such as "László Bíró", a QZ4 hard question).
 ok(q1.question === QUIZ_BANK[q1.qid]?.en.q, 'The question is in English');
@@ -113,7 +113,7 @@ ok(q2.players.every((p) => !p.answered), '4 sn sonra ikinci soruya geçildi');
 // The rest quickly: both always pick 0.
 for (let n = 2; n <= 5; n++) {
   if (n > 2) await alex.wait((m) => m.t === 'state' && m.phase === 'question' && m.n === n, `q${n}`, 9000);
-  ok(!!alex.state.guess === (n === 5) && (n === 5 || alex.state.options.length === 4), n === 5 ? 'QZ5: the fifth question of five is a closest guess' : `Question ${n}: four options`);
+  ok(!!alex.state.guess === (n === 5) && (n === 5 || alex.state.options.length >= 2), n === 5 ? 'QZ5: the fifth question of five is a closest guess' : `Question ${n}: an option question`);
   alex.send(answerOf(alex.state, 0));
   sam.send(answerOf(alex.state, 0));
 }
