@@ -3097,3 +3097,10 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   tall phones; Quiz top bar, Five Frames picker in the head row; side-game notes off the art in a computer's window.
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
+
+### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
+- Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.
+- What: the shared stage rule above (`stage.ts`, shared lobby / side column CSS: one narrow side width for all
+  games), always open in the video's place; then Classics (chess, dama, backgammon, reversi, XOX, Four) fills it.
+- Done when: every table opens in the video's place; Classics' board is the biggest square that fits; sweep shots.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/571 (stage) + the Classics PR (this branch, claude/gfit1-classics).

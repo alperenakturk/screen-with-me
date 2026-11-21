@@ -529,3 +529,47 @@ html.phone #game-stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min
 #game-stage.in-tab .mt .cl-bot .btn { flex: none; }
 #game-stage.in-tab .mt .cl-bot-label { text-wrap: balance; }
 #game-stage.in-tab .mt .xox-player.turn { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ===== GFIT1 (owner, 21 Nov 2026: "the right column too wide, the game too narrow"): filling the video's place =====
+   The table is laid out at the box itself (`#game-stage.fill`, stage.ts): the board is the biggest square the height
+   allows (backgammon its own 1.45 : 1), the bar, seats, status and buttons sit in the one narrow side column every game
+   shares (`--game-side`, stage.css), and the two stand centred as one block. */
+/* Side by side from 6 : 5 (not PROP's 16 : 10): with the narrow column a board beside it is bigger than one under the
+   bar and seats in any box wider than that (a sideways tablet's 800 × 530 box: 494 px against 270 px). */
+@container game (min-aspect-ratio: 6 / 5) {
+  #game-stage.fill.stage[data-place='stage'] .xox-page.mt > .mt-table {
+    grid-template-columns: min(100cqh - 24px, 100cqw - 24px - var(--game-side) - var(--game-gap)) var(--game-side);
+    grid-template-rows: minmax(0, 1fr) auto auto auto auto auto auto minmax(0, 1fr);
+    grid-template-areas: 'board .' 'board bar' 'board top' 'board bottom' 'board tray' 'board status' 'board actions' 'board .';
+    justify-content: center; gap: 8px var(--game-gap);
+  }
+  #game-stage.fill .mt .dama-board { width: calc(min(100cqh, 100cqw) - 4px); }
+  #game-stage.fill .mt .bg-board { width: calc(min(100cqh * 1.45, 100cqw) - 4px); }
+  #game-stage.fill .mt .cl-picker-grid { max-width: none; flex-wrap: nowrap; }
+  #game-stage.fill .mt .cl-picker-grid > .cl-card { flex: 1 1 0; }
+  #game-stage.fill.stage[data-place='stage'] .xox-page.mt[data-board='backgammon'] > .mt-table {
+    grid-template-columns: min((100cqh - 24px) * 1.45, 100cqw - 24px - var(--game-side) - var(--game-gap)) var(--game-side);
+  }
+  /* Backgammon's seat in the narrow column: the name stays whole, "0/15 home · Pips 167" gives way with "…" (as on a
+     phone; first look: the home / pips line pushed the name out). */
+  #game-stage.fill.stage [data-board='backgammon'] .xox-player { gap: 6px; }
+  #game-stage.fill.stage [data-board='backgammon'] .xox-name { flex: 1 0 auto; }
+  #game-stage.fill.stage [data-board='backgammon'] .mt-taken { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; white-space: nowrap; font-size: 13px; letter-spacing: 0; }
+  #game-stage.fill.stage[data-place='stage'] .xox-page.mt[data-board='four'] > .mt-table {
+    grid-template-columns: min((100cqh - 38px) * 7 / 6, 100cqw - 24px - var(--game-side) - var(--game-gap)) var(--game-side);
+  }
+  /* The narrow column: score and 👁 on the bar's first line, Stub and its levels on a line of their own (they ran past
+     the column), and the status gets three lines before it shortens. */
+  #game-stage.fill .mt .mt-bar { row-gap: 6px; }
+  #game-stage.fill .mt .cl-bot { order: 1; flex-basis: 100%; flex-wrap: wrap; justify-content: center; row-gap: 6px; }
+  #game-stage.fill .mt .cl-bot:not(:has(.cl-bot-leave)) .cl-bot-label { flex-basis: 100%; justify-content: center; white-space: normal; text-align: center; }
+  #game-stage.fill .mt .xox-status { -webkit-line-clamp: 3; text-wrap: balance; }
+}
+/* GFIT1: a small video's place (a layout under 720 px: a 1024 × 640 laptop) keeps the name whole in the narrow column:
+   "(you)" stays for screen readers only, as in a phone's Games tab (the seat is already marked as mine), and the seat
+   spaces its parts tighter. */
+@container game (max-width: 720px) and (min-aspect-ratio: 6 / 5) {
+  #game-stage.fill.stage .mt .xox-you { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  #game-stage.fill.stage .mt .xox-player { gap: 6px; padding-inline: 8px; }
+  #game-stage.fill.stage .mt :is(.mt-taken, .mt-wins) { gap: 2px; }
+}

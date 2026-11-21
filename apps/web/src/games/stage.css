@@ -23,6 +23,6 @@ html:not(.phone) .theater.side-rail.dock-mode .player-wrap:has(> #game-stage.sta
    `FILL_BASE`). A game lays out its board / play area in what is left: `grid-template-columns: minmax(0, 1fr)
    var(--game-side)` (or the side first). The players, chat and menus fit that width; the board takes the rest. */
 #game-stage .game-fit { --game-side: 264px; --game-gap: 16px; }
-@container game (max-width: 900px) {
-  #game-stage .game-fit > * { --game-side: 232px; --game-gap: 12px; }
+@container game (max-width: 720px) {
+  #game-stage .game-fit > * { --game-side: 248px; --game-gap: 12px; }
 }
