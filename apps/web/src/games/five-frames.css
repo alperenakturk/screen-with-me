@@ -40,7 +40,7 @@
 .ff-lang.on { background: var(--ff-gold); color: var(--ff-ink); }
 /* FW1: the daily word or a category, on its own slim line under the head; the picked category is the hint, so it stays
    in view (gold once picked). */
-.ff-cat-row { display: flex; justify-content: center; min-height: 0; }
+.ff-cat-row { display: flex; justify-content: center; gap: 6px; min-height: 0; min-width: 0; }
 .ff-cat {
   flex: 0 1 auto; min-width: 0; max-width: 100%; min-height: 26px; padding: 1px 8px; border: 0; border-radius: 999px;
   font: inherit; font-size: 13px; font-weight: 700; text-overflow: ellipsis; cursor: pointer;

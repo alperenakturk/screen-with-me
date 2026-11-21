@@ -1510,6 +1510,14 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `aria-live`), its chip / head pops its ✕ (`.just-out`), and the result card waits until it is over (`sankUntil`).
   Lab `sea.sank` plays it in this tab; `seaBattle.state` adds `sank` and `dragging`. Sea harness: ghost mid-drag, R
   turns it, the drop lands on the ghost, a tap turns the picked ship, the end's moment before the card.
+  **FW2 levels:** `packages/shared/src/games/five-frames.ts` `LEVELS` (`easy` / `medium` default / `hard` / `mixed`),
+  `levelWords(words, bands, level)` (bands 1 / 1–2 / 2–3 / all; missing bands = all), `levelAnswer` (each level its own
+  salt, Medium 0), `categoryAnswer(…, level, bands)`; the word modules carry `BANDS` (one digit per answer) and
+  `CATEGORY_BANDS` (scripts/words/build-words.py `BAND_SEEN`). The solo game keeps `save.level` and the other levels'
+  games in `save.lv` (`en:easy`, `en:countries:hard`; Medium daily stays in `games`, Mixed categories in `cats`); its
+  level select `.ff-level` sits beside the category select; the share line names a level other than Medium. The Duel's
+  `settings` take `level` (state `level`, the tag shows it); the table's day word is the solo game's word at that level.
+  Both "?" guides end with "Which words count".
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),

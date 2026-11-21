@@ -118,6 +118,35 @@ export function answerFor(day: number, answers: readonly string[], lang: Lang, s
   return answers[order[index % answers.length]!]!;
 }
 
+// ---- Levels (card FW2, owner: Easy / Medium (default) / Hard / Mixed) ----
+
+/**
+ * The word lists mark each answer with a band (`BANDS` in `./words/<lang>.ts`, from how often people use the word): 1
+ * common, 2 known, 3 rare. Easy plays band 1, Medium 1–2 (odd or rare words never come), Hard 2–3 (no everyday word),
+ * Mixed every answer. Each level has its own word of the day.
+ */
+export const LEVELS = ['easy', 'medium', 'hard', 'mixed'] as const;
+export type Level = (typeof LEVELS)[number];
+export const DEFAULT_LEVEL: Level = 'medium';
+export const isLevel = (value: unknown): value is Level => LEVELS.includes(value as Level);
+const LEVEL_BANDS: Record<Level, string> = { easy: '1', medium: '12', hard: '23', mixed: '123' };
+/** Medium keeps the salt the daily word had before levels (0); the others get their own shuffle. */
+const LEVEL_SALT: Record<Level, number> = { easy: 7_001, medium: 0, hard: 14_009, mixed: 21_017 };
+export const levelSalt = (level: Level): number => LEVEL_SALT[level];
+
+/** The words of a level (`bands`: one digit per word, same order). Missing bands, or none left: every word. */
+export function levelWords(words: readonly string[], bands: string | undefined, level: Level): string[] {
+  if (!bands || bands.length !== words.length || level === 'mixed') return [...words];
+  const keep = LEVEL_BANDS[level];
+  const out = words.filter((_, i) => keep.includes(bands[i]!));
+  return out.length ? out : [...words];
+}
+
+/** The answer of a day at a level (the same for everyone at that level). */
+export function levelAnswer(day: number, answers: readonly string[], bands: string | undefined, lang: Lang, level: Level): string {
+  return answerFor(day, levelWords(answers, bands, level), lang, levelSalt(level));
+}
+
 // ---- Categories (card FW1): a daily word from one list (countries, cities, …), the category shown as the hint ----
 
 /** The categories, in the order the game lists them (the word modules have one packed list each). */
@@ -128,9 +157,9 @@ export const isCategory = (value: unknown): value is Category => CATEGORY_IDS.in
 /** Each category gets its own shuffle, so two categories never walk their lists in step. */
 const categorySalt = (cat: Category): number => (CATEGORY_IDS.indexOf(cat) + 1) * 104_729;
 
-/** The answer of a day in a category (the same for everyone, like the daily word). */
-export function categoryAnswer(day: number, words: readonly string[], lang: Lang, cat: Category): string {
-  return answerFor(day, words, lang, categorySalt(cat));
+/** The answer of a day in a category (the same for everyone, like the daily word); FW2: at a level (bands per word). */
+export function categoryAnswer(day: number, words: readonly string[], lang: Lang, cat: Category, level: Level = 'mixed', bands?: string): string {
+  return answerFor(day, levelWords(words, bands, level), lang, categorySalt(cat) + (level === 'mixed' ? 0 : levelSalt(level) + 3));
 }
 
 /** Unpacks a word module's CATEGORIES (five letters each, glued together). A missing category is an empty list. */
@@ -190,6 +219,9 @@ export interface FramesSave {
   stats: Record<Lang, Stats>;
   /** FW1: today's game per language and category (`en:countries`); the stats and the streak are the daily word's only. */
   cats: Partial<Record<string, DayGame>>;
+  /** FW2: the level picked (Medium if none), and today's games at the other levels (`en:easy`, `en:countries:hard`). */
+  level?: Level;
+  lv?: Partial<Record<string, DayGame>>;
 }
 
 const freshStats = (): Stats => ({ played: 0, won: 0, streak: 0, best: 0, last: 0, tries: Array.from({ length: MAX_TRIES }, () => 0) });
@@ -222,8 +254,9 @@ export function liveStreak(stats: { streak: number; last: number }, day: number)
   return stats.last >= day - 1 ? stats.streak : 0;
 }
 
-/** Today's game in this language: the saved one if it is today's, else a new empty one. */
-export function today(save: FramesSave, lang: Lang, day: number): DayGame {
+/** Today's game in this language (FW2: at a level; Medium is the one saved before levels). */
+export function today(save: FramesSave, lang: Lang, day: number, level: Level = DEFAULT_LEVEL): DayGame {
+  if (level !== DEFAULT_LEVEL) return todayAt(save, `${lang}:${level}`, day);
   const game = save.games[lang];
   if (game && game.day === day) return game;
   const fresh = { day, guesses: [] };
@@ -232,12 +265,23 @@ export function today(save: FramesSave, lang: Lang, day: number): DayGame {
 }
 
 /** Today's game in a category: the saved one if it is today's, else a new empty one (one save per language and category). */
-export function todayIn(save: FramesSave, lang: Lang, cat: Category, day: number): DayGame {
+export function todayIn(save: FramesSave, lang: Lang, cat: Category, day: number, level: Level = 'mixed'): DayGame {
+  if (level !== 'mixed') return todayAt(save, `${lang}:${cat}:${level}`, day);
   const key = `${lang}:${cat}`;
   const game = save.cats[key];
   if (game && game.day === day) return game;
   const fresh = { day, guesses: [] };
   save.cats[key] = fresh;
+  return fresh;
+}
+
+/** FW2: a game kept under `save.lv[key]` (the levels other than the ones saved before levels). */
+function todayAt(save: FramesSave, key: string, day: number): DayGame {
+  save.lv ??= {};
+  const game = save.lv[key];
+  if (game && game.day === day) return game;
+  const fresh = { day, guesses: [] };
+  save.lv[key] = fresh;
   return fresh;
 }
 
@@ -279,6 +323,15 @@ export function loadFrames(raw: unknown): FramesSave {
     return { day: num(g.day, 1e6), guesses: words };
   };
   const stats = (record.stats && typeof record.stats === 'object' ? record.stats : {}) as Record<string, unknown>;
+  if (isLevel(record.level)) save.level = record.level;
+  const lv = (record.lv && typeof record.lv === 'object' ? record.lv : {}) as Record<string, unknown>;
+  for (const [key, value] of Object.entries(lv).slice(0, 64)) {
+    const [lang, a, b] = key.split(':');
+    const level = b ?? a;
+    if (!(LANGS as readonly string[]).includes(lang!) || !isLevel(level) || (b !== undefined && !isCategory(a))) continue;
+    const one = readGame(value, lang as Lang);
+    if (one) (save.lv ??= {})[key] = one;
+  }
   for (const lang of LANGS) {
     const game = readGame(games[lang], lang);
     if (game) save.games[lang] = game;

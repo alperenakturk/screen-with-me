@@ -1,2 +1,5 @@
 # Five Frames category list (card FW1): five-letter words, one category, shown to the player as a hint.
 paris tokyo cairo dubai miami delhi seoul osaka kyoto milan turin genoa porto basel essen leeds derby dover perth lagos accra dakar rabat tunis sofia minsk quito hanoi dhaka kabul izmir bursa adana konya omaha tulsa salem lhasa
+# FW2 (21 Nov 2026): well-known cities picked by eye from GeoNames (CC BY 4.0, via datasets/world-cities); names that are
+# also everyday words or first names (young, split, nancy, kazan …) left out.
+amman busan cadiz daegu dijon haifa ibiza jinan lille luxor mainz mosul padua parma lucca siena sochi tampa tomsk turku varna wuhan yalta macau reims rouen boise akron sanaa najaf trier

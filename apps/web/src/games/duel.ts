@@ -8,7 +8,7 @@ import './duel.css';
 import './lobby.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { DUEL_MAX_SEATS, DUEL_PROTOCOL_VERSION, DUEL_TIMES, type DuelClientMessage, type DuelPlayer, type DuelServerMessage } from '@swm/shared/games/duel';
-import { ALPHABET, MAX_TRIES, WORD_LENGTH, letters, normalize, upper, type Lang, type Mark } from '@swm/shared/games/five-frames';
+import { ALPHABET, LEVELS, MAX_TRIES, WORD_LENGTH, letters, normalize, upper, type Lang, type Level, type Mark } from '@swm/shared/games/five-frames';
 import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { lang as pageLang } from '../i18n.ts';
@@ -96,6 +96,8 @@ const TEXT = {
     seeBoard: 'See the boards',
     how1: 'The same word for everyone',
     how1Line: 'Two to six players, each on their own board: seven tries to find the same five-letter word, like Five Frames.',
+    how4: 'Which words count',
+    how4Line: 'Real, everyday words only: no names of people or places (like Fırat), abbreviations, slang or rude words. The word is a base form, never a plural. The lobby sets the level, the time and the points: 7 for the first guess down to 1, +3 for the first to find it.',
     how2: 'Marks, never letters',
     how2Line: 'You see the others’ marks as they come, never their letters: ✓ right place, • in the word, × not in it.',
     how3: 'First to find it wins',
@@ -111,6 +113,16 @@ const TEXT = {
     places: 'Places',
     noWord: 'no word',
     lobbyTime: 'Time limit',
+    lobbyLevel: 'Words',
+    levelTitle: 'Easy: everyday words. Medium: everyday and known words, no odd ones. Hard: known and rare words. Mixed: all of them.',
+    level_easy: 'Easy words',
+    level_medium: 'Medium words',
+    level_hard: 'Hard words',
+    level_mixed: 'Mixed words',
+    levelTag_easy: 'Easy',
+    levelTag_medium: 'Medium',
+    levelTag_hard: 'Hard',
+    levelTag_mixed: 'Mixed',
     timeOff: 'No time limit',
     timeMinutes: '{n} min a game',
     timeTitle: 'When the time runs out, everyone who hasn’t found the word is out.',
@@ -187,6 +199,8 @@ const TEXT = {
     seeBoard: 'Tahtalara bak',
     how1: 'Herkese aynı kelime',
     how1Line: 'İki ile altı oyuncu, herkes kendi tahtasında: aynı beş harfli kelimeyi bulmak için yedi hak, Beş Kare gibi.',
+    how4: 'Hangi kelimeler geçerli',
+    how4Line: 'Sadece gerçek, günlük kelimeler: kişi ya da yer adları (Fırat gibi), kısaltmalar, argo ve kaba sözler yok. Kelime her zaman yalın hâldedir, çoğul değil. Lobide seviye, süre ve puan: ilk tahminde 7’den 1’e, ilk bulana +3.',
     how2: 'İşaretler var, harfler yok',
     how2Line: 'Diğerlerinin işaretlerini anında görürsün, harflerini asla: ✓ doğru yerde, • kelimede var, × yok.',
     how3: 'Önce bulan kazanır',
@@ -201,6 +215,16 @@ const TEXT = {
     places: 'Sıralama',
     noWord: 'bulamadı',
     lobbyTime: 'Süre sınırı',
+    lobbyLevel: 'Kelimeler',
+    levelTitle: 'Kolay: günlük kelimeler. Orta: günlük ve bilinen kelimeler, tuhafları yok. Zor: bilinen ve nadir kelimeler. Karışık: hepsi.',
+    level_easy: 'Kolay kelimeler',
+    level_medium: 'Orta kelimeler',
+    level_hard: 'Zor kelimeler',
+    level_mixed: 'Karışık kelimeler',
+    levelTag_easy: 'Kolay',
+    levelTag_medium: 'Orta',
+    levelTag_hard: 'Zor',
+    levelTag_mixed: 'Karışık',
     timeOff: 'Süre sınırı yok',
     timeMinutes: 'Oyun başı {n} dk',
     timeTitle: 'Süre bitince kelimeyi bulamayan herkes oyun dışı kalır.',
@@ -270,6 +294,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     label.htmlFor = id;
     return el('div', { class: 'duel-lobby-lang game-setting duel-pick' }, label, select);
   }
+  const levelPick = pick(LEVELS, (v) => tx(`level_${v}` as TextKey), () => tx('lobbyLevel'), () => tx('levelTitle'), (s) => s.level, (v) => ({ t: 'settings', level: v as Level }));
   const gamesPick = pick([1, 3] as const, (v) => (v === 1 ? tx('oneGame') : tx('bestOf3')), () => tx('lobbyGames'), () => '', (s) => s.bestOf, (v) => ({ t: 'settings', bestOf: v }));
   const hardPick = pick([false, true] as const, (v) => (v ? tx('hardOn') : tx('hardOff')), () => tx('hardMode'), () => tx('hardTitle'), (s) => s.hard, (v) => ({ t: 'settings', hard: v }));
   const timePick = pick(DUEL_TIMES, (n) => (n ? tx('timeMinutes', { n: n / 60 }) : tx('timeOff')), () => tx('lobbyTime'), () => tx('timeTitle'), (s) => s.time, (v) => ({ t: 'settings', time: v }));
@@ -286,6 +311,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         'div',
         { class: 'duel-lobby-settings game-settings' },
         el('div', { class: 'duel-lobby-lang game-setting' }, lobbyLangLabel, el('span', { class: 'game-chips', role: 'group' }, ...lobbyLangButtons)),
+        levelPick,
         gamesPick,
         timePick,
         hardPick,
@@ -656,7 +682,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
         : `${a.name} ${a.points} – ${b.points} ${b.name}`;
     // FW2: the bar counts points (the tooltip: everyone's, and how they are won).
     score0.title = `${seated().map((i) => `${s.players[i]!.name} ${tx('points', { n: s.players[i]!.points })}`).join(' · ')}\n${tx('pointsTitle')}`;
-    tag.textContent = s.phase === 'wait' ? '' : `${s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice')}${s.hard ? ` · ${tx('hardLine')}` : ''}`;
+    tag.textContent = s.phase === 'wait' ? '' : `${s.daily !== null ? tx('daily', { n: s.daily }) : tx('practice')} · ${tx(`levelTag_${s.level}` as TextKey)}${s.hard ? ` · ${tx('hardLine')}` : ''}`;
     langButtons.forEach((btn) => {
       const on = btn.dataset.lang === s.lang;
       btn.classList.toggle('on', on);
@@ -865,6 +891,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     { art: how1, title: tx('how1'), line: tx('how1Line') },
     { art: how2, title: tx('how2'), line: tx('how2Line') },
     { art: how3, title: tx('how3'), line: tx('how3Line') },
+    { art: how1, title: tx('how4'), line: tx('how4Line') },
   ]);
   const offKeys = keepKeys(box, board);
   return () => {
