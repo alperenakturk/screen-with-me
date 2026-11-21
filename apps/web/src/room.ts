@@ -4365,13 +4365,11 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
       send({ t: 'recap' });
       return;
     }
-    // RC2: one press: the host's starts the show for the room (preparing is the 3-2-1), a guest's asks the host.
+    // RC2 (owner's pick A): one press by anyone starts the show for the whole room (preparing is the 3-2-1), once per
+    // session.
+    void anchor;
     renderRecap();
-    if (amHost()) send({ t: 'recap-show' });
-    else {
-      send({ t: 'recap-ask' });
-      flashHint(anchor, t('recap.asked'));
-    }
+    send({ t: 'recap-show' });
   }
   for (const sel of ['#dock-recap', '#shorts-recap', '#recap-open']) $(sel).addEventListener('click', (event) => openRecapFlow(event.currentTarget as HTMLElement));
   function playRecapAlone(recap: Recap): void {

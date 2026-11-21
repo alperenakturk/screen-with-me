@@ -858,9 +858,10 @@ export class Room extends DurableObject<Env> {
         return;
       }
       case 'recap-show': {
-        if (!this.isHost(ws)) return this.sendTo(ws, { t: 'error', code: 'not_host' });
+        // Card RC2 (owner's pick A, 21 Nov 2026): anyone in the room starts it once it is ready, once per session (the
+        // `shownAt` lock below). Only the host's Test Lab may skip the 2 h.
         this.statsTick();
-        const lab = message.lab === true && (this.lab ||= await labRemembered(this.ctx.storage, this.env));
+        const lab = message.lab === true && this.isHost(ws) && (this.lab ||= await labRemembered(this.ctx.storage, this.env));
         if (this.stats.data.shownAt) return this.sendTo(ws, { t: 'error', code: 'recap_shown' });
         if (!lab && !this.stats.ready()) return this.sendTo(ws, { t: 'error', code: 'recap_not_ready' });
         const now = Date.now();
