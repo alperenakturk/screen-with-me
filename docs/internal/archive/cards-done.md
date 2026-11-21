@@ -3131,6 +3131,13 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
 - Done when: no true / false left (test); closest scoring unit-tested; finale e2e; texts EN + TR.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/579 (Game Studio "Quiz"). The finale counts as a round (its winner gets a round win, its points add up). Filling the video's place (GFIT1 `data-fill`) follows in a small second PR.
 
+### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
+- Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.
+- What: the shared stage rule above (`stage.ts`, shared lobby / side column CSS: one narrow side width for all
+  games), always open in the video's place; then Classics (chess, dama, backgammon, reversi, XOX, Four) fills it.
+- Done when: every table opens in the video's place; Classics' board is the biggest square that fits; sweep shots.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/571 (stage) + https://github.com/alperenakturk/screen-with-me/pull/583 (Classics).
+
 ### FW2. Five Frames Duel / co-op: timer, points, levels, more words (owner, 21 Nov 2026; Game Studio "Five Frames")
 - Bug: two players both showed "2nd" though one finished first.
 - What: (1) a time limit chosen when the table opens; time up = out; (2) points: first to solve +3, plus 7 → 1 by the

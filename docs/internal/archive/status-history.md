@@ -514,6 +514,12 @@ the open table ("Bu masaya 🤖 bir arkadaş otursun"); "🤖 arkadaşlar masala
 Saved 31 Oct 2026. Tick items here (or tell Claude the result and it ticks them). The owner talks Turkish; Claude
 explains each step in Turkish when asked. Details and reasons: `browser-support.md`.
 
+**Superseded 21 Nov 2026 (GFIT1: every table opens in the video's place; GW3 had already replaced ⛶; see 27aa, 27aw).**
+- [ ] 27k. [GW2] On a computer with a friend and a YouTube video playing: open Classics from 🎮: it fills the whole
+  screen and the video pauses for both of you. Press 🪟 (or Esc): a frame at the right edge, the video plays again.
+  Drag the frame over the video: it stays there. Open Sea Battle: it opens as a frame (the mode you used last); ⛶ in
+  its head gives it the whole screen again. Snack Bar: a frame you can drag over the video too.
+
 **0.9.97.121 (lane W: the side game window lines up with the chat column; fold into the next round).**
 - [ ] W121. Laptop (1366 and a big screen): open Snack Bar from 🎮. Its window covers the chat column from the top
   down to just above the message box (no strip of chat around it) and you can still type a message. Drag it by its
