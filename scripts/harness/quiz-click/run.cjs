@@ -33,6 +33,9 @@ const until = async (fn, ms = 15000) => {
   let last = null;
   let quizUrl = null;
   const sent = [];
+  // The lab messages the page sends, with the phase it had seen ("jump to the result card" must stop at the end).
+  const labSent = [];
+  let overSeen = false;
   page.on('websocket', (ws) => {
     if (!/\/api\/quiz\//.test(ws.url())) return;
     quizUrl = ws.url();
@@ -40,12 +43,14 @@ const until = async (fn, ms = 15000) => {
       try {
         const m = JSON.parse(String(f.payload));
         if (m.t === 'state') last = m;
+        if (m.t === 'state' && m.phase === 'over') overSeen = true;
       } catch {}
     });
     ws.on('framesent', (f) => {
       try {
         const m = JSON.parse(String(f.payload));
         if (m.t === 'answer') sent.push(m);
+        if (m.t === 'lab') labSent.push(overSeen ? `after the end (${last?.phase} ${last?.n})` : '');
       } catch {}
     });
   });
@@ -128,6 +133,10 @@ const until = async (fn, ms = 15000) => {
   });
   const shown = await page.evaluate(() => document.querySelector('#game-stage .quiz-question')?.textContent);
   check(fresh >= 2 && shown === last.question, 'the rematch question is new and its options can be pressed', `${fresh} ${shown} / ${last.question}`);
+  // QZ5b: "jump to the result card" stops at the end of its game: a rematch started before its next step (350 ms)
+  // got its first question skipped (the options above were then the reveal's, none pressable: CI, 21 Nov 2026).
+  await wait(800);
+  check(!labSent.some(Boolean) && last.phase === 'question' && last.n === 1, 'the lab\'s "jump to the result card" leaves the rematch alone', `${labSent.filter(Boolean).join(', ') || 'no skip after the end'} · now ${last.phase} ${last.n}`);
 
   check(errors.length === 0, 'no page errors', errors.join(' | '));
   for (const o of Object.values(others)) o.ws.close();
