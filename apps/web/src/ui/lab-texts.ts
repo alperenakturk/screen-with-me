@@ -149,6 +149,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Together card: compact beside a game window?', tr: 'Birlikte kartı: oyun penceresinin yanında kısa mı?' },
     help: { en: 'Writes whether the Together card is compact (a game window lies over the side panel) and whether "Join voice" and "Share" are clear. "on" / "off" hold it that way, "auto" follows the game window again.', tr: 'Birlikte kartının kısa olup olmadığını (bir oyun penceresi yan panelin üstünde) ve "Sese katıl" ile "Paylaş"ın açıkta olup olmadığını yazar. "on" / "off" kartı öyle tutar, "auto" yeniden oyun penceresine uyar.' },
   },
+  'together.layout': {
+    title: { en: 'Together card: its buttons, names and sizes', tr: 'Birlikte kartı: düğmeleri, adları ve boyları' },
+    help: { en: 'Writes every visible button of the Together card with its name and size, any without a name, any that spills out of the card, and whether the old title or counter is still there. "sound" opens the 🔊 sound settings window first and says whether it fits on the screen.', tr: 'Birlikte kartındaki her görünen düğmeyi adı ve boyuyla, adı olmayanları, karttan taşanları ve eski başlık ya da sayacın hâlâ olup olmadığını yazar. "sound" önce 🔊 ses ayarları penceresini açar ve ekrana sığıp sığmadığını söyler.' },
+  },
   'phoneRoom.gamesTab': {
     title: { en: 'Phone Games tab: no page scroll, the strip\'s buttons whole', tr: 'Telefon Oyunlar sekmesi: sayfa kaymaz, şeritteki düğmeler tam' },
     help: { en: 'With a game open in the Games tab: writes whether the page scrolls (it must not) and whether the empty room\'s Search / Invite buttons are whole inside the video strip, above "Back to video".', tr: 'Oyunlar sekmesinde bir oyun açıkken: sayfanın kayıp kaymadığını (kaymamalı) ve boş odanın Ara / Davet et düğmelerinin video şeridinde, "Videoya dön"ün üstünde tam görünüp görünmediğini yazar.' },

@@ -3245,31 +3245,72 @@ html.shorts-view .footer {
 
 /* ---- "Birlikte" kartı: odadakiler (seste olanlar yeşil halkalı), ses/kamera düğmeleri, ekran paylaşımı ---- */
 .together-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px;
 }
 
-.together-head {
+/* Card TG2: 🔊 sound settings, a small window under the voice buttons (push-to-talk, talk window, volume, devices). */
+.sound-pop {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  z-index: 30;
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+}
+
+.sound-pop[hidden],
+.sound-pop [hidden] {
+  display: none !important;
+}
+
+.sound-pop-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
-.together-card .together-title {
+.sound-pop-head h4 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  text-transform: none;
-  letter-spacing: 0;
+  font-size: 15px;
 }
 
-.together-head .voice-limit {
-  flex-basis: auto;
-  text-align: right;
+.sound-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 32px;
+  font-size: 14px;
+}
+
+.sound-volume input {
+  flex: 1 1 auto;
+  max-width: 55%;
+}
+
+.sound-pop .talk-window-btn,
+.sound-pop .sound-devices {
+  align-self: stretch;
+  justify-content: center;
+}
+
+.sound-note {
+  margin: 0;
+}
+
+.voice-sound.on {
+  border-color: var(--accent);
 }
 
 .voice-row[hidden] {
@@ -3290,7 +3331,6 @@ html.shorts-view .footer {
 
 .voice-on {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
@@ -3453,9 +3493,9 @@ html.shorts-view .footer {
 
 /* Kişi sınırı: "Seste 3/6 · 📷 1/4" (hep görünür; dolunca kırmızı, son yerde sarı) */
 .voice-ptt {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
   color: var(--chrome-text);
   cursor: pointer;
   user-select: none;
@@ -6941,6 +6981,20 @@ html.in-room .topbar-right > .lang {
   gap: 8px;
 }
 
+/* TG2: the voice icons and Share in one row of the narrow side panel (a stream's line still takes its own place). */
+html:not(.phone) .together-actions:not(:has(.live-card.active)) {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+html:not(.phone) .together-actions .voice-on {
+  gap: 4px;
+}
+
+html:not(.phone) .together-actions :is(.voice-on .small-btn, .live-share) {
+  padding-inline: 8px;
+}
+
 .together-actions .live-card {
   padding-top: 0;
   border-top: 0;
@@ -6969,7 +7023,7 @@ html:not(.phone) .together-card:has(.live-card.active) > * {
 
 html:not(.phone) .together-card:has(.live-card.active) > .together-strip {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 1;
 }
 
 html:not(.phone) .together-card:has(.live-card.active) > .together-actions {
@@ -6982,7 +7036,7 @@ html:not(.phone) .together-card:has(.live-card.active) .together-actions > .voic
 
 html:not(.phone) .together-actions .live-card.active {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   align-self: center;
   min-width: 0;
   padding: 0 0 0 10px;
@@ -10044,7 +10098,8 @@ html.phone .speed-pop .speed {
   }
 
   .voice-ptt,
-  .ptt-key {
+  .ptt-key,
+  .ptt-key-row {
     display: none !important;
   }
 }
@@ -11634,17 +11689,12 @@ html:not(.phone) .together-card.compact {
   padding: 10px 12px;
 }
 
-html:not(.phone) .together-card.compact > :is(.together-head, .together-strip) {
+html:not(.phone) .together-card.compact > .together-strip {
   display: contents;
 }
 
-html:not(.phone) .together-card.compact .together-title {
-  grid-column: 1;
-  grid-row: 1;
-}
-
 html:not(.phone) .together-card.compact .voice-people {
-  grid-column: 2;
+  grid-column: 1 / -1;
   grid-row: 1;
   flex-wrap: nowrap;
   gap: 4px;
@@ -11653,24 +11703,20 @@ html:not(.phone) .together-card.compact .voice-people {
   padding: 3px;
 }
 
-html:not(.phone) .together-card.compact .voice-limit {
-  grid-column: 3;
-  grid-row: 1;
-}
-
 html:not(.phone) .together-card.compact > .together-actions {
   display: flex;
   grid-column: 1 / -1;
   grid-row: 2;
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 html:not(.phone) .together-card.compact .voice-on {
   flex-wrap: nowrap;
+  gap: 4px;
 }
 
-html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .ptt-key, .talk-window-btn, .voice-hint) {
+html:not(.phone) .together-card.compact :is(.together-name, .voice-hint) {
   display: none;
 }
 
@@ -11689,7 +11735,7 @@ html:not(.phone) .together-card.compact .together-more {
 }
 
 html:not(.phone) .together-card.compact .voice-on {
-  gap: 6px;
+  gap: 4px;
 }
 
 /* In voice the compact card's one row is the voice buttons and Share: Share shows its icon only (its name is kept for

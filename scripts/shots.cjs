@@ -324,7 +324,7 @@ const SCREENS = {
   },
   // Card TG1: a side game's window over the side panel (Five Frames, the tallest), in voice: the compact Together card.
   'together-compact': {
-    what: 'Card TG1: in voice with Five Frames open beside the chat: the Together card is compact (title, small faces and counts in one row; mic, deafen, camera, Leave and Share in one row), clear above the game window',
+    what: 'Card TG1: in voice with Five Frames open beside the chat: the Together card is compact (TG2: small faces in one row; mic, deafen, camera, 🔊, Leave and Share icons in one row), clear above the game window',
     room: true,
     sizes: ['laptop', 'desktop'],
     after: async (p) => {
@@ -354,18 +354,30 @@ const SCREENS = {
   // Card VC4: past 4 cameras the chat shows one note (the Test Lab's voice.crowdNote), room activity lines hidden.
   'voice-crowd-note': { what: 'Card VC4: the chat note shown once when a room has more than 4 cameras or 6 people in voice (room activity lines hidden: only the note shows)', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => { localStorage.setItem('opt:chatEvents', '0'); return window.__swmLab.run('voice.crowdNote', '5 5'); }); } },
   // Card PTT1: in voice with push-to-talk on and the key changed to B: the key button and 🪟 Talk window show.
-  'voice-ptt': {
-    what: 'Card PTT1: in voice with push-to-talk on and its key changed to B (Test Lab voice.pttKey): the key button shows "B" and a "🪟 Talk window" button opens a small window to talk from another tab',
+  // Card TG2: the Together card in voice (no title, no counter, icon buttons) and its 🔊 sound settings window.
+  'together': {
+    what: 'Card TG2: in voice, the Together card: faces, then mic, deafen, camera, 🔊 sound settings, Leave (an icon with a name) and Share (an icon); no "Together" title and no "Voice 1/8" counter',
     room: true,
-    sizes: ['laptop', 'desktop', 'phone'],
+    sizes: ['laptop', 'desktop', 'tablet', 'phone'],
+    after: async (p) => {
+      await p.evaluate(() => {
+        localStorage.setItem('opt:voiceCheck', 'skip');
+        localStorage.setItem('opt:ipNotice:voice', '1');
+      });
+      await p.evaluate(() => document.getElementById('voice-join').click());
+      await p.waitForFunction(() => !document.getElementById('voice-on').hidden, null, { timeout: 15000 });
+    },
+  },
+  'sound-settings': {
+    what: 'Card TG2: the 🔊 sound settings window open under the voice buttons: push-to-talk switch, its key (B), 🪟 Talk window, voices volume, "Microphone, camera and speaker", a note that noise suppression is always on',
+    room: true,
+    sizes: ['laptop', 'desktop', 'tablet'],
     after: async (p) => {
       await p.evaluate(() => {
         localStorage.setItem('opt:voiceCheck', 'skip');
         localStorage.setItem('opt:ipNotice:voice', '1');
         localStorage.setItem('opt:ptt', '1');
       });
-      await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
-      await p.evaluate(() => window.__swmLab.run('voice.pttKey', 'KeyB'));
       await p.evaluate(() => {
         const box = document.getElementById('voice-ptt');
         box.checked = true;
@@ -373,6 +385,9 @@ const SCREENS = {
         document.getElementById('voice-join').click();
       });
       await p.waitForFunction(() => !document.getElementById('voice-on').hidden, null, { timeout: 15000 });
+      await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
+      await p.evaluate(() => window.__swmLab.run('voice.pttKey', 'KeyB'));
+      await p.evaluate(() => window.__swmLab.run('together.layout', 'sound'));
     },
   },
   'camera-refused': { what: 'Card CAM2: 📷 pressed and the browser refused the camera: a message next to the 📷 says why and how to allow it', room: true, after: (p) => camera(p, 'blocked') },
@@ -387,9 +402,9 @@ const SCREENS = {
 const SCREEN_FOR = [
   [/^docs\/|\.md$|^\.github\/|^scripts\/(?!shots)/, []],
   [/^apps\/web\/src\/ui\/chat\.ts$/, ['chat-delete', 'room']],
-  [/^apps\/web\/src\/ui\/(ptt-key|talk-window)/, ['voice-ptt', 'room']],
-  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['voice-ptt', 'camera-on', 'camera-grid', 'camera-grid-4', 'camera-refused', 'room']],
-  [/^apps\/web\/src\/ui\/together-compact/, ['together-compact', 'room']],
+  [/^apps\/web\/src\/ui\/(ptt-key|talk-window)/, ['sound-settings', 'together', 'room']],
+  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['together', 'sound-settings', 'camera-on', 'camera-grid', 'camera-grid-4', 'camera-refused', 'room']],
+  [/^apps\/web\/src\/ui\/together-compact/, ['together', 'together-compact', 'room']],
   [/^apps\/web\/public\/help/, ['help']],
   [/^apps\/web\/public\/privacy/, ['privacy']],
   [/^apps\/web\/public\/terms/, ['terms']],

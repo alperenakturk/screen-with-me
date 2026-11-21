@@ -1156,7 +1156,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   alone" bubble (`isAlone`, `ui/hint.ts` `flashHint`); on the server there is no "everyone ready" wait when fewer than
   2 distinct cids are present.
 - **Voice chat (`packages/shared/src/voice.ts`, `voice-p2p.ts`, site `ui/voice.ts`, plan `docs/internal/ses-goruntu.md`):**
-  "🎙 Sese katıl" in the "Birlikte" card; after joining 🎙/🔇 and "Ayrıl"; the card shows avatars of people in the room
+  "🎙 Sese katıl" in the Together card; after joining 🎙/🔇, 🎧, 📷, 🔊 and Leave (icons since TG2); the card shows avatars of people in the room
   (those in voice have a green ring, the speaker glows, `getSynchronizationSources`), 🎙/🔇 in the people list. Those
   who didn't join hear nobody. Member field `voice: {mic, track?}` (no version bump); `{t:'voice', on, mic}`. Transport
   is `welcome.voiceMode`: **p2p** (default, no card/account): each person has a separate WebRTC connection with
@@ -2230,7 +2230,27 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   switch and the headphones hint hidden; in voice Share shows its icon only, its name kept as `title` and for screen
   readers). The share menu lifts the side panel over the game window (`z-index` 960) while open. Test Lab
   `together.compact` (🎬; `on` / `off` / `auto`, reports compact, game over panel, Join / Share clear). Harness
-  `scripts/harness/together-compact/run.cjs` (`site` job), shots screen `together-compact`.
+  `scripts/harness/together-compact/run.cjs` (`site` job), shots screen `together-compact`. Since TG2 the compact
+  card is the faces in one row and the six icon buttons + Share in the next.
+- **A cleaner Together card + 🔊 sound settings (card TG2, owner, 21 Nov 2026):** `#together` has no title (its name
+  stays as `title` / `aria-label`) and no "Voice 1/8 · 📷 0/6" counter (VC4's chat note says when a room has many;
+  a full room still dims Join, and pressing it explains; `voice.limit` / `camLimit` / `lastSeat` texts removed). In
+  voice the row is 🎙, 🎧, 📷, **🔊** (`#voice-sound`) and **Leave** (`#voice-leave`), all line icons with names
+  (`data-i18n-title` → `title` + `aria-label`), then **Share** (`#live-share`, screen icon only, no "▾"), one row on a
+  computer (`.together-actions` no wrap unless a stream's line is shown; buttons 8 px side padding, 4 px gaps).
+  🔊 opens `#sound-pop` (`role="dialog"`, `data-island` so it shows on the film page, absolute under the buttons
+  inside the card): push-to-talk switch (`#voice-ptt`, `opt:ptt`), its key (`#voice-ptt-key` row, only while on;
+  card PTT1), 🪟 Talk window (PTT1), **voices volume** (`#voice-out-volume`, 0–100, `opt:voicesVolume`, a factor in
+  `volumeOf` for every voice here, also the extension's volumes on the film page), "🎛 Microphone, camera and speaker"
+  (the existing device check: `changeDevices` / on the film page `changeShellDevices`) and a note that noise
+  suppression and echo cancellation are always on (`AUDIO` constraints; no switch: Chrome doesn't reliably change
+  them on a live track). No mic input volume (auto gain control levels it; a gain stage on the sent track would be
+  new audio processing). Esc, ✕, 🔊 again, a click outside or leaving voice closes it; focus goes into it on open and
+  back to 🔊 on close. Phones keep their own strip (push-to-talk stays computer-only). The profile menu is unchanged
+  (language, shortcuts, name, avatar, theme, recaps, links: nothing of sound lives there). Test Lab `together.layout`
+  (🎬; every visible control with name and size, unnamed ones, ones outside the card, whether the old title /
+  counter is back; `sound` opens the window and says whether it fits). Shots `together`, `sound-settings`; harnesses
+  `together-compact`, `live-card`.
 - **Cameras on a laptop (card CAM2, the owner, 19 Nov 2026: "the camera doesn't show on my laptop"):** three causes,
   all fixed. (1) The camera window's "−" (`opt:camFolded`) was remembered for good, so every later camera came as a bare
   "📷 1" strip: `createCamWindow` opens the window whenever cameras come back after none (`update`), and `reveal()`
@@ -2583,7 +2603,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     room name (`.room-title-dot` green/yellow/red, short text next to it when not connected, click reconnects; on
     phones only the dot). Language and ⟳ sit at the top of the profile menu (`.profile-actions`); ⚙️ is its own button
     right of the profile picture (`#settings-open`, 0.9.87).
-  - **Together card:** "🎙 Sese katıl" + "🖥️ Paylaş ▾" on the same row (`.together-actions`); the Share menu has screen /
+  - **Together card:** "🎙 Sese katıl" + 🖥️ Share (an icon since TG2) on the same row (`.together-actions`); the Share menu has screen /
     camera and a limits note; while streaming the row is full width (`.live-card.active`), quality only for my own
     screen stream. People who can't share (shell, phones without screen sharing) don't see this part while idle.
   - Fixes: an empty pin strip takes no space (`.pin-strip.empty` hidden), the "same spot" badge is one line.

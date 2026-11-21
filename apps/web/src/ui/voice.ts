@@ -97,7 +97,6 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   let deaf = load(deafKey) === '1';
   const peopleBox = root.querySelector<HTMLElement>('#voice-people')!;
   const camButton = root.querySelector<HTMLButtonElement>('#voice-cam')!;
-  const limitEl = root.querySelector<HTMLElement>('#voice-limit')!;
   const camsBox = root.querySelector<HTMLElement>('#voice-cams')!;
   // Kameralar kartta, sayfada yüzen pencerede ya da tam ekranda videonun içinde (sürüklenir, boyutlandırılır).
   // My mic, camera and stream outside the card are the dock's and the Shorts bar's quick buttons (0.9.91.5: no longer
@@ -233,7 +232,49 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
   pttBox.checked = ptt;
   /** Card PTT1: the push-to-talk key, changed by pressing it (ptt-key.ts). */
   const pttKeyBtn = root.querySelector<HTMLButtonElement>('#voice-ptt-key')!;
+  const pttKeyRow = pttKeyBtn.closest<HTMLElement>('.ptt-key-row') ?? pttKeyBtn;
   pttKeyButton(pttKeyBtn);
+  /**
+   * Card TG2: 🔊 sound settings, a small window under the button (Discord-like): push-to-talk and its key, the talk
+   * window, how loud the voices play, the devices. Esc, ✕, 🔊 again or a click outside closes it.
+   */
+  const soundButton = root.querySelector<HTMLButtonElement>('#voice-sound')!;
+  const soundPop = root.querySelector<HTMLElement>('#sound-pop')!;
+  const outVolume = root.querySelector<HTMLInputElement>('#voice-out-volume')!;
+  setIcon(soundButton, 'volume');
+  setIcon(root.querySelector<HTMLElement>('#voice-leave')!, 'leave');
+  function setSoundPop(open: boolean): void {
+    if (soundPop.hidden === !open) return;
+    soundPop.hidden = !open;
+    soundButton.setAttribute('aria-expanded', String(open));
+    soundButton.classList.toggle('on', open);
+    if (open) {
+      const r = soundButton.getBoundingClientRect();
+      const card = soundPop.offsetParent?.getBoundingClientRect();
+      soundPop.style.top = card ? `${Math.round(r.bottom - card.top + 6)}px` : '';
+      soundPop.querySelector<HTMLElement>('input, button:not([hidden])')?.focus();
+    }
+    dispatchEvent(new Event('swm-layout'));
+  }
+  soundButton.addEventListener('click', () => setSoundPop(soundPop.hidden !== false));
+  root.querySelector('#sound-pop-close')!.addEventListener('click', () => {
+    setSoundPop(false);
+    soundButton.focus();
+  });
+  soundPop.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    event.stopPropagation();
+    setSoundPop(false);
+    soundButton.focus();
+  });
+  document.addEventListener('pointerdown', (event) => {
+    const target = event.target as Node;
+    if (!soundPop.hidden && !soundPop.contains(target) && !soundButton.contains(target)) setSoundPop(false);
+  });
+  root.querySelector('#voice-devices')!.addEventListener('click', () => {
+    setSoundPop(false);
+    void (isShell ? changeShellDevices() : changeDevices());
+  });
   /** Card PTT1: the talk window (talk-window.ts), for talking while another tab is in front. */
   const talkWinBtn = root.querySelector<HTMLButtonElement>('#voice-talk-window')!;
   const talkWindow = createTalkWindow({
@@ -565,7 +606,8 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     micButton.classList.toggle('ptt', ptt);
     micButton.classList.toggle('talking', ptt && talking);
     setPttLive(ptt && active);
-    pttKeyBtn.hidden = !ptt;
+    pttKeyRow.hidden = !ptt;
+    if (!active) setSoundPop(false);
     talkWinBtn.hidden = !active || !canTalkWindow();
     talkWinBtn.setAttribute('aria-pressed', String(talkWindow.isOpen()));
     talkWindow.update();
@@ -608,24 +650,11 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     );
     peopleBox.title = '';
     unreachableNote.hidden = badLinks.size === 0;
-    limitEl.hidden = !available;
-    // Sınırlar hep görünür: "Seste 3/6 · 📷 1/4" (neden sınır var: üstüne gelince). Dolunca düğme soluk, basınca açıklama.
+    // Card TG2: no "Voice 3/8 · 📷 1/6" counter any more (VC4's chat note says when a room has many); a full room
+    // still dims Join, and pressing it explains.
     const max = voiceMax();
     const cams = members.filter((m) => m.voice?.cam).length;
-    const camsShown = mode === 'p2p' && !!client.setCam && inVoice.length > 0;
-    // The camera count carries our line icon, not the 📷 emoji (Windows drew it as an empty box).
-    limitEl.replaceChildren(t('voice.limit', { n: inVoice.length, max }));
-    if (camsShown) {
-      const camCount = el('span', { class: 'voice-limit-cam' }, t('voice.camLimit', { n: cams, max: CAM_MAX }));
-      setIcon(camCount, 'cam');
-      limitEl.append(' · ', camCount);
-    }
-    limitEl.title = t('voice.limitTitle', { max }) + (camsShown ? `\n${t('voice.camLimitTitle', { max: CAM_MAX })}` : '');
     const full = !active && inVoice.length >= max;
-    const left = max - inVoice.length;
-    limitEl.classList.toggle('full', inVoice.length >= max);
-    limitEl.classList.toggle('near', !full && left === 1 && !active);
-    if (!active && !full && left === 1) limitEl.append(` · ${t('voice.lastSeat', { n: left })}`);
     joinButton.classList.toggle('is-full', full);
     // Kamera düğmesi sadece eşler arası seste (Cloudflare yolunda ve eski eklentinin film sayfasında görüntü yok).
     camButton.hidden = !active || !client.setCam;
@@ -826,8 +855,19 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
     if (isMyOtherTab(memberId) || silenced || deaf) return 0;
     const member = members.find((m) => m.id === memberId);
     const s = member ? sound[personOf(member)] : undefined;
-    return s?.m ? 0 : Math.min(1, Math.max(0, s?.v ?? 1)) * master;
+    return s?.m ? 0 : Math.min(1, Math.max(0, s?.v ?? 1)) * master * outGain;
   }
+  /** Card TG2: how loud all voices play here (the 🔊 window's slider), 0–1, per browser. */
+  let outGain = (() => {
+    const v = Number(load('opt:voicesVolume') ?? '100');
+    return Number.isFinite(v) ? Math.min(1, Math.max(0, v / 100)) : 1;
+  })();
+  outVolume.value = String(Math.round(outGain * 100));
+  outVolume.addEventListener('input', () => {
+    outGain = Math.min(1, Math.max(0, Number(outVolume.value) / 100));
+    save('opt:voicesVolume', String(Math.round(outGain * 100)));
+    applyVolumes();
+  });
   function setVolume(audio: HTMLAudioElement, memberId: string): void {
     const volume = volumeOf(memberId);
     audio.volume = volume;
