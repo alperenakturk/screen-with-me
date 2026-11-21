@@ -93,3 +93,10 @@
 #game-stage.in-tab .dg-page .draw-gains:has(> li:nth-child(5)) li { padding: 3px 8px; }
 /* The guesses keep two lines at least, even with eight players listed. */
 #game-stage.in-tab .dg-page.draw-page:not(.draw-lobby):not(.quiz-page) .draw-feed { min-height: 44px; }
+
+/* A long two-word hint ("_ _ _ _ _ _ _   _ _ _ _ _ _ _") was one unbreakable line wider than a phone: the stage then
+   scaled the whole game down to fit it (0.73, the chat at 10 px). It wraps between its letters now, in the middle
+   column that takes what the round and the timer leave. */
+#game-stage .dg-page .draw-top { grid-template-columns: auto minmax(0, 1fr) auto; }
+#game-stage .dg-page .draw-hint { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+#game-stage.in-tab .dg-page .draw-hint { font-size: 18px; letter-spacing: 0.04em; }
