@@ -41,8 +41,8 @@ const TEXT = {
     oneGame: 'One game',
     bestOf3: 'Best of three',
     hardMode: 'Hard mode',
-    hardOff: 'Off',
-    hardOn: 'On',
+    hardOff: 'Hard mode: off',
+    hardOn: 'Hard mode: on',
     hardTitle: 'Letters you found must be used in your next guesses.',
     hardMiss: 'Hard mode: use {letter}',
     hardMissAt: 'Hard mode: {letter} goes in place {n}',
@@ -111,7 +111,7 @@ const TEXT = {
     places: 'Places',
     noWord: 'no word',
     lobbyTime: 'Time limit',
-    timeOff: 'No limit',
+    timeOff: 'No time limit',
     timeMinutes: '{n} min a game',
     timeTitle: 'When the time runs out, everyone who hasn’t found the word is out.',
     timeLeft: 'Time left: {t}',
@@ -132,8 +132,8 @@ const TEXT = {
     oneGame: 'Tek oyun',
     bestOf3: 'Üçte iki',
     hardMode: 'Zor mod',
-    hardOff: 'Kapalı',
-    hardOn: 'Açık',
+    hardOff: 'Zor mod: kapalı',
+    hardOn: 'Zor mod: açık',
     hardTitle: 'Bulduğun harfleri sonraki tahminlerinde kullanmalısın.',
     hardMiss: 'Zor mod: {letter} harfini kullan',
     hardMissAt: 'Zor mod: {letter} {n}. yerde olmalı',
@@ -201,7 +201,7 @@ const TEXT = {
     places: 'Sıralama',
     noWord: 'bulamadı',
     lobbyTime: 'Süre sınırı',
-    timeOff: 'Sınırsız',
+    timeOff: 'Süre sınırı yok',
     timeMinutes: 'Oyun başı {n} dk',
     timeTitle: 'Süre bitince kelimeyi bulamayan herkes oyun dışı kalır.',
     timeLeft: 'Kalan süre: {t}',
@@ -296,6 +296,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const watchers = el('span', { class: 'duel-watchers' });
   // FW2: the time left of the running game (from the server's `left`, counted down here).
   const clock = el('span', { class: 'duel-clock', role: 'timer' });
+  // A phone race with three or more hides the bar (duel.css); this copy beside Stub's line shows the time there.
+  const clock2 = el('span', { class: 'duel-clock duel-clock-ref', 'aria-hidden': 'true' });
   let endsAt = 0;
   const bar = el('div', { class: 'ff-head duel-bar' }, score0, tag, clock, el('span', { class: 'ff-gap' }), watchers, langs);
 
@@ -332,7 +334,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   const actions = el('div', { class: 'duel-actions' });
   const tray = el('div', { class: 'ff-tray' });
   // The table id is no secret (the room lists it); harnesses join it as a second player.
-  const refRow = el('div', { class: 'duel-ref' }, referee, status);
+  const refRow = el('div', { class: 'duel-ref' }, referee, clock2, status);
   const box = el('div', { class: 'ff duel', 'data-table': gameId }, bar, main, lobby, refRow, actions, tray);
   app.replaceChildren(box);
   const result = resultCard(main, stubArt('plain', 'duel-glow'), (moved) => actions.prepend(...moved));
@@ -563,6 +565,7 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     for (const p of picks as unknown as Pick<string | number | boolean>[]) {
       p.label.textContent = p.text();
       p.label.title = p.title();
+      p.select.title = p.title() || p.text();
       const now = p.now(s);
       if (p.select.options.length !== p.values.length || p.select.dataset.lang !== pageLang()) {
         p.select.replaceChildren(...p.values.map((v) => el('option', {}, p.name(v))));
@@ -595,12 +598,15 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
   function drawClock(): void {
     const on = state?.phase === 'play' && endsAt > 0;
     clock.hidden = !on;
+    clock2.hidden = !on;
     if (!on) return;
     const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
     const text = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
     if (clock.textContent !== text) clock.textContent = text;
+    if (clock2.textContent !== text) clock2.textContent = text;
     clock.setAttribute('aria-label', tx('timeLeft', { t: text.slice(2) }));
     clock.classList.toggle('low', left <= 15);
+    clock2.classList.toggle('low', left <= 15);
   }
   const clockTimer = window.setInterval(drawClock, 250);
 
