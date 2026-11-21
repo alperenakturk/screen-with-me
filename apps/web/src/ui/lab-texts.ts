@@ -51,7 +51,7 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   },
   'rail.speed': {
     title: { en: 'Speed picker', tr: 'Hız seçici' },
-    help: { en: 'Logs the speed, this video\'s speeds, the ⋯ picker and "Keep the controls open".', tr: 'Hızı, videonun hızlarını, ⋯ seçicisini ve "Kontroller hep açık"ı kayda yazar.' },
+    help: { en: 'Logs the speed, this video\'s speeds, the ⋯ picker and whether the rail is fixed.', tr: 'Hızı, videonun hızlarını, ⋯ seçicisini ve rayın sabit olup olmadığını kayda yazar.' },
   },
   'safety.state': {
     title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
@@ -60,6 +60,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   'voice.deafen': {
     title: { en: 'Voice: 🎧 deafen (on / off)', tr: 'Ses: 🎧 sesleri kapat (on / off)' },
     help: { en: 'With "on" or "off" deafens or undeafens me; then writes whether I am deafened, in voice, my mic, whether every voice is silent here and who else is deafened into the log.', tr: '"on" ya da "off" ile benim için sesleri kapatır ya da açar; sonra seslerimin kapalı olup olmadığını, seste olup olmadığımı, mikrofonumu, buradaki bütün seslerin kısık olup olmadığını ve başka kimin seslerini kapattığını kayda yazar.' },
+  },
+  'rail.pin': {
+    title: { en: 'Rail: fixed or waiting for the edge', tr: 'Ray: sabit mi, kenarı mı bekliyor' },
+    help: { en: 'Writes the saved choice of the rail\'s hide button, whether the rail is fixed now (fullscreen YouTube always waits for the edge) and whether it rests into the log.', tr: 'Rayın gizle düğmesinde kayıtlı seçimi, rayın şu an sabit olup olmadığını (tam ekran YouTube hep kenarı bekler) ve dinlenip dinlenmediğini kayda yazar.' },
   },
   'player.focus': {
     title: { en: 'Player: is the keyboard focus in it', tr: 'Oynatıcı: klavye odağı onda mı' },
@@ -76,6 +80,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   'shorts.state': {
     title: { en: 'Shorts: which view, the way back, who speaks and the start', tr: 'Shorts: hangi görünüm, geri dönüş yolu, kim konuşuyor ve başlangıç' },
     help: { en: 'Writes the view (Shorts, room or none), whether "📱 Shorts view" is offered, who is speaking, how many seat faces show the green ring and where this Short started playing here (0 = from its very start) into the log.', tr: 'Görünümü (Shorts, oda ya da yok), "📱 Shorts görünümü" düğmesinin sunulup sunulmadığını, kimin konuştuğunu, kaç koltuk yüzünde yeşil halka olduğunu ve bu Short\'un burada kaçıncı saniyeden oynamaya başladığını (0 = en baştan) kayda yazar.' },
+  },
+  'recap.button': {
+    title: { en: 'Recap: 2 hours together now', tr: 'Özet: şimdi 2 saat birlikte' },
+    help: { en: 'Counts this session as 2 hours watched together (test server only): the ✨ button shows for everyone.', tr: 'Bu oturumu 2 saat birlikte izlenmiş sayar (yalnız test sunucusu): ✨ düğmesi herkese görünür.' },
   },
   'recap.show': {
     title: { en: 'Recap: show it to everyone now (lab server)', tr: 'Özet: şimdi herkese göster (test sunucusu)' },

@@ -12,12 +12,13 @@ One handoff per lane or role; each session updates only its own lines and delete
   - [ ] Next: DM1 (Dailymotion) when the owner gives the Player ID.
   - [ ] UI2 `rail-speed` flake (games-more): see the archived line; if it fails again, add a `sync-engine.test.ts`
     scenario.
+- [ ] Lane A2 (handoff 21 Nov): open PRs #573, #578, #581.
+  - [ ] RC2 part 2: look C (marquee) + music 1 (own pad), owner's picks; `design/recap-cinema/`.
+  - [ ] FR1 (host-only "Rate the film" poll, film page).
 - [ ] FW2 (Five Frames): [x] 1 places [ ] 2 timer, points [ ] 3 big board [ ] 4 levels [ ] 5 words
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
-  - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
-    `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
@@ -214,6 +215,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27an. [FW1] Five Frames: odd words refused; 🌍 Countries: gold hint, a country is a guess.
 - [ ] 27ao. [GPH1] Phone: Son Kalp shows all 5 🤖; Büfe / Bahçe "closed" note below art.
 - [ ] 27ap. [GPH1] Phone: chess still at start, XOX # lines, quiz bar clear, Beş Kare picker by 🔥. PC: Büfe note off art.
+- [ ] 27aq. [RAIL2] Computer, a video playing: the rail beside it stays. Its last small button: the rail now opens at
+  the right edge only; pressed again it stays; a reload remembers. ⋯ has no such item. YouTube ⛶: the rail waits for the edge.
 
 - [ ] 16d. [TH3] Home page in Neon: the name, slogan, buttons and devices glow, calm; Tab shows a clear
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three

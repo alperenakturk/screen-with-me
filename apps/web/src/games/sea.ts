@@ -1,7 +1,8 @@
 // 🚢 Sea Battle, the page (Game Studio, notes in docs/internal/design/games/sea-battle.md). A lazy chunk with its own
 // texts (EN + TR). The server holds both fleets; this page only ever knows my own ships (and, after the game, both).
-// Placing: a random fleet comes from the server; tap a ship to pick it, tap water to move it there, "Turn" turns it,
-// or drag it. Shooting: tap a cell of the enemy sea on my turn.
+// Placing: a random fleet comes from the server; drag a ship (it snaps to the nearest spot that fits), tap it (or R) to
+// turn it, or pick it and tap water. Shooting: tap a cell of the enemy sea on my turn. SB2: a sunk fleet goes out with
+// a short explosion and "ALEX SANK!".
 import './sea.css';
 import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import {
@@ -10,6 +11,7 @@ import {
   SEA_RULES,
   checkFleet,
   knownEmpty,
+  nearestPlace,
   type SeaClientMessage,
   type SeaServerMessage,
   type ShipPlace,
@@ -42,7 +44,7 @@ const TEXT = {
     mySea: 'My sea',
     seaOf: "{name}'s sea",
     waiting: 'Waiting for a second player…',
-    placeHint: 'Place your fleet: tap a ship, then tap water to move it. Then Ready.',
+    placeHint: 'Place your fleet: drag a ship onto the sea, tap it (or R) to turn it. Then Ready.',
     placeWait: 'Ready. Waiting for {name}…',
     otherPlacing: '{name} is placing their fleet',
     yourTurn: 'Your turn: pick a cell on their sea',
@@ -91,7 +93,7 @@ const TEXT = {
     seeBoard: 'See the seas',
     fire: 'Fire at {cell}',
     how1: 'Place your fleet',
-    how1Line: 'Shuffle, drag or turn your ships; they may not touch. Then press Ready.',
+    how1Line: 'Drag your ships where you like (tap one, or press R, to turn it) or shuffle them; they may not touch. Then press Ready.',
     how2: 'Call your shots',
     how2Line: 'Tap a cell on their sea. A hit shoots again; a miss passes the turn.',
     how3: 'Sink them all',
@@ -109,13 +111,17 @@ const TEXT = {
     yourPlace: 'You came {place}.',
     places: 'Places',
     afloat: '🚢 {n} left',
+    sank: '{name} SANK!',
+    sankMe: 'YOUR FLEET SANK!',
+    sankLine: 'Every ship of {name} is under water.',
+    sankLineMe: 'Every ship of yours is under water.',
   },
   tr: {
     theirSea: 'Onun denizi',
     mySea: 'Benim denizim',
     seaOf: '{name} denizi',
     waiting: 'İkinci oyuncu bekleniyor…',
-    placeHint: 'Filonu yerleştir: bir gemiye dokun, sonra suya dokunup oraya taşı. Sonra Hazır.',
+    placeHint: 'Filonu yerleştir: gemiyi denize sürükle, döndürmek için ona dokun (ya da R). Sonra Hazır.',
     placeWait: 'Hazırsın. {name} bekleniyor…',
     otherPlacing: '{name} filosunu yerleştiriyor',
     yourTurn: 'Sıra sende: onun denizinden bir kare seç',
@@ -164,7 +170,7 @@ const TEXT = {
     seeBoard: 'Denizlere bak',
     fire: '{cell} hedefine ateş',
     how1: 'Filonu yerleştir',
-    how1Line: 'Gemilerini karıştır, sürükle ya da çevir; birbirine değemezler. Sonra Hazır de.',
+    how1Line: 'Gemilerini istediğin yere sürükle (döndürmek için dokun ya da R’ye bas) veya karıştır; birbirine değemezler. Sonra Hazır de.',
     how2: 'Atışını yap',
     how2Line: 'Onların denizinde bir kareye dokun. İsabet edersen yine atarsın; ıska sırayı geçirir.',
     how3: 'Hepsini batır',
@@ -182,6 +188,10 @@ const TEXT = {
     yourPlace: 'Sen {place} oldun.',
     places: 'Sıralama',
     afloat: '🚢 {n} kaldı',
+    sank: '{name} BATTI!',
+    sankMe: 'FİLON BATTI!',
+    sankLine: '{name} oyuncusunun bütün gemileri suyun altında.',
+    sankLineMe: 'Bütün gemilerin suyun altında.',
   },
 } as const;
 
@@ -217,6 +227,11 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   let lastShot = '';
   let lastPhase = '';
   let note = '';
+  /** SB2: the ship that just sank (its cells wobble and go under for a moment). */
+  let justSunk: { seat: number; cells: Set<number> } | null = null;
+  /** SB2: the seats whose fleet just went under (their chip pops its ✕), and until when the "ALEX SANK!" moment shows. */
+  const justOut = new Set<number>();
+  let sankUntil = 0;
 
   // ---- The layout ----
   const score = el('span', { class: 'sea-score' });
@@ -257,6 +272,39 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   const seas = el('div', { class: 'sea-seas' }, theirs.box, mine.box);
   // GP2: the one result card over the seas; Play again moves into it while it shows.
   const result = resultCard(seas, stubArt('plain', 'gr-glow'), (moved) => actions.prepend(...moved));
+  // SB2: "ALEX SANK!": a short explosion over the seas when a whole fleet goes under (before the result card).
+  const sankText = el('b', { class: 'sea-sank-title' });
+  const sankLine = el('span', { class: 'sea-sank-line' });
+  const sankBox = el('div', { class: 'sea-sank', role: 'status', 'aria-live': 'assertive', hidden: '' }, el('span', { class: 'sea-sank-boom', 'aria-hidden': 'true' }, ...Array.from({ length: 8 }, (_, k) => el('i', { style: `--k:${k}` }))), sankText, sankLine);
+  seas.append(sankBox);
+  let sankTimer = 0;
+  const SANK_MS = 2200;
+  /** Shows "{NAME} SANK!" for `seat` (mine: "YOUR FLEET SANK!"); the result card waits until it is over. */
+  function showSank(seat: number): void {
+    const who = nameOfSeat(seat);
+    const me = seat === mySeat();
+    const upper = who.toLocaleUpperCase(lang() === 'tr' ? 'tr' : 'en');
+    sankText.textContent = me ? tx('sankMe') : tx('sank', { name: upper });
+    sankLine.textContent = me ? tx('sankLineMe') : tx('sankLine', { name: who });
+    sankBox.dataset.me = String(me);
+    // First look: held inside the sea that sank when it is on screen (else over both seas), never over the other board.
+    const host = state && seat === other() ? theirs.box : state && seat === (mySeat() >= 0 ? mySeat() : many() ? watcherMine() : 0) ? mine.box : seas;
+    if (sankBox.parentElement !== host) host.append(sankBox);
+    sankBox.hidden = false;
+    // Restart the animation for a second fleet in a row.
+    sankBox.classList.remove('go');
+    void sankBox.offsetWidth;
+    sankBox.classList.add('go');
+    sankUntil = Date.now() + SANK_MS;
+    justOut.add(seat);
+    clearTimeout(sankTimer);
+    sankTimer = window.setTimeout(() => {
+      sankBox.hidden = true;
+      sankBox.classList.remove('go');
+      justOut.clear();
+      render();
+    }, SANK_MS);
+  }
   const referee = stubArt('referee', 'sea-ref-mascot');
   const status = el('p', { class: 'sea-status', role: 'status', 'aria-live': 'polite' });
   const actions = el('div', { class: 'sea-actions' });
@@ -348,6 +396,14 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
         return render();
       }
     }
+    // SB2: no room right there: the nearest spot where it fits turned.
+    const near = nearestPlace(SEA_RULES, places, picked, r, c, !p.down, 2);
+    if (near) {
+      places = places.map((q, i) => (i === picked ? near : q));
+      send({ t: 'place', ships: places });
+      note = '';
+      return render();
+    }
     setNote(tx('noRoom'));
   }
 
@@ -357,8 +413,10 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const ships = myShips();
     const hitShip = ships.findIndex((s) => s.includes(cell));
     if (hitShip >= 0) {
-      picked = picked === hitShip ? null : hitShip;
-      grab = picked === null ? 0 : ships[hitShip]!.indexOf(cell);
+      // SB2: a tap on the picked ship turns it; a tap on another ship picks that one.
+      if (picked === hitShip) return turnShip();
+      picked = hitShip;
+      grab = ships[hitShip]!.indexOf(cell);
       note = '';
       return render();
     }
@@ -411,48 +469,99 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   mine.grid.addEventListener('click', (e) => {
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.sea-cell');
     if (cell && !dragged) onMine(Number(cell.dataset.cell));
-    dragged = false;
   });
   theirs.grid.addEventListener('click', (e) => {
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.sea-cell');
     if (cell) onTheirs(Number(cell.dataset.cell));
   });
-  // Drag a ship (mouse or finger): press on a ship, let go over water.
-  let dragging: number | null = null;
-  let dragGrab = 0;
+  /**
+   * SB2: drag a ship (mouse or finger) straight onto the sea. While it moves, a gold ghost shows the nearest spot that
+   * fits (`nearestPlace`), a red one when nothing fits near; letting go puts it there. R turns it mid-drag.
+   */
+  interface Drag { ship: number; grab: number; down: boolean; id: number; x: number; y: number; moved: boolean; row: number; col: number; spot: ShipPlace | null }
+  let drag: Drag | null = null;
   let dragged = false;
+  /** The cell under a point of my sea (may be off the sea: then row / col run past its edges). */
+  function cellAt(x: number, y: number): { row: number; col: number } {
+    const rect = mine.grid.getBoundingClientRect();
+    const pad = 4;
+    const step = (rect.width - pad * 2) / size;
+    return { row: Math.floor((y - rect.top - pad) / step), col: Math.floor((x - rect.left - pad) / step) };
+  }
+  function aimDrag(x: number, y: number): void {
+    if (!drag) return;
+    const { row, col } = cellAt(x, y);
+    drag.row = drag.down ? row - drag.grab : row;
+    drag.col = drag.down ? col : col - drag.grab;
+    drag.spot = nearestPlace(SEA_RULES, places, drag.ship, drag.row, drag.col, drag.down, 2);
+  }
   mine.grid.addEventListener('pointerdown', (e) => {
-    if (!placing()) return;
+    if (!placing() || e.button > 0) return;
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.sea-cell');
     if (!cell) return;
     const i = Number(cell.dataset.cell);
     const ships = myShips();
     const ship = ships.findIndex((s) => s.includes(i));
     if (ship < 0) return;
-    // Only a drag starts here; a plain tap picks the ship in the click handler.
-    dragging = ship;
-    dragGrab = ships[ship]!.indexOf(i);
+    // Only a drag starts here; a plain tap picks (or turns) the ship in the click handler.
+    drag = { ship, grab: ships[ship]!.indexOf(i), down: places[ship]!.down, id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, row: 0, col: 0, spot: null };
     dragged = false;
   });
-  const onUp = (e: PointerEvent) => {
-    if (dragging === null) return;
-    const ship = dragging;
-    dragging = null;
-    const target = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('.sea-mine .sea-cell');
-    if (!target) return;
-    const cell = Number(target.dataset.cell);
-    if (myShips()[ship]!.includes(cell)) return;
+  mine.grid.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    // Captured only once it is a drag: a plain tap keeps its click on the cell (a capture moves the click to the grid).
+    if (!drag.moved) {
+      try {
+        mine.grid.setPointerCapture(e.pointerId);
+      } catch {
+        // A synthetic event has no pointer to capture.
+      }
+    }
+    drag.moved = true;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    aimDrag(e.clientX, e.clientY);
+    render();
+  });
+  const endDrag = (e: PointerEvent, drop: boolean) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    drag = null;
+    if (!d.moved) return;
+    // The click that follows a drag must not pick a ship or move one.
     dragged = true;
-    picked = ship;
-    grab = dragGrab;
-    if (!moveShip(ship, cell)) setNote(tx('noRoom'));
-    else render();
+    setTimeout(() => (dragged = false), 0);
+    if (drop && placing()) {
+      if (d.spot) {
+        places = places.map((p, i) => (i === d.ship ? d.spot! : p));
+        send({ t: 'place', ships: places });
+        picked = d.ship;
+        grab = 0;
+        note = '';
+        playSound('seaAim');
+      } else note = tx('noRoom');
+    }
+    render();
   };
-  document.addEventListener('pointerup', onUp);
+  mine.grid.addEventListener('pointerup', (e) => {
+    if (drag && drag.moved) aimDrag(e.clientX, e.clientY);
+    endDrag(e, true);
+  });
+  mine.grid.addEventListener('pointercancel', (e) => endDrag(e, false));
   root.addEventListener('keydown', (e) => {
     if ((e.key === 'r' || e.key === 'R') && placing()) {
       e.preventDefault();
       e.stopPropagation();
+      // SB2: R mid-drag turns the ship being dragged (around the cell held).
+      if (drag?.moved) {
+        if (!e.repeat) {
+          drag.down = !drag.down;
+          aimDrag(drag.x, drag.y);
+          render();
+        }
+        return;
+      }
       // KEYREP: a held R turns the ship once; key-repeat sent a `place` ~30 times a second and could trip the
       // server's per-connection message limit (QUOTA1a).
       if (!e.repeat) turnShip();
@@ -492,12 +601,36 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     // The sea being shot at now (for everyone, watchers too).
     const shotAt = !many() ? 1 - s.turn : s.last?.by === s.turn ? (s.last.target ?? -1) : -1;
     box.box.classList.toggle('target', s.phase === 'play' && seat === shotAt);
+    // SB2: a ship being dragged: its old cells fade, the ghost shows where it would land (red when nothing fits near).
+    const lifting = new Set<number>();
+    const ghost = new Set<number>();
+    let ghostBad = false;
+    if (isMine && placing() && drag?.moved) {
+      for (const c of ships[drag.ship] ?? []) lifting.add(c);
+      const len = SEA_RULES.fleet[drag.ship]!;
+      const spot = drag.spot ?? { at: drag.row * size + drag.col, down: drag.down };
+      ghostBad = !drag.spot;
+      // Nothing fits near: the red ghost stays whole on the sea, at the edge nearest the pointer.
+      const row0 = Math.max(0, Math.min(size - (drag.down ? len : 1), drag.row));
+      const col0 = Math.max(0, Math.min(size - (drag.down ? 1 : len), drag.col));
+      for (let k = 0; k < len; k++) {
+        const r = drag.spot ? Math.floor(spot.at / size) + (spot.down ? k : 0) : row0 + (drag.down ? k : 0);
+        const c = drag.spot ? (spot.at % size) + (spot.down ? 0 : k) : col0 + (drag.down ? 0 : k);
+        if (r >= 0 && r < size && c >= 0 && c < size) ghost.add(r * size + c);
+      }
+    }
+    box.box.classList.toggle('dragging', lifting.size > 0);
+    // SB2: the ship that just sank wobbles and goes under for a moment.
+    const sinking = justSunk && justSunk.seat === seat ? justSunk.cells : null;
     box.cells.forEach((cell, i) => {
       const h = shot.get(i);
       const ship = shipOf.get(i);
       cell.className = 'sea-cell';
       if (ship !== undefined) cell.classList.add('ship');
-      if (ship !== undefined && isMine && placing() && ship === picked) cell.classList.add('picked');
+      if (ship !== undefined && isMine && placing() && ship === picked && !lifting.size) cell.classList.add('picked');
+      if (lifting.has(i)) cell.classList.add('lifting');
+      if (ghost.has(i)) cell.classList.add('ghost', ...(ghostBad ? ['bad'] : []));
+      if (sinking?.has(i)) cell.classList.add('sinking');
       if (h === 0) cell.classList.add('miss');
       if (h === 1) cell.classList.add('hit');
       if (sunk.has(i)) cell.classList.add('sunk');
@@ -516,9 +649,10 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const who = p?.bot ? stubArt('opponent', 'sea-avatar sea-bot-avatar') : p ? avatarNode(p.avatar, 'sea-avatar') : el('span', { class: 'sea-avatar vacant' });
     const left = p ? el('span', { class: 'sea-left', title: p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }) }, ...Array.from({ length: p.left }, () => el('i', { 'aria-hidden': 'true' })), el('span', { class: 'sr-only' }, p.left === 1 ? tx('leftOne') : tx('left', { n: p.left }))) : '';
     const ready = state!.phase === 'place' && p?.ready ? el('span', { class: 'sea-ready' }, '✓') : '';
-    const out = p?.out ? el('span', { class: 'sea-out' }, `✕ ${tx('outTag')}`) : '';
+    const out = p?.out || (p && p.left === 0 && state!.phase !== 'place') ? el('span', { class: 'sea-out' }, `✕ ${tx('outTag')}`) : '';
     head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, out || left);
     head.classList.toggle('out', !!p?.out);
+    head.classList.toggle('just-out', justOut.has(seat) && !!p && p.left === 0);
     if (head === theirs.head) head.append(wholeSea);
     head.classList.toggle('offline', !!p && !p.online);
   }
@@ -592,7 +726,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
         const pressed = isSmall ? view === 'mine' : i === shown && view === 'theirs';
         const chip = el(
           'button',
-          { type: 'button', class: `sea-target${isSmall ? ' small-sea' : ''}${i === me ? ' me' : ''}${p.out ? ' out' : ''}${s.phase === 'play' && s.turn === i ? ' turn' : ''}`, 'data-seat': String(i), 'aria-pressed': String(pressed), 'aria-label': i === me ? tx('myChip', { left }) : tx('targetChip', { name: p.name, left }), title: i === me ? tx('mySea') : p.name },
+          { type: 'button', class: `sea-target${isSmall ? ' small-sea' : ''}${i === me ? ' me' : ''}${p.out ? ' out' : ''}${justOut.has(i) ? ' just-out' : ''}${s.phase === 'play' && s.turn === i ? ' turn' : ''}`, 'data-seat': String(i), 'aria-pressed': String(pressed), 'aria-label': i === me ? tx('myChip', { left }) : tx('targetChip', { name: p.name, left }), title: i === me ? tx('mySea') : p.name },
           avatarNode(p.avatar, 'sea-avatar small'),
           el('span', { class: 'sea-target-name' }, p.name),
           el('span', { class: 'sea-target-left', 'aria-hidden': 'true' }, p.out ? '✕' : el('span', { class: 'sea-target-ship' }, '🚢'), p.out ? '' : String(p.left)),
@@ -728,7 +862,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     drawTargets();
     drawActions();
     status.textContent = statusText();
-    if (s.phase === 'over' && s.winner !== null) {
+    if (s.phase === 'over' && s.winner !== null && Date.now() < sankUntil) result.hide();
+    else if (s.phase === 'over' && s.winner !== null) {
       const [a, b] = s.players;
       const rematch = actions.querySelector<HTMLElement>('.sea-rematch');
       result.show({
@@ -799,7 +934,20 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
           if (m.phase === 'place') revealed = null;
         }
         if (prev && prev.last?.cell !== m.last?.cell) note = '';
+        // SB2: a ship that just sank, and a fleet that just went under.
+        const sunkNow = prev && m.last?.result === 'sunk' && `${m.last.by}:${m.last.target ?? ''}:${m.last.cell}` !== lastShot;
+        const gone = prev && prev.phase === 'play' ? m.players.flatMap((p, i) => (p && prev.players[i]?.id === p.id && prev.players[i]!.left > 0 && p.left === 0 ? [i] : [])) : [];
         state = m;
+        if (sunkNow && m.last) {
+          const seat = m.last.target ?? 1 - m.last.by;
+          const ship = m.seas[seat]?.sunk.find((cells) => cells.includes(m.last!.cell));
+          justSunk = ship ? { seat, cells: new Set(ship) } : null;
+          setTimeout(() => {
+            justSunk = null;
+            render();
+          }, 900);
+        }
+        for (const seat of gone) showSank(seat);
         sounds(prev, m);
         render();
       } else if (m.t === 'reveal') {
@@ -847,7 +995,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     commands: [
       quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
       // GMP: what this tab sees (players, turn, watchers, and how many seas it may see whole: 1 as a player, all as a watcher).
-      { id: 'seaBattle.state', title: { en: 'Sea Battle: what this tab sees', tr: 'Amiral Battı: bu sekme ne görüyor' }, help: { en: 'Players (sunk or afloat), whose turn, the sea in the big box (the target), the places, who watches, and how many seas show their ships here (a watcher sees them all).', tr: 'Oyuncular (batmış ya da yüzüyor), sıra kimde, büyük kutudaki deniz (hedef), sıralama, kim izliyor ve burada kaç denizin gemileri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, turn: s.turn, target: other(), players: s.players.map((p) => p && { name: p.name, ready: p.ready, left: p.left, online: p.online, out: !!p.out }), ranks: s.ranks ?? null, lastTarget: s.last?.target ?? null, watchers: s.watchers.map((w) => w.name), seasWithShips: s.seas.filter((x) => (x.ships?.length ?? 0) > 0).length }); } },
+      { id: 'seaBattle.state', title: { en: 'Sea Battle: what this tab sees', tr: 'Amiral Battı: bu sekme ne görüyor' }, help: { en: 'Players (sunk or afloat), whose turn, the sea in the big box (the target), the places, who watches, and how many seas show their ships here (a watcher sees them all).', tr: 'Oyuncular (batmış ya da yüzüyor), sıra kimde, büyük kutudaki deniz (hedef), sıralama, kim izliyor ve burada kaç denizin gemileri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, turn: s.turn, target: other(), players: s.players.map((p) => p && { name: p.name, ready: p.ready, left: p.left, online: p.online, out: !!p.out }), ranks: s.ranks ?? null, lastTarget: s.last?.target ?? null, watchers: s.watchers.map((w) => w.name), seasWithShips: s.seas.filter((x) => (x.ships?.length ?? 0) > 0).length, sank: sankBox.hidden ? null : sankText.textContent, dragging: drag?.moved ? { ship: drag.ship, fits: !!drag.spot } : null }); } },
+      { id: 'sea.sank', title: { en: 'Sea Battle: show the "sank" moment', tr: 'Amiral Battı: "battı" anını göster' }, help: { en: 'Plays the explosion and "NAME SANK!" in this tab for the other seat (nothing changes in the game); the result card waits for it the same way.', tr: 'Bu sekmede diğer koltuk için patlamayı ve "AD BATTI!" yazısını oynatır (oyunda bir şey değişmez); sonuç kartı da aynı şekilde onu bekler.' }, tab: 'games' as const, available: () => (!!state && state.players.filter(Boolean).length >= 2) || { en: 'two people (or Stub) at the table first', tr: 'önce masada iki kişi (ya da Stub) olsun' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { showSank(other()); render(); return sankText.textContent ?? ''; } },
       { id: 'sea.bot', title: { en: 'Sea Battle: Stub takes the other seat', tr: 'Amiral Battı: Stub diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, available: () => (!!state && state.seat >= 0) || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
       { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel test sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
       { id: 'sea.zoom', title: { en: 'Sea Battle: zoom into the next quarter (phone view)', tr: 'Amiral Battı: sonraki çeyreğe yakınlaş (telefon görünümü)' }, help: { en: 'Shows the phone zoom on any screen: each run aims at the middle of the next quarter of their sea; Whole sea goes back.', tr: 'Telefondaki yakınlaşmayı her ekranda gösterir: her çalıştırmada rakibin denizinin sonraki çeyreğinin ortasına nişan alır; Bütün deniz geri döner.' }, tab: 'games' as const, available: () => (!!state && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, during the battle', tr: 'Amiral Battı masasında, savaş sırasında' }, run: () => { const q = zoomQ === null ? 0 : (zoomQ + 1) % 4; const half = size / 2; zoomQ = q; aimAt = (Math.floor(q / 2) * half + Math.floor(half / 2)) * size + (q % 2) * half + Math.floor(half / 2); render(); } },
@@ -866,12 +1015,12 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     offLab();
     how.destroy();
     document.removeEventListener('pointerdown', closeWatch);
-    document.removeEventListener('pointerup', onUp);
     setGameLive(false);
     close();
     clearInterval(ping);
     link.stop();
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
+    clearTimeout(sankTimer);
   };
 }

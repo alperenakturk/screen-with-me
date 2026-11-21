@@ -523,7 +523,7 @@ export type ClientMessage =
   /** Test Lab (DL3b): only a local lab server (`SWM_LAB_SERVER`) acts on it; elsewhere `bad_message`. */
   /** `age-images` (QUOTA1a / IMG2): the room's chat images run out now, as if their time had passed. */
   /** `recap-gap` (RC1): the session's last activity moves 4 h back, so the next activity starts a new session. */
-  | { t: 'lab'; op: 'tipjar' | 'age-images' | 'chat-fill' | 'recap-gap' }
+  | { t: 'lab'; op: 'tipjar' | 'age-images' | 'chat-fill' | 'recap-gap' | 'recap-together' }
   /** Window Garden: a cutting of a bloomed plant for someone in the room (side games 2, pick 8). */
   | { t: 'gift'; to: string; plant: string }
   /** Sesli sohbete katıl / ayrıl / mikrofonu aç-kapa. `track`: yayın hazır olunca adı. */
@@ -1153,7 +1153,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'feed-played':
       return { t: 'feed-played' };
     case 'lab':
-      return m.op === 'tipjar' || m.op === 'age-images' || m.op === 'chat-fill' || m.op === 'recap-gap' ? { t: 'lab', op: m.op } : null;
+      return m.op === 'tipjar' || m.op === 'age-images' || m.op === 'chat-fill' || m.op === 'recap-gap' || m.op === 'recap-together' ? { t: 'lab', op: m.op } : null;
     case 'ping':
       return isTimestamp(m.c) ? { t: 'ping', c: m.c } : null;
     case 'load':
