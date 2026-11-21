@@ -9,7 +9,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A: idle (PTT1, TG2, CI4 done 21 Nov). Tag `v0.9.97.113` (8ce4385) missing. DM1 waits for the owner's
   Player ID, FILM1 for his pick. UI2 `rail-speed` flake: if it fails again, add a `sync-engine.test.ts` scenario.
   CI4: count 10 PR runs from #608 with no first-attempt failure on games-shorts / Sea zoom / shorts-tidy / phone-sideways.
-- [ ] Game Studio: QZ5b (Quiz fill). LH4 done (v0.9.97.193).
+- [ ] Game Studio: idle (LH4, QZ5b done 21 Nov; no Ready game card).
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -58,13 +58,6 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the album under the window sill, Sula / Stub'un ışığı inside their card.
 - [ ] 15b. [0.9.97.128] Phone, upright: open any table (Draw & Guess, Quiz, Sea Battle…), tap ⋯ in its top bar:
   "Masadan kalk" and "Masayı kapat" can be tapped, and "Masadan kalk" leaves the table.
-- [ ] 16c. [QW1–QW5, 0.9.97.124] Tablet upright and sideways, a video playing: Snack Bar never covers the video
-  (sideways the right column down to the message box, upright the column beside the chat); the rail's 🎮 hall shows
-  whole; a sideways phone's hall shows all six tables in a row. Laptop, chess with a video playing: "Video paused for
-  the game" under the window's top bar, its buttons read "Game hall · Leave table · Close table · Back to video".
-  Phone upright, a table: one top row (the small video with "‹" = back, the name, ?, 🎙, 🎮, ⋯ holding Leave / Close,
-  Close asks first); sideways Leave / Close sit in that row. Cinema mode (T) then Snack Bar: cinema mode ends, the
-  window sits off the video.
 - [ ] 16. [QA2, 0.9.97.123] Games on phones: sideways Quiz / Last Heart rules read in full, the Duel card fits; XOX
   shows "Stub'a (bota) karşı oyna" with Kolay / Orta and "👁 0 izliyor"; Snack Bar sideways lists the popcorn machine; in
   Turkish Snack Bar numbers read 0,5 / 6 B; Matinee: the games hall covers are warm posters.
@@ -75,8 +68,6 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   is for computers. Turkish: a nameless room gets a Turkish name; Settings → Sound shows "%70"; the Test Lab says
   "Test Panosu". Sinema / Lokum: the chosen invite tab and Settings category are lit, and the new scene art stays
   clear of the text.
-- [ ] 17. [W121, 0.9.97.121] Snack Bar on a laptop and a big screen: its window covers the chat column from the top to
-  just above the message box and you can still type; drag, resize, double-click the top bar: back to the column.
 - [ ] 18. [L1–L2, 0.9.97.120] Test Lab on a phone: no floating 🐞 upright (⋯ has the Test Lab tile); sideways a small
   🐞 bottom right, never over the video; none in fullscreen.
 - [ ] 19. [Y1–Y7, 0.9.97.118] Plain 🎙 / 📷 before voice (red only when muted in voice); ➤ inside the chat box on a
@@ -84,9 +75,6 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   "Next ⏭"; Stub in the phone's empty room; the tablet's Queue / People tabs.
 - [ ] 20. [M1–M4, 0.9.97.116] Matinee: calm paper, the video in a framed screen (fullscreen black), edge to edge on a
   phone, the film page unpainted; a table's "?" works on the first click right after entering.
-- [ ] 21. [Q1–Q2, 0.9.97.114; P2–P4, 0.9.97.112; W1–W5, 0.9.97.111] Game windows: a side game keeps the video playing,
-  a table pauses it for everyone with a note; side games open as a window on the right; the hall slides out of the
-  window's left; hovering the corner moves nothing; drag, resize, reopen and reload keep each game's spot; no ⛶.
 - [ ] 22. [LAB1, 0.9.97.109] `?debug=<your code>` on phone and computer: 🐞 stays after a reload; 🧪 "Test turu" rows run and undo.
 - [ ] 23. [C1–C5, 0.9.97.107] A calmer room screen; ⚙️ categories without scrolling (phone chips too); About, Move,
   the mic check without the IP window; the join card's ⓘ.
@@ -94,8 +82,6 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   the title, Matinee by day, the theme colours on the home page, the Sidelit font, the camera window's spot.
 - [ ] 25. [F1–F2, 0.9.97.100; T1–T2, 0.9.97.98] The seven fonts (Turkish letters, kept after reload); picture themes'
   text readable; the search and chat boxes visible in each theme.
-- [ ] 26. [L1–L3, 0.9.97.96] Phone sideways: a game fills the screen; a stream's small picture top right; a big
-  monitor's bigger Snack Bar keeps its size.
 - [ ] 27. [Q1–Q6, 0.9.97.93 and .95] On a hotspot or the backup connection, and with a background tab, an idle table and
   five tabs of one room for 10 minutes: no "reconnecting", nothing "too many connections".
 - [ ] 27a. [PH1, 0.9.97.127] On your own phone: the four tabs at the bottom (Room, Search, Games, Me) each one tap;
@@ -229,6 +215,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   table, rivals on top with ♥ chips, big shared cards, buttons on the right; cards and chips fly, new sounds; 🪟 brings
   the window layout back. Phone Games tab: my two cards show their rank.
 
+- [ ] 27qz. [QZ5b] Computer or tablet, Quiz in the video's place: card + players column fill it (no empty band), big
+  question on a big screen; a 🏆 tournament with 4–5: one row each, names whole, "🏆 n" in a gold pill, a used joker a
+  grey button; upright tablet: the topic chip stays on one line.
 - [ ] 27vc. [VC4] With 5+ friends with cameras: 6 cameras fit, the 7th says it's full; the chat shows one note
   recommending 4 cameras / 6 people (once per room), even with room activity hidden.
 - [ ] 27pt. [PTT1] In voice, push-to-talk on, the key button, press B: holding B talks, V doesn't; M is refused with a
