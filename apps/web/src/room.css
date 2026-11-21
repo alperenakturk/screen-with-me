@@ -12546,6 +12546,10 @@ html:not(.phone) .together-card.compact > .together-actions {
   gap: 6px;
 }
 
+html:not(.phone) .together-card.compact .voice-on {
+  flex-wrap: nowrap;
+}
+
 html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .ptt-key, .talk-window-btn, .voice-hint) {
   display: none;
 }
