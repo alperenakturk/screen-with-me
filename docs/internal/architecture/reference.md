@@ -1528,6 +1528,18 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   brings back my last target (`myTarget`). Lab `seaBattle.state` adds `following`, `follow`, `peerAim`. Tests: unit
   (`aim` parsing), e2e `sea-many.mjs` (relayed to players and the watcher, not to the shooter; out of turn / own sea
   dropped), sea harness (Kim's hover reaches the sockets; Lee's aim at Kim and at Max on Kim's page).
+  SB2 part 3, ship themes: `games/sea-ships.ts` draws every ship as our own SVG (`shipSvg(theme, len)`, lying left to
+  right, one cell = 100 units; themes `navy` (default), `pirate`, `toys`; previews and their renderer in
+  `docs/internal/design/games/sea-ships/`). Each sea's grid has a `.sea-fleet` layer under the cells (rows `z-index 1`):
+  one `.sea-ship` per known ship (mine, a watcher's or the end's `ships`, every sunk ship), placed by `--r` / `--c` /
+  `--len` over the grid's 4 px padding, a ship running down is the same drawing turned (`container-type: size`,
+  `100cqh` wide); ship cells stay see-through so hits, the sunk cross, the ghost and the picked outline show on the
+  drawing; `.picked`, `.lifting`, `.sunk` (dimmed), `.sinking`, `.faint` (Lab reveal) on the ship. The theme is this
+  tab's own (`sea:theme` in storage, nothing sent): while I place, my sea's head shows the picker (`.sea-themes`, three
+  small boats, `aria-pressed`) instead of the ships-left pips. Lab `sea.theme` (next theme); `seaBattle.state` adds
+  `theme`, `shipsDrawn`. Sea harness: five drawn ships in Navy, Pirates redraws and is remembered.
+  GFIT1: the root carries `data-fill`; in the video's place the side column is `var(--game-side)` and, in battle, the
+  sea in play takes two thirds of the width (the full height), the other sea one third (swapped while `.following`).
   **FW2 levels:** `packages/shared/src/games/five-frames.ts` `LEVELS` (`easy` / `medium` default / `hard` / `mixed`),
   `levelWords(words, bands, level)` (bands 1 / 1–2 / 2–3 / all; missing bands = all), `levelAnswer` (each level its own
   salt, Medium 0), `categoryAnswer(…, level, bands)`; the word modules carry `BANDS` (one digit per answer) and

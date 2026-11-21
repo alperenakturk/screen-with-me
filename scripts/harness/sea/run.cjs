@@ -83,6 +83,12 @@ async function unnamed(page) {
   const opened = await run(alex.page, 'games.open.sea');
   check(opened.dir === 'lab', 'Alex opens a Sea Battle table', opened.text);
   check(!!(await until(() => alex.page.evaluate(() => document.querySelectorAll('#game-stage .sea-mine .sea-cell.ship').length === 17))), 'Alex sees his random fleet (17 ship cells)');
+  // SB2: every ship is drawn (Navy by default); the picker in my sea's head switches the theme and remembers it.
+  const drawn = await alex.page.evaluate(() => ({ theme: document.querySelector('#game-stage .sea')?.dataset.theme, ships: [...document.querySelectorAll('#game-stage .sea-mine .sea-ship')].map((s) => s.dataset.len + (s.querySelector('svg') ? 'svg' : '')).sort().join(','), picker: document.querySelectorAll('#game-stage .sea-mine .sea-themes .sea-theme').length }));
+  check(drawn.theme === 'navy' && drawn.ships === '2svg,3svg,3svg,4svg,5svg' && drawn.picker === 3, 'SB2: the fleet is drawn (five ships, Navy) with a three-theme picker in my sea\'s head', JSON.stringify(drawn));
+  await click(alex.page, '#game-stage .sea-theme[data-theme="pirate"]');
+  const pirate = await alex.page.evaluate(() => ({ theme: document.querySelector('#game-stage .sea')?.dataset.theme, saved: localStorage.getItem('sea:theme'), pressed: document.querySelector('#game-stage .sea-theme[data-theme="pirate"]')?.getAttribute('aria-pressed'), keys: [...document.querySelectorAll('#game-stage .sea-mine .sea-ship')].every((s) => s.dataset.key.startsWith('pirate:')) }));
+  check(pirate.theme === 'pirate' && pirate.saved === 'pirate' && pirate.pressed === 'true' && pirate.keys, 'SB2: Pirates redraws every ship and is remembered', JSON.stringify(pirate));
   check(!!(await until(() => sam.page.evaluate(() => !!document.querySelector('#game-invite .btn.primary')))), 'Sam gets the invite card');
   await click(sam.page, '#game-invite .btn.primary');
   check(!!(await until(() => alex.page.evaluate(() => /Sam/.test(document.querySelector('#game-stage .sea-theirs .sea-head')?.textContent ?? '') || document.querySelector('#game-stage .sea')?.dataset.phase === 'place'))), 'Sam takes the second seat');
