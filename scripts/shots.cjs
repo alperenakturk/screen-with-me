@@ -318,6 +318,9 @@ const SCREENS = {
   },
   // Card CAM2: my camera on (the Test Lab's drawn picture, the window folded before), and a refused camera's message.
   'camera-on': { what: 'Card CAM2: in voice with my camera on (a drawn test picture): my camera window shows it, even though it had been folded with "−" before', room: true, after: (p) => camera(p, 'fold') },
+  // Card CAM3: the camera window as a grid (the Test Lab's drawn cameras: 5 = 3 + 2) and as 4 (2 × 2).
+  'camera-grid': { what: 'Card CAM3: the one camera window with 5 drawn test cameras: a grid of equal 4:3 tiles, 3 on top and 2 centred below, never more lower down; it can be resized from any edge', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => window.__swmLab.run('camera.grid', '5')); } },
+  'camera-grid-4': { what: 'Card CAM3: the camera window with 4 drawn test cameras: 2 × 2', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => window.__swmLab.run('camera.grid', '4')); } },
   'camera-refused': { what: 'Card CAM2: 📷 pressed and the browser refused the camera: a message next to the 📷 says why and how to allow it', room: true, after: (p) => camera(p, 'blocked') },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [
@@ -330,7 +333,7 @@ const SCREENS = {
 const SCREEN_FOR = [
   [/^docs\/|\.md$|^\.github\/|^scripts\/(?!shots)/, []],
   [/^apps\/web\/src\/ui\/chat\.ts$/, ['chat-delete', 'room']],
-  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['camera-on', 'camera-refused', 'room']],
+  [/^apps\/web\/src\/ui\/(voice|cam-)/, ['camera-on', 'camera-grid', 'camera-grid-4', 'camera-refused', 'room']],
   [/^apps\/web\/src\/ui\/together-compact/, ['together-compact', 'room']],
   [/^apps\/web\/public\/help/, ['help']],
   [/^apps\/web\/public\/privacy/, ['privacy']],

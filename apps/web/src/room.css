@@ -7125,7 +7125,7 @@ html:not(.phone) .live-card.active .live-quality select {
   padding-bottom: 0;
 }
 
-.voice-cams.floating.folded :is(.cam-grid, .cam-resize) {
+.voice-cams.floating.folded :is(.cam-grid, .cam-resize, .cam-edge) {
   display: none;
 }
 
@@ -9300,36 +9300,91 @@ html.is-touch:not(.has-mouse) .theater.dock-mode.dock-idle .fs-dock:not(:has(:fo
   accent-color: var(--accent);
 }
 
-/* 0.9.91.16: a pinned camera in the one-window layout is a spotlight: big on the left, the others in a strip on the
-   right sharing its height (ui/cam-float.ts sets .spotlight and --cam-others). */
-.voice-cams .cam-grid.spotlight {
-  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
-  grid-template-rows: repeat(var(--cam-others, 1), minmax(0, 1fr));
+/* CAM3 (owner, 21 Nov 2026): the one window's cameras are a real grid. ui/cam-float.ts `layoutGrid` places every tile
+   (same size, 4:3, never more tiles in a lower row, rows centred; a pinned camera takes the left ¾). */
+.voice-cams.floating:not(.free) .cam-grid {
+  display: block;
+  position: relative;
 }
 
-.voice-cams .cam-grid.spotlight > .cam-tile {
-  grid-column: 2;
-  grid-row: auto;
-  align-self: center;
-  aspect-ratio: 4 / 3;
-  max-height: 100%;
+/* First look (CAM3): the grid's gaps and a short row's empty sides must not show the page through the window. */
+.voice-cams.floating:not(.free) {
+  background: var(--surface);
+}
+
+.voice-cams.floating:not(.free) .cam-grid > .cam-tile {
+  position: absolute;
+  aspect-ratio: auto;
   min-height: 0;
 }
 
-.voice-cams .cam-grid.spotlight > .cam-tile.pinned {
-  grid-column: 1;
-  grid-row: 1 / -1;
-  align-self: stretch;
-  aspect-ratio: 4 / 3;
-  max-height: none;
+/* A face sits in the upper middle of a webcam picture: when a tile crops, it crops the sides and the bottom first. */
+.cam-tile video {
+  object-position: 50% 30%;
 }
 
-.voice-cams.floating.sized .cam-grid.spotlight > .cam-tile:not(.pinned) {
-  aspect-ratio: 4 / 3;
+/* Test Lab `camera.grid`: a drawn camera. */
+.cam-tile.lab {
+  display: grid;
+  place-items: center;
 }
 
-.voice-cams.floating.sized .cam-grid.spotlight > .cam-tile.pinned {
-  aspect-ratio: auto;
+/* CAM3: resize from every edge and corner. The "se" handle keeps its old grip (.cam-resize / .cam-tile-resize); the
+   other seven are thin invisible strips with the right cursor. */
+.cam-edge,
+.cam-tile-edge {
+  display: none;
+}
+
+.voice-cams.floating:not(.free, .folded) .cam-edge:not([data-edge='se']),
+.voice-cams.free .cam-tile-edge:not([data-edge='se']) {
+  display: block;
+  position: absolute;
+  z-index: 3;
+  touch-action: none;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='n'], [data-edge='s']) {
+  left: 14px;
+  right: 14px;
+  height: 7px;
+  cursor: ns-resize;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='e'], [data-edge='w']) {
+  top: 14px;
+  bottom: 14px;
+  width: 7px;
+  cursor: ew-resize;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='ne'], [data-edge='nw'], [data-edge='sw']) {
+  width: 14px;
+  height: 14px;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='n'], [data-edge='ne'], [data-edge='nw']) {
+  top: 0;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='s'], [data-edge='sw']) {
+  bottom: 0;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='w'], [data-edge='nw'], [data-edge='sw']) {
+  left: 0;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='e'], [data-edge='ne']) {
+  right: 0;
+}
+
+:is(.cam-edge, .cam-tile-edge):is([data-edge='ne'], [data-edge='sw']) {
+  cursor: nesw-resize;
+}
+
+:is(.cam-edge, .cam-tile-edge)[data-edge='nw'] {
+  cursor: nwse-resize;
 }
 
 /* 0.9.91.20: first-visit tips (ui/first-tips.ts), a bubble pointing at its button. */

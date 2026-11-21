@@ -1,3 +1,4 @@
+import { camGrid, camGridBoxes } from '@swm/shared/cam-grid';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { load, save } from '../storage.ts';
@@ -50,6 +51,21 @@ const SIZES: Record<CamSize, { normal: number; fs: number }> = {
   large: { normal: 0.27, fs: 0.26 },
 };
 const GAP = 8;
+/** Space between tiles in the one window (CAM3 grid). */
+const TILE_GAP = 6;
+/** A tile's shape: a webcam picture (the grid keeps every tile at it, so faces are never cut by a squeezed tile). */
+const TILE_RATIO = 4 / 3;
+/** The eight resize handles (CAM3, owner: "resize from any edge"); "se" keeps the old corner grip's class. */
+const EDGES = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'] as const;
+type Edge = (typeof EDGES)[number];
+const handles = (corner: string, edge: string): HTMLElement[] =>
+  EDGES.map((e) => el('span', { class: e === 'se' ? `${corner} ${edge}` : edge, 'data-edge': e, 'aria-hidden': 'true' }));
+/**
+ * The saved camera layout (CAM3, owner 21 Nov 2026): every browser starts in the one window ("framed") once more. Old
+ * browsers had "free" saved in `opt:camLayout` from an earlier default; that key is no longer read, so the switch
+ * starts fresh here and the free layout is still one press away.
+ */
+const LAYOUT_KEY = 'opt:camView';
 const EDGE = 12;
 /** At most this many people's tile places are remembered. */
 const MAX_REMEMBERED = 30;
@@ -132,7 +148,10 @@ export function createCamWindow(opts: {
     layoutButton,
     foldButton,
   );
-  const resize = el('span', { class: 'cam-resize', 'aria-hidden': 'true' });
+  /** The one window's eight resize handles (the "se" one is the old `.cam-resize` corner grip). */
+  const edges = handles('cam-resize', 'cam-edge');
+  /** Test Lab `camera.grid`: drawn cameras that fill the grid with no one in voice. */
+  const labTiles: HTMLElement[] = [];
   /** Free layout: the bar in one small draggable pill. */
   const pill = el('div', { class: 'cam-pill' });
   /** Its corner makes the pill bigger or smaller (0.9.90.8, owner's request); remembered in this browser. */
@@ -150,7 +169,7 @@ export function createCamWindow(opts: {
   // its height), in the one-window layout. A saved "free" is only ever written by the person pressing the switch (the
   // old default was never saved), so it is kept.
   let folded = load('opt:camFolded') === '1';
-  let layout: 'free' | 'group' = load('opt:camLayout') === 'free' ? 'free' : 'group';
+  let layout: 'free' | 'group' = load(LAYOUT_KEY) === 'free' ? 'free' : 'group';
   /** A saved place, or null: the default place (bottom left of the video). A reset saves 'null'. */
   const savedSpot = (key: string, fallback: Spot): Spot | null => (load(key) && load(key) !== 'null' ? readSpot(key, fallback) : null);
   let spots = { normal: savedSpot('camFloat:spot', NORMAL_DEFAULT), fs: savedSpot('camFloat:fsSpot', FS_DEFAULT) };
@@ -253,8 +272,9 @@ export function createCamWindow(opts: {
     for (const tile of tilesNow()) {
       const spot = map.get(personOf(tile)) ?? {};
       const attached = spot.x === undefined || spot.y === undefined;
-      const width = Math.round(Math.min(Math.max((spot.w ?? TILE_W[at]) * c.w, MIN_TILE_W), c.w * MAX_SHARE, attached ? (box.maxW ?? Infinity) : Infinity));
-      const height = Math.round(spot.h !== undefined ? Math.min(Math.max(spot.h * c.h, MIN_TILE_H), c.h * MAX_SHARE) : (width * 3) / 4);
+      // CAM3: a tile always keeps the camera's shape (an older saved height is ignored): faces are never cut.
+      const width = Math.round(Math.min(Math.max((spot.w ?? TILE_W[at]) * c.w, MIN_TILE_W), c.w * MAX_SHARE, c.h * MAX_SHARE * TILE_RATIO, attached ? (box.maxW ?? Infinity) : Infinity));
+      const height = Math.round(width / TILE_RATIO);
       let left: number;
       let top: number;
       if (spot.x !== undefined && spot.y !== undefined) {
@@ -281,10 +301,61 @@ export function createCamWindow(opts: {
 
   function clearTiles(): void {
     for (const tile of tilesNow()) tile.style.left = tile.style.top = tile.style.width = tile.style.height = tile.style.zIndex = '';
+    grid.style.height = '';
+  }
+
+  /** The tiles' rows in the one window right now (Test Lab `camera.grid`, harness). */
+  let rowsNow: number[] = [];
+  /**
+   * CAM3: the one window's tiles as a real grid (`camGrid`: never more tiles lower down, the row count that gives the
+   * biggest picture for this window's shape, every tile 4:3, rows centred). With no set height the window is as tall
+   * as its grid at most ¾ of its width; with a set height the grid fills it. A pinned camera (spotlight) takes the left
+   * ¾, the others share the right strip as their own grid.
+   */
+  function layoutGrid(): void {
+    const tiles = tilesNow();
+    const width = grid.clientWidth;
+    if (!tiles.length || width <= 0 || folded) {
+      rowsNow = [];
+      return;
+    }
+    const sized = box.classList.contains('sized');
+    const c = container();
+    const barH = bar.offsetHeight;
+    const pad = box.offsetHeight - box.clientHeight + 12;
+    const maxH = Math.max(MIN_TILE_H, c.h * MAX_SHARE - barH - pad);
+    const height = sized ? Math.max(MIN_TILE_H, box.clientHeight - barH - 12) : Math.min(maxH, width / TILE_RATIO);
+    const pinned = tiles.length > 1 ? tiles.find((tile) => tile.classList.contains('pinned')) : undefined;
+    const put = (tile: HTMLElement, b: { x: number; y: number; w: number; h: number }) => {
+      tile.style.left = `${Math.round(b.x)}px`;
+      tile.style.top = `${Math.round(b.y)}px`;
+      tile.style.width = `${Math.round(b.w)}px`;
+      tile.style.height = `${Math.round(b.h)}px`;
+    };
+    if (pinned) {
+      const others = tiles.filter((tile) => tile !== pinned);
+      const mainW = Math.round((width - TILE_GAP) * 0.75);
+      const stripW = width - mainW - TILE_GAP;
+      const main = camGrid(1, mainW, height, TILE_GAP, TILE_RATIO);
+      const strip = camGrid(others.length, stripW, height, TILE_GAP, TILE_RATIO);
+      const used = sized ? height : Math.max(main.usedH, strip.usedH);
+      put(pinned, camGridBoxes(main, mainW, used, TILE_GAP)[0]!);
+      camGridBoxes(strip, stripW, used, TILE_GAP).forEach((b, i) => put(others[i]!, { ...b, x: b.x + mainW + TILE_GAP }));
+      grid.style.height = `${Math.round(used)}px`;
+      rowsNow = [1, ...strip.rows];
+      return;
+    }
+    const layout = camGrid(tiles.length, width, height, TILE_GAP, TILE_RATIO);
+    const used = sized ? height : layout.usedH;
+    camGridBoxes(layout, width, used, TILE_GAP).forEach((b, i) => put(tiles[i]!, b));
+    grid.style.height = `${Math.round(used)}px`;
+    rowsNow = layout.rows;
   }
 
   /** Places the box (and in the free layout every tile) by the saved shares, inside the container. */
   function apply(): void {
+    // A redraw while a window or tile is being pulled (a voice level, a new tile) must not put it back (CAM3).
+    if (drag) return;
     const m = mode();
     if (m === 'card' || isFree()) {
       box.style.left = box.style.top = box.style.width = box.style.height = '';
@@ -297,7 +368,9 @@ export function createCamWindow(opts: {
     const c = container();
     const saved = m === 'fs' ? spots.fs : spots.normal;
     const spot = saved ?? (m === 'fs' ? FS_DEFAULT : NORMAL_DEFAULT);
-    const inRow = Math.min(3, tilesNow().length);
+    // The default window is wide enough for its cameras side by side; a size the person pulled is kept as it is
+    // (CAM3: the grid picks the rows for any shape).
+    const inRow = saved ? 0 : Math.min(3, tilesNow().length);
     const row = inRow > 1 ? Math.min(inRow * ROW_TILE_W + (inRow - 1) * 6 + 16, c.w * ROW_MAX_SHARE) : 0;
     const width = Math.round(Math.min(Math.max(spot.w * c.w, MIN_WIDTH, row), c.w * MAX_SHARE));
     box.style.width = `${width}px`;
@@ -305,6 +378,7 @@ export function createCamWindow(opts: {
     const sized = spot.h !== undefined && !folded;
     box.classList.toggle('sized', sized);
     box.style.height = sized ? `${Math.round(Math.min(Math.max(spot.h! * c.h, MIN_HEIGHT), c.h * MAX_SHARE))}px` : '';
+    layoutGrid();
     const height = box.offsetHeight;
     let left = spot.x * c.w;
     let top = spot.y * c.h;
@@ -324,14 +398,13 @@ export function createCamWindow(opts: {
     const free = isFree();
     const tiles = tilesNow();
     for (const tile of tiles) {
-      if (!tile.querySelector('.cam-tile-resize')) tile.append(el('span', { class: 'cam-tile-resize', 'aria-hidden': 'true' }));
+      if (!tile.querySelector('.cam-tile-resize')) tile.append(...handles('cam-tile-resize', 'cam-tile-edge'));
       tile.toggleAttribute('data-island', free);
     }
     // A pinned camera in the one-window layout (owner: pinning made the window look broken, the others spilled out):
     // it fills the left, the others share a strip on the right, everything inside the window.
-    const spotlight = !free && mode() !== 'card' && tiles.length > 1 && tiles.some((tile) => tile.classList.contains('pinned'));
-    grid.classList.toggle('spotlight', spotlight);
-    grid.style.setProperty('--cam-others', String(Math.max(1, tiles.length - 1)));
+    // CAM3: `layoutGrid` places it; the class only marks it (Test Lab, harness).
+    grid.classList.toggle('spotlight', !free && tiles.length > 1 && tiles.some((tile) => tile.classList.contains('pinned')));
   }
 
   /** Moves the box between the card, the page and the video; moved videos pause, so they are played again. */
@@ -351,7 +424,7 @@ export function createCamWindow(opts: {
         box.replaceChildren(pill, grid);
       }
     } else if (bar.parentNode !== box) {
-      box.replaceChildren(bar, grid, resize);
+      box.replaceChildren(bar, grid, ...edges);
     }
     // Only while there is a camera (owner: the pill comes with the camera; mic and camera are on the dock).
     box.hidden = count === 0 && hiddenCount === 0;
@@ -386,12 +459,8 @@ export function createCamWindow(opts: {
         return;
       }
       const person = personOf(target);
-      const prev = tileSpots[at].get(person) ?? {};
-      const spot: TileSpot = { x: target.offsetLeft / c.w, y: target.offsetTop / c.h, w: target.offsetWidth / c.w };
-      // The height is only fixed once the person resized it; otherwise the tile keeps a 4:3 shape.
-      const h = kind === 'size' ? target.offsetHeight / c.h : prev.h;
-      if (h !== undefined) spot.h = h;
-      setTileSpot(person, spot);
+      // CAM3: a tile keeps the camera's shape, so only its width is kept.
+      setTileSpot(person, { x: target.offsetLeft / c.w, y: target.offsetTop / c.h, w: target.offsetWidth / c.w });
       return;
     }
     const prev = (m === 'fs' ? spots.fs : spots.normal) ?? (m === 'fs' ? FS_DEFAULT : NORMAL_DEFAULT);
@@ -410,6 +479,8 @@ export function createCamWindow(opts: {
     id: number;
     target: HTMLElement;
     kind: 'move' | 'size' | 'scale';
+    /** Which handle resizes it (CAM3: any edge or corner). */
+    edge: Edge;
     x: number;
     y: number;
     left: number;
@@ -439,12 +510,13 @@ export function createCamWindow(opts: {
     const element = event.target as Element;
     if (element.closest('button')) return;
     let target: HTMLElement = box;
-    let kind: 'move' | 'size' | 'scale' = element === resize ? 'size' : 'move';
+    const edge = (element as HTMLElement).dataset?.edge as Edge | undefined;
+    let kind: 'move' | 'size' | 'scale' = edge && element.classList.contains('cam-edge') ? 'size' : 'move';
     if (isFree()) {
       const tile = element.closest<HTMLElement>('.cam-tile');
       if (tile) {
         target = tile;
-        kind = element.classList.contains('cam-tile-resize') ? 'size' : 'move';
+        kind = edge && element.classList.contains('cam-tile-edge') ? 'size' : 'move';
         // The one I touch comes to the front.
         tile.style.zIndex = String(++front);
       } else if (element.closest('.cam-pill')) {
@@ -456,6 +528,7 @@ export function createCamWindow(opts: {
       id: event.pointerId,
       target,
       kind,
+      edge: edge ?? 'se',
       x: event.clientX,
       y: event.clientY,
       left: target.offsetLeft,
@@ -489,12 +562,17 @@ export function createCamWindow(opts: {
       if (target === pill) applyFree({ left, top });
     } else {
       const tile = target !== box;
-      const max = Math.min(c.w * MAX_SHARE, c.w - drag.left);
-      target.style.width = `${Math.round(Math.min(Math.max(tile ? MIN_TILE_W : MIN_WIDTH, drag.width + dx), max))}px`;
-      // Both directions: the height is free too (tiles fill the box).
-      const maxH = Math.min(c.h * MAX_SHARE, c.h - drag.top);
-      target.style.height = `${Math.round(Math.min(Math.max(tile ? MIN_TILE_H : MIN_HEIGHT, drag.height + dy), maxH))}px`;
-      if (!tile) box.classList.add('sized');
+      const r = resized(drag, dx, dy, c, tile);
+      target.style.left = `${r.left}px`;
+      target.style.top = `${r.top}px`;
+      target.style.width = `${r.width}px`;
+      // The one window: a side handle changes only the width (its grid finds a new shape); any handle with a top or
+      // bottom sets its height too. A tile always keeps the camera's shape.
+      if (tile || /[ns]/.test(drag.edge) || box.classList.contains('sized')) {
+        target.style.height = `${r.height}px`;
+        if (!tile) box.classList.add('sized');
+      }
+      if (!tile) layoutGrid();
     }
     // In the shell the hole and islands are reported once per frame.
     if (!frame) {
@@ -504,6 +582,47 @@ export function createCamWindow(opts: {
       });
     }
   });
+  /**
+   * CAM3: the new box while a handle is pulled. The opposite edge stays put; the size stays between its minimum and
+   * what the container allows. A tile keeps 4:3: its larger pull (across or down) decides, the other side follows.
+   */
+  function resized(
+    d: { edge: Edge; left: number; top: number; width: number; height: number },
+    dx: number,
+    dy: number,
+    c: { w: number; h: number },
+    tile: boolean,
+  ): { left: number; top: number; width: number; height: number } {
+    const { edge } = d;
+    const west = edge.includes('w');
+    const north = edge.includes('n');
+    const across = edge.includes('e') || west;
+    const down = north || edge.includes('s');
+    const minW = tile ? MIN_TILE_W : MIN_WIDTH;
+    const minH = tile ? MIN_TILE_H : MIN_HEIGHT;
+    const maxW = Math.min(c.w * MAX_SHARE, west ? d.left + d.width : c.w - d.left);
+    const maxH = Math.min(c.h * MAX_SHARE, north ? d.top + d.height : c.h - d.top);
+    let width = across ? d.width + (west ? -dx : dx) : d.width;
+    let height = down ? d.height + (north ? -dy : dy) : d.height;
+    if (tile) {
+      // Pulled more across than down (in the tile's own shape): the width leads.
+      const byWidth = across && (!down || Math.abs(dx) >= Math.abs(dy) * TILE_RATIO);
+      if (byWidth) height = width / TILE_RATIO;
+      else width = height * TILE_RATIO;
+      width = Math.min(Math.max(width, minW), maxW, maxH * TILE_RATIO);
+      height = width / TILE_RATIO;
+    } else {
+      width = Math.min(Math.max(width, minW), maxW);
+      height = Math.min(Math.max(height, minH), maxH);
+    }
+    width = Math.round(width);
+    height = Math.round(height);
+    // A tile pulled from its top or bottom only grows sideways from its middle.
+    const left = west ? d.left + d.width - width : tile && !across ? d.left + (d.width - width) / 2 : d.left;
+    const top = north ? d.top + d.height - height : d.top;
+    return { left: Math.round(Math.min(Math.max(0, left), Math.max(0, c.w - width))), top: Math.round(Math.max(0, top)), width, height };
+  }
+
   const stop = (event: PointerEvent) => {
     if (!drag || event.pointerId !== drag.id) return;
     const { target, kind } = drag;
@@ -578,7 +697,7 @@ export function createCamWindow(opts: {
   });
   layoutButton.addEventListener('click', () => {
     layout = layout === 'free' ? 'group' : 'free';
-    save('opt:camLayout', layout);
+    save(LAYOUT_KEY, layout);
     place();
   });
 
@@ -595,7 +714,8 @@ export function createCamWindow(opts: {
     /** The tiles changed: the count and the hidden count are written, places kept inside the container. */
     update(n: number, hidden = 0): void {
       const wasHidden = box.hidden;
-      count = n;
+      if (labTiles.length) grid.append(...labTiles);
+      count = n + labTiles.length;
       hiddenCount = hidden;
       markTiles();
       labels();
@@ -609,6 +729,21 @@ export function createCamWindow(opts: {
     /** CAM2: my own camera was just turned on: open the window if it was folded, so I see my picture. */
     reveal(): void {
       if (folded) setFolded(false);
+    },
+    /**
+     * Test Lab `camera.grid` (CAM3): `n` drawn cameras join the real ones (0 takes them away); returns the rows and
+     * each tile's size, so the grid rule can be read.
+     */
+    labGrid(n: number, again: () => void): { rows: number[]; tiles: string[]; layout: string } {
+      labTiles.splice(0).forEach((tile) => tile.remove());
+      for (let i = 1; i <= n; i++) {
+        const tile = el('div', { class: 'cam-tile lab', 'data-person': `lab|${i}` }, el('span', { class: 'cam-name' }, `Lab ${i}`));
+        tile.style.background = `linear-gradient(160deg, hsl(${(i * 47) % 360} 55% 42%), hsl(${(i * 47 + 40) % 360} 50% 22%))`;
+        labTiles.push(tile);
+      }
+      again();
+      apply();
+      return { rows: rowsNow, tiles: tilesNow().map((tile) => `${tile.offsetWidth}×${tile.offsetHeight}`), layout: isFree() ? 'free' : 'group' };
     },
     /** Test Lab: fold the window to its title strip, as "−" does. */
     fold: () => setFolded(true),

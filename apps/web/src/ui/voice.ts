@@ -350,6 +350,20 @@ export function createVoice(root: HTMLElement, send: (message: ClientMessage) =>
         },
       },
       {
+        // CAM3: 1–8 drawn cameras in the camera window (no one needs to be in voice): the grid rule can be seen and
+        // read; 0 takes them away.
+        id: 'camera.grid',
+        tab: 'video',
+        run: async (arg?: string) => {
+          const n = Math.round(Number(arg?.trim() || 4));
+          if (!Number.isFinite(n) || n < 0 || n > 8) throw labFail({ en: 'use a number 0–8', tr: '0–8 arası bir sayı yaz' });
+          const out = camWindow.labGrid(n, renderCams);
+          await new Promise((r) => requestAnimationFrame(r));
+          const text = n ? `${out.layout}: rows ${out.rows.join(' + ') || '-'} · ${out.tiles.join(', ')}` : 'drawn cameras removed';
+          return { en: text, tr: n ? `${out.layout}: satırlar ${out.rows.join(' + ') || '-'} · ${out.tiles.join(', ')}` : 'çizilmiş kameralar kaldırıldı' };
+        },
+      },
+      {
         id: 'voice.switchCam',
         tab: 'video',
         where: CAM_ON,
