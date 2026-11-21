@@ -197,8 +197,8 @@ const SCREENS = {
   // 30 min together). The first scene (time), then the summary poster.
   ...Object.fromEntries(
     [
-      ['recap-show', 'the first scene (night sky, the time watched, our logo and its light cone, Glowbeam), the filmstrip and the controls under it; the host sees "▶ Back to the video"', 0],
-      ['recap-summary', 'the last scene (the poster: every number, "⬇ Save image")', 1],
+      ['recap-show', 'the first scene: a theatre marquee sign under the night sky (RC2 look C: gold frame, chasing bulbs, cream board reading "Now showing · Our movie night · <time> · <people>"), our logo top left, Glowbeam bottom right, the filmstrip and the controls under it; the host sees "▶ Back to the video"', 0],
+      ['recap-summary', 'the last scene on the same marquee sign (every number, "⬇ Save image")', 1],
     ].map(([id, what, steps]) => [
       id,
       {
@@ -351,6 +351,8 @@ const SCREENS = {
   // Card CAM3: the camera window as a grid (the Test Lab's drawn cameras: 5 = 3 + 2) and as 4 (2 × 2).
   'camera-grid': { what: 'Card CAM3: the one camera window with 5 drawn test cameras: a grid of equal 4:3 tiles, 3 on top and 2 centred below, never more lower down; it can be resized from any edge', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => window.__swmLab.run('camera.grid', '5')); } },
   'camera-grid-4': { what: 'Card CAM3: the camera window with 4 drawn test cameras: 2 × 2', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => window.__swmLab.run('camera.grid', '4')); } },
+  // Card VC4: past 4 cameras the chat shows one note (the Test Lab's voice.crowdNote), room activity lines hidden.
+  'voice-crowd-note': { what: 'Card VC4: the chat note shown once when a room has more than 4 cameras or 6 people in voice (room activity lines hidden: only the note shows)', room: true, after: async (p) => { await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 }); await p.evaluate(() => { localStorage.setItem('opt:chatEvents', '0'); return window.__swmLab.run('voice.crowdNote', '5 5'); }); } },
   'camera-refused': { what: 'Card CAM2: 📷 pressed and the browser refused the camera: a message next to the 📷 says why and how to allow it', room: true, after: (p) => camera(p, 'blocked') },
   ...Object.fromEntries(
     ['me', 'view', 'room', 'rules', 'schedule', 'sound', 'about'].map((sec) => [

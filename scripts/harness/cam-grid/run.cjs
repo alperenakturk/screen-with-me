@@ -4,6 +4,7 @@
 //     down, every tile is the same size, 4:3, inside the window, none overlapping; 4 = 2 × 2, 5 = 3 + 2.
 //  3. The window resizes from all eight handles (each edge and corner moves the right sides); free tiles resize from
 //     their edges too and keep the camera's shape.
+//  4. Card VC4: past 4 cameras the chat shows one note per room (Test Lab `voice.crowdNote`), even with activity hidden.
 //
 //   built site on wrangler dev:  node scripts/harness/cam-grid/run.cjs http://localhost:8787 [screenshot folder]
 const { chromium } = require('playwright');
@@ -193,6 +194,20 @@ async function pull(page, selector, dx, dy) {
   if (OUT) await page.screenshot({ path: `${OUT}/free.png` });
   await page.evaluate(() => document.querySelector('#voice-cams .cam-layout').click());
   check(await page.evaluate(() => localStorage.getItem('opt:camView') === 'group'), 'the switch is saved under the new key');
+  // Card VC4: past 4 cameras the chat says once per room that slow connections may struggle, visible even while room
+  // activity lines are hidden; a second time it stays quiet.
+  await page.evaluate(() => localStorage.setItem('opt:chatEvents', '0'));
+  const first = await page.evaluate(() => window.__swmLab.run('voice.crowdNote', '5 5'));
+  const note = await page.evaluate(() => {
+    const n = document.querySelector('.chat-list .chat-note');
+    return n ? { shown: n.getBoundingClientRect().height > 0, text: n.textContent, hidden: document.querySelector('.chat-list').classList.contains('hide-events') } : null;
+  });
+  check(!!note && note.shown && /4 cameras/.test(note.text), 'VC4: 5 cameras put one note in the chat, shown even with room activity hidden', { first, note });
+  const again = await page.evaluate(() => window.__swmLab.run('voice.crowdNote', '6 6'));
+  const count = await page.evaluate(() => document.querySelectorAll('.chat-list .chat-note').length);
+  check(count === 1, 'VC4: the note comes once per room', { again, count });
+  const within = await page.evaluate(() => window.__swmLab.run('voice.crowdNote', 'reset').then(() => window.__swmLab.run('voice.crowdNote', '4 6')));
+  check(await page.evaluate(() => document.querySelectorAll('.chat-list .chat-note').length) === 1, 'VC4: 4 cameras and 6 in voice are within what we recommend (no note)', within);
   check(errors.length === 0, 'no page errors', errors);
 
   await browser.close();

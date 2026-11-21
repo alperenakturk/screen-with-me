@@ -797,6 +797,7 @@ const en = {
   'voice.camLimitTitle': 'Up to {max} cameras at once. Each camera goes to everyone in voice separately and everyone plays them all, which strains slow connections and laptops.',
   'voice.fullHint': 'Voice is full ({n}/{max}). Everyone sends their voice to everyone directly, so more people would overload home connections. You can join when someone leaves.',
   'voice.lastSeat': '{n} left',
+  'voice.crowdNote': 'Many cameras and voices in this room: on a slow connection the picture or sound may stutter. We recommend up to {cams} cameras and {voices} people in voice.',
   'voice.camFullHint': '{n}/{max} cameras are on. Video goes to everyone separately, so there is a limit; you can turn yours on when someone turns theirs off.',
   'voice.unreachable': 'Your voice isn’t reaching the others. A VPN or this network may be blocking it — turn the VPN off and try again.',
   'voice.unreachableFor': 'Voice isn’t connecting with {name} (a VPN or the network may be blocking it)',

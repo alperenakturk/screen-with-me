@@ -1161,7 +1161,7 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   who didn't join hear nobody. Member field `voice: {mic, track?}` (no version bump); `{t:'voice', on, mic}`. Transport
   is `welcome.voiceMode`: **p2p** (default, no card/account): each person has a separate WebRTC connection with
   everyone in voice (the smaller id makes the offer), the server relays `{t:'signal'}` only if both sides are in voice
-  (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (6), STUN Cloudflare only (every STUN server
+  (IPs are only visible to people in voice), at most `VOICE_MAX_P2P` (8 since VC4), STUN Cloudflare only (every STUN server
   sees each user's IP). **No IP notice (card SIMP1, owner, 10 Nov 2026):** the 0.9.86 dialog before voice / a stream /
   watching and the "🔒 People in voice can see your IP · Why?" line are gone (`ui/ip-notice.ts` deleted; old
   `opt:ipNotice:*` keys are harmless leftovers). The legal place is `privacy.html#voice` (EN) / `#voice-tr` (TR), linked
@@ -1528,12 +1528,20 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   brings back my last target (`myTarget`). Lab `seaBattle.state` adds `following`, `follow`, `peerAim`. Tests: unit
   (`aim` parsing), e2e `sea-many.mjs` (relayed to players and the watcher, not to the shooter; out of turn / own sea
   dropped), sea harness (Kim's hover reaches the sockets; Lee's aim at Kim and at Max on Kim's page).
+  **FW2 levels:** `packages/shared/src/games/five-frames.ts` `LEVELS` (`easy` / `medium` default / `hard` / `mixed`),
+  `levelWords(words, bands, level)` (bands 1 / 1–2 / 2–3 / all; missing bands = all), `levelAnswer` (each level its own
+  salt, Medium 0), `categoryAnswer(…, level, bands)`; the word modules carry `BANDS` (one digit per answer) and
+  `CATEGORY_BANDS` (scripts/words/build-words.py `BAND_SEEN`). The solo game keeps `save.level` and the other levels'
+  games in `save.lv` (`en:easy`, `en:countries:hard`; Medium daily stays in `games`, Mixed categories in `cats`); its
+  level select `.ff-level` sits beside the category select; the share line names a level other than Medium. The Duel's
+  `settings` take `level` (state `level`, the tag shows it); the table's day word is the solo game's word at that level.
+  Both "?" guides end with "Which words count". Lab `fiveFrames.level` (arg a level) switches it and reports the word count and today's answer.
   **⚔️ Five Frames Duel (card FFDUEL, `docs/internal/design/games/five-frames-duel.md`):** room kind `duel`, its own
   object `Duel` (`apps/server/src/duel.ts`, binding `DUELS`, migration `v14`, `/api/duel/:id/ws`) on the Sea pattern:
   the word and every guess live only there; each connection's `view` carries my own words, everyone's marks (`score`),
   `solved` / `out`; the word (`answer`) and all words only once the game is over. Rules and protocol in
   `packages/shared/src/games/duel.ts` (`duelGuess` = the solo game's `guess` checks, `duelOutcome`: the first to solve
-  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); FW2 time and points: the lobby's `settings` carries `time` (`DUEL_TIMES` 0 / 60 / 120 / 180 / 300 s, 180 by default); `start` sets `endsAt`, `scheduleAlarm` includes it and `alarm` (or a guess that comes after it, answered `error` `time`) calls `timeUp` → `duelTimeUp` (every board not done gets `timeUp`, the first solver wins, else a draw); `state.left` is the milliseconds left while a game runs (the page counts it down, `.duel-clock`). `finish` gives `duelPoints` (7 → 1 by the guess it took, `FIRST_BONUS` 3 to the first finder) as each seat's `gained` and adds it to its `points` (the bar shows points; best of three still counts matches). In the video's place my tickets share the full height (rows ≤ 50 px) and three to six others are one-line strips; the lobby's settings after the word language are selects (two a row under 520 px). Lab `duel.timeup` ends the time at once (lab server only). the word lists moved to `packages/shared/src/games/words/` (the server
+  wins, both used up = draw; `practiceWord`; FW2 `duelPlace`: a solver's place in the finishing order, sent as `place` on their seat so the page never counts solvers); FW2 time and points: the lobby's `settings` carries `time` (`DUEL_TIMES` 0 / 60 / 120 / 180 / 300 s, 180 by default); `start` sets `endsAt`, `scheduleAlarm` includes it and `alarm` (or a guess that comes after it, answered `error` `time`) calls `timeUp` → `duelTimeUp` (every board not done gets `timeUp`, the first solver wins, else a draw); `state.left` is the milliseconds left while a game runs (the page counts it down, `.duel-clock`). `finish` gives `duelPoints` (7 → 1 by the guess it took, `FIRST_BONUS` 3 to the first finder) as each seat's `gained` and adds it to its `points` (the bar shows points; best of three still counts matches). In the video's place the Duel's root carries `data-fill` (GFIT1: laid out at the box itself) and my tickets share the full height (rows ≤ 64 px, cells 26–58 px) and three to six others are one-line strips; the lobby's settings after the word language are selects (two a row under 520 px). Lab `duel.timeup` ends the time at once (lab server only). the word lists moved to `packages/shared/src/games/words/` (the server
   unpacks them with `decodeWords`). Phases `wait` (both press Ready; a seated player picks EN / TR, which resets Ready)
   → `play` → `over` ("Play again" = ready; both = the next game). The table's first game is the day's word (`daily` =
   day number, `answerFor` on the server's UTC day), every next one a practice word (secure random, never the day's).
@@ -2143,10 +2151,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   incoming streams + my own preview (`me`) reach the site in the overlay through a **local WebRTC bridge**
   (`{op:'loop'}`: offscreen makes the offer, `cams` = mid → member; the bridge restarts on every change; no `data` = no
   camera). Old extensions don't send `caps.cam` → button hidden. My own voice level: a bar under 🎙 (`LevelMeter`
-  "me"; in the extension offscreen `me`). At most `CAM_MAX` (4) cameras at once (server `cam_full`). **Limits always
-  visible** (user's request): "Seste 3/6 · 📷 1/4" in the card, yellow at the last slot, red when full; a full button is
+  "me"; in the extension offscreen `me`). At most `CAM_MAX` (6 since VC4) cameras at once (server `cam_full`). **Limits always
+  visible** (user's request): "Seste 3/8 · 📷 1/6" in the card, yellow at the last slot, red when full; a full button is
   dimmed (`.is-full`) and pressing it explains why (peer-to-peer, upload speed) via `flashHint`. Tests:
   `voice/run.mjs` (camera frames are counted), e2e `voice.mjs` (cam_full).
+  **Card VC4 (owner, 21 Nov 2026: 5 in voice and 4 cameras ran without trouble):** `VOICE_MAX_P2P` 6 → 8, `CAM_MAX`
+  4 → 6 (server-checked; no protocol bump: only the numbers change, old clients just show the old maximum). What we
+  recommend is `CAM_RECOMMENDED` (4) cameras and `VOICE_RECOMMENDED` (6) people in voice: past either, `crowdNote` in
+  `ui/voice.ts` (on every `members`) puts one grey line in the chat (`voice.crowdNote`, EN + TR, "…we recommend up to 4
+  cameras and 6 people in voice"), once per room in this browser (`localStorage` `voiceCrowd:<room>`). It is a local
+  line through `VoiceRoom.note` → `chat.note()` (a `system` line with `note: true`, class `.chat-note`), shown even
+  while room activity lines are hidden (`.hide-events` skips it, the "no messages yet" text hides for it). Test Lab
+  `voice.crowdNote` (📊; `[cameras] [people]`, `reset`); e2e `voice.mjs` (8 voices / 6 cameras accepted, the 9th / 7th
+  refused); harness `cam-grid/run.cjs` part 4; shots screen `voice-crowd-note`; the help page states 8 and 6.
 - **Cameras on phones (card CAM1, the owner's test with a friend):** a second capture of the camera while the voice
   camera is live froze or blacked out what the others saw on phones, so the pre-join / 🎛 window shows the live camera
   (`voiceCheck({ live })`) and a pick switches it in place. `P2pVoice.switchCam(open)`: the new track goes into every
@@ -2395,6 +2412,19 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `RECAP_MUSIC_LEVEL` (0.035) × volume / 100, faded in from silence over `RECAP_FADE_S` (3 s); `state().level`
   reports it. Lab `{t:'lab', op:'recap-together'}` sets `togetherMs` to 2 h (Test Lab `recap.button`). Owner's picks: look C (marquee sign) and music 1 (our own pad, re-voiced), built in part 2
   (`design/recap-cinema/`). Harness `scripts/harness/recap` (CI `site`).
+  **RC2 part 2 (look + music, 21 Nov 2026):** every scene is `.rc-scene.rc-marquee` (night sky `.rc-sky`, the cone,
+  the scene's own `decor`) with `marquee(board)`: `.rc-sign` > `.rc-sign-frame` (a 3 × 3 grid: bulb rows
+  `.rc-b-top` / `.rc-b-bottom` of `MARQUEE_BULBS.across` (22), columns `.rc-b-left` / `.rc-b-right` of `.down` (6),
+  rows run clockwise; every third `.rc-bulb` lights together, `rc-chase` 0.9 s, so the light runs round; still and lit
+  with reduced motion) round the cream `.rc-board`, plus `.rc-post`. `signLines` gives each fact a kicker, a big red
+  headline and a small line: the time fact reads "Now showing · Our movie night · <time> · <people>" (`TEXT`
+  `nowShowing` / `ourNight`), the others title · big · sub; the summary keeps its grid and "⬇ Save image" (the kicker
+  hides in a narrow box). Under a 520 px box the sign is 92 % wide below the logo pill, every other bulb hides. The
+  saved image gets the gold frame and bulbs. Music 1: `createMusic` re-voiced: `RECAP_MUSIC_LEVEL` 0.025, one chord
+  per `RECAP_CHORD_S` (5.2 s), sine + triangle pairs under a 620 Hz low-pass (warm), two soft sine "piano" plucks per
+  chord (an octave up, 12 ms attack, 2.6 s decay) past it, all under an 1.8 kHz low-pass. `recapCard`, `nudge` and
+  their texts are deleted (unused since part 1). `state().sign` = `{ bulbs, chasing, lines }` (Test Lab
+  `recap.state`); the harness checks the sign, the first sign's words, reduced motion and gain ≤ 0.025.
 - **Rate the film (card FR1, 21 Nov 2026; `packages/shared/src/film-rate.ts`, site `ui/film-rate.ts` + `.css`, a lazy
   chunk):** "⭐ Rate the film" `#dock-rate` sits in the rail's first group and shows only on the film page (`isShell`)
   for the host (`renderRateButton`, on `members` and every `rate`). `{t:'rate-start'}` (host only, else `not_host`;

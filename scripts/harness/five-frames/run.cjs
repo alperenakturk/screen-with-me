@@ -3,7 +3,7 @@
 // a phone), a wrong guess typed with the tray gets the right ✓ / • marks, an unknown word is refused, the physical
 // keyboard types only while the board has the focus (the room's keys stay the room's), solving shows the result and a
 // spoiler-free share line, the result survives a reload, Turkish has its own alphabet; FW1: a category (countries) with
-// its hint, a country name as a guess, its own share line.
+// its hint, a country name as a guess, its own share line; FW2: the level (Hard's own word, kept across a reload).
 //
 //   npm run dev, then: node scripts/harness/five-frames/run.cjs [site]
 const { chromium, devices } = require('playwright');
@@ -68,12 +68,13 @@ const fits = (page) =>
 const solve = (page, lang) =>
   page.evaluate(async ([root, lang]) => {
     const rules = await import(`/@fs${root}/packages/shared/src/games/five-frames.ts`);
-    const { WORDS, ANSWERS } = await import(`/@fs${root}/packages/shared/src/games/words/${lang}.ts`);
+    const { WORDS, ANSWERS, BANDS } = await import(`/@fs${root}/packages/shared/src/games/words/${lang}.ts`);
     const chars = Array.from(WORDS);
     const words = [];
     for (let i = 0; i < chars.length; i += 5) words.push(chars.slice(i, i + 5).join(''));
     const answers = ANSWERS.split(',').map((n) => words[parseInt(n, 36)]);
-    const answer = rules.answerFor(rules.dayNumber(), answers, lang);
+    // FW2: a new player plays Medium words.
+    const answer = rules.levelAnswer(rules.dayNumber(), answers, BANDS, lang, 'medium');
     const wrong = words.find((w) => w !== answer && new Set(w).size === 5 && rules.score(w, answer).some((m) => m !== 'miss')) ?? words.find((w) => w !== answer);
     return { answer, wrong, marks: rules.score(wrong, answer), day: rules.dayNumber() };
   }, [ROOT, lang]);
@@ -218,9 +219,9 @@ async function checkResult(page, label, unit) {
   // FW1: a category. Today's country, worked out with the game's rules; a country name is a guess only in the category.
   const country = await alex.evaluate(async ([root]) => {
     const rules = await import(`/@fs${root}/packages/shared/src/games/five-frames.ts`);
-    const { CATEGORIES } = await import(`/@fs${root}/packages/shared/src/games/words/en.ts`);
+    const { CATEGORIES, CATEGORY_BANDS } = await import(`/@fs${root}/packages/shared/src/games/words/en.ts`);
     const list = rules.decodeCategories(CATEGORIES).countries;
-    const answer = rules.categoryAnswer(rules.dayNumber(), list, 'en', 'countries');
+    const answer = rules.categoryAnswer(rules.dayNumber(), list, 'en', 'countries', 'medium', CATEGORY_BANDS.countries);
     return { answer, other: list.find((w) => w !== answer && !['spain', 'italy', 'india', 'egypt', 'chile', 'nepal'].includes(w)) };
   }, [ROOT]);
   await alex.evaluate(() => { localStorage.setItem('fiveFrames:lang', 'en'); localStorage.setItem('lang', 'en'); });
@@ -228,11 +229,11 @@ async function checkResult(page, label, unit) {
   await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
   await alex.waitForTimeout(1200);
   await open(alex);
-  await alex.selectOption('#game-stage .ff-cat', 'countries');
+  await alex.selectOption('#game-stage .ff-cat:not(.ff-level)', 'countries');
   await alex.waitForTimeout(300);
   const catShape = await alex.evaluate(() => ({
-    hinted: document.querySelector('#game-stage .ff-cat').classList.contains('hinted'),
-    label: document.querySelector('#game-stage .ff-cat').selectedOptions[0].textContent,
+    hinted: document.querySelector('#game-stage .ff-cat:not(.ff-level)').classList.contains('hinted'),
+    label: document.querySelector('#game-stage .ff-cat:not(.ff-level)').selectedOptions[0].textContent,
     streak: document.querySelector('#game-stage .ff-streak').hidden,
     empty: !document.querySelector('#game-stage .ff-row.done'),
   }));
@@ -249,10 +250,33 @@ async function checkResult(page, label, unit) {
   const catShared = await alex.evaluate(() => navigator.clipboard.readText());
   check(/^🍿 Five Frames #\d+ · 🌍 Countries · 2\/7$/u.test(catShared), 'category: the share line names the category, no letters', catShared);
   await alex.screenshot({ path: __dirname + '/frames-category.png' });
-  await alex.selectOption('#game-stage .ff-cat', 'daily');
+  await alex.selectOption('#game-stage .ff-cat:not(.ff-level)', 'daily');
   await alex.waitForTimeout(300);
   // (The streak check above cleared today's daily game, so the daily board is empty again.)
   check(await alex.evaluate(() => !document.querySelector('#game-stage .ff-row.done') && !document.querySelector('#game-stage .ff-streak').hidden), 'back to the daily word: its own board (not the category\'s) and the streak');
+
+  // FW2: the level. Hard has its own word of the day (known and rare words); the choice survives a reload.
+  const hard = await alex.evaluate(async ([root]) => {
+    const rules = await import(`/@fs${root}/packages/shared/src/games/five-frames.ts`);
+    const { WORDS, ANSWERS, BANDS } = await import(`/@fs${root}/packages/shared/src/games/words/en.ts`);
+    const { answers } = rules.decodeWords(WORDS, ANSWERS);
+    return { answer: rules.levelAnswer(rules.dayNumber(), answers, BANDS, 'en', 'hard'), easy: rules.levelWords(answers, BANDS, 'easy') };
+  }, [ROOT]);
+  check(!hard.easy.includes(hard.answer), `level: Hard's word (${hard.answer}) is no Easy word`);
+  await alex.selectOption('#game-stage .ff-level', 'hard');
+  await alex.waitForTimeout(300);
+  check(await alex.evaluate(() => !document.querySelector('#game-stage .ff-row.done')), 'level: Hard has its own empty board');
+  await alex.reload();
+  await until(() => alex.evaluate(() => !!document.querySelector('#game-btn')));
+  check(!!(await open(alex)), 'level: reopens after a reload');
+  await alex.waitForTimeout(500);
+  check((await alex.evaluate(() => document.querySelector('#game-stage .ff-level')?.value)) === 'hard', 'level: Hard is kept across a reload');
+  await tap(alex, hard.answer);
+  check(!!(await until(() => alex.evaluate(() => /Solved in 1\/7/.test(document.querySelector('#game-stage .ff-message').textContent)), 4000)), 'level: the Hard word of the day solves it');
+  await alex.evaluate(() => document.querySelector('#game-stage .ff-share').click());
+  const hardShared = await alex.evaluate(() => navigator.clipboard.readText());
+  check(/^🍿 Five Frames #\d+ · Hard · 1\/7$/u.test(hardShared), 'level: the share line names the level', hardShared);
+  await alex.selectOption('#game-stage .ff-level', 'medium');
 
   const phone = await browser.newContext({ ...devices['iPhone 13'], permissions: ['clipboard-read', 'clipboard-write'] });
   const pam = await person(phone, 'Pam', 'elf');

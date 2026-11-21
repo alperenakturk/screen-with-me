@@ -10,6 +10,7 @@ import {
   newDeck,
   newPokerData,
   parsePokerMessage,
+  pokerTurnKey,
   scoreFive,
 } from './poker.ts';
 
@@ -195,6 +196,36 @@ describe('Poker table', () => {
     }
     expect(e.data.phase).toBe('over');
     expect(e.winner()?.life).toBe(200);
+  });
+
+  it('LH4: the hand\'s net per player: what the winner gained, what the others lost', () => {
+    const e = table(3, false, 11);
+    e.startGame();
+    // Everyone calls / checks to the showdown.
+    for (let i = 0; i < 40 && e.isBetting(); i++) {
+      const o = e.options()!;
+      e.act(toActKey(e), o.call > 0 ? { a: 'call' } : { a: 'check' });
+    }
+    const r = e.data.result!;
+    const net = r.net!;
+    // Net sums to zero (no moves were used) and each one is the change in life over the hand.
+    expect(Object.values(net).reduce((a, b) => a + b, 0)).toBe(0);
+    for (const s of e.data.seats) expect(s.life - 100).toBe(net[s.key] ?? 0);
+    // The winner's "won" is the whole middle, their net is less (their own share came back).
+    const winner = Object.keys(r.won)[0]!;
+    if (Object.keys(r.won).length === 1) expect(net[winner]!).toBeLessThan(r.won[winner]!);
+  });
+
+  it('LH4: the turn key changes on an action, not on a special move out of turn', () => {
+    const e = table(4, false, 3);
+    e.startGame();
+    const before = pokerTurnKey(e.data);
+    const other = e.data.seats.find((s, i) => i !== e.data.toAct)!;
+    expect(e.move(other.key, 'shield').ok).toBe(true);
+    expect(e.move(other.key, 'peek', e.data.seats.find((s) => s !== other)!.pid).ok).toBe(true);
+    expect(pokerTurnKey(e.data)).toBe(before);
+    e.act(toActKey(e), { a: 'call' });
+    expect(pokerTurnKey(e.data)).not.toBe(before);
   });
 
   it('message validation', () => {

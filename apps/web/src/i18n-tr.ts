@@ -799,6 +799,7 @@ export const tr: Record<I18nKey, string> = {
   'voice.camLimitTitle': 'Aynı anda en fazla {max} kamera açık olabilir. Her kamera seste olan herkese ayrı gider ve herkes hepsini birden oynatır; yavaş internette ve dizüstünde zorlanır.',
   'voice.fullHint': 'Seste yer yok ({n}/{max}). Herkes sesini herkese ayrı yolladığı için daha kalabalıkta internet yetmiyor. Biri ayrılınca katılabilirsin.',
   'voice.lastSeat': 'son {n} yer',
+  'voice.crowdNote': 'Bu odada çok kamera ve ses var: yavaş bir bağlantıda görüntü ya da ses takılabilir. En fazla {cams} kamera ve seste {voices} kişi öneriyoruz.',
   'voice.camFullHint': 'Şu an {n}/{max} kamera açık. Görüntü herkese ayrı gittiği için sınır var; biri kapatınca seninki açılabilir.',
   'voice.unreachable': 'Sesin diğerlerine ulaşmıyor. Bir VPN ya da bu ağ engelliyor olabilir — VPN’i kapatıp yeniden dene.',
   'voice.unreachableFor': '{name} ile ses bağlanamıyor (bir VPN ya da ağ engelliyor olabilir)',

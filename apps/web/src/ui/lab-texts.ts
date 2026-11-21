@@ -99,7 +99,7 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   },
   'recap.state': {
     title: { en: 'Recap: status, ready, scene', tr: 'Özet: durum, hazır mı, sahne' },
-    help: { en: 'Writes this session\'s recap status into the log: minutes watched together, whether it was shown, whether ✨ is ready, the show running and which scene the stage is on.', tr: 'Bu oturumun özet durumunu kayda yazar: birlikte izlenen dakikalar, gösterildi mi, ✨ hazır mı, açık gösteri ve sahnenin hangi sahnede olduğu.' },
+    help: { en: 'Writes this session\'s recap status into the log: minutes watched together, whether it was shown, whether ✨ is ready, the show running, which scene the stage is on and its marquee sign (bulbs, whether they chase, the three lines).', tr: 'Bu oturumun özet durumunu kayda yazar: birlikte izlenen dakikalar, gösterildi mi, ✨ hazır mı, açık gösteri, sahnenin hangi sahnede olduğu ve ışıklı tabelası (ampuller, yanıp akıyorlar mı, üç satır).' },
   },
   'shorts.tidy': {
     title: { en: 'Shorts view: rail groups, labels, pill, overlaps', tr: 'Shorts görünümü: ray grupları, etiketler, şerit, çakışmalar' },
@@ -152,6 +152,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   'camera.open': {
     title: { en: 'Turn my camera on with a test picture', tr: 'Kameramı test görüntüsüyle aç' },
     help: { en: 'Presses 📷 with a drawn picture instead of the real camera: my camera window must open and show it. "fold" folds the window first (it must open again). "blocked", "system", "busy" or "none" makes the browser refuse instead: a message must say why and how to allow it.', tr: '📷 düğmesine gerçek kamera yerine çizilmiş bir görüntüyle basar: kamera pencerem açılıp onu göstermeli. "fold" önce pencereyi küçültür (yeniden açılmalı). "blocked", "system", "busy" ya da "none" tarayıcının reddetmesini sağlar: bir mesaj nedenini ve nasıl izin verileceğini söylemeli.' },
+  },
+  'voice.crowdNote': {
+    title: { en: 'Show the "many cameras" chat note', tr: '"Çok kamera" sohbet notunu göster' },
+    help: { en: 'As if the room had this many cameras (default 5) and people in voice: past 4 cameras or 6 people the chat says once per room that slow connections may struggle. "reset" lets it show again.', tr: 'Odada bu kadar kamera (varsayılan 5) ve seste bu kadar kişi varmış gibi: 4 kamerayı ya da 6 kişiyi geçince sohbet, yavaş bağlantıların zorlanabileceğini oda başına bir kez söyler. "reset" yeniden çıkmasını sağlar.' },
   },
   'camera.grid': {
     title: { en: 'Fill the camera window with test cameras', tr: 'Kamera penceresini test kameralarıyla doldur' },

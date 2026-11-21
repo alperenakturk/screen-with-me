@@ -4,11 +4,13 @@
 // ends when every board is done; the places follow the finishing order (and everyone who didn't find it shares the
 // place after the last solver); six used-up boards are a draw with everyone first.
 import { GameSocket } from './game-socket.mjs';
-import { answerFor, decodeWords } from '../../packages/shared/src/games/five-frames.ts';
+import { decodeWords, levelAnswer, levelWords } from '../../packages/shared/src/games/five-frames.ts';
 import * as EN from '../../packages/shared/src/games/words/en.ts';
 
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const { allowed, answers } = decodeWords(EN.WORDS, EN.ANSWERS);
+/** FW2: the day's word at a level (a new table plays Medium). */
+const dayWord = (day, level = 'medium') => levelAnswer(day, answers, EN.BANDS, 'en', level);
 const words = [...allowed];
 const NAMES = ['Alex', 'Sam', 'Robin', 'Kim', 'Lee', 'Max', 'Ari'];
 
@@ -72,7 +74,7 @@ async function table(n) {
   robin.send({ t: 'ready', on: true });
   ok(await until(() => people.every((p) => p.state.phase === 'play')), 'all three ready: the race starts');
   ok(alex.state.time === 180 && alex.state.left > 170_000 && alex.state.left <= 180_000, `FW2: a new table has 3 minutes a game (${alex.state.left} ms left)`);
-  const answer = answerFor(alex.state.daily, answers, 'en');
+  const answer = dayWord(alex.state.daily);
   const wrong = wrongFor(answer);
   alex.send({ t: 'guess', word: wrong[0] });
   sam.send({ t: 'guess', word: wrong[1] });
@@ -110,10 +112,15 @@ async function table(n) {
   robin.send({ t: 'settings', time: 7 });
   alex.send({ t: 'settings', time: 60 });
   ok(await until(() => people.every((p) => p.state.time === 60)), 'FW2: a seated player picks 1 minute (an odd value is refused)');
+  ok(alex.state.level === 'medium', 'FW2: a new table plays Medium words');
+  sam.send({ t: 'settings', level: 'expert' });
+  sam.send({ t: 'settings', level: 'easy' });
+  ok(await until(() => people.every((p) => p.state.level === 'easy')), 'FW2: a seated player picks Easy (an unknown level is refused)');
   for (const p of people) p.send({ t: 'ready', on: true });
   ok(await until(() => people.every((p) => p.state.phase === 'play')), 'FW2: the timed race starts');
   ok(alex.state.left > 50_000 && alex.state.left <= 60_000, `FW2: about a minute left (${alex.state.left} ms)`);
-  const answer = answerFor(alex.state.daily, answers, 'en');
+  const answer = dayWord(alex.state.daily, 'easy');
+  ok(levelWords(answers, EN.BANDS, 'easy').includes(answer) && answer !== dayWord(alex.state.daily), 'FW2: an Easy table plays the Easy word of the day');
   sam.send({ t: 'guess', word: answer });
   ok(await until(() => alex.state.players[1].solved), 'Sam finds it');
   alex.send({ t: 'lab', op: 'timeup' });
@@ -138,7 +145,7 @@ async function table(n) {
   ok(extra.state.players.length === 6 && extra.state.players.every(Boolean), 'six seats, all taken');
   for (const p of people) p.send({ t: 'ready', on: true });
   ok(await until(() => people.every((p) => p.state.phase === 'play')), 'six ready: the race starts');
-  const answer = answerFor(people[0].state.daily, answers, 'en');
+  const answer = dayWord(people[0].state.daily);
   const wrong = wrongFor(answer);
   for (const p of people) for (const w of wrong) p.send({ t: 'guess', word: w });
   ok(await until(() => people.every((p) => p.state.phase === 'over'), 15000), 'six used-up boards: the game is over');

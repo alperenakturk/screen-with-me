@@ -1,0 +1,6 @@
+- Last Heart: a special move made out of turn no longer restarts the clock of the player whose turn it is.
+- Last Heart: the hand's result says how much the winner took from the middle, and every seat shows its change in life (+4, −12).
+- Last Heart: only the winning cards glow gold at the showdown; a losing hand gets a quiet outline.
+- Last Heart: the table's feed shows each new street with its cards, repeated moves, and what a time-out did.
+- Last Heart: dragging the raise slider is no longer interrupted when another player moves; life bars and the pot now ease to their new level.
+- Last Heart: card ranks stay readable on small cards (phones), and the result is said once instead of twice.

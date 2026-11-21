@@ -114,5 +114,23 @@ with credit; hunspell-tr (MPL 2.0) was looked at and left out, the Leipzig corpo
   word seen ≥ 3 times in the subtitles or kept by hand) become `CATEGORIES` in the same modules.
   `python3 scripts/words/build-words.py --check` rebuilds in memory and fails if the shipped modules differ or a list
   breaks a rule (the "check script over the lists" of the card).
+- **FW2 (21 Nov 2026, Game Studio "Five Frames"): levels + more lists.** Easy / Medium (default) / Hard / Mixed for
+  the daily word, the categories and the Duel. Each answer gets a band from two FrequencyWords thresholds (`BAND_SEEN`:
+  EN ≥ 3,000 / ≥ 400, TR ≥ 1,200 / ≥ 180 uses; `<lang>-keep.txt` words at least band 2): 1 common, 2 known, 3 rare.
+  Easy = 1 (EN 870, TR 868), Medium = 1–2 (EN 1,604, TR 1,594), Hard = 2–3 (EN 1,166, TR 1,188), Mixed = all; only
+  the band digit ships (`BANDS`, `CATEGORY_BANDS`: a category splits by its own order, half / 30 % / rest). The odd
+  roots the owner met (zevce, imbik, tonoz, katot, keton, yekun …) are band 3: Hard or Mixed only. Each level has its
+  own word of the day (Medium keeps the old salt).
+  Sources looked at for more words:
+  | Source | Licence | Verdict |
+  |---|---|---|
+  | GeoNames cities15000 (via datasets/world-cities on GitHub; geonames.org itself is blocked from the cloud) | CC BY 4.0 | **Used** to pick 31 EN and 21 TR well-known five-letter cities by eye (amman, busan, haifa, musul, şiraz …); homonyms of everyday words or first names left out (young, split, nancy, kazan) |
+  | Wikidata (cities, countries, given names) | CC0 | Fine to use; not needed now (the categories already have 22–44 words). Given names are not used: the game accepts no proper nouns |
+  | Unicode CLDR country / city names | Unicode licence (permissive) | Fine; our country lists already cover the five-letter ones |
+  | TDK Güncel Türkçe Sözlük | no open licence | Not used |
+  | Wiktionary | CC BY-SA 4.0 (share-alike would bind the lists) | Not used |
+  | hunspell-tr | MPL 2.0 | Left out (as in GMP) |
+  What the game does not use (now said in the "?" of both games): names of people and places as guesses or daily
+  answers (a typed "Fırat" is refused), abbreviations, slang, rude words, and as answers plurals or other endings.
 - To change a list: edit the pick / exclude files, run `python3 scripts/words/build-words.py`. Changing the
   answers changes the daily word for everyone on the same day (everyone gets the new list together after a deploy).
