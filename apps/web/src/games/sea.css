@@ -360,3 +360,5 @@ html.phone .sea-bot-label { flex-basis: auto; }
 .sea-theme-art svg { width: 100%; height: 100%; display: block; }
 html.phone .sea-theme { height: 44px; }
 @media (prefers-reduced-motion: reduce) { .sea-ship.sinking { animation: none; } .sea-ship { transition: none; } }
+/* First look: while I place, the head's small label reads "Ships" (what the picker beside it changes). */
+.sea-themes { align-items: center; }

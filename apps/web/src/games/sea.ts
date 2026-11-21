@@ -788,7 +788,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const out = p?.out || (p && p.left === 0 && state!.phase !== 'place') ? el('span', { class: 'sea-out' }, `✕ ${tx('outTag')}`) : '';
     // SB2: while I place my fleet the ships-left pips give way to the theme picker.
     const picker = head === mine.head && placing() ? themePicker() : null;
-    head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, picker ?? (out || left));
+    // While placing only my sea shows, so its small label says what the picker beside it is ("Ships").
+    head.replaceChildren(who, el('span', { class: 'sea-name' }, el('b', {}, picker ? tx('themes') : label), p ? el('small', {}, p.name) : el('small', {}, tx('waiting'))), ready, picker ?? (out || left));
     head.classList.toggle('out', !!p?.out);
     head.classList.toggle('just-out', justOut.has(seat) && !!p && p.left === 0);
     if (head === theirs.head) head.append(wholeSea);
