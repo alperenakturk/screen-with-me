@@ -171,9 +171,7 @@ export const Q5_TRAVEL: readonly QuizEntry[] = [
   {"c":"travel","d":2,"k":"guess","n":3776,"en":{"q":"How high is Mount Fuji in metres?"},"tr":{"q":"Fuji Dağı kaç metre yüksekliğindedir?"}},
   {"c":"travel","d":2,"k":"guess","n":828,"en":{"q":"What is the official height of Dubai's Burj Khalifa in metres?"},"tr":{"q":"Dubai'deki Burj Halife'nin resmî yüksekliği kaç metredir?"}},
   {"c":"travel","d":2,"k":"guess","n":1883,"en":{"q":"In which year did the Orient Express make its first run from Paris?"},"tr":{"q":"Orient Express ilk seferini Paris'ten hangi yıl yaptı?"}},
-  {"c":"travel","d":2,"k":"guess","n":1900,"en":{"q":"In which year did the first line of the Paris Métro open?"},"tr":{"q":"Paris Metrosu'nun ilk hattı hangi yıl açıldı?"}},
   {"c":"travel","d":2,"k":"guess","n":50,"en":{"q":"How long is the Channel Tunnel between England and France, in km?"},"tr":{"q":"İngiltere ile Fransa arasındaki Manş Tüneli kaç kilometre uzunluğundadır?"}},
-  {"c":"travel","d":2,"k":"guess","n":11,"en":{"q":"How many time zones does Russia have?"},"tr":{"q":"Rusya'da kaç saat dilimi vardır?"}},
   {"c":"travel","d":2,"k":"guess","n":135,"en":{"q":"How tall is the London Eye observation wheel, in metres?"},"tr":{"q":"London Eye dönme dolabı kaç metre yüksekliğindedir?"}},
   {"c":"travel","d":2,"k":"guess","n":6,"en":{"q":"How many hours is Tokyo ahead of Istanbul?"},"tr":{"q":"Tokyo, İstanbul'un kaç saat ilerisindedir?"}},
 
@@ -184,7 +182,6 @@ export const Q5_TRAVEL: readonly QuizEntry[] = [
   {"c":"travel","d":3,"k":"guess","n":57,"en":{"q":"How long is Switzerland's Gotthard Base Tunnel, the world's longest railway tunnel, in km?"},"tr":{"q":"Dünyanın en uzun demiryolu tüneli olan İsviçre'deki Gotthard Taban Tüneli kaç kilometredir?"}},
   {"c":"travel","d":3,"k":"guess","n":1435,"en":{"q":"How wide is standard-gauge railway track, between the rails, in millimetres?"},"tr":{"q":"Standart genişlikteki demiryolu hattında raylar arası kaç milimetredir?"}},
   {"c":"travel","d":3,"k":"guess","n":979,"en":{"q":"How high is Angel Falls in Venezuela, the tallest waterfall on Earth, in metres?"},"tr":{"q":"Dünyanın en yüksek şelalesi olan Venezuela'daki Angel Şelalesi kaç metre yüksekliğindedir?"}},
-  {"c":"travel","d":3,"k":"guess","n":5895,"en":{"q":"How high is Mount Kilimanjaro in metres?"},"tr":{"q":"Kilimanjaro Dağı kaç metre yüksekliğindedir?"}},
   {"c":"travel","d":3,"k":"guess","n":1931,"en":{"q":"In which year was Rio's Christ the Redeemer statue completed?"},"tr":{"q":"Rio'daki Kurtarıcı İsa heykeli hangi yıl tamamlandı?"}},
   {"c":"travel","d":3,"k":"guess","n":1952,"en":{"q":"In which year did the first jet airliner, the de Havilland Comet, start carrying paying passengers?"},"tr":{"q":"İlk jet yolcu uçağı de Havilland Comet ücretli yolcu taşımaya hangi yıl başladı?"}},
 ];

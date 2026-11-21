@@ -537,7 +537,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
                     { class: `quiz-said-one${p.gained ? ' right' : ''}` },
                     avatarNode(p.avatar, 'quiz-picker'),
                     el('span', { class: 'quiz-said-text' }, `${p.id === me ? t('games.you') : p.name}: ${showNum(p.guess!)}`),
-                    el('span', {}, p.gained ? `+${p.gained}` : '·'),
+                    el('span', {}, `+${p.gained ?? 0}`),
                   ),
                 )
             : []),

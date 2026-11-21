@@ -162,7 +162,10 @@ describe('Quiz closest guesses (QZ5)', () => {
 
   it('every category has closest-guess questions; the fifth bank brings three new topics', () => {
     for (const lang of ['tr', 'en'] as const) {
-      expect(quizPool(lang, 'mix', undefined, 'mix', 'guess').length).toBeGreaterThanOrEqual(300);
+      const guesses = quizPool(lang, 'mix', undefined, 'mix', 'guess');
+      expect(guesses.length).toBeGreaterThanOrEqual(300);
+      const texts = guesses.map((id) => QUIZ_BANK[id]![lang]!.q);
+      expect(texts.filter((q, i) => texts.indexOf(q) !== i)).toEqual([]);
       for (const topic of QUIZ_CATEGORIES) expect(quizPool(lang, topic, undefined, 'mix', 'guess').length, `${lang} ${topic}`).toBeGreaterThanOrEqual(10);
     }
     for (const topic of ['screen', 'games', 'travel'] as const) expect(QUIZ_CATEGORIES).toContain(topic);
