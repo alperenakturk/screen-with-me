@@ -2174,6 +2174,28 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
   `blocked` / `system` / `busy` / `none`), 📊 "Camera refused" / "Camera window: folded". Harness
   `scripts/harness/cam-laptop/run.cjs` (1366 and 1920, `site` job); `scripts/shots.cjs` screens `camera-on`,
   `camera-refused` (the shots' browser has a fake microphone and camera).
+- **Camera window: start framed, any edge, a real grid (card CAM3, owner 21 Nov 2026):** (1) the layout switch is
+  saved under a new key `opt:camView` (`free` / `group`); the old `opt:camLayout` is no longer read, so every browser,
+  old or new, starts in the one window ("framed") and the free layout stays one press away. (2) Eight resize handles
+  (`handles()` in `ui/cam-float.ts`, `data-edge` n / s / e / w / ne / nw / se / sw): on the one window `.cam-edge`
+  (the "se" one keeps the old `.cam-resize` grip), on free tiles `.cam-tile-edge` (the "se" one is `.cam-tile-resize`).
+  The opposite edge stays put (`resized`); a side handle of the one window changes only its width, a handle with a
+  top or bottom sets its height (`.sized`). A free tile always keeps 4:3 (its larger pull leads; a saved `h` from
+  before is ignored), so only `x`, `y`, `w` are saved. A redraw during a pull no longer puts the piece back (`apply`
+  returns while `drag` is set). The default width rule (`ROW_TILE_W`) applies only to the never-moved default.
+  (3) The grid: `packages/shared/src/cam-grid.ts` `camGrid(n, w, h, gap, ratio)` tries every row count, splits the
+  tiles as evenly as possible with the extra ones on top (`splitRows`: 5 = 3 + 2, 7 = 3 + 2 + 2, never 3 + 3 + 1) and
+  keeps the count that gives the biggest 4:3 tile (ties: fewer rows); `camGridBoxes` centres each row and the grid.
+  `layoutGrid` in `cam-float.ts` places the tiles absolutely in `.cam-grid` (no set height: the grid is as tall as it
+  needs at most ¾ of its width; a set height: it fills it). A pinned camera (spotlight) takes the left ¾ and the
+  others form their own grid in the right strip (the old CSS spotlight rules are gone). Videos use `object-position:
+  50% 30%` so a crop takes the sides and the bottom first. How others tile (read 21 Nov 2026): Google Meet's auto /
+  tiled view picks the column count from the window's shape for the biggest tile and centres a shorter last row;
+  Zoom's gallery fills equal rows and centres the last; Discord packs equal 16:9 tiles row by row; all keep every tile
+  the same size and shape. Unit test `cam-grid.test.ts` (1–8 cameras, three shapes); Test Lab `camera.grid` (🎬, 0–8
+  drawn cameras with no one in voice: `labGrid`, answers the rows and tile sizes); harness
+  `scripts/harness/cam-grid/run.cjs` (`site` job: fresh and old profile start framed, 1–8 cameras at three shapes,
+  all eight handles, free tile edges keep 4:3); `scripts/shots.cjs` screens `camera-grid`, `camera-grid-4`.
 - **Streaming / screen share (0.9.64, `packages/shared/src/live-p2p.ts`, site `ui/live.ts`, plan + decisions
   `docs/internal/yayin.md`):** bottom part of the "Birlikte" card (`#live-card`): "🖥️ Ekranını paylaş"
   (`getDisplayMedia`, 720p/30, tab audio) / "📹 Kamerayla yayın" (720p); one stream per room (`live_busy`), at most

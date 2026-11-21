@@ -145,6 +145,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Turn my camera on with a test picture', tr: 'Kameramı test görüntüsüyle aç' },
     help: { en: 'Presses 📷 with a drawn picture instead of the real camera: my camera window must open and show it. "fold" folds the window first (it must open again). "blocked", "system", "busy" or "none" makes the browser refuse instead: a message must say why and how to allow it.', tr: '📷 düğmesine gerçek kamera yerine çizilmiş bir görüntüyle basar: kamera pencerem açılıp onu göstermeli. "fold" önce pencereyi küçültür (yeniden açılmalı). "blocked", "system", "busy" ya da "none" tarayıcının reddetmesini sağlar: bir mesaj nedenini ve nasıl izin verileceğini söylemeli.' },
   },
+  'camera.grid': {
+    title: { en: 'Fill the camera window with test cameras', tr: 'Kamera penceresini test kameralarıyla doldur' },
+    help: { en: 'Adds 1–8 drawn cameras (default 4; 0 removes them) to the camera window, no one needs to be in voice. Rows must never hold more cameras lower down (5 = 3 + 2), every tile keeps the camera\'s shape, and pulling any edge or corner of the window reflows them.', tr: 'Kamera penceresine 1–8 çizilmiş kamera ekler (varsayılan 4; 0 kaldırır), kimsenin seste olması gerekmez. Alttaki satırda üsttekinden fazla kamera olmamalı (5 = 3 + 2), her kutu kameranın şeklini korumalı ve pencerenin herhangi bir kenarından ya da köşesinden çekince yeniden dizilmeli.' },
+  },
   'voice.camPause': {
     title: { en: 'My camera freezes for the others for 6 s', tr: 'Kameram diğerlerinde 6 sn donsun' },
     help: { en: 'My picture stops reaching the others, as when a phone stalls: their tile must say "waiting for the picture…" and come back by itself. A number sets the seconds (1–30).', tr: 'Görüntüm diğerlerine gitmez, telefon takılınca olduğu gibi: onların ekranında "görüntü bekleniyor…" yazmalı ve kendiliğinden geri gelmeli. Bir sayı yazarsan saniye olur (1–30).' },

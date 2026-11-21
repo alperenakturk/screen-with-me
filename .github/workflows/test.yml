@@ -304,6 +304,11 @@ jobs:
       - name: Laptop cameras
         run: node scripts/harness/cam-laptop/run.cjs http://localhost:8787
 
+      # Card CAM3: the camera window starts framed (fresh and old profiles), its grid for 1–8 cameras at three shapes,
+      # resize from all eight handles, free tiles keep 4:3.
+      - name: Camera grid
+        run: node scripts/harness/cam-grid/run.cjs http://localhost:8787
+
       # Card TG1: the Together card is compact while a side game's window lies over the side panel (1366 and 1920,
       # three side games, in and out of voice: Join voice and Share clear and working, the full card back after ✕).
       - name: Compact Together card beside a game
