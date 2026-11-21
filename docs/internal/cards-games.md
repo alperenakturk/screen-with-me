@@ -29,15 +29,6 @@ leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness 
   when a player's fleet is gone: a short explosion, "ALEX SANK!" in a playful tone, their chip crossed out.
 - Done when: all four at 2 and 4 players; e2e; first look; art licence-clean.
 
-### FW2. Five Frames Duel / co-op: timer, points, levels, more words (owner, 21 Nov 2026; Game Studio "Five Frames")
-- Bug: two players both showed "2nd" though one finished first.
-- What: (1) a time limit chosen when the table opens; time up = out; (2) points: first to solve +3, plus 7 → 1 by the
-  guess it took (1st guess 7 … 7th guess 1); (3) my own board big, the others smaller; (4) difficulty Easy / Medium
-  (recommended, default) / Hard / Mixed for daily, categories and Duel: odd words like a root form ("Fırat" refused,
-  odd roots asked) go to Hard or out; (5) research more word lists (names, cities …) and add only what the game
-  accepts; the "?" explains what kinds of words are not used.
-- Done when: ranking bug fixed with a test; timer and points server-checked; levels; e2e with 3 players.
-
 ### LH4. Last Heart: review, smooth animations, sounds, design (owner, 21 Nov 2026; Game Studio "Last Heart")
 - What: a detailed play-through review (bugs, rules, layout at 3 sizes), then fixes; smooth card / chip animations
   and sounds if missing; a nicer table design. Report findings to the Planner before big redesigns.
