@@ -29,7 +29,7 @@ import {
   type DuelServerMessage,
   type DuelTime,
 } from '@swm/shared/games/duel';
-import { answerFor, dayNumber, decodeWords, normalize, score, type Lang } from '@swm/shared/games/five-frames';
+import { DEFAULT_LEVEL, dayNumber, decodeWords, levelAnswer, levelWords, normalize, score, type Lang, type Level } from '@swm/shared/games/five-frames';
 import * as EN from '@swm/shared/games/words/en';
 import * as TR from '@swm/shared/games/words/tr';
 import { GHOST_MS, closeAsGone, closeGhosts, nextGhostCheck, noteClose, touch, wasGhost } from './ghost.ts';
@@ -41,12 +41,12 @@ const MAX_SOCKETS = 40;
 const MAX_PEOPLE = 60;
 
 /** The word lists, unpacked once per isolate when a duel first needs them. */
-const lists = new Map<Lang, { allowed: Set<string>; answers: string[] }>();
-function wordList(lang: Lang): { allowed: Set<string>; answers: string[] } {
+const lists = new Map<Lang, { allowed: Set<string>; answers: string[]; bands: string }>();
+function wordList(lang: Lang): { allowed: Set<string>; answers: string[]; bands: string } {
   let list = lists.get(lang);
   if (!list) {
     const mod = lang === 'tr' ? TR : EN;
-    list = decodeWords(mod.WORDS, mod.ANSWERS);
+    list = { ...decodeWords(mod.WORDS, mod.ANSWERS), bands: mod.BANDS };
     lists.set(lang, list);
   }
   return list;
@@ -99,6 +99,8 @@ interface Saved {
   hard: boolean;
   /** FW2: the time limit per game (seconds, 0 = none), when the running game's time ends, and the last game's points. */
   time: DuelTime;
+  /** FW2: the words' level (the day's word and practice words come from it). */
+  level: Level;
   endsAt: number | null;
   gained: number[];
   /** The match: wins per seat and games played in it; over = the next Ready starts a new match. */
@@ -110,7 +112,7 @@ interface Saved {
 
 const fresh = (): Saved => ({
   seats: [null, null], phase: 'wait', lang: 'en', answer: '', daily: null, dailyDone: false, winner: null, draw: false, solved: [], ranks: [], round: 0,
-  bestOf: 1, hard: false, time: DUEL_DEFAULT_TIME, endsAt: null, gained: [], matchWins: [0, 0], matchGames: 0, people: {}, emptySince: null,
+  bestOf: 1, hard: false, time: DUEL_DEFAULT_TIME, level: DEFAULT_LEVEL, endsAt: null, gained: [], matchWins: [0, 0], matchGames: 0, people: {}, emptySince: null,
 });
 
 /** The platform's secure random numbers for practice words (never `Math.random`, review 4 R4-7). */
@@ -282,9 +284,10 @@ export class Duel extends DurableObject<Env> {
     const d = this.data;
     const list = wordList(d.lang);
     const day = dayNumber();
-    const todays = answerFor(day, list.answers, d.lang);
+    // FW2: the level's word of the day (the same as the solo game's at that level), practice words from the level.
+    const todays = levelAnswer(day, list.answers, list.bands, d.lang, d.level);
     if (d.dailyDone) {
-      d.answer = practiceWord(list.answers, todays, secureRandom);
+      d.answer = practiceWord(levelWords(list.answers, list.bands, d.level), todays, secureRandom);
       d.daily = null;
     } else {
       d.answer = todays;
@@ -382,6 +385,7 @@ export class Duel extends DurableObject<Env> {
         if (message.bestOf !== undefined) d.bestOf = message.bestOf;
         if (message.hard !== undefined) d.hard = message.hard;
         if (message.time !== undefined) d.time = message.time;
+        if (message.level !== undefined) d.level = message.level;
         for (const s of d.seats) if (s) s.ready = false;
         break;
       }
@@ -531,6 +535,7 @@ export class Duel extends DurableObject<Env> {
       bestOf: d.bestOf,
       hard: d.hard,
       time: d.time,
+      level: d.level,
       ...(d.phase === 'play' && d.endsAt !== null ? { left: Math.max(0, d.endsAt - Date.now()) } : {}),
       match: { games: d.matchGames, wins: [...d.matchWins], over: this.matchDone(), winner: this.matchDone() && d.matchGames ? matchWinner(d.matchWins) : null },
       watchers,

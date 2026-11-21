@@ -5,12 +5,14 @@
 // the same moment give exactly one winner, the same for everyone; then everyone sees the word and both boards; a
 // rematch is a practice word (never the day's); two used-up boards are a draw.
 import { GameSocket } from './game-socket.mjs';
-import { answerFor, decodeWords, score } from '../../packages/shared/src/games/five-frames.ts';
+import { decodeWords, levelAnswer, score } from '../../packages/shared/src/games/five-frames.ts';
 import * as EN from '../../packages/shared/src/games/words/en.ts';
 
 const base = process.argv[2] ?? 'ws://localhost:8787';
 const game = 'fd' + Math.random().toString(36).slice(2, 8);
 const { allowed, answers } = decodeWords(EN.WORDS, EN.ANSWERS);
+/** FW2: the day's word at a level (a new table plays Medium). */
+const dayWord = (day, level = 'medium') => levelAnswer(day, answers, EN.BANDS, 'en', level);
 const words = [...allowed];
 
 function client(name, cid) {
@@ -77,7 +79,7 @@ sam.send({ t: 'ready', on: true });
 ok(await until(() => alex.state.phase === 'play' && sam.state.phase === 'play' && robin.state.phase === 'play'), 'both ready: the race starts');
 const day = alex.state.daily;
 ok(Number.isInteger(day) && day > 0, `the first game is the word of the day (#${day})`);
-const answer = answerFor(day, answers, 'en');
+const answer = dayWord(day);
 
 // Bad guesses: refused, nothing counted.
 for (const [word, code] of [['abc', 'short'], ['ab1de', 'letters'], ['qqqqq', 'unknown']]) {
@@ -186,7 +188,7 @@ p1.send({ t: 'settings', hard: false });
 ok(await until(() => p1.inbox.some((m) => m.code === 'in_progress')), 'settings cannot change during a match');
 
 // Hard mode: a word that ignores a found letter is refused, with the letter named.
-const answer2 = answerFor(p1.state.daily, answers, 'en');
+const answer2 = dayWord(p1.state.daily);
 const withHit = words.find((w) => w !== answer2 && score(w, answer2).some((m) => m === 'hit'));
 p1.send({ t: 'guess', word: withHit });
 ok(await until(() => p1.state.players[0].marks.length === 1), 'Alex guesses a word with a letter in the right place');

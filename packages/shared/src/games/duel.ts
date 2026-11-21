@@ -11,7 +11,7 @@
 //   repeat.
 
 import { CLIENT_ID, cleanName, isAvatar, type Avatar } from '../protocol.ts';
-import { LANGS, MAX_TRIES, WORD_LENGTH, guess, letters, score, type GuessError, type Lang, type Mark } from './five-frames.ts';
+import { LANGS, MAX_TRIES, WORD_LENGTH, guess, isLevel, letters, score, type GuessError, type Lang, type Level, type Mark } from './five-frames.ts';
 
 export const DUEL_PROTOCOL_VERSION = 1;
 export const DUEL_ID_PATTERN = /^[A-Za-z0-9_-]{3,40}$/;
@@ -155,7 +155,7 @@ export type DuelClientMessage =
   | { t: 'guess'; word: string }
   | { t: 'sit' }
   | { t: 'rematch' }
-  | { t: 'settings'; bestOf?: 1 | 3; hard?: boolean; time?: DuelTime }
+  | { t: 'settings'; bestOf?: 1 | 3; hard?: boolean; time?: DuelTime; level?: Level }
   | { t: 'lab'; op: 'answer' | 'timeup' };
 
 export interface DuelPlayer {
@@ -209,6 +209,8 @@ export type DuelServerMessage =
       /** FW2: the table's time limit per game in seconds (0 = none), and while a game goes on the milliseconds left. */
       time: DuelTime;
       left?: number;
+      /** FW2: the words' level (Medium by default). */
+      level: Level;
       /** The match so far: games played in it, wins per seat, whether it is over (and who won it, null = a tie). */
       match: { games: number; wins: number[]; over: boolean; winner: number | null };
       watchers: { id: string; name: string; avatar?: Avatar }[];
@@ -253,7 +255,8 @@ export function parseDuelMessage(raw: string): DuelClientMessage | null {
       if (m.bestOf === 1 || m.bestOf === 3) out.bestOf = m.bestOf;
       if (typeof m.hard === 'boolean') out.hard = m.hard;
       if (isDuelTime(m.time)) out.time = m.time;
-      return out.bestOf === undefined && out.hard === undefined && out.time === undefined ? null : out;
+      if (isLevel(m.level)) out.level = m.level;
+      return out.bestOf === undefined && out.hard === undefined && out.time === undefined && out.level === undefined ? null : out;
     }
     case 'lab':
       return m.op === 'answer' || m.op === 'timeup' ? { t: 'lab', op: m.op } : null;
