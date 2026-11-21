@@ -3290,7 +3290,13 @@ html.shorts-view .footer {
 
 .voice-on {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+}
+
+.voice-ptt span {
+  white-space: nowrap;
 }
 
 .voice-on[hidden] {
@@ -3453,6 +3459,19 @@ html.shorts-view .footer {
   color: var(--chrome-text);
   cursor: pointer;
   user-select: none;
+}
+
+/* Card PTT1: the push-to-talk key, changed by pressing it */
+.ptt-key {
+  min-width: 32px;
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+}
+
+.ptt-key.waiting {
+  border-color: var(--accent);
+  font-family: inherit;
+  font-weight: 400;
 }
 
 /* Bas-konuş: düğme basılı tutulurken konuşulur (dokunmatikte kaydırma/menü olmasın) */
@@ -10024,7 +10043,8 @@ html.phone .speed-pop .speed {
     font-size: max(16px, 1em);
   }
 
-  .voice-ptt {
+  .voice-ptt,
+  .ptt-key {
     display: none !important;
   }
 }
@@ -11646,7 +11666,11 @@ html:not(.phone) .together-card.compact > .together-actions {
   gap: 6px;
 }
 
-html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .voice-hint) {
+html:not(.phone) .together-card.compact .voice-on {
+  flex-wrap: nowrap;
+}
+
+html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .ptt-key, .talk-window-btn, .voice-hint) {
   display: none;
 }
 

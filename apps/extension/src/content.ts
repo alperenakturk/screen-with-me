@@ -9,7 +9,7 @@
 // için bunlar da yakalanır.
 
 import { OffsetClock } from '@swm/shared/clock';
-import { FILM_EDGE, isForwardedKey, isPushToTalkKey, KNOWN_PLAYER_CONTROLS, type EmbedControl } from '@swm/shared/embed';
+import { FILM_EDGE, isShortcutKey, KNOWN_PLAYER_CONTROLS, type EmbedControl } from '@swm/shared/embed';
 import type { PlaybackState } from '@swm/shared/protocol';
 import { holePath, type ShellLayout } from '@swm/shared/shell';
 import { SyncEngine } from '@swm/shared/sync-engine';
@@ -674,15 +674,25 @@ for (const type of ['mousemove', 'mousedown', 'wheel', 'touchstart'] as const) {
 
 // Kısayollar (1–8 emoji, Enter mesaj, P pin) odak film sayfasındayken de çalışsın: tuşu film
 // sitesine göstermeden (oynatıcılar rakamlarla sarar) siteye iletiriz. Sadece oda görünümündeyken.
+// Card PTT1: the push-to-talk key is whatever the site's layout names (`ptt`, a `KeyboardEvent.code`); no `ptt` means
+// push-to-talk is off and the key stays the film site's.
+const MODIFIER_CODES = new Set(['ShiftLeft', 'ShiftRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight']);
+function pttCodeNow(): string | null {
+  return layout?.mode === 'full' ? (layout.ptt ?? null) : null;
+}
 addEventListener(
   'keydown',
   (event) => {
-    if (!port || layout?.mode !== 'full' || event.ctrlKey || event.metaKey || event.altKey || !isForwardedKey(event.key)) return;
+    if (!port || layout?.mode !== 'full') return;
+    const ptt = pttCodeNow();
+    const isPtt = ptt !== null && event.code === ptt;
+    const modified = event.ctrlKey || event.metaKey || event.altKey;
+    if (isPtt ? modified && !MODIFIER_CODES.has(ptt) : modified || !isShortcutKey(event.key)) return;
     const target = event.composedPath()[0];
     if (target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    if (!event.repeat) send({ type: 'key', key: event.key });
+    if (!event.repeat) send(isPtt ? { type: 'key', key: event.key, code: event.code, ptt: true } : { type: 'key', key: event.key });
   },
   true,
 );
@@ -690,10 +700,11 @@ addEventListener(
 addEventListener(
   'keyup',
   (event) => {
-    if (!port || layout?.mode !== 'full' || !isPushToTalkKey(event.key)) return;
+    const ptt = pttCodeNow();
+    if (!port || ptt === null || event.code !== ptt) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    send({ type: 'key', key: event.key, up: true });
+    send({ type: 'key', key: event.key, code: event.code, ptt: true, up: true });
   },
   true,
 );

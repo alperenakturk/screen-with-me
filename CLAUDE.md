@@ -33,8 +33,8 @@ direct video files) + **browser extension** (any HTML5 video on any site, iframe
 | Design notes and picks, game design | `docs/internal/design/`, `docs/internal/design/games/` |
 | Research, vision | `docs/internal/research/`, `docs/internal/VIZYON.md`, `docs/internal/rakip-analizi.md`, `docs/internal/name-research.md` |
 | Security reviews | `docs/internal/security-review-<n>.md`, `docs/internal/security-review-cf.md` (Cloudflare audit) |
-| The optimization plan (quota, docs, glossary) and the docs analysis | `docs/internal/OPTIMIZATION.md`, `docs/internal/docs-sprawl.md` |
-| Skills and tools for this project | `docs/internal/tools.md` |
+| Optimization plan, docs analysis | `docs/internal/OPTIMIZATION.md`, `docs/internal/docs-sprawl.md` |
+| Skills, tools; guides for new projects | `docs/internal/tools.md`; `docs/internal/playbooks/` |
 | Costs and free limits, custom domain, breach plan, store texts | `docs/internal/costs.md`, `custom-domain.md`, `breach-plan.md`, `web-store.md` |
 | The owner's board (his test ticks) | https://claude.ai/artifact/NWZG7GLH4JzAnZt1rNgrJo (one Artifact, kept by the Planner) |
 
@@ -83,11 +83,10 @@ Rules for all:
   (a decision, a test, a secret) and otherwise sends **one short summary when a group of work is finished**, never a
   message per release. The owner will name product changes himself; until then nothing in the product is reworked for
   "tidiness" unless it is clearly broken.
-- **Fresh sessions, small contexts (owner, 16 Nov 2026):** a big context costs usage on every turn. A building
-  session works one card group, writes its handoff (STATUS task queue, its cards, branch names) and stops; the Planner
-  archives it and opens a fresh one. Past ~300k tokens a session finishes its current PR, hands off and stops; the
-  Planner past ~400k rewrites `docs/internal/planner-handoff.md` and hands off to a fresh Planner. A daily scheduled
-  check (`get_session` `context_usage`) does this without being asked.
+- **Fresh sessions (owner, 16 + 21 Nov 2026):** a building session works one card group, then hands off (its cards,
+  branches) and stops; the Planner opens a fresh one. **Never hand off or reset mid-task:** the handoff is always the
+  last task, after every open job is done, however big the context (a building session's group is kept small; the
+  Planner hands off past ~400k only between jobs, via `docs/internal/planner-handoff.md`). A daily `get_session` check reads `context_usage`.
 - Never start work that has no card; an idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
   pick". Each role edits only its own files, so two sessions never change the same lines.
 - Every change goes through a branch + PR, never a push to `main`; a docs-only PR may be merged by its session once CI
@@ -306,7 +305,8 @@ first attempt" for every release): `docs/internal/ROADMAP.md` "Milestone gates t
   distributed or used without written permission. Every `package.json`: `"license": "UNLICENSED"` + `"private": true`.
   Third-party parts keep their licences (`apps/web/public/third-party-notices.txt`); shipped code has no third-party
   package code; a new runtime dependency needs a licence check (MIT / Apache / BSD fine) and a line there.
-- **The repo is public** (free Actions minutes): never commit secrets, tokens, private e-mails or hidden addresses.
+- **The repo is public** (free Actions minutes): never commit secrets, tokens, private e-mails, hidden addresses
+  (push protection on, `playbooks/github.md`)
 - `apps/web/public/privacy.html` and `terms.html` (TR + EN, `?lang=en|tr` via `lang.js`; `data-terms-link` links get
   `?lang=` from `i18n.ts` `translate`; the old `gizlilik.html` redirects). Abuse / takedown: `terms.html#abuse`
   (e-mail "Report", 72 hours; `SECURITY.md` and help `#report` point there). A change adds a dated "Changes" line in
