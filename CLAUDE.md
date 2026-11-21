@@ -83,11 +83,10 @@ Rules for all:
   (a decision, a test, a secret) and otherwise sends **one short summary when a group of work is finished**, never a
   message per release. The owner will name product changes himself; until then nothing in the product is reworked for
   "tidiness" unless it is clearly broken.
-- **Fresh sessions, small contexts (owner, 16 Nov 2026):** a big context costs usage on every turn. A building
-  session works one card group, writes its handoff (STATUS task queue, its cards, branch names) and stops; the Planner
-  archives it and opens a fresh one. Past ~300k tokens a session finishes its current PR, hands off and stops; the
-  Planner past ~400k rewrites `docs/internal/planner-handoff.md` and hands off to a fresh Planner. A daily scheduled
-  check (`get_session` `context_usage`) does this without being asked.
+- **Fresh sessions (owner, 16 + 21 Nov 2026):** a building session works one card group, then hands off (its cards,
+  branches) and stops; the Planner opens a fresh one. **Never hand off or reset mid-task:** the handoff is always the
+  last task, after every open job is done, however big the context (a building session's group is kept small; the
+  Planner hands off past ~400k only between jobs, via `docs/internal/planner-handoff.md`). A daily `get_session` check reads `context_usage`.
 - Never start work that has no card; an idea that comes up mid-task goes to `STATUS.md` "Ideas waiting for the owner's
   pick". Each role edits only its own files, so two sessions never change the same lines.
 - Every change goes through a branch + PR, never a push to `main`; a docs-only PR may be merged by its session once CI

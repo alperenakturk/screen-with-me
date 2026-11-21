@@ -12,7 +12,7 @@ owner's sessions; state as of 21 Nov 2026. Where the repo does not record a sett
 | Description, website, social preview | Settings → General | Description + website set; a 1280 × 640 social preview image (upload by hand; not readable through the API). |
 | Merge button | Settings → General → Pull Requests | **Squash merge**: one commit per PR on `main`. Whether merge commits / rebase are switched off: check in Settings. |
 | Allow auto-merge | same place | **On since 21 Nov 2026.** Before that, a green PR waited until its session came back to merge it; with 7 parallel sessions, every merge on `main` sent the others back for another ~30 min CI run. |
-| Automatically delete head branches | same place | **Not on here; turn it on next time.** Sessions could not delete merged branches (`git push origin --delete` was refused), so merged branches piled up. |
+| Automatically delete head branches | same place | **On.** GitHub deletes a PR's branch when it merges. Only branches pushed without a PR stay; a session's `git push origin --delete` can fail through the cloud proxy, so remove those by hand (Code → Branches). |
 | Ruleset for `main` | Settings → Rules → Rulesets | Active on the default branch: no deletion, no force push, PR required with 0 approvals (solo owner), required checks **`changes` + `test`**, "up to date with main" **not** required (green PRs whose files don't overlap merge without updating). |
 | Actions permissions | Settings → Actions → General | Workflow token = **read repository contents**; **require approval for all external contributors** (fork PRs cannot burn minutes). |
 | Environment `production` | Settings → Environments | Deployment branches = `main` only. Holds the deploy secrets (cloud provider token + account id, API keys, feedback token, a lab code) and the variable `FEEDBACK_REPO`. The only repository-level secret is `TAG_TOKEN` (tag job). |
@@ -110,7 +110,7 @@ current); `timeout-minutes` on every job; `scripts/ci-workflow.test.mjs` checks 
 - **Split work by files** so no two sessions touch the same lines; give each session one group of work, then a fresh
   session (small contexts are cheaper).
 - **Merged-branch cleanup:** check with `git merge-base --is-ancestor <branch> origin/main` before deleting; better,
-  let GitHub delete head branches automatically.
+  GitHub deletes head branches automatically on merge.
 - **Flaky tests double CI time.** A step that depends on a third-party site (here: YouTube's response times) failed
   often enough that reruns doubled the CI time. Tests must not depend on outside response times: fake or stub the
   outside service in the browser, serve test media locally, and keep real-service checks as a manual or separate,

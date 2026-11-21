@@ -245,8 +245,8 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   a fresh invite opens on one screen; the extension's install card turns into "Go to the film" by itself.
 
 ## Owner's to-dos (settings and accounts; tell the Planner when done)
-- [ ] GitHub (21 Nov): Code security → Secret scanning + Push protection on; General → Pull Requests → Automatically
-  delete head branches on. Auto-merge is on (21 Nov); `github-playbook.md` lists the rest.
+- [ ] GitHub (21 Nov): Code security → Secret scanning + Push protection on. Auto-merge and "Automatically delete head
+  branches" are on; `github-playbook.md` lists the rest.
 - [ ] The private feedback repository: Watch → Custom → Issues, so an `outage` issue reaches your phone. [0.9.97.92]
 - [ ] Before the store: the Microsoft Partner Center account for Edge Add-ons (`web-store.md`).
 
