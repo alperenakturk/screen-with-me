@@ -12,6 +12,7 @@ import {
   boardSolved,
   duelGuess,
   duelOutcome,
+  duelPlace,
   duelRanks,
   duelWordsVisible,
   hardModeMiss,
@@ -452,6 +453,7 @@ export class Duel extends DurableObject<Env> {
         ...(duelWordsVisible(mine, i, watcher, over) ? { words: [...s.guesses] } : {}),
         solved: !!d.answer && boardSolved(board, d.answer),
         out: !!d.answer && boardDone(board, d.answer) && !boardSolved(board, d.answer),
+        ...(duelPlace(d.solved, i) ? { place: duelPlace(d.solved, i) } : {}),
       };
     });
     const seated = new Set(d.seats.map((s) => s?.key));

@@ -56,8 +56,8 @@ const STAGE_READY = true;
 /**
  * GW3 (owner, 17 Nov 2026: "only videos ever go fullscreen"; it replaced GW2's ⛶): a table plays in the video's place
  * (`place`: the player's box, the video paused; the side panel, chat, voice and the rail stay usable) or in the 🪟 frame
- * (the free window), switched any time from its head. No game ever asks for the browser's full screen. A table opens in
- * the mode I used last, the video's place the first time (GW2's saved `full` reads as it). In the Shorts view and in
+ * (the free window), switched any time from its head. No game ever asks for the browser's full screen. GFIT1 (owner, 21
+ * Nov 2026): every table opens in the video's place (a reload back to it keeps the mode it had). In the Shorts view and in
  * the video's own fullscreen a table is a frame (the mode is kept and comes back after). Narrow screens (phones, PH2's
  * Games tab) keep their own placements.
  */
@@ -96,6 +96,15 @@ const READ_ZOOM = 0.85;
 const MAX_STAGE = 2.2;
 const CHROME_W = 2;
 const CHROME_H = 52;
+/**
+ * GFIT1 (owner, 21 Nov 2026: "in every game the right column is too wide and the game too narrow"): a game that says it
+ * can fill the video's place (`data-fill` on its root, set in the game's own file) is laid out at the box itself instead
+ * of its design shape: its board / play area takes what is left beside one narrow side column (`--game-side`, stage.css).
+ * The box is read at this size: smaller boxes lay out at their own size (scale 1, shrunk only if something overflows),
+ * bigger ones scale the layout up in proportion, at most `MAX_FILL`, so text grows with the screen but never balloons.
+ */
+const FILL_BASE: readonly [number, number] = [1000, 560];
+const MAX_FILL = 1.6;
 /** The game is never shown smaller than this share of its layout (tiny boxes fall back to it). */
 const MIN_FIT = 0.4;
 /** PH2: the game's height on a phone's whole screen (a 390 × 664 page less the head), for games laid out for it. */
@@ -947,6 +956,8 @@ export function createGameStage(opts: StageOptions) {
     // Games tab keeps one row: its height goes to the game).
     if (!stage.classList.contains('in-tab') && name.getBoundingClientRect().right > title.getBoundingClientRect().right + 1) stage.classList.add('head-wrap');
   }
+  /** GFIT1: the game mounted now fills the video's place (its root carries `data-fill`). */
+  const fills = () => !!body.querySelector(':scope > [data-fill]');
   function refit(): void {
     const kind = shownKind();
     if (fitting || stage.hidden || !kind) return;
@@ -989,6 +1000,10 @@ export function createGameStage(opts: StageOptions) {
       const ih = Math.max(H, TAB_H);
       scale = H / ih;
       own = [Math.round(W / scale), ih];
+    } else if (!narrow.matches && mode === 'stage' && fills()) {
+      // GFIT1: the game fills the box (its own layout stretches); only the reading size grows with the screen.
+      scale = Math.max(1, Math.min(W / FILL_BASE[0], H / FILL_BASE[1], MAX_FILL));
+      own = [Math.floor(W / scale), Math.floor(H / scale)];
     } else if (!narrow.matches && mode === 'stage') {
       // PROP (owner: "the same experience in both modes"): in the video's place the game keeps its own shape too, scaled
       // to the box like the free window, from the shape that suits the box best: its own (`size`) or its wide one (`wide`).
@@ -1041,6 +1056,7 @@ export function createGameStage(opts: StageOptions) {
     body.style.left = own ? `${Math.max(0, Math.round((W - own[0] * scale) / 2))}px` : '';
     body.style.top = own ? `${Math.max(0, Math.round((H - own[1] * scale) / 2))}px` : '';
     stage.style.setProperty('--fit', String(scale));
+    stage.classList.toggle('fill', !narrow.matches && mode === 'stage' && fills());
     fitting = false;
   }
   let fitQueued = false;
@@ -1056,7 +1072,7 @@ export function createGameStage(opts: StageOptions) {
   // A new phase (lobby → question → podium) changes what has to fit.
   // 0.9.97.134: something shown or hidden too (Snack Bar's `fitRows` hides the stands that do not fit after the window
   // was scaled for more of them: without a new fit the game stayed shrunk, its text under 11 px on an upright tablet).
-  new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden'] });
+  new MutationObserver(queueFit).observe(body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['hidden', 'data-fill'] });
   // Classics changed its screen (picker ↔ a board): the free window takes that screen's size.
   body.addEventListener('swm-game-size', () => {
     if (mode === 'float') placeFloat();
@@ -1262,6 +1278,9 @@ export function createGameStage(opts: StageOptions) {
     headSlot.replaceChildren();
     solo = null;
     current = table;
+    // GFIT1 (owner, 21 Nov 2026): every table opens in the video's place first; the 🪟 frame only when I pick it (a
+    // reload back to my table keeps the mode I had).
+    if (!resume) save(TABLE_MODE_KEY, 'place');
     labels();
     if (shortsView()) besideShorts(table.kind);
     place();
@@ -1565,7 +1584,7 @@ export function createGameStage(opts: StageOptions) {
       else if (!arg) setTableMode(tableMode() === 'place' ? 'frame' : 'place');
       const box = stage.getBoundingClientRect();
       const view = shortsView() ? 'shorts' : mode === 'stage' ? 'place' : mode === 'float' ? 'frame' : mode;
-      return { mode: tableMode(), view, place: mode, forced: frameForced, gameFullscreen: !!document.fullscreenElement && stage.contains(document.fullscreenElement), pausedForPlace, box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
+      return { mode: tableMode(), view, place: mode, forced: frameForced, gameFullscreen: !!document.fullscreenElement && stage.contains(document.fullscreenElement), pausedForPlace, fill: stage.classList.contains('fill'), fit: Number(stage.style.getPropertyValue('--fit')), own: [body.offsetWidth, body.offsetHeight], box: [Math.round(box.left), Math.round(box.top), Math.round(box.width), Math.round(box.height)], youtube: overYoutube() };
     },
     lastOpen: () => lastOpen,
     scaleTo: (arg) => {
@@ -1600,7 +1619,8 @@ export function createGameStage(opts: StageOptions) {
       const hall = !menu.hidden && menu.parentElement === headMenuWrap ? ` · hall ${headMenuWrap.dataset.side ?? ''}` : '';
       const labelled = stage.classList.contains('head-labels') ? ' · labels' : '';
       const paused = pausedAt ? ` · paused the video ${Math.round((Date.now() - pausedAt) / 1000)} s ago` : '';
-      return `${kind} · ${where}${home}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`;
+      const filled = stage.classList.contains('fill') ? ' · fills the place' : '';
+      return `${kind} · ${where}${home}${filled}${hall}${labelled}${paused}${overYoutube() ? ' · YouTube' : ''}`;
     },
   };
   const loadWindowLab = () => void loadChunk(() => import('./lab-tools.ts')).then((m) => m?.registerWindowLab(windowLab));
@@ -1685,6 +1705,13 @@ export function createGameStage(opts: StageOptions) {
       opts.hint(t(code === 'game_busy' ? 'game.busy' : `error.${code}`));
     },
     isOpen: () => !stage.hidden,
+    /** GN1: Join from the chat's game line (like the invite card's); false when the table is gone. */
+    join(id: string): boolean {
+      const table = tables.find((x) => x.id === id);
+      if (!table) return false;
+      if (current?.id !== id) void open(table);
+      return true;
+    },
     /** The Test Lab's game commands: loaded only while the lab is on in this tab (`?debug=1`, `debug-lab.ts`). */
     lab: labIsOn()
       ? void import('./lab-tools.ts').then((m) => {

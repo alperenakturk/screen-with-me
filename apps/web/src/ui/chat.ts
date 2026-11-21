@@ -1,4 +1,4 @@
-import { CHAT_MAX_LENGTH, cleanChatText, personOf, type ChatMessage, type ClientMessage, type Member } from '@swm/shared/protocol';
+import { CHAT_MAX_LENGTH, cleanChatText, personOf, type ChatMessage, type ClientMessage, type Member, type RoomGame } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { avatarNode } from './avatar.ts';
 import { lang, t, type I18nKey } from '../i18n.ts';
@@ -20,7 +20,23 @@ const SYSTEM_LINES_MAX = 150;
 /** Aynı kişinin bu kadar süre içindeki art arda mesajları tek balon grubunda (isim/avatar bir kez). */
 const GROUP_MS = 3 * 60_000;
 
-type Line = { kind: 'chat'; message: ChatMessage } | { kind: 'system'; at: number; text: () => string };
+/**
+ * Card GN1: someone opened a game table. Shown to everyone (not an activity line, so "Show activity" doesn't hide it),
+ * with the game's cover and a Join button that greys out once the table closes. Local to this tab, like activity.
+ */
+export interface GameLine {
+  table: RoomGame;
+  /** It's my own table: no Join button. */
+  mine: boolean;
+  join: () => void;
+  /** The cover, drawn when the games' chunk has it (null: the game's emoji stays). */
+  cover: () => Promise<HTMLElement | null>;
+}
+
+type Line =
+  | { kind: 'chat'; message: ChatMessage }
+  | { kind: 'system'; at: number; text: () => string }
+  | { kind: 'game'; at: number; game: GameLine; closed: boolean };
 
 /**
  * Sohbet sekmesi: mesaj geçmişi (mesajlaşma uygulamaları gibi balonlar: benimkiler sağda vurgu renginde, diğerleri
@@ -213,7 +229,23 @@ export function createChatPanel(
   // The site's language decides the clock, not the browser's (owner, 13 Nov 2026: a Turkish screen showed "12:18 PM").
   const time = (at: number) => new Date(at).toLocaleTimeString(lang() === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
 
+  function gameNode(line: Extract<Line, { kind: 'game' }>): HTMLLIElement {
+    const { table, mine } = line.game;
+    const art = el('span', { class: 'chat-game-cover', 'aria-hidden': 'true' }, '🎮');
+    void line.game.cover().then((cover) => cover && art.replaceChildren(cover));
+    const text = el('span', { class: 'chat-game-text' }, el('time', {}, time(line.at)), ' ', t('hub.opened', { name: table.by.name, game: t(`games.${table.kind}.title` as I18nKey) }));
+    const item = el('li', { class: `chat-game${line.closed ? ' closed' : ''}`, 'data-table': table.id }, art, text);
+    if (line.closed) item.append(el('span', { class: 'chat-game-state' }, t('hub.closed')));
+    else if (!mine) {
+      const join = el('button', { type: 'button', class: 'btn small-btn primary chat-game-join' }, t('hub.join'));
+      join.addEventListener('click', () => line.game.join());
+      item.append(join);
+    }
+    return item;
+  }
+
   function node(line: Line, prev?: Line): HTMLLIElement {
+    if (line.kind === 'game') return gameNode(line);
     if (line.kind === 'system') {
       return el('li', { class: 'chat-system' }, el('span', {}, el('time', {}, time(line.at)), ' ', line.text()));
     }
@@ -510,6 +542,26 @@ export function createChatPanel(
     system(text: () => string): void {
       push({ kind: 'system', at: Date.now(), text }, false);
     },
+    /** GN1: someone opened a game table (one line per table). */
+    gameOpened(game: GameLine): void {
+      if (lines.some((l) => l.kind === 'game' && l.game.table.id === game.table.id)) return;
+      push({ kind: 'game', at: Date.now(), game, closed: false }, !game.mine);
+    },
+    /** GN1: the room's open tables now: a line whose table is gone greys out, its Join goes. */
+    gameTables(open: readonly string[]): void {
+      for (const line of lines) {
+        if (line.kind !== 'game' || line.closed || open.includes(line.game.table.id)) continue;
+        line.closed = true;
+        const old = nodes.get(line);
+        if (!old) continue;
+        const next = gameNode(line);
+        nodes.set(line, next);
+        old.replaceWith(next);
+      }
+    },
+    /** GN1: the Test Lab's `chat.gameInvite`: the game lines shown now. */
+    gameLines: () =>
+      lines.flatMap((l) => (l.kind === 'game' ? [{ table: l.game.table.id, kind: l.game.table.kind, by: l.game.table.by.name, closed: l.closed, join: !!nodes.get(l)?.querySelector('.chat-game-join') }] : [])),
     /** Sohbet sekmesi açıldı/kapandı. */
     setVisible(value: boolean): void {
       visible = value;

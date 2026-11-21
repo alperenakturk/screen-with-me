@@ -461,6 +461,9 @@ jobs:
       # Card GP1: every game opens with one click on its card, Classics and Snack Bar in ≤ 300 ms (hall open, CI machine).
       - name: Games open at once
         run: node scripts/harness/game-open/run.cjs http://localhost:8787
+      # Card GN1: a table opened shows in the chat (cover, Join for the others, greyed once it closes).
+      - name: Game table in the chat
+        run: node scripts/harness/game-chat/run.cjs http://localhost:8787
 
       # Card DG2: Draw & Guess with three players at 1366, 1920 and a phone: the results never shrink the game, the
       # canvas is the biggest 4 : 3 that fits, the side column narrow, eight players' results fit (the Test Lab preview).
