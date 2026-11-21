@@ -115,6 +115,19 @@ function flask(): HTMLElement {
   box.append(el('b', { class: 'pk-pot' }, '0'));
   return box;
 }
+/** LH4 round table: a "♥ 12" chip in front of a seat (hidden at 0). */
+function betChip(): HTMLElement {
+  return el('span', { class: 'pk-seat-bet', hidden: '' });
+}
+function setBet(chip: HTMLElement, bet: number): void {
+  chip.hidden = bet <= 0;
+  const text = `♥ ${bet}`;
+  if (bet > 0 && chip.textContent !== text) {
+    chip.textContent = text;
+    chip.setAttribute('aria-label', t('poker.status.bet', { n: bet }));
+  }
+}
+
 /** LH4: the liquid rises and falls (a scale from the bottom, eased in poker.css) instead of being redrawn. */
 function setFlask(box: HTMLElement, pot: number, total: number): void {
   const level = total > 0 ? Math.min(1, pot / total) : 0;
@@ -217,6 +230,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     life: HTMLElement;
     cards: HTMLElement;
     status: HTMLElement;
+    /** LH4 round table: what they put in this street, lying in front of them on the table. */
+    bet: HTMLElement;
     pick: HTMLButtonElement;
   }
   interface TableView {
@@ -228,18 +243,25 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     info: HTMLElement;
     board: HTMLElement[];
     feed: HTMLElement;
+    center: HTMLElement;
+    /** LH4: the narrow side column, used only while the table fills the video's place (`placeParts`). */
+    side: HTMLElement;
+    /** LH4: the layer the flying chips cross (clipped: a chip on its way never makes the table "overflow", which made
+     * the stage shrink the whole game to fit it). */
+    fx: HTMLElement;
     me: HTMLElement;
     hand: HTMLElement;
     myName: HTMLElement;
     myLife: HTMLElement;
     myStatus: HTMLElement;
+    myBet: HTMLElement;
     actions: HTMLElement;
     moves: HTMLElement;
   }
   let view: TableView | null = null;
 
   function tableView(): TableView {
-    if (view && view.status.parentElement === root) return view;
+    if (view && view.me.parentElement === root) return view;
     const slots = Array.from({ length: 5 }, () => el('span', { class: 'pk-slot' }));
     const v: TableView = {
       status: el('div', { class: 'pk-status', role: 'status', 'aria-live': 'polite' }),
@@ -250,27 +272,77 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       info: el('div', { class: 'pk-info' }),
       board: slots,
       feed: el('div', { class: 'pk-feed', 'aria-live': 'polite' }),
+      center: el('div', { class: 'pk-center' }),
+      side: el('div', { class: 'pk-side' }),
+      fx: el('div', { class: 'pk-fx', 'aria-hidden': 'true' }),
       me: el('div', { class: 'pk-me' }),
       hand: el('span', { class: 'pk-hand' }),
       myName: el('b'),
       myLife: lifeBar(),
       myStatus: el('span', { class: 'pk-seat-status' }),
+      myBet: betChip(),
       actions: el('div', { class: 'pk-actions' }),
       moves: el('div', { class: 'pk-moves' }),
     };
-    v.middle.append(v.flask, el('div', { class: 'pk-center' }, v.info, el('div', { class: 'pk-board' }, ...slots), v.feed));
-    v.me.append(el('div', { class: 'pk-me-top' }, v.hand, el('div', { class: 'pk-me-info' }, v.myName, v.myLife, v.myStatus)), v.actions, v.moves);
-    root.replaceChildren(v.status, v.seats, v.middle, v.me, toast);
-    return (view = v);
+    v.center.append(v.info, el('div', { class: 'pk-board' }, ...slots), v.feed);
+    v.middle.append(v.flask, v.center);
+    v.me.append(el('div', { class: 'pk-me-top' }, v.hand, el('div', { class: 'pk-me-info' }, v.myName, v.myLife, v.myStatus), v.myBet), v.actions, v.moves);
+    root.replaceChildren(v.status, v.seats, v.middle, v.me, toast, v.fx);
+    view = v;
+    placeParts();
+    return v;
   }
+
+  /**
+   * LH4 (GFIT1): while the table fills the video's place, the turn, my buttons, the special moves and the feed move into
+   * one narrow side column (`.pk-side`) and the play area takes the rest; elsewhere (a free window, a phone's Games tab)
+   * they go back where those layouts expect them. Called on each render and when the stage changes its mode.
+   */
+  function placeParts(): void {
+    const v = view;
+    if (!v || v.status.parentElement === null) return;
+    const fill = root.hasAttribute('data-fill') && !!root.closest('#game-stage.fill');
+    if (fill === (v.side.parentElement === root)) return;
+    if (fill) {
+      v.side.append(v.status, v.actions, v.moves, v.feed);
+      root.prepend(v.side);
+    } else {
+      v.side.remove();
+      root.prepend(v.status);
+      v.center.append(v.feed);
+      v.me.append(v.actions, v.moves);
+    }
+  }
+  let stageFill: boolean | null = null;
+  const stageWatch = new MutationObserver(() => {
+    // The stage started or stopped filling the place: the deal / chips in flight land at once (they were measured in
+    // the other layout). Only our own Web Animations (CSS ones such as the low-life beat run forever).
+    const fill = !!root.closest('#game-stage.fill');
+    if (fill !== stageFill) {
+      stageFill = fill;
+      for (const a of root.getAnimations?.({ subtree: true }) ?? []) {
+        if (a instanceof CSSAnimation || a instanceof CSSTransition) continue;
+        try {
+          a.finish();
+        } catch {
+          // Not finishable: leave it.
+        }
+      }
+    }
+    placeParts();
+  });
+  queueMicrotask(() => {
+    const stage = root.closest('#game-stage');
+    if (stage) stageWatch.observe(stage, { attributes: true, attributeFilter: ['class'] });
+  });
 
   function seatView(v: TableView, id: string): SeatView {
     let sv = v.seat.get(id);
     if (!sv) {
       const pick = el('button', { type: 'button', class: 'pk-seat-pick' }) as HTMLButtonElement;
       pick.addEventListener('click', () => arming && useMove(arming, id));
-      sv = { root: el('div', { class: 'pk-seat', 'data-id': id }), top: el('span', { class: 'pk-seat-top' }), life: lifeBar(), cards: el('span', { class: 'pk-seat-cards' }), status: el('span', { class: 'pk-seat-status' }), pick };
-      sv.root.append(sv.top, sv.life, sv.cards, sv.status);
+      sv = { root: el('div', { class: 'pk-seat', 'data-id': id }), top: el('span', { class: 'pk-seat-top' }), life: lifeBar(), cards: el('span', { class: 'pk-seat-cards' }), status: el('span', { class: 'pk-seat-status' }), bet: betChip(), pick };
+      sv.root.append(sv.top, sv.life, sv.cards, sv.status, sv.bet);
       v.seat.set(id, sv);
     }
     return sv;
@@ -305,6 +377,9 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       const players = s.players.map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, online: p.online, score: p.id === s.winner ? Math.max(1, p.life) : p.life }));
       showPointsResult(endCard, `poker:${gameId}:${s.hand}`, players, s.host, me, endLines(), () => send({ t: 'start' }));
     } else endCard.hide();
+    // GFIT1 / LH4: a running hand fills the video's place (the table takes what the narrow side column leaves); the
+    // lobby, the podium and "how to play" keep the design shape's scale.
+    root.toggleAttribute('data-fill', howto === null && s.phase !== 'lobby' && s.phase !== 'over');
     if (howto !== null) return renderHowto();
     if (s.phase === 'lobby' || s.phase === 'over') return renderLobby(s, myPlayer);
     const v = tableView();
@@ -312,6 +387,9 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     const total = s.players.reduce((sum, p) => sum + p.life, 0) + s.pot;
     const inHand = (p: PokerPlayer) => p.dealt && !p.folded && !p.dq && !p.out;
 
+    // LH4: the round table (the owner's pick A) while the game fills the video's place: bets lie as chips on it.
+    placeParts();
+    const onTable = v.side.parentElement === root;
     // ---- Status strip ----
     renderStatus(v.status, s, myTurn, lang);
 
@@ -336,7 +414,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
             ? [peek ? faceUp(cardNode(peek, 'small'), `k${p.id}:${peek}`, 0) : cardNode(null, 'small'), cardNode(null, 'small')]
             : [],
       );
-      sv.status.textContent = statusText(p, s);
+      sv.status.textContent = statusText(p, s, onTable);
+      setBet(sv.bet, onTable && !p.folded && !p.dq ? p.bet : 0);
       if (targetable) {
         sv.pick.setAttribute('aria-label', t('poker.pick', { name: p.name }));
         if (sv.pick.parentElement !== sv.root) sv.root.append(sv.pick);
@@ -355,7 +434,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     v.board.forEach((slot, i) => {
       const c = s.board[i];
       const best = !!c && winningCard(s, c);
-      patch(slot, `${s.hand}:${c ?? ''}:${best}`, () => [c ? faceUp(cardNode(c, best ? 'best' : ''), `b${i}:${c}`, i) : el('span', { class: 'pk-card slot' })]);
+      patch(slot, `${s.hand}:${c ?? ''}:${best}`, () => [c ? faceUp(cardNode(c, best ? 'best' : ''), `b${i}:${c}`, i) : el('span', { class: 'pk-card pk-empty' })]);
     });
     patch(v.feed, feed.join('\n'), () => feed.map((x, i) => el('p', { class: i === feed.length - 1 ? 'new' : '' }, x)));
 
@@ -368,7 +447,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     v.myName.textContent = myPlayer ? myPlayer.name : t('poker.watching');
     v.myLife.hidden = !myPlayer;
     if (myPlayer) setLife(v.myLife, myPlayer.life);
-    v.myStatus.textContent = myPlayer ? statusText(myPlayer, s) : '';
+    v.myStatus.textContent = myPlayer ? statusText(myPlayer, s, onTable) : '';
+    setBet(v.myBet, onTable && myPlayer && !myPlayer.folded ? myPlayer.bet : 0);
     const playing = !!myPlayer && inHand(myPlayer);
     v.actions.hidden = !playing;
     v.moves.hidden = !playing;
@@ -380,7 +460,10 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       renderActions(v.actions, s, myTurn, lang);
       renderMoves(v.moves, s, myPlayer!, myTurn, lang);
     }
-    motion(v, s);
+    placeParts();
+    // After the stage has fitted this layout (it refits on the next frame when the table starts filling the place):
+    // a deal measured in the old layout flew out of the table and the stage shrank the game to fit the flight.
+    requestAnimationFrame(() => requestAnimationFrame(() => view === v && motion(v, s)));
     tick();
   }
 
@@ -407,7 +490,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     const chip = el('span', { class: `pk-fly${cls ? ` ${cls}` : ''}`, 'aria-hidden': 'true' }, text);
     chip.style.left = `${a.x}px`;
     chip.style.top = `${a.y}px`;
-    root.append(chip);
+    (view?.fx ?? root).append(chip);
     const move = `translate(calc(-50% + ${(b.x - a.x).toFixed(1)}px), calc(-50% + ${(b.y - a.y).toFixed(1)}px))`;
     const run = chip.animate(
       [
@@ -634,7 +717,8 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     return s.phase === 'showdown' && s.players.some((p) => p.won && p.best?.includes(card));
   }
 
-  function statusText(p: PokerPlayer, s: State): string {
+  /** `chips`: the bet lies on the table as a chip (round table), so the status leaves it out. */
+  function statusText(p: PokerPlayer, s: State, chips = false): string {
     if (p.out) return t('poker.status.out');
     if (s.phase === 'showdown') {
       const parts: string[] = [];
@@ -649,7 +733,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
     if (p.folded) return t('poker.status.folded');
     const parts: string[] = [];
     if (p.allIn) parts.push(t('poker.status.allIn'));
-    if (p.bet > 0) parts.push(t('poker.status.bet', { n: p.bet }));
+    if (p.bet > 0 && !chips) parts.push(t('poker.status.bet', { n: p.bet }));
     if (p.shield) parts.push('🛡️');
     if (!p.online) parts.push(t('games.offline'));
     return parts.join(' · ');
@@ -974,6 +1058,7 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
   ]);
   return () => {
     offLab();
+    stageWatch.disconnect();
     ref.destroy();
     how.destroy();
     setGameLive(false);

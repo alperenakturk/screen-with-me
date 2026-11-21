@@ -27,6 +27,18 @@ LH3, GPH1, GFIT1) are still in `reference.md` under those card names.
   absolutely placed in `.pk` in its own pixels, so a scaled stage is fine), a disqualified or peeked seat shakes. Sounds
   (`SFX`, ids `pokerDeal` / `pokerChip` / `pokerFold` / `pokerStreet` / `pokerMove` in `sound-policy.ts`): the deal, life into the middle, a fold, a new street, a special move, plus the older my turn / last 5 s /
   win or loss / game over. "Reduce motion": no flying or sliding, no eased bars; the sounds stay.
+- **Round table** (the owner's pick A, 21 Nov 2026): while a hand fills the video's place (`data-fill` on `.pk`,
+  `#game-stage.fill`) `placeParts()` moves the status strip, my actions, the moves and the feed into `.pk-side` (the
+  shared `--game-side` column); the play area is a grid ('seats' / 'middle' / 'mine') on a wine table drawn by
+  `.pk::before` (theme colours via `color-mix` with `--pk-life` and `--bg`). Rivals sit along its top edge, each bet
+  lies in front of a seat as a `.pk-seat-bet` "♥ 12" chip (so the status leaves "Put in" out), the flask and five
+  shared cards are as big as the middle allows (the board is a size container), my seat sits on the bottom edge. Short
+  boxes (≤ 460 px, an upright tablet) open the amounts from ± and tighten rows. A free window and a phone's Games tab
+  keep their layouts (the parts move back). Motion runs two frames after the render and anything in flight finishes
+  when the stage starts / stops filling, and chips fly in a clipped `.pk-fx` layer: a deal measured in the old layout
+  made the stage shrink the game to 0.6. Harness `scripts/harness/last-heart/run.cjs` (laptop + upright tablet: fills,
+  fit 1 after the deal, side column, chips, board size, nothing spills, free window and back). Empty board places are `.pk-empty` (`.slot` is the video player's class).
+- **Text size.** At the table's own size nothing is under 13 px (games sweep).
 - **Feed.** The last 4 lines of the hand: each event once (keyed by hand, board size and event, so "Sam checked" on two
   streets shows twice), each new street with its cards ("Flop: 7♦ K♥ 5♥"), a time-out with what it did.
 - **Card faces** scale with the card (`container-type: inline-size`; rank 40 cqw top-left, suit 48 cqw bottom-right).
