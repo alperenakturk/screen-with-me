@@ -333,9 +333,9 @@ const SCREENS = {
         localStorage.setItem('opt:voiceCheck', 'skip');
         localStorage.setItem('opt:ipNotice:voice', '1');
         localStorage.setItem('opt:ptt', '1');
-        localStorage.setItem('opt:pttKey', 'KeyB');
-        localStorage.setItem('opt:pttLabel', 'B');
       });
+      await p.waitForFunction(() => !!window.__swmLab, null, { timeout: 20000 });
+      await p.evaluate(() => window.__swmLab.run('voice.pttKey', 'KeyB'));
       await p.evaluate(() => {
         const box = document.getElementById('voice-ptt');
         box.checked = true;

@@ -3290,7 +3290,13 @@ html.shorts-view .footer {
 
 .voice-on {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+}
+
+.voice-ptt span {
+  white-space: nowrap;
 }
 
 .voice-on[hidden] {
