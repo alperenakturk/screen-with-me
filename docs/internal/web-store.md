@@ -4,7 +4,11 @@ Developer dashboard: chrome.google.com/webstore/devconsole → **New item** → 
 below. The texts for the form fields are in English (the store's main language); the description ends with a short
 Turkish paragraph.
 
-**File to upload:** `store/screenwithme-<version>.zip` (made by `npm run store`).
+**File to upload:** the extension zip of the live release. Either download it from the live site
+(`https://screen-with-me.swm-server.workers.dev/screenwithme-extension.zip`, the same file as the extension page's
+download button; it carries the live release number) or run `npm run store` (`store/screenwithme-<version>.zip`, the
+same bytes for the same commit). Card STORE2 (21 Nov 2026): the live release number is submitted as it is (for
+example `0.9.97.150`); no `1.0.0` is needed for the store.
 
 **Title and summary come from the zip** (manifest, `apps/extension/build.mjs`):
 - Title: `Sidelit – Watch Videos Together in Sync`
@@ -38,13 +42,13 @@ WHY SIDELIT
 • Emoji reactions and quick chat over the video, also in fullscreen
 • Voice chat while you watch: the microphone is asked for once and only turns on when you join voice
 • Cameras and screen sharing with the people in the room, also on the film page
-• Games to play together while you wait or between episodes (Classics, Sea Battle, quiz, draw and guess) and small games on the side
+• Games to play together while you wait or between episodes (chess, backgammon and other classics, Sea Battle, a quiz, draw and guess, a card game for chips, a word race) and small games on the side
 • Pin moments with an optional note and jump back to talk about them later
 • Add your own custom emojis (images or GIFs) to a room; they stay in that room only
 • Send pictures in the room chat; links open in a new tab after a check
 • Keyboard shortcuts: 1–8 send reactions, Enter opens chat, P pins the moment
 • Shared speed: other speed extensions can't knock the room out of sync
-• The room host can lock the controls, remove people and lift bans
+• The room host can lock the controls, remove people and lift bans; anyone can block a person for themselves or report them
 • Ten themes and drawn avatars; just pick a name, no account
 • YouTube (with search), Vimeo, TikTok, podcasts and direct video links play right on the website, no extension needed
 • English and Turkish
@@ -53,7 +57,7 @@ PRIVATE BY DESIGN
 • No account, no ads, no third-party analytics or tracking
 • Runs only in the tab you joined a room with; dormant everywhere else
 • Videos play in each person's own browser; our server only relays small sync messages and the room's chat
-• Voice chat is direct between the people in voice; you're told before joining that they can see your IP address
+• Voice chat is direct between the people in voice; the privacy policy explains that they can see each other's IP address
 • Privacy policy: https://screen-with-me.swm-server.workers.dev/privacy.html
 
 NOTES
@@ -107,7 +111,7 @@ Stores the website's settings locally in chrome.storage.local, so the room layer
 
 `offscreen` (since 0.9.60):
 ```
-Voice and video chat while watching: on the film page the microphone and camera are used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone or camera through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice" (after a notice that the people in voice can see their IP address), the camera only after they press the camera button; "Leave" turns both off. Nothing is recorded; audio and video go peer-to-peer (encrypted) to the others in voice.
+Voice and video chat while watching: on the film page the microphone and camera are used in the extension's own offscreen document (reason USER_MEDIA), so the permission is asked once for the extension instead of for every film site, the film site can never reach the microphone or camera through us, and voice keeps going when the film page reloads. The microphone is only on after the user presses "Join voice", the camera only after they press the camera button; "Leave" turns both off. Nothing is recorded; audio and video go peer-to-peer (encrypted) to the others in voice.
 ```
 
 `scripting` (since 0.9.91.20):
@@ -137,16 +141,20 @@ note if asked.)
 card H3 + M7, 0.9.97.60):
 - ☑ **Personally identifiable information**: the nickname the user picks (shown to the people in the room) and the
   device names of the chosen microphone / camera, which can contain a person's name (kept on the device only).
-- ☑ **Personal communications**: chat messages (the room keeps the last 50), images in chat, custom emojis, private
-  messages (passed on, never stored), and on film pages voice, camera and screen streams (peer-to-peer, never stored).
+- ☑ **Personal communications**: chat messages (the room keeps the last 1000 until the room is deleted), images in
+  chat, custom emojis, private messages (passed on, never stored), and on film pages voice, camera and screen streams
+  (peer-to-peer, never stored). A report about a person (🚩 Report) sends us the room ID, their shown name, their last
+  chat lines, the reason and the reporter's optional note.
 - ☑ **Location**: IP address. In peer-to-peer voice, camera and streams (also on film pages, through the offscreen
-  document) the people in voice or watching can see each other's public IP address; the user is told so before joining
-  voice, streaming or watching (security review 1, W1).
+  document) the people in voice or watching can see each other's public IP address; the privacy policy says so (Settings → Sound &
+  camera links to it; the separate notice before joining was removed in 0.9.97, the policy section stayed).
 - ☑ **User activity**: on the film tab of a room the content script passes key presses, clicks and mouse moves over the
   film to our own room layer on the same page (so room shortcuts and the controls work there); this stays on the device
-  and is not sent to our server.
+  and is not sent to our server. The room's session recap counts per person (by browser ID) messages, reactions, pins,
+  pauses and skips (kept at most 90 days).
 - ☑ **Website content**: the page title, when a room is created or a page is opened in the room.
-- ☑ **Web history**: in the same case the page address goes to the people in the room.
+- ☑ **Web history**: in the same case the page address goes to the people in the room; the room keeps the recently
+  played videos and, in the session recap, which videos were watched for how long (at most 90 days).
 - The rest empty (health, financial, authentication).
 
 Tick all three statements below them:
@@ -203,7 +211,7 @@ store avoids it.
    which Edge accepts). Edge's square store logo is `store/edge-logo-300.png` (300×300, made by `npm run store` from
    the full-bleed app icon since STORE1).
 5. Notes for certification: the same reviewer note as §4.
-6. Review takes a few business days. Submit together with the Chrome Web Store (1.0); later updates: upload the new
+6. Review takes a few business days. Submit together with the Chrome Web Store (card STORE2, Nov 2026); later updates: upload the new
    zip in both dashboards.
 
 Opera's own store (addons.opera.com) is **not** used: reviews take weeks to months; Opera installs from the Chrome
@@ -222,6 +230,6 @@ Before submitting (Claude checks; ✅ items were done in 0.9.0):
 - ✅ Screenshots up to date (`npm run store`).
 - ⬜ A real test with a friend on Brave/Edge/Opera (checklist: `STATUS.md` "Owner's hand tests").
 - ⬜ Edge Add-ons listing submitted together with the Chrome Web Store (section above).
-- ⬜ Version `1.0.0` → `npm run store` → upload the zip in the dashboard → fill in the form with this guide → submit
-  (with the owner's account; Claude can't submit).
+- ⬜ The live release's zip (see "File to upload") → upload it in the dashboard → fill in the form with this guide →
+  submit (with the owner's account; Claude can't submit). The owner's step list: the Planner's chat (card STORE2).
 - ⬜ Once approved: change the install links in `extension.html` and on the site to the store link.

@@ -4,46 +4,45 @@ The Planner's working memory, so a fresh Planner session can continue without th
 "keep contexts small, everything needed must be in the repo"). The Planner rewrites this file at every handoff;
 rules stay in `CLAUDE.md`, cards in `CARDS.md` / `cards-games.md` / `cards-proposed.md`, the owner's lists in `STATUS.md`.
 
-## State on 17 Nov 2026, 12:45 Istanbul (handoff 5; previous Planner session_015Fyri4om23mvzYMosodsyX)
+## State on 21 Nov 2026, ~09:35 UTC (handoff 6; previous Planner session_015Fyri3TBzeHzTHsWyxSnes)
 
-**Live:** v0.9.97.171. Deploys use the rolled Cloudflare token (works). v0.9.97.113 tag still missing on purpose.
+**Live:** v0.9.97.183. Shipped 19–20 Nov (all on the owner's board as tests): GD1 table drops (.172), CAM2 laptop
+camera (.173), GPH1 phones (.174, .181–.183), QZ4 more questions (.175), TG1 compact Together card (.176), QZ3 ×2
+after answering (.177), PH4 phones upright except video (.178), PH3 (.179), FW1 Five Frames real words + categories
+(.180; FrequencyWords CC BY-SA used offline only, credited: Planner kept it).
 
-**Sessions:** none building. Lane A and Game Studio finished their groups and were archived (handoffs in STATUS).
-Open a fresh session per card group (CLAUDE.md §4); the owner said on 17 Nov: "open them, don't hold back on usage,
-I'll reset; finish every job". The account's seven-day limit shows `allowed_warning` (resets 21 Nov ~06:00 Istanbul).
+**Owner's message 21 Nov (big batch) → cards in PR #569:** CAM3, VC4, PTT1, TG2 (lane A); RAIL2, GN1, EMO1, RC2, FR1
+(lane A2); STORE2 (lane B); GFIT1, DG2, SB2, FW2, QZ5, LH4 (`cards-games.md`); LB1 (Proposed, research).
+**Owner decisions 21 Nov:** store submission now (~25 Nov, before Spotify Wrapped ~3 Dec; this moves the store ahead
+of 1.0); emoji = a "Hands" page. Earlier: ×2 after answering; Together card compact (TG1); phones upright except video.
 
-**Shipped 17 Nov (all on the owner's board as hand tests):** CR2 YouTube Music lists (.158), GW3 games never
-fullscreen (.159), SRC2 "What are we watching?" big grid + FD1a feed drawer (.160), FD1b Shorts view tidy (.161),
-GW4 layout never moves (.162), FC1 feed country + words + kind combined, GMP2 2–6 players (.163), RC1 session recap
-(.165), UI4 polish: no feed pill on top, Drive-In default theme, picker centred + generic "Subscription services ·
-Coming" row, Shorts ⋯ More works (.166), GW5 game windows scale in proportion (.167), LH2 / LH3 Last Heart on tablets
-(.168/.169), XO1 tic-tac-toe on sideways tablet (.170), BG1 backgammon on upright tablet (.171).
+**Sessions running (opened 21 Nov 09:30 UTC, all report to the Planner):**
+- lane A session_015Fyri5HfoxHpQNeuh9r4K4: CAM3 → VC4 → PTT1 → TG2
+- lane A2 session_015Fyri67RgmE8p1io8r1Skq: RAIL2 → GN1 → EMO1 → RC2 → FR1
+- lane B store session_015Fyri6awefucxDtZBLKWqq: STORE2 (sends the owner's Turkish submit steps)
+- Game Studio "Classics + stage" session_015Fyri3w2YukxdT5hcUXJdU: GFIT1 (shared stage first, tells the Planner)
+- Game Studio "Draw" session_015Fyri5wHytdFSSsqfcKQCi: DG2
+- Game Studio "Sea" session_015Fyri7JZggJruevvCq2aYs: SB2
+- Game Studio "Quiz" session_015Fyri5bYLQjHpBgDbzhpdp: QZ5
+- **Not opened yet (usage):** Game Studio "Five Frames" (FW2) and "Last Heart" (LH4): open each when a session
+  finishes. Their first prompt: copy the Draw one, swap the card and files.
+The account hit its weekly usage limit on 19 Nov night with 4 sessions; if sessions show `failed` with
+"usage_limit_reached", wait for the reset and send each "continue" (send_message).
 
-**Owner decisions 17 Nov:** picks page (Artifact 5jN5FuuqcPpVW3nRMba65Z): all A (source picker grid, feed drawer,
-recap night stage / host shows / ✨ on rail / own music). Default theme Drive-In. Game windows: what shows at first
-size shows at every size, aspect ratio kept, else no resize. Brand logos: we keep our glyphs (YouTube needs approval,
-TikTok written permission). Usage: don't hold back. He asked for visual option pages this time (picks page): when
-asking design questions, give him visuals (a page or the SVGs), not only text.
+**Waiting on the owner:** Dailymotion Player ID (DM1); VIMEO_TOKEN; `sidelit.app` after the trademark check; the
+Brave / Edge hand test right before the store submission; picks that sessions will send: RC2 recap music + cinema
+look (images), SB2 ship themes (images). Ask him with AskUserQuestion, recommended first, with visuals.
 
-**Waiting on the owner:**
-- Five Frames' home at 1366: covers Together's "Join voice / Share". A = Together card one row shorter while a side
-  game is open (lane A card, recommended); B = leave as is (current). Ask again with clickable choices.
-- Netflix / Prime names in the picker: he asked to list them as "coming"; I applied the rule (no names, one generic
-  row) and told him; he hasn't objected. If he insists, it's his call (store risk explained).
-- Dailymotion Player ID (DM1, lane A), VIMEO_TOKEN, `sidelit.app` after the trademark check, the 0.9.98 gate.
+**Owner's questions answered in chat 21 Nov (no card):** Letterboxd has no open API (access by application) → LB1
+research; Discord's web app also loses push-to-talk in another tab (PTT1 researches the extension shortcut / PiP);
+voice 8 / cameras 6 (VC4).
 
-**Ideas from sessions (put in STATUS ideas when convenient):** upright-tablet Shorts bottom bar has no ⋯ More; the
-feed drawer cuts the room's text mid-word at its edge; live e2e quota.mjs flake (parallel shards share one address).
+**The owner's board:** Artifact NWZG7GLH4JzAnZt1rNgrJo, version 83. Edit: `Artifact` read (full file), add TESTS
+entries at the top of the array (`d`: phone | tablet | pc | ext; `g`: "🆕 Yeni (önce bunlar)"), update the meta line,
+republish to the same URL.
 
-**The owner's board** (Artifact NWZG7GLH4JzAnZt1rNgrJo, version 78) now has a 📲 Tablette device section; every item is
-one device. Source not in the repo: `Artifact` read (with and without `path`), keep from `<title>` to the last
-`</script>`, edit TESTS (`d`: phone | tablet | pc | ext), republish to the same URL.
+**Scheduled:** "Daily context check" (18:41 Istanbul) trig_01M5GbVeFS1oZpL7cyz4DjA6 is bound to the previous Planner:
+re-create it bound to yourself (same prompt, `get_trigger`) and delete the old one.
 
-**Scheduled:** "Daily context check" trig_01UurtiJTp8MAPYRK1Pc791w (18:41 Istanbul) is bound to the old Planner
-session: re-create it bound to yourself (same prompt, `get_trigger`) and delete the old one.
-
-**Leftover merged branches** the sessions couldn't delete (squash merges): claude/shorts-rail-short-screens,
-claude/rc1-session-recap, claude/ui4-polish, claude/lane-a-handoff-17nov, claude/gmp2-six-seats, claude/ng2-menu-wait,
-claude/gw5-proportional, claude/xo1-board-tablet (unmerged, superseded). Harmless.
-
-**Room JS budget:** 145 kB guard; room CSS budget full (38 kB): new room styles go into lazy stylesheets.
+**Leftovers:** merged branches the sessions couldn't delete (squash merges) are harmless; STATUS.md sits near its
+30 KB limit (sessions archive finished lines when they add); tag v0.9.97.113 still missing.
