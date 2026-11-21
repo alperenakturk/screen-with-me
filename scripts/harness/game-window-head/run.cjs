@@ -376,6 +376,7 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
     // they fit there at their smallest readable size, else over its edge by the difference); the tables always play in
     // the video's place. No game has a placement switch on a computer. SIDE340 (0.9.97.115): smallest readable 320 px.
     const minW = { snack: 320, garden: 320, word: 320 };
+    await page.evaluate(() => localStorage.setItem('gameMode', 'frame'));
     for (const kind of ['snack', 'garden', 'word', 'classics', 'sea', 'quiz', 'draw', 'poker', 'duel']) {
       await openGame(page, kind);
       const b = await box(page);
@@ -389,8 +390,10 @@ const near = (a, b, d = 3) => Math.abs(a.x - b.x) <= d && Math.abs(a.y - b.y) <=
       } else {
         // Until card .113 turns stage.ts STAGE_READY on, a table keeps its free window and the switch; then it plays
         // in the video's place without one. Either way it opens whole on screen, and 🎮 shows the hall.
-        // GW3: a table opens in the video's place (the first time, and in the mode used last after that).
-        check(b.onScreen && b.mode === 'stage' && !b.fs && !switchShown, `${L} ${kind}: a table opens in the video's place, no placement switch`, { b, switchShown });
+        // GFIT1 (owner, 21 Nov 2026): every table opens in the video's place, even when I used the 🪟 frame last time
+        // (the frame mode saved just before opening it, below).
+        check(b.onScreen && b.mode === 'stage' && !b.fs && !switchShown, `${L} ${kind}: a table opens in the video's place (🪟 used last), no placement switch`, { b, switchShown });
+        await page.evaluate(() => localStorage.setItem('gameMode', 'frame'));
         await page.click('#game-stage .game-hub-open');
         check(!!(await until(() => visible(page, '#game-menu'), 3000)), `${L} ${kind}: 🎮 in the video's place opens the hall, visible`);
         await page.keyboard.press('Escape');
