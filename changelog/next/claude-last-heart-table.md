@@ -1,0 +1,1 @@
+- Last Heart has a new round table: in the video's place the game fills the whole space, the rivals sit along the top of a dark wine table with their bets in front of them, the five shared cards are far bigger, and the buttons sit in a narrow column beside it.

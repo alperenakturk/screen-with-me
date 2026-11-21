@@ -18,12 +18,12 @@ The unit tests (`poker.test.ts`) cover all of these. What reads wrong:
 
 | # | Sev | What | Where | Status |
 |---|---|---|---|---|
-| 1 | B | **Any special move resets the turn clock.** `changed()` sets `endsAt = deadline()` after every change, so a rival's Shield, Peek or Disqualify out of turn gives the player to act a fresh 30 s. Five rivals can stretch one turn by minutes. The clock should restart only when the turn passes (someone else to act, a new street or hand). | server `changed()` | |
-| 2 | R | **"+8" is what was taken from the middle, not what was won.** The result line and the seat say "+8" while the winner's life went 96 → 104 (+4 over the hand, +8 against the life left after betting). Players read "+8" as the change in their life. Say "takes 8 from the middle" (EN / TR), keep the number. | page `result()`, `statusText()` | |
-| 3 | B | **A loser's best cards glow gold** at the showdown (the seat uses `p.best` for everyone; the shared cards only for winners), so the losing hand looks like it won. Only winners' cards glow; a loser's best five get a quiet outline. | page rival seats | |
-| 4 | B | **The feed drops a repeated line.** "Sam checked" on the flop and again on the turn shows once (`feed[last] !== line`). The new street itself never shows in the feed ("Flop", "Turn"…). | page `render()` | |
-| 5 | B | **The raise slider is rebuilt by every state.** A rival's move while I drag the slider ends my drag (the whole table is re-rendered). Keep the actions row when only others' details change. | page `render()` | |
-| 6 | R | A time-out shows "Time ran out for Sam" but not what that did (checked or folded). | page `describe()` | |
+| 1 | B | **Any special move resets the turn clock.** `changed()` sets `endsAt = deadline()` after every change, so a rival's Shield, Peek or Disqualify out of turn gives the player to act a fresh 30 s. Five rivals can stretch one turn by minutes. The clock should restart only when the turn passes (someone else to act, a new street or hand). | server `changed()` | fixed #594 |
+| 2 | R | **"+8" is what was taken from the middle, not what was won.** The result line and the seat say "+8" while the winner's life went 96 → 104 (+4 over the hand, +8 against the life left after betting). Players read "+8" as the change in their life. Say "takes 8 from the middle" (EN / TR), keep the number. | page `result()`, `statusText()` | fixed #594 |
+| 3 | B | **A loser's best cards glow gold** at the showdown (the seat uses `p.best` for everyone; the shared cards only for winners), so the losing hand looks like it won. Only winners' cards glow; a loser's best five get a quiet outline. | page rival seats | fixed #594 |
+| 4 | B | **The feed drops a repeated line.** "Sam checked" on the flop and again on the turn shows once (`feed[last] !== line`). The new street itself never shows in the feed ("Flop", "Turn"…). | page `render()` | fixed #594 |
+| 5 | B | **The raise slider is rebuilt by every state.** A rival's move while I drag the slider ends my drag (the whole table is re-rendered). Keep the actions row when only others' details change. | page `render()` | fixed #594 |
+| 6 | R | A time-out shows "Time ran out for Sam" but not what that did (checked or folded). | page `describe()` | fixed #594 |
 | 7 | R | A peeked card is forgotten on a reload (it came once, only to me). Minor: the peek costs 5 life. The server could keep the peek with the hand and send it again in `cards`. | server / page | later |
 | 8 | R | A player who left stays dealt in every hand (4 s per turn, then check / fold) until they run out or the game ends. Expected for a short drop; a long one slows a 6-player table. Leave as is (a reload keeps the seat). | server | as is |
 
@@ -31,26 +31,26 @@ The unit tests (`poker.test.ts`) cover all of these. What reads wrong:
 
 | # | Sev | What | Where | Status |
 |---|---|---|---|---|
-| 9 | L | **The table doesn't fill the video's place** (GFIT1). It is laid out at its design size (878 × 428) and scaled: at 1366 there are ≈ 100 px empty bands above and below, at 1920 ≈ 130 px. The root has no `data-fill`. | `poker.ts` root, `poker.css` | |
-| 10 | L | **The shared cards are the smallest thing on the table**: 34 px wide at 1366, 50 px at 1920 (my seat box is twice their area and half empty at 1920). The board is the game; it should be the biggest thing after my own two cards. | `poker.css` | |
-| 11 | L | **Card faces break at small sizes.** The rank and the suit are fixed 14 px / 26 px on a card whose width changes (26–52 px): on a phone my two 38 px cards show only a big suit, the rank hidden under it; at 34 px the "3" of a heart touches the suit. The face should scale with the card. | `room.css` `.pk-card` | |
-| 12 | L | Upright tablet (820 wide): the table is scaled to 0.96, small print ≈ 12 px; most of the box's height goes to rows that could be one line. | `poker.css` LH2 block | |
-| 13 | L | Phone (Games tab): fine at 2 and 6 players (GPH1); the shared cards leave the right third of their box empty at 2 players. | `poker.css` PH2 block | |
-| 14 | L | At the showdown the result is said twice at once: in the status strip and in the gold toast over it. | page `announce()` | |
-| 15 | L | Fold has a red outline on touch screens only (a hover style that sticks after a tap). | `room.css` `.pk-fold:hover` | |
+| 9 | L | **The table doesn't fill the video's place** (GFIT1). It is laid out at its design size (878 × 428) and scaled: at 1366 there are ≈ 100 px empty bands above and below, at 1920 ≈ 130 px. The root has no `data-fill`. | `poker.ts` root, `poker.css` | round table |
+| 10 | L | **The shared cards are the smallest thing on the table**: 34 px wide at 1366, 50 px at 1920 (my seat box is twice their area and half empty at 1920). The board is the game; it should be the biggest thing after my own two cards. | `poker.css` | round table |
+| 11 | L | **Card faces break at small sizes.** The rank and the suit are fixed 14 px / 26 px on a card whose width changes (26–52 px): on a phone my two 38 px cards show only a big suit, the rank hidden under it; at 34 px the "3" of a heart touches the suit. The face should scale with the card. | `room.css` `.pk-card` | fixed #594 |
+| 12 | L | Upright tablet (820 wide): the table is scaled to 0.96, small print ≈ 12 px; most of the box's height goes to rows that could be one line. | `poker.css` LH2 block | round table |
+| 13 | L | Phone (Games tab): fine at 2 and 6 players (GPH1); the shared cards leave the right third of their box empty at 2 players. | `poker.css` PH2 block | as is |
+| 14 | L | At the showdown the result is said twice at once: in the status strip and in the gold toast over it. | page `announce()` | fixed #594 |
+| 15 | L | Fold has a red outline on touch screens only (a hover style that sticks after a tap). | `room.css` `.pk-fold:hover` | fixed #594 |
 
 ## Feel: animation and sound
 
 | # | Sev | What | Status |
 |---|---|---|---|
-| 16 | F | Nothing moves but a card turning face up (`flipIn`). No deal (cards appear), no life going into the middle (the flask level jumps), no pot going to the winner, life bars jump. The page rebuilds every node on each state, so CSS transitions never run. | |
-| 17 | F | Sounds: my turn, the last 5 s, a win / loss at the showdown, the game's end. Silent: the deal, a rival's call / raise / all-in, a fold, the flop / turn / river, special moves (a disqualify or peek happens without a sound). | |
+| 16 | F | Nothing moves but a card turning face up (`flipIn`). No deal (cards appear), no life going into the middle (the flask level jumps), no pot going to the winner, life bars jump. The page rebuilds every node on each state, so CSS transitions never run. | #596 |
+| 17 | F | Sounds: my turn, the last 5 s, a win / loss at the showdown, the game's end. Silent: the deal, a rival's call / raise / all-in, a fold, the flop / turn / river, special moves (a disqualify or peek happens without a sound). | #596 |
 
 ## The table's look
 
 The table is a set of dark cards (rivals, the middle, me) on the room's background with a faint red glow. It reads as
 a form more than a table: no surface the cards lie on, the rivals in a list, my seat a big box with empty space.
-A nicer table is a design pick for the owner (sent to the Planner with mockups, `last-heart/` pictures):
+The owner picked **A** (21 Nov 2026), built in the round-table PR. A nicer table was a design pick for the owner (sent to the Planner with mockups, `last-heart/` pictures):
 
 - **A. Round table** (recommended): a dark wine table filling the play area, rivals around its top edge with what
   they put in lying in front of them, the flask and five big shared cards in the middle, my seat at the bottom edge;
