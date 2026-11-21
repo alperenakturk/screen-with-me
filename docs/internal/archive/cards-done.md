@@ -3239,3 +3239,9 @@ Security and Research suggestions: `docs/internal/cards-proposed.md`.
   when a player's fleet is gone: a short explosion, "ALEX SANK!" in a playful tone, their chip crossed out.
 - Done when: all four at 2 and 4 players; e2e; first look; art licence-clean.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/576, https://github.com/alperenakturk/screen-with-me/pull/585, https://github.com/alperenakturk/screen-with-me/pull/589 (v0.9.97.187 / .191; Navy / Pirates / Bath toys).
+
+### LH4. Last Heart: review, smooth animations, sounds, design (owner, 21 Nov 2026; Game Studio "Last Heart")
+- What: a detailed play-through review (bugs, rules, layout at 3 sizes), then fixes; smooth card / chip animations
+  and sounds if missing; a nicer table design. Report findings to the Planner before big redesigns.
+- Done when: the review file `docs/internal/design/games/last-heart-review.md`, its fixes merged; e2e.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/592, https://github.com/alperenakturk/screen-with-me/pull/594, https://github.com/alperenakturk/screen-with-me/pull/596, https://github.com/alperenakturk/screen-with-me/pull/597, https://github.com/alperenakturk/screen-with-me/pull/601 (Game Studio "Last Heart", 21 Nov 2026; v0.9.97.193): review file (17 findings), out-of-turn moves keep the 30 s clock, "takes N from the middle" + per-seat net, deal / chip / pot motion + five sounds, `.pk` styles in poker.css, round table (pick A) in the video's place, harness `scripts/harness/last-heart/run.cjs` in the `games` job, area file `architecture/last-heart.md`.
