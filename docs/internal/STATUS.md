@@ -220,7 +220,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   ring. Any theme: four faces under the devices and "4 kişi izliyor · 2'si seste"; the balloon drifts across all three
   screens in step (and stands still with "reduce motion" on).
 
-**D. Before the 1.0 store submission** (Claude reminds the owner right before it)
+**D. Before the store submission (STORE2, ~25 Nov)** (the Planner reminds the owner first)
 - [ ] 28. The extension in Edge, Brave and Opera: install unpacked, room + YouTube sync, voice, camera, tab share, the
   film page and voice there, fullscreen, sounds; Brave Shields + "Disable non-proxied UDP" shows the "blocks direct
   connections" note; Edge "Strict" tracking prevention; Opera's ad blocker, VPN and GX limits; write down each version.
