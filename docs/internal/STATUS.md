@@ -9,7 +9,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A (fresh session 21 Nov): PTT1 (#599) + TG2 (#604) merged; then CI4 (flaky steps). Tag `v0.9.97.113`
   (8ce4385) missing. DM1 waits for the owner's Player ID; UI2 `rail-speed` flake: if it fails again, add a
   `sync-engine.test.ts` scenario. FILM1 waits for the owner's pick.
-- [ ] Game Studio: LH4 (Last Heart, round table #601) finishing; QZ5b (Quiz fill) in a fresh session.
+- [ ] Game Studio: QZ5b (Quiz fill). LH4 done (v0.9.97.193).
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -225,7 +225,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   "⏱ 1 min": the clock counts down, at 0 the rest are out; laptop: my board big, the others smaller. Solo: Easy /
   Medium / Hard each have their own word and stay after a reload; "?" ends with "Which words count".
 - [ ] 27lh. [LH4] Last Heart, 3 players: Shield out of turn doesn't reset the other player's 30 s; the showdown says
-  "takes N from the middle", each seat shows +/−, only the winner's cards are gold.
+  "takes N from the middle", each seat shows +/−, only the winner's cards are gold. Laptop, video's place: a round
+  table, rivals on top with ♥ chips, big shared cards, buttons on the right; cards and chips fly, new sounds; 🪟 brings
+  the window layout back. Phone Games tab: my two cards show their rank.
 
 - [ ] 27vc. [VC4] With 5+ friends with cameras: 6 cameras fit, the 7th says it's full; the chat shows one note
   recommending 4 cameras / 6 people (once per room), even with room activity hidden.
@@ -293,7 +295,7 @@ with what became of each (built in 0.9.93.2, Test Lab, not planned …) is in `a
 - **Later ideas (21 Nov):** an extension shortcut to toggle the mic from any tab (`chrome.commands`, toggle only,
   needs a store update); a noise-suppression switch; Sea Battle's pirate sails and paper boat redrawn.
 - **Game leftovers (21 Nov):** Test Lab 🤖 friends can share the player's name (`lab-table-friend.ts`); room.css's
-  global `.slot` rule hits any game element with class `slot`.
+  global `.slot` rule hits any game element with class `slot`. Phone Games tab: Last Heart's ± amounts panel covers the table while open.
 - **Small leftovers (Planner, 20 Nov):** upright-tablet Shorts bar has no ⋯ More; the feed drawer cuts room text
   mid-word; live e2e `quota.mjs` flake (shards share one address); `side-games-polish` harness stale since GW5.
 

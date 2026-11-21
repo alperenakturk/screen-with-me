@@ -11,11 +11,6 @@ window only when the player picks it); in the video's place the game itself fill
 chat, menus) stays narrow and the board / play area is as large as it can be, centred and balanced when its shape
 leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness / e2e, first look, EN + TR.
 
-### LH4. Last Heart: review, smooth animations, sounds, design (owner, 21 Nov 2026; Game Studio "Last Heart")
-- What: a detailed play-through review (bugs, rules, layout at 3 sizes), then fixes; smooth card / chip animations
-  and sounds if missing; a nicer table design. Report findings to the Planner before big redesigns.
-- Done when: the review file `docs/internal/design/games/last-heart-review.md`, its fixes merged; e2e.
-
 ### QZ5b. Quiz fills the video's place; shared-stage leftovers (Planner, 21 Nov 2026; a fresh Game Studio session)
 - Why: QZ5 left Quiz on its design shape (empty bands in the video's place); GFIT1's sweep left `tabup/tr/word` (the
   solo Five Frames legend at 12.8 px on an upright tablet in Turkish) below the 13 px rule; the topic chip wraps on a
