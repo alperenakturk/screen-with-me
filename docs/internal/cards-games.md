@@ -11,12 +11,6 @@ window only when the player picks it); in the video's place the game itself fill
 chat, menus) stays narrow and the board / play area is as large as it can be, centred and balanced when its shape
 leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness / e2e, first look, EN + TR.
 
-### GFIT1. Games open in the video's place and fill it; Classics (owner, 21 Nov 2026; Game Studio "Classics", first)
-- Why: "in every game the right column is too wide and the game too narrow"; 99 % of players play in the video's place.
-- What: the shared stage rule above (`stage.ts`, shared lobby / side column CSS: one narrow side width for all
-  games), always open in the video's place; then Classics (chess, dama, backgammon, reversi, XOX, Four) fills it.
-- Done when: every table opens in the video's place; Classics' board is the biggest square that fits; sweep shots.
-
 ### SB2. Sea Battle: ship themes, drag to place, watch the attacker, a fun sinking (owner, 21 Nov 2026; Game Studio "Sea")
 - What: (1) pick a ship theme (2–3 drawn sets, not plain squares); (2) place ships by dragging them straight onto the
   board (snap to the nearest valid spot, rotate with a tap / R); (3) with 3+ players: my own sea big, plus a second

@@ -111,6 +111,8 @@ const TEXT = {
     yourPlace: 'You came {place}.',
     places: 'Places',
     afloat: '🚢 {n} left',
+    aimsAt: '{name} aims at {target}’s sea',
+    aimsAtMe: '{name} aims at you!',
     sank: '{name} SANK!',
     sankMe: 'YOUR FLEET SANK!',
     sankLine: 'Every ship of {name} is under water.',
@@ -188,6 +190,8 @@ const TEXT = {
     yourPlace: 'Sen {place} oldun.',
     places: 'Sıralama',
     afloat: '🚢 {n} kaldı',
+    aimsAt: '{name}, {target} denizine nişan alıyor',
+    aimsAtMe: '{name} sana nişan alıyor!',
     sank: '{name} BATTI!',
     sankMe: 'FİLON BATTI!',
     sankLine: '{name} oyuncusunun bütün gemileri suyun altında.',
@@ -224,6 +228,10 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   let revealed: number[][] | null = null;
   /** GMP b: the sea picked with the chips (a player's target, or the sea a watcher looks at). */
   let chosenTarget: number | null = null;
+  /** SB2: my last target, picked again when my turn comes back. */
+  let myTarget: number | null = null;
+  /** SB2: with three or more, the shooter's live aim (the server passes it on): whose sea, which cell. */
+  let follow: { by: number; target: number; cell: number | null } | null = null;
   let lastShot = '';
   let lastPhase = '';
   let note = '';
@@ -334,6 +342,11 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const me = mySeat();
     if (!s || !many()) return me === -1 ? 1 : 1 - me;
     if (chosenTarget !== null && canShow(chosenTarget)) return chosenTarget;
+    // SB2: on someone else's turn the big box follows the shooter: the sea they aim at, else the sea they last shot at.
+    if (following()) {
+      if (follow && canShow(follow.target)) return follow.target;
+      if (s.last?.by === s.turn && s.last.target !== undefined && canShow(s.last.target)) return s.last.target;
+    }
     // A watcher, or a player whose fleet sank, follows the sea last shot at.
     if ((me < 0 || isOut(me)) && s.last?.target !== undefined && canShow(s.last.target)) return s.last.target;
     const n = s.players.length;
@@ -345,6 +358,11 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       }
     }
     return me === 0 ? 1 : 0;
+  }
+  /** SB2: three or more, in battle, and someone else shoots: the second view follows them. */
+  function following(): boolean {
+    const s = state;
+    return !!s && many() && s.phase === 'play' && s.turn !== mySeat();
   }
   const nameOfSeat = (i: number) => state?.players[i]?.name ?? '';
   const cellName = (i: number) => tx('cell', { col: COLS[i % size]!, row: Math.floor(i / size) + 1 });
@@ -436,6 +454,42 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
    */
   let zoomQ: number | null = null;
   const quarterOf = (cell: number) => (Math.floor(cell / size) >= size / 2 ? 2 : 0) + (cell % size >= size / 2 ? 1 : 0);
+  /**
+   * SB2: my live aim for the others' second view (three or more, my turn): the sea in my big box and the cell under my
+   * pointer (or my phone's aim). At most one message every 150 ms, the latest one last; nothing when it didn't change.
+   */
+  let aimSent = '';
+  let aimAtMs = 0;
+  let aimTimer = 0;
+  let aimCell: number | null = null;
+  function queueAim(cell: number | null): void {
+    aimCell = cell;
+    if (!state || !many() || state.phase !== 'play' || state.turn !== mySeat()) return;
+    const wait = aimAtMs + 150 - Date.now();
+    if (wait > 0) {
+      if (!aimTimer) aimTimer = window.setTimeout(flushAim, wait);
+      return;
+    }
+    flushAim();
+  }
+  function flushAim(): void {
+    aimTimer = 0;
+    if (!state || !many() || state.phase !== 'play' || state.turn !== mySeat()) return;
+    const target = other();
+    const key = `${target}:${aimCell}`;
+    if (key === aimSent) return;
+    aimSent = key;
+    aimAtMs = Date.now();
+    send({ t: 'aim', target, cell: aimCell });
+  }
+  theirs.grid.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.sea-cell');
+    queueAim(cell ? Number(cell.dataset.cell) : null);
+  });
+  theirs.grid.addEventListener('pointerleave', (e) => {
+    if (e.pointerType === 'mouse') queueAim(null);
+  });
   function onTheirs(cell: number): void {
     if (!state || state.phase !== 'play' || state.turn !== mySeat()) return;
     if (state.seas[other()]!.shots.some(([c]) => c === cell)) return;
@@ -443,6 +497,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       if (zoomQ === null || quarterOf(cell) !== zoomQ) {
         zoomQ = quarterOf(cell);
         aimAt = cell;
+        queueAim(cell);
         playSound('seaAim');
         return render();
       }
@@ -452,7 +507,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
   function fire(cell: number): void {
     aimAt = null;
     zoomQ = null;
-    send({ t: 'shot', cell, target: other() });
+    myTarget = other();
+    send({ t: 'shot', cell, target: myTarget });
     // The whole sea comes back at once, not when the server's answer arrives.
     render();
   }
@@ -599,7 +655,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     const myTurn = s.phase === 'play' && s.turn === mySeat() && !isMine;
     box.box.classList.toggle('aim', myTurn);
     // The sea being shot at now (for everyone, watchers too).
-    const shotAt = !many() ? 1 - s.turn : s.last?.by === s.turn ? (s.last.target ?? -1) : -1;
+    const shotAt = !many() ? 1 - s.turn : following() && follow ? follow.target : s.last?.by === s.turn ? (s.last.target ?? -1) : -1;
+    // SB2: the shooter's live pointer on the sea they aim at.
+    const peer = following() && follow && follow.target === seat ? follow.cell : null;
     box.box.classList.toggle('target', s.phase === 'play' && seat === shotAt);
     // SB2: a ship being dragged: its old cells fade, the ghost shows where it would land (red when nothing fits near).
     const lifting = new Set<number>();
@@ -631,6 +689,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
       if (lifting.has(i)) cell.classList.add('lifting');
       if (ghost.has(i)) cell.classList.add('ghost', ...(ghostBad ? ['bad'] : []));
       if (sinking?.has(i)) cell.classList.add('sinking');
+      if (peer === i) cell.classList.add('peer-aim');
       if (h === 0) cell.classList.add('miss');
       if (h === 1) cell.classList.add('hit');
       if (sunk.has(i)) cell.classList.add('sunk');
@@ -681,7 +740,9 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     }
     if (me >= 0 && isOut(me)) said = `${tx('youOut')} ${said}`.trim();
     if (aimAt !== null && s.turn === me) return tx('aimed', { cell: cellName(aimAt) });
-    const turn = s.turn === me ? tx(many() ? 'yourTurnMany' : 'yourTurn') : s.players[s.turn]?.bot ? tx('botTurn') : me < 0 || isOut(me) ? tx('watchTurn', { name: nameOfSeat(s.turn) }) : tx('theirTurn', { name: nameOfSeat(s.turn) });
+    // SB2: with three or more, who the shooter aims at (live).
+    const aiming = following() && follow ? (follow.target === me ? tx('aimsAtMe', { name: nameOfSeat(s.turn) }) : tx('aimsAt', { name: nameOfSeat(s.turn), target: nameOfSeat(follow.target) })) : '';
+    const turn = aiming ? aiming : s.turn === me ? tx(many() ? 'yourTurnMany' : 'yourTurn') : s.players[s.turn]?.bot ? tx('botTurn') : me < 0 || isOut(me) ? tx('watchTurn', { name: nameOfSeat(s.turn) }) : tx('theirTurn', { name: nameOfSeat(s.turn) });
     return said ? `${said} ${turn}` : turn;
   }
 
@@ -737,6 +798,12 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
           else {
             chosenTarget = i;
             view = 'theirs';
+          }
+          if (state?.turn === mySeat()) {
+            myTarget = i;
+            // The others' view follows my pick at once (the cell comes with my pointer).
+            aimSent = '';
+            window.setTimeout(() => queueAim(null), 0);
           }
           aimAt = null;
           zoomQ = null;
@@ -837,6 +904,8 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     root.dataset.phase = s.phase;
     root.classList.toggle('watching', me < 0);
     root.classList.toggle('many', many());
+    // SB2: someone else shoots (three or more) and aims at me: my own sea is the big one (else the followed sea is).
+    root.classList.toggle('following', following() && me >= 0 && follow?.target === me);
     root.dataset.count = String(s.players.length);
     // My sea is seat `me` (or seat 0 for a watcher; with three or more, the shooter's); "theirs" is the other.
     const mineSeat = me >= 0 ? me : many() ? watcherMine() : 0;
@@ -844,6 +913,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     // A narrow window: placing shows my sea; in battle the sea to look at follows the turn unless chosen.
     if (s.phase === 'place' && me >= 0) view = 'mine';
     // A watcher (GMP) looks at the sea being shot at: seat 1's ("theirs") on seat 0's turn, seat 0's on seat 1's.
+    else if (!viewChosen && following() && me >= 0 && !isOut(me)) view = follow && follow.target !== me ? 'theirs' : 'mine';
     else if (!viewChosen && s.phase === 'play') view = me < 0 ? (many() || s.turn === mineSeat ? 'theirs' : 'mine') : s.turn === me || isOut(me) ? 'theirs' : 'mine';
     root.dataset.view = view;
     const theirLabel = me >= 0 && !many() ? tx('theirSea') : tx('seaOf', { name: nameOfSeat(theirSeat) });
@@ -934,6 +1004,16 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
           if (m.phase === 'place') revealed = null;
         }
         if (prev && prev.last?.cell !== m.last?.cell) note = '';
+        // SB2: a new turn: the follow view starts over; my own turn brings back my last target.
+        if (prev && (prev.turn !== m.turn || prev.phase !== m.phase)) {
+          follow = null;
+          aimSent = '';
+          if (m.phase === 'play' && m.turn === m.seat) chosenTarget = myTarget;
+          else if (m.phase === 'play') {
+            chosenTarget = null;
+            viewChosen = false;
+          }
+        }
         // SB2: a ship that just sank, and a fleet that just went under.
         const sunkNow = prev && m.last?.result === 'sunk' && `${m.last.by}:${m.last.target ?? ''}:${m.last.cell}` !== lastShot;
         const gone = prev && prev.phase === 'play' ? m.players.flatMap((p, i) => (p && prev.players[i]?.id === p.id && prev.players[i]!.left > 0 && p.left === 0 ? [i] : [])) : [];
@@ -949,6 +1029,13 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
         }
         for (const seat of gone) showSank(seat);
         sounds(prev, m);
+        render();
+      } else if (m.t === 'aim') {
+        // SB2: only the shooter of this turn; a late one from the turn before is dropped.
+        if (!state || state.phase !== 'play' || m.by !== state.turn || m.by === state.seat) return;
+        const moved = follow?.target !== m.target;
+        follow = { by: m.by, target: m.target, cell: m.cell };
+        if (moved) viewChosen = false;
         render();
       } else if (m.t === 'reveal') {
         revealed = m.ships;
@@ -995,7 +1082,7 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     commands: [
       quiet.command('sea', { en: 'Sea Battle', tr: 'Amiral Battı' }),
       // GMP: what this tab sees (players, turn, watchers, and how many seas it may see whole: 1 as a player, all as a watcher).
-      { id: 'seaBattle.state', title: { en: 'Sea Battle: what this tab sees', tr: 'Amiral Battı: bu sekme ne görüyor' }, help: { en: 'Players (sunk or afloat), whose turn, the sea in the big box (the target), the places, who watches, and how many seas show their ships here (a watcher sees them all).', tr: 'Oyuncular (batmış ya da yüzüyor), sıra kimde, büyük kutudaki deniz (hedef), sıralama, kim izliyor ve burada kaç denizin gemileri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, turn: s.turn, target: other(), players: s.players.map((p) => p && { name: p.name, ready: p.ready, left: p.left, online: p.online, out: !!p.out }), ranks: s.ranks ?? null, lastTarget: s.last?.target ?? null, watchers: s.watchers.map((w) => w.name), seasWithShips: s.seas.filter((x) => (x.ships?.length ?? 0) > 0).length, sank: sankBox.hidden ? null : sankText.textContent, dragging: drag?.moved ? { ship: drag.ship, fits: !!drag.spot } : null }); } },
+      { id: 'seaBattle.state', title: { en: 'Sea Battle: what this tab sees', tr: 'Amiral Battı: bu sekme ne görüyor' }, help: { en: 'Players (sunk or afloat), whose turn, the sea in the big box (the target), the places, who watches, and how many seas show their ships here (a watcher sees them all).', tr: 'Oyuncular (batmış ya da yüzüyor), sıra kimde, büyük kutudaki deniz (hedef), sıralama, kim izliyor ve burada kaç denizin gemileri görünüyor (izleyen hepsini görür).' }, tab: 'games' as const, available: () => !!state || { en: 'open a Sea Battle table first', tr: 'önce bir Amiral Battı masası aç' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { const s = state!; return JSON.stringify({ phase: s.phase, seat: s.seat, turn: s.turn, target: other(), players: s.players.map((p) => p && { name: p.name, ready: p.ready, left: p.left, online: p.online, out: !!p.out }), ranks: s.ranks ?? null, lastTarget: s.last?.target ?? null, watchers: s.watchers.map((w) => w.name), seasWithShips: s.seas.filter((x) => (x.ships?.length ?? 0) > 0).length, sank: sankBox.hidden ? null : sankText.textContent, dragging: drag?.moved ? { ship: drag.ship, fits: !!drag.spot } : null, following: following(), follow, peerAim: [...root.querySelectorAll<HTMLElement>('.sea-cell.peer-aim')].map((c) => `${c.closest<HTMLElement>('.sea-sea')?.dataset.sea}:${c.dataset.cell}`) }); } },
       { id: 'sea.sank', title: { en: 'Sea Battle: show the "sank" moment', tr: 'Amiral Battı: "battı" anını göster' }, help: { en: 'Plays the explosion and "NAME SANK!" in this tab for the other seat (nothing changes in the game); the result card waits for it the same way.', tr: 'Bu sekmede diğer koltuk için patlamayı ve "AD BATTI!" yazısını oynatır (oyunda bir şey değişmez); sonuç kartı da aynı şekilde onu bekler.' }, tab: 'games' as const, available: () => (!!state && state.players.filter(Boolean).length >= 2) || { en: 'two people (or Stub) at the table first', tr: 'önce masada iki kişi (ya da Stub) olsun' }, where: { en: 'at a Sea Battle table', tr: 'Amiral Battı masasında' }, run: () => { showSank(other()); render(); return sankText.textContent ?? ''; } },
       { id: 'sea.bot', title: { en: 'Sea Battle: Stub takes the other seat', tr: 'Amiral Battı: Stub diğer koltuğa otursun' }, help: { en: 'Medium level; only while the other seat is free.', tr: 'Orta seviye; sadece diğer koltuk boşken.' }, tab: 'games' as const, available: () => (!!state && state.seat >= 0) || { en: 'take a seat at the table first', tr: 'önce masada bir koltuğa otur' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'bot', level: 2 }) },
       { id: 'sea.oneLeft', title: { en: 'Sea Battle: one ship left each', tr: 'Amiral Battı: herkese tek gemi kalsın' }, help: { en: 'Local lab server only: everything but the last ship of each fleet is sunk, my turn.', tr: 'Sadece yerel test sunucusunda: iki filonun da son gemisi dışında hepsi batar, sıra bende.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.seat >= 0 && state.phase === 'play') || { en: 'only during the battle (both fleets ready)', tr: 'sadece savaş sırasında (iki filo da hazır)' }, where: { en: 'at a Sea Battle table, seated', tr: 'Amiral Battı masasında, oturmuşken' }, run: () => send({ t: 'lab', op: 'oneLeft' }) },
@@ -1022,5 +1109,6 @@ export function mountSea(app: HTMLElement, gameId: string, name: string, avatar:
     removeEventListener('pagehide', close);
     removeEventListener('langchange', onLang);
     clearTimeout(sankTimer);
+    clearTimeout(aimTimer);
   };
 }

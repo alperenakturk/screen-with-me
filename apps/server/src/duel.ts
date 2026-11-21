@@ -6,6 +6,7 @@ import { labOnRequest, labRemembered } from './lab.ts';
 import { RateLimiter } from './rate-limit.ts';
 import type { Avatar } from '@swm/shared/protocol';
 import {
+  DUEL_DEFAULT_TIME,
   DUEL_MAX_SEATS,
   DUEL_PROTOCOL_VERSION,
   boardDone,
@@ -13,7 +14,9 @@ import {
   duelGuess,
   duelOutcome,
   duelPlace,
+  duelPoints,
   duelRanks,
+  duelTimeUp,
   duelWordsVisible,
   hardModeMiss,
   matchOver,
@@ -24,6 +27,7 @@ import {
   type DuelPhase,
   type DuelPlayer,
   type DuelServerMessage,
+  type DuelTime,
 } from '@swm/shared/games/duel';
 import { answerFor, dayNumber, decodeWords, normalize, score, type Lang } from '@swm/shared/games/five-frames';
 import * as EN from '@swm/shared/games/words/en';
@@ -69,6 +73,9 @@ interface Seat {
   ready: boolean;
   wins: number;
   guesses: string[];
+  /** FW2: the time ran out on this board; points at this table (all games). */
+  timeUp?: boolean;
+  points?: number;
 }
 
 interface Saved {
@@ -90,6 +97,10 @@ interface Saved {
   /** NG1: one game or best of three; hard mode. */
   bestOf: 1 | 3;
   hard: boolean;
+  /** FW2: the time limit per game (seconds, 0 = none), when the running game's time ends, and the last game's points. */
+  time: DuelTime;
+  endsAt: number | null;
+  gained: number[];
   /** The match: wins per seat and games played in it; over = the next Ready starts a new match. */
   matchWins: number[];
   matchGames: number;
@@ -99,7 +110,7 @@ interface Saved {
 
 const fresh = (): Saved => ({
   seats: [null, null], phase: 'wait', lang: 'en', answer: '', daily: null, dailyDone: false, winner: null, draw: false, solved: [], ranks: [], round: 0,
-  bestOf: 1, hard: false, matchWins: [0, 0], matchGames: 0, people: {}, emptySince: null,
+  bestOf: 1, hard: false, time: DUEL_DEFAULT_TIME, endsAt: null, gained: [], matchWins: [0, 0], matchGames: 0, people: {}, emptySince: null,
 });
 
 /** The platform's secure random numbers for practice words (never `Math.random`, review 4 R4-7). */
@@ -202,6 +213,12 @@ export class Duel extends DurableObject<Env> {
   override async alarm(): Promise<void> {
     const now = Date.now();
     await this.polls.sweepDue(now);
+    // FW2: the running game's time ran out.
+    if (this.data.phase === 'play' && this.data.endsAt !== null && now >= this.data.endsAt) {
+      this.timeUp();
+      await this.save();
+      this.broadcast();
+    }
     // GHOST: sockets silent past `GHOST_MS` died without a close frame; they leave like a real close.
     for (const ws of closeGhosts(this.sockets(), Date.now(), GHOST_MS, this.heard)) await this.left(ws);
     if (this.sockets().length === 0 && this.data.emptySince !== null && now - this.data.emptySince >= EMPTY_TTL_MS) {
@@ -279,7 +296,9 @@ export class Duel extends DurableObject<Env> {
     d.draw = false;
     d.solved = [];
     d.ranks = [];
+    d.gained = [];
     d.round++;
+    d.endsAt = d.time ? Date.now() + d.time * 1000 : null;
     // A new match after the last one ended (or the first); else the next game of this match.
     if (this.matchDone()) {
       d.matchWins = d.seats.map(() => 0);
@@ -290,7 +309,44 @@ export class Duel extends DurableObject<Env> {
       if (!s) continue;
       s.guesses = [];
       s.ready = false;
+      delete s.timeUp;
     }
+  }
+
+  /** The boards as the rules see them (null = an empty seat). */
+  private boards(): ({ guesses: string[]; timeUp?: boolean } | null)[] {
+    return this.data.seats.map((s) => s);
+  }
+
+  /** A game is over (`outcome` = the winning seat or a draw): places, points, the match score. */
+  private finish(outcome: number | 'draw'): void {
+    const d = this.data;
+    const boards = this.boards();
+    d.phase = 'over';
+    d.endsAt = null;
+    d.ranks = duelRanks(boards, d.answer, d.solved);
+    d.gained = duelPoints(boards, d.answer, d.solved);
+    d.seats.forEach((s, i) => {
+      if (s) s.points = (s.points ?? 0) + (d.gained[i] ?? 0);
+    });
+    d.matchGames++;
+    if (outcome === 'draw') d.draw = true;
+    else {
+      d.winner = outcome;
+      d.matchWins[outcome] = (d.matchWins[outcome] ?? 0) + 1;
+    }
+    // The score in the bar counts matches won (a single game is a match of one).
+    if (matchOver(d.bestOf, d.matchWins, d.matchGames)) {
+      const w = matchWinner(d.matchWins);
+      if (w !== null) d.seats[w]!.wins++;
+    }
+  }
+
+  /** FW2: the game's time ran out (from the alarm, or a guess that came after it). */
+  private timeUp(): void {
+    const d = this.data;
+    if (d.phase !== 'play') return;
+    this.finish(duelTimeUp(this.boards(), d.answer, d.solved));
   }
 
   /** GMP b: two or more seated and every seated player ready. */
@@ -308,6 +364,7 @@ export class Duel extends DurableObject<Env> {
   private async apply(ws: WebSocket, key: string, message: DuelClientMessage): Promise<void> {
     const d = this.data;
     const seat = this.seatOf(key);
+    const phaseBefore = d.phase;
     switch (message.t) {
       case 'lang': {
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
@@ -324,6 +381,7 @@ export class Duel extends DurableObject<Env> {
         if (d.phase === 'play' || !this.matchDone()) return this.sendTo(ws, { t: 'error', code: 'in_progress' });
         if (message.bestOf !== undefined) d.bestOf = message.bestOf;
         if (message.hard !== undefined) d.hard = message.hard;
+        if (message.time !== undefined) d.time = message.time;
         for (const s of d.seats) if (s) s.ready = false;
         break;
       }
@@ -346,6 +404,12 @@ export class Duel extends DurableObject<Env> {
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         // A guess that arrives after the other one won (or a draw) doesn't count: the server decides who was first.
         if (d.phase !== 'play') return this.sendTo(ws, { t: 'error', code: 'over' });
+        // FW2: a guess after the time ran out doesn't count (the alarm may not have fired yet); the game ends here.
+        if (d.endsAt !== null && Date.now() >= d.endsAt) {
+          this.timeUp();
+          this.sendTo(ws, { t: 'error', code: 'time' });
+          break;
+        }
         const board = d.seats[seat]!;
         // NG1 hard mode: the letters found so far must be used again (checked before the list, so the hint is precise).
         if (d.hard && board.guesses.length) {
@@ -355,28 +419,10 @@ export class Duel extends DurableObject<Env> {
         }
         const error = duelGuess(board, message.word, d.answer, d.lang, (w) => wordList(d.lang).allowed.has(w));
         if (error) return this.sendTo(ws, { t: 'error', code: error });
-        const boards = d.seats.map((s) => (s ? { guesses: s.guesses } : null));
+        const boards = this.boards();
         if (boardSolved(boards[seat]!, d.answer) && !d.solved.includes(seat)) d.solved.push(seat);
         const outcome = duelOutcome(boards, d.answer, seat, d.solved);
-        if (outcome !== null) {
-          d.phase = 'over';
-          d.ranks = duelRanks(boards, d.answer, d.solved);
-          d.matchGames++;
-          if (outcome === 'draw') d.draw = true;
-          else {
-            d.winner = outcome;
-            d.matchWins[outcome] = (d.matchWins[outcome] ?? 0) + 1;
-            // The score in the bar counts matches won (a single game is a match of one).
-            if (matchOver(d.bestOf, d.matchWins, d.matchGames)) {
-              const w = matchWinner(d.matchWins);
-              if (w !== null) d.seats[w]!.wins++;
-            }
-          }
-          if (outcome === 'draw' && matchOver(d.bestOf, d.matchWins, d.matchGames)) {
-            const w = matchWinner(d.matchWins);
-            if (w !== null) d.seats[w]!.wins++;
-          }
-        }
+        if (outcome !== null) this.finish(outcome);
         break;
       }
       case 'sit': {
@@ -396,6 +442,11 @@ export class Duel extends DurableObject<Env> {
         if (!this.lab) return this.sendTo(ws, { t: 'error', code: 'lab_off' });
         if (seat < 0) return this.sendTo(ws, { t: 'error', code: 'not_player' });
         if (d.phase !== 'play') return this.sendTo(ws, { t: 'error', code: 'not_playing' });
+        // FW2: end the time now (to see the time-up end without waiting).
+        if (message.op === 'timeup') {
+          this.timeUp();
+          break;
+        }
         return this.sendTo(ws, { t: 'reveal', answer: d.answer });
       }
       default:
@@ -403,6 +454,8 @@ export class Duel extends DurableObject<Env> {
     }
     await this.save();
     this.broadcast();
+    // FW2: a game started or ended: the alarm follows its time limit.
+    if (d.phase !== phaseBefore) await this.scheduleAlarm();
   }
 
   private async left(ws: WebSocket): Promise<void> {
@@ -418,6 +471,7 @@ export class Duel extends DurableObject<Env> {
   private async scheduleAlarm(): Promise<void> {
     const times: number[] = [];
     if (this.data.emptySince !== null) times.push(this.data.emptySince + EMPTY_TTL_MS);
+    if (this.data.phase === 'play' && this.data.endsAt !== null) times.push(this.data.endsAt);
     const due = this.polls.nextDue();
     if (due !== null) times.push(due);
     const ghost = nextGhostCheck(this.sockets(), this.heard);
@@ -452,8 +506,11 @@ export class Duel extends DurableObject<Env> {
         marks: d.answer ? s.guesses.map((w) => score(w, d.answer)) : [],
         ...(duelWordsVisible(mine, i, watcher, over) ? { words: [...s.guesses] } : {}),
         solved: !!d.answer && boardSolved(board, d.answer),
-        out: !!d.answer && boardDone(board, d.answer) && !boardSolved(board, d.answer),
+        out: !!d.answer && boardDone({ guesses: s.guesses, ...(s.timeUp ? { timeUp: true } : {}) }, d.answer) && !boardSolved(board, d.answer),
         ...(duelPlace(d.solved, i) ? { place: duelPlace(d.solved, i) } : {}),
+        ...(s.timeUp ? { timeUp: true } : {}),
+        points: s.points ?? 0,
+        ...(over ? { gained: d.gained[i] ?? 0 } : {}),
       };
     });
     const seated = new Set(d.seats.map((s) => s?.key));
@@ -473,6 +530,8 @@ export class Duel extends DurableObject<Env> {
       round: d.round,
       bestOf: d.bestOf,
       hard: d.hard,
+      time: d.time,
+      ...(d.phase === 'play' && d.endsAt !== null ? { left: Math.max(0, d.endsAt - Date.now()) } : {}),
       match: { games: d.matchGames, wins: [...d.matchWins], over: this.matchDone(), winner: this.matchDone() && d.matchGames ? matchWinner(d.matchWins) : null },
       watchers,
     };

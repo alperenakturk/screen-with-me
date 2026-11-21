@@ -15,7 +15,7 @@ One handoff per lane or role; each session updates only its own lines and delete
 - [ ] Lane A2 (handoff 21 Nov): open PRs #573, #578, #581.
   - [ ] RC2 part 2: look C (marquee) + music 1 (own pad), owner's picks; `design/recap-cinema/`.
   - [ ] FR1 (host-only "Rate the film" poll, film page).
-- [ ] FW2 (Five Frames): [x] 1 places [ ] 2 timer, points [ ] 3 big board [ ] 4 levels [ ] 5 words
+- [ ] FW2 (Five Frames): [x] 1 places [x] 2 timer, points [x] 3 big board [ ] 4 levels [ ] 5 words
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
@@ -136,10 +136,6 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
   are accepted (Turkish forms such as "evler", "kitabı"), and the day's word is a common, clean word.
 - [ ] 27l. [GP1] On a computer, open 🎮 and pick Classics, then Snack Bar: each shows at once, pictures complete, no
   blank moment. On an iPad held sideways, open Five Frames: its letters and the ticket numbers are easy to read.
-- [ ] 27k. [GW2] On a computer with a friend and a YouTube video playing: open Classics from 🎮: it fills the whole
-  screen and the video pauses for both of you. Press 🪟 (or Esc): a frame at the right edge, the video plays again.
-  Drag the frame over the video: it stays there. Open Sea Battle: it opens as a frame (the mode you used last); ⛶ in
-  its head gives it the whole screen again. Snack Bar: a frame you can drag over the video too.
 - [ ] 27j. [ST1, 0.9.97.139] With a friend sharing a tab (on a computer): the stream has one button, "⛶ Fullscreen";
   it fills the screen, "🪟 Window" brings it back; drag the window anywhere and resize it from its corner; reload and
   watch again: it comes back where you left it. With a YouTube video playing, drag it onto the video: it moves beside it.
@@ -240,6 +236,9 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 31. Real YouTube / TikTok (the cloud can't play them): ♾ → 🎲 Discover chips and ✨ More like this; the Shorts view's
   bar; `?measure=1` switch times with a friend (then decide on a hidden preload player); TikTok links play and loop;
   a fresh invite opens on one screen; the extension's install card turns into "Go to the film" by itself.
+- [ ] 27aw. [GFIT1] Laptop and a big screen: press 🪟 on a table, then open another table: it opens in the video's place
+  again. Classics there (chess, backgammon, Four in a Row): the board as tall as the box, the score, Stub, players and status in a
+  narrow column beside it, names whole.
 
 ## Owner's to-dos (settings and accounts; tell the Planner when done)
 - [ ] GitHub: the `production` environment holds the deploy secrets and `LAB_CODE`; private vulnerability reporting on;
