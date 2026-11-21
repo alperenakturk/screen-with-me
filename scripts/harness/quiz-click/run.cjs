@@ -60,7 +60,7 @@ const until = async (fn, ms = 15000) => {
   for (const name of ['Sam', 'Alex']) {
     const ws = new WebSocket(quizUrl);
     others[name] = { ws, state: null };
-    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 3, name, avatar: 'fox', lang: 'en' })));
+    ws.addEventListener('open', () => ws.send(JSON.stringify({ t: 'hello', v: 4, name, avatar: 'fox', lang: 'en' })));
     ws.addEventListener('message', (e) => {
       const m = JSON.parse(String(e.data));
       if (m.t === 'state') others[name].state = m;
@@ -68,7 +68,7 @@ const until = async (fn, ms = 15000) => {
   }
   check(!!(await until(async () => last.players.filter((p) => p.online).length === 3)), 'three players at the table');
   await page.evaluate(() => [...document.querySelectorAll('#game-stage button')].find((b) => /start/i.test(b.textContent) && !b.disabled)?.click());
-  // QZ2: a typed question has no options: skip on to the next option question (lab skip: question → reveal → next).
+  // QZ5: a closest-guess question has no options: skip on to the next option question (lab skip: question → reveal → next).
   const optionQuestion = async (after) => {
     for (let i = 0; i < 12; i++) {
       const q = await until(async () => last.phase === 'question' && last.n > after && last, 15000);
@@ -120,7 +120,7 @@ const until = async (fn, ms = 15000) => {
   await page.evaluate(() => [...document.querySelectorAll('#game-stage .gr-again, #game-stage button')].find((b) => /new game|play again|again/i.test(b.textContent) && !b.disabled)?.click());
   check(!!(await until(async () => last.phase === 'question' && last.n === 1, 15000)), 'a rematch starts');
   await wait(700);
-  // A typed question: its field is empty and open; an option question: two or more options can be pressed.
+  // A closest-guess question: its number field is empty and open; an option question: two or more options can be pressed.
   const fresh = await page.evaluate(() => {
     const field = document.querySelector('#game-stage .quiz-type-input');
     if (field) return !field.disabled && field.value === '' ? 4 : 0;

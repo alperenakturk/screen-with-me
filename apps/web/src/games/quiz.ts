@@ -1,7 +1,8 @@
-// The in-room Quiz (on the game stage): question, four options (2×2), true / false or a typed answer, timer bar,
-// players and points; the reveal shows the right option and who picked what (small avatars), then a podium. In the
-// lobby the host picks the language and Classic (topic, length) or Tournament (QZ2: each player picks a round's topic
-// in turn, once or twice round the table). Jokers (QZ2): 50:50, Double and Second chance, each once a game.
+// The in-room Quiz (on the game stage): question, four options (2×2) or a closest-guess number field (QZ5), timer bar,
+// players and points; the reveal shows the right option and who picked what (small avatars), or the right number and
+// everyone's guesses by place, then a podium. In the lobby the host picks the language and Classic (topic, length) or
+// Tournament (QZ2: each player picks a round's topic in turn, once or twice round the table; QZ5: then a five-question
+// closest-guess finale). Jokers (QZ2): 50:50, Double and Second chance, each once a game, never on a guess.
 
 import './lobby.css';
 import { gameHint } from './hint.ts';
@@ -14,12 +15,13 @@ import {
   QUIZ_MAX_PLAYERS,
   QUIZ_PROTOCOL_VERSION,
   QUIZ_REVEAL_MS,
-  QUIZ_TYPED_MAX,
+  QUIZ_FINALE_QUESTIONS,
   QUIZ_LAPS,
   QUIZ_LEVELS,
   QUIZ_PICK_MS,
   QUIZ_ROUND_QUESTIONS,
   tournamentOrder,
+  parseGuess,
   quizAnswerMs,
   type QuizJoker,
   type QuizClientMessage,
@@ -94,7 +96,6 @@ const TEXT = {
     'level.easy': '★ Easy',
     'level.medium': '★★ Medium',
     'level.hard': '★★★ Hard',
-    'rulesTour': '{rounds} rounds of 3 questions; everyone picks a topic in turn. The best score wins a round, the most rounds win the tournament (a tie goes to points). Three jokers, each once a game.',
     'double': '×2 Double',
     'second': '↺ Second chance',
     'doubleTitle': 'Joker: press it after you answer, until the answer shows: right = double points, wrong = 0. Pressed before answering, it costs the first-answer bonus. Once a game.',
@@ -102,7 +103,6 @@ const TEXT = {
     'doubleBy': '×2 {name} plays Double',
     'secondBy': '↺ {name} takes a Second chance',
     'tryAgain': 'Not quite! One more try, for half points',
-    'hint': 'Hint: {hint}',
     'roundN': 'Round {round}/{rounds}',
     'pickYours': 'Your pick! Choose the next round’s topic',
     'pickWait': '{name} is choosing the topic…',
@@ -110,6 +110,15 @@ const TEXT = {
     'roundNone': 'Nobody scored in round {n}',
     'wins': '🏆 {n} round wins',
     'podium': '🏆{wins} · {points} pts',
+    'rulesTourFinale': '{rounds} rounds of 3 questions; everyone picks a topic in turn. The best score wins a round. Then a 5-question finale: the closest number guess wins 200, the next 100, the third 50. Most rounds win (a tie goes to points).',
+    'guessTag': '🎯 Closest guess wins',
+    'guessBad': 'Type a number, like 1889 or 3.5',
+    'guessAnswer': 'Answer: {value}',
+    'guessPlace': '🎯 #{place} closest · +{points}',
+    'guessNone': 'Not the closest this time',
+    'refExact': 'Spot on! Exactly right!',
+    'finale': '🏁 Finale · {i}/{n}',
+    'finaleStart': '🏁 The finale: 5 closest guesses, 200 / 100 / 50!',
   },
   tr: {
     how1: 'Hızlı cevapla',
@@ -133,7 +142,6 @@ const TEXT = {
     'level.easy': '★ Kolay',
     'level.medium': '★★ Orta',
     'level.hard': '★★★ Zor',
-    'rulesTour': '3 soruluk {rounds} tur; herkes sırayla konu seçer. Turu en çok puanı alan, turnuvayı en çok tur kazanan alır (eşitlikte puan). Üç joker, her biri oyunda bir kez.',
     'double': '×2 Çift puan',
     'second': '↺ İkinci şans',
     'doubleTitle': 'Joker: cevapladıktan sonra, cevap görünene kadar bas: doğruysa iki kat puan, yanlışsa 0. Cevaplamadan basarsan ilk bilen bonusunu kaybedersin. Oyunda bir kez.',
@@ -141,7 +149,6 @@ const TEXT = {
     'doubleBy': '×2 {name} Çift puan oynadı',
     'secondBy': '↺ {name} İkinci şans aldı',
     'tryAgain': 'Olmadı! Bir hakkın daha var, yarım puan',
-    'hint': 'İpucu: {hint}',
     'roundN': 'Tur {round}/{rounds}',
     'pickYours': 'Sıra sende! Turun konusunu seç',
     'pickWait': '{name} konuyu seçiyor…',
@@ -149,6 +156,15 @@ const TEXT = {
     'roundNone': '{n}. turda kimse puan alamadı',
     'wins': '🏆 {n} tur kazandı',
     'podium': '🏆{wins} · {points} puan',
+    'rulesTourFinale': '3 soruluk {rounds} tur; herkes sırayla konu seçer. Turu en çok puanı alan kazanır. Sonra 5 soruluk final: en yakın sayı tahmini 200, sonraki 100, üçüncü 50 alır. En çok tur kazanan alır (eşitlikte puan).',
+    'guessTag': '🎯 En yakın tahmin kazanır',
+    'guessBad': 'Bir sayı yaz, örneğin 1889 ya da 3,5',
+    'guessAnswer': 'Cevap: {value}',
+    'guessPlace': '🎯 En yakın {place}. · +{points}',
+    'guessNone': 'Bu sefer en yakın sen değilsin',
+    'refExact': 'Tam isabet! Birebir doğru!',
+    'finale': '🏁 Final · {i}/{n}',
+    'finaleStart': '🏁 Final: 5 tahmin sorusu, 200 / 100 / 50!',
   },
 } as const;
 const tx = (key: keyof (typeof TEXT)['en']): string => (lang() === 'tr' ? TEXT.tr : TEXT.en)[key];
@@ -186,8 +202,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let offset = 0;
   /** Bu soruda benim seçtiğim (sunucu açıklamaya kadar söylemez). */
   let myPick: { n: number; pick: number } | null = null;
-  /** Options my 50:50 hid on question `n` (on a typed question: the hint). */
-  let fifty: { n: number; hide: number[]; hint?: string } | null = null;
+  /** Options my 50:50 hid on question `n`. */
+  let fifty: { n: number; hide: number[] } | null = null;
   /** QZ2 jokers: the question I played one on (one per question) and which; my Second chance's wrong first try. */
   let myJoker: { n: number; kind: QuizJoker } | null = null;
   let retry: { n: number; wrong?: number } | null = null;
@@ -214,42 +230,49 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   let lastTick = 0;
   const body = $('#quiz-body');
   /** The question on screen (QZ2: kept between states so a press always lands on the button it started on). */
-  let view: { n: number; q: string; texts: string[]; list: HTMLElement; buttons: HTMLButtonElement[]; note: HTMLElement; fresh: boolean; typed?: Typed } | null = null;
-  /** A typed-answer question's box (QZ2): the field, its button, and the reveal's right answer and players' answers. */
-  interface Typed {
+  let view: { n: number; q: string; texts: string[]; list: HTMLElement; buttons: HTMLButtonElement[]; note: HTMLElement; fresh: boolean; guess?: Guess } | null = null;
+  /** A closest-guess question's box (QZ5): the number field, its button, and the reveal's guesses by place. */
+  interface Guess {
     input: HTMLInputElement;
     go: HTMLButtonElement;
     said: HTMLElement;
   }
-  /** What I typed for question `n` (shown back in the field until the reveal). */
-  let myText: { n: number; text: string } | null = null;
-  function answerTyped(n: number, text: string): void {
-    const clean = text.trim().slice(0, QUIZ_TYPED_MAX);
-    if (!clean || !state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
+  /** My guess for question `n` (shown back in the field until the reveal). */
+  let myGuess: { n: number; num: number; text: string } | null = null;
+  function answerGuess(n: number, text: string): void {
+    if (!state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
     if (state.players.find((p) => p.id === me)?.answered) return;
+    const num = parseGuess(text);
+    if (num === null) {
+      flash(tq('guessBad'));
+      return;
+    }
     myPick = { n, pick: -1 };
-    myText = { n, text: clean };
-    send({ t: 'answer', n, text: clean });
+    myGuess = { n, num, text: text.trim() };
+    send({ t: 'answer', n, num });
     playSound('locked');
     render();
   }
-  function buildTyped(n: number, question: string): NonNullable<typeof view> {
-    const input = el('input', { type: 'text', class: 'quiz-type-input', maxlength: String(QUIZ_TYPED_MAX), autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', enterkeyhint: 'send', 'aria-label': t('quiz.typeLabel'), placeholder: t('quiz.typeHere') }) as HTMLInputElement;
+  function buildGuess(n: number, question: string): NonNullable<typeof view> {
+    // A text field with the number keypad (not type="number": that one refuses "1.440" / "3,14" and spins on a wheel).
+    const input = el('input', { type: 'text', inputmode: 'decimal', class: 'quiz-type-input', maxlength: '20', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'send', 'aria-label': t('quiz.typeLabel'), placeholder: t('quiz.typeHere') }) as HTMLInputElement;
     const go = el('button', { type: 'submit', class: 'btn primary quiz-type-go' }, t('quiz.typeSend')) as HTMLButtonElement;
     const form = el('form', { class: 'quiz-type' }, input, go);
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      answerTyped(n, input.value);
+      answerGuess(n, input.value);
     });
     const said = el('ul', { class: 'quiz-said' });
     const note = el('p', { class: 'quiz-note' });
-    // The note sits right under the field, so "locked in" and the reveal's verdict appear in the same place.
-    body.replaceChildren(el('h3', { class: 'quiz-question' }, question), form, note, said);
+    // The note sits right under the field, so "locked in" and the reveal's answer appear in the same place.
+    body.replaceChildren(el('p', { class: 'quiz-round-result' }, tq('guessTag')), el('h3', { class: 'quiz-question' }, question), form, note, said);
     shownN = n;
     // A keyboard is there: the field is ready to type into (a phone's keyboard opens on a tap).
     if (hasMouse()) queueMicrotask(() => input.focus({ preventScroll: true }));
-    return { n, q: question, texts: [], list: form, buttons: [], note, fresh: false, typed: { input, go, said } };
+    return { n, q: question, texts: [], list: form, buttons: [], note, fresh: false, guess: { input, go, said } };
   }
+  /** A number as the table's language writes it (1,889.5 / 1.889,5). */
+  const showNum = (n: number): string => n.toLocaleString(lang() === 'tr' ? 'tr-TR' : 'en-GB', { maximumFractionDigits: 2 });
   /** My answer to option `i` of question `n`: once, on the first press (pointer, key or screen reader). */
   function answer(n: number, i: number): void {
     if (!state || state.phase !== 'question' || state.n !== n || (myPick && myPick.n === n)) return;
@@ -296,6 +319,11 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
   // GP4: Stub the referee says a kind word at a reveal (everyone right, my streak, a tricky one); never a mistake.
   const ref = referee(app.firstElementChild as HTMLElement);
   function refereeLine(s: State): void {
+    // QZ5: a closest guess that hit the number exactly.
+    if (s.guess) {
+      if (s.value !== undefined && s.players.some((p) => p.guess === s.value)) ref.say(tx('refExact'), 'cheer');
+      return;
+    }
     const playing = s.players.filter((p) => p.online);
     const right = playing.filter((p) => p.pick === s.correct);
     const mine = s.players.find((p) => p.id === me);
@@ -309,6 +337,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (lastKey !== '' && key !== lastKey && s.phase === 'reveal') refereeLine(s);
     if (lastKey !== '' && key !== lastKey && mine) {
       if (s.phase === 'question') playSound('roundMine');
+      if (s.phase === 'question' && s.finale && s.n === s.total - QUIZ_FINALE_QUESTIONS + 1) flash(tq('finaleStart'));
       else if (s.phase === 'reveal') playSound(mine.gained ? 'guessRight' : 'wrong');
       else if (s.phase === 'over') playSound('podium');
     }
@@ -392,7 +421,9 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         ? t('draw.players', { n: s.players.filter((p) => p.online).length, max: QUIZ_MAX_PLAYERS })
         : s.phase === 'over'
           ? ''
-          : s.rounds
+          : s.finale
+            ? tq('finale', { i: s.n - (s.total - QUIZ_FINALE_QUESTIONS), n: QUIZ_FINALE_QUESTIONS })
+            : s.rounds
             ? `${tq('roundN', { round: s.round ?? 1, rounds: s.rounds })}${s.phase === 'pick' ? '' : ` · ${inRound}/${QUIZ_ROUND_QUESTIONS}`}`
             : t('quiz.n', { n: s.n, total: s.total });
     // The topic, and the question's difficulty as stars (QZ4: the server sends it; easy questions first in Mixed).
@@ -403,7 +434,8 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     // after my answer, until the reveal (QZ3: "double points for this one"). The row
     // keeps its place off a question (hidden, not removed), so nothing below it moves.
     const answeredNow = (myPick && myPick.n === s.n) || !!mine?.answered || (retry?.n === s.n);
-    const asking = s.phase === 'question' && !!mine;
+    // QZ5: no joker on a closest-guess question (the row stays, its buttons off).
+    const asking = s.phase === 'question' && !!mine && !s.guess;
     jokerRow.classList.toggle('off', !asking);
     const usedKinds = new Set<QuizJoker>(mine?.jokers ?? (mine?.joker ? ['fifty'] : []));
     for (const { kind, b } of jokerButtons) {
@@ -411,7 +443,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       if (b.textContent !== JOKER_ICON[kind]) b.textContent = JOKER_ICON[kind];
       b.setAttribute('aria-label', label);
       const onThis = myJoker?.n === s.n;
-      const twoOptions = !s.typed && (s.options?.length ?? 0) < 4;
+      const twoOptions = (s.options?.length ?? 0) < 4;
       b.disabled = !asking || usedKinds.has(kind) || onThis || (!!answeredNow && (kind !== 'double' || retry?.n === s.n)) || (kind === 'fifty' && twoOptions);
       // QZ3: once I answered, ×2 is the one joker left to press; it says so.
       b.classList.toggle('ready', kind === 'double' && !b.disabled && !!answeredNow);
@@ -427,7 +459,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
     if (s.phase === 'lobby' || s.phase === 'over') {
       // A new game numbers its questions from 1 again: what I picked in the last one must not carry over.
       myPick = null;
-      myText = null;
+      myGuess = null;
       fifty = null;
       myJoker = null;
       const online = s.players.filter((p) => p.online).length;
@@ -441,7 +473,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       const intro =
         s.phase === 'over'
           ? el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.over')), podium(ranked))
-          : el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, tour ? tq('rulesTour', { rounds: Math.max(2, online) * (s.laps ?? 1) }) : t('quiz.rules', { count: s.count })));
+          : el('div', { class: 'quiz-intro lobby-intro' }, el('h3', {}, t('games.quiz.title')), el('p', { class: 'quiz-rules' }, tour ? tq('rulesTourFinale', { rounds: Math.max(2, online) * (s.laps ?? 1) }) : t('quiz.rules', { count: s.count })));
       const parts: HTMLElement[] = [];
       const host = s.players.find((p) => p.id === s.host);
       const topics: QuizTopic[] = ['mix', ...QUIZ_CATEGORIES];
@@ -483,25 +515,31 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       // QZ2: the question's nodes are built once and then patched. Rebuilding them on every state (another player
       // answers, a joker) swapped the button under a press, so the click never came and a second one was needed.
       const texts = s.options ?? [];
-      if (!view || view.n !== s.n || view.q !== (s.question ?? '') || !!view.typed !== !!s.typed || view.texts.join('\n') !== texts.join('\n') || !body.contains(view.list))
-        view = s.typed ? buildTyped(s.n, s.question ?? '') : buildQuestion(s.n, s.question ?? '', texts);
+      if (!view || view.n !== s.n || view.q !== (s.question ?? '') || !!view.guess !== !!s.guess || view.texts.join('\n') !== texts.join('\n') || !body.contains(view.list))
+        view = s.guess ? buildGuess(s.n, s.question ?? '') : buildQuestion(s.n, s.question ?? '', texts);
       const v = view;
-      if (v.typed) {
-        // QZ2: the typed answer. Others' answers are never sent before the reveal; then each shows with ✅ / ❌.
-        const ty = v.typed;
+      if (v.guess) {
+        // QZ5: the closest guess. Others' numbers are never sent before the reveal; then all show, closest first.
+        const g = v.guess;
         const done = reveal || picked !== null;
-        ty.input.disabled = done;
-        // 50:50 on a typed question: the hint in the empty field.
-        const hintText = fifty && fifty.n === s.n && fifty.hint ? tq('hint', { hint: fifty.hint }) : t('quiz.typeHere');
-        if (ty.input.placeholder !== hintText) ty.input.placeholder = hintText;
-        ty.go.disabled = done;
-        ty.go.textContent = picked !== null ? t('quiz.typeSent') : t('quiz.typeSend');
-        if (myText && myText.n === s.n && ty.input.value !== myText.text) ty.input.value = myText.text;
-        ty.said.replaceChildren(
+        g.input.disabled = done;
+        g.go.disabled = done;
+        g.go.textContent = picked !== null ? t('quiz.typeSent') : t('quiz.typeSend');
+        if (myGuess && myGuess.n === s.n && g.input.value !== myGuess.text) g.input.value = myGuess.text;
+        g.said.replaceChildren(
           ...(reveal
             ? s.players
-                .filter((p) => p.said)
-                .map((p) => el('li', { class: `quiz-said-one${p.pick === 0 ? ' right' : ''}` }, avatarNode(p.avatar, 'quiz-picker'), el('span', { class: 'quiz-said-text' }, p.said!), el('span', { 'aria-hidden': 'true' }, p.pick === 0 ? '✅' : '❌')))
+                .filter((p) => p.guess !== undefined)
+                .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99))
+                .map((p) =>
+                  el(
+                    'li',
+                    { class: `quiz-said-one${p.gained ? ' right' : ''}` },
+                    avatarNode(p.avatar, 'quiz-picker'),
+                    el('span', { class: 'quiz-said-text' }, `${p.id === me ? t('games.you') : p.name}: ${showNum(p.guess!)}`),
+                    el('span', {}, p.gained ? `+${p.gained}` : '·'),
+                  ),
+                )
             : []),
         );
       }
@@ -519,7 +557,13 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         const box = b.querySelector('.quiz-pickers')!;
         if (box.childElementCount !== pickers.length || !reveal) box.replaceChildren(...pickers.map((p) => avatarNode(p.avatar, 'quiz-picker')));
       });
-      const note = reveal
+      const note = v.guess
+        ? reveal
+          ? `${tq('guessAnswer', { value: s.value === undefined ? '…' : showNum(s.value) })} · ${mine?.gained ? tq('guessPlace', { place: mine.rank ?? 1, points: mine.gained }) : picked === null && mine?.guess === undefined ? t('quiz.late') : tq('guessNone')}`
+          : picked !== null
+            ? t('quiz.waiting')
+            : ''
+        : reveal
         ? mine?.gained
           ? mine.rank
             ? t('quiz.rightRank', { rank: mine.rank, points: mine.gained })
@@ -530,8 +574,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         : picked !== null
           ? t('quiz.waiting')
           : '';
-      // A typed question's reveal names the right answer on the verdict's line (QZ2).
-      v.note.textContent = v.typed && reveal ? `${note} · ${t('quiz.typedAnswer', { answer: s.answer ?? '' })}` : note;
+      v.note.textContent = note;
       v.note.classList.toggle('good', reveal && !!mine?.gained);
     }
     tick();
@@ -547,7 +590,7 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       return;
     }
     const left = Math.max(0, s.endsAt - (Date.now() + offset));
-    const total = s.phase === 'question' ? quizAnswerMs(s.typed) : s.phase === 'pick' ? QUIZ_PICK_MS : QUIZ_REVEAL_MS;
+    const total = s.phase === 'question' ? quizAnswerMs(s.guess) : s.phase === 'pick' ? QUIZ_PICK_MS : QUIZ_REVEAL_MS;
     bar.style.width = `${Math.min(100, (left / total) * 100)}%`;
     bar.classList.toggle('low', s.phase === 'question' && left < 5000);
     timer.textContent = s.phase === 'question' || s.phase === 'pick' ? `${Math.ceil(left / 1000)}` : '';
@@ -602,17 +645,14 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
         offset = m.now - Date.now();
       } else if (m.t === 'pong') offset = m.now + (performance.now() - pingAt) / 2 - Date.now();
       else if (m.t === 'fifty') {
-        fifty = { n: m.n, hide: m.hide, ...(m.hint ? { hint: m.hint } : {}) };
+        fifty = { n: m.n, hide: m.hide };
         render();
       } else if (m.t === 'again') {
         // QZ2 Second chance: my first answer was wrong; the question opens again for me (that option stays out).
         retry = { n: m.n, ...(m.wrong !== undefined ? { wrong: m.wrong } : {}) };
         if (myPick?.n === m.n) myPick = null;
-        if (myText?.n === m.n) myText = null;
-        if (view?.typed && view.n === m.n) view.typed.input.value = '';
         flash(tq('tryAgain'));
         render();
-        if (view?.typed && view.n === m.n && hasMouse()) view.typed.input.focus({ preventScroll: true });
       } else if (m.t === 'state') {
         state = m;
         if (typeof m.qid === 'number') rememberSeen(m.qid);
@@ -661,8 +701,10 @@ export function mountQuiz(app: HTMLElement, gameId: string, name: string, avatar
       { id: 'quiz.skip', title: { en: 'Quiz: end this phase now', tr: 'Bilgi yarışması: bu aşamayı hemen bitir' }, help: { en: 'Local lab server only: the question / round / reveal ends at once.', tr: 'Sadece yerel test sunucusunda: soru / tur / cevap ekranı hemen biter.' }, tab: 'games', available: () => !labServerHere() ? LOCAL_ONLY : (!!state && state.phase !== 'lobby' && state.phase !== 'over') || { en: 'only while a game is going: start one first', tr: 'sadece oyun sürerken: önce bir oyun başlat' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'skip' }) },
       // QZ2 (card hook): a one-lap tournament starts now (the host, two or more at the table: a 🤖 friend will do).
       { id: 'quiz.tournament', title: { en: 'Quiz: start a tournament', tr: 'Bilgi yarışması: turnuva başlat' }, help: { en: 'Sets Tournament, one pick each, and starts: everyone picks a round’s topic in turn. Add a 🤖 friend first if you are alone.', tr: 'Turnuvayı seçer (kişi başı bir seçim) ve başlatır: herkes sırayla bir turun konusunu seçer. Yalnızsan önce bir 🤖 arkadaş ekle.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host can start', tr: 'sadece masanın yöneticisi başlatabilir' } : state.players.filter((p) => p.online).length < 2 ? { en: 'needs two players: add a 🤖 friend', tr: 'iki oyuncu gerekir: bir 🤖 arkadaş ekle' } : true), run: () => { send({ t: 'settings', mode: 'tournament', laps: 1 }); send({ t: 'start' }); } },
-      // QZ2: the next game asks only typed-answer questions (to try the field and the forgiving match).
-      { id: 'quiz.typed', title: { en: 'Quiz: next game only typed answers', tr: 'Bilgi yarışması: sonraki oyun sadece yazılı cevap' }, help: { en: 'Local lab server only: the next game this table starts asks only questions you answer by typing.', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki oyun yalnızca yazarak cevaplanan sorular sorar.' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'typed' }) },
+      // QZ5 (card hook): the next classic game asks only closest-guess questions; the next tournament goes straight to
+      // its five-question finale.
+      { id: 'quiz.guess', title: { en: 'Quiz: next game only closest guesses', tr: 'Bilgi yarışması: sonraki oyun sadece en yakın tahmin' }, help: { en: 'Local lab server only: the next classic game this table starts asks only number questions where the closest guess wins (200 / 100 / 50).', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki klasik oyun yalnızca en yakın tahminin kazandığı sayı soruları sorar (200 / 100 / 50).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'guess' }) },
+      { id: 'quiz.finale', title: { en: 'Quiz: next tournament only the finale', tr: 'Bilgi yarışması: sonraki turnuva sadece final' }, help: { en: 'Local lab server only: the next tournament this table starts skips the topic rounds and plays only its five closest-guess questions (no jokers).', tr: 'Sadece yerel test sunucusunda: bu masanın başlattığı sonraki turnuva konu turlarını atlar, yalnızca beş tahmin sorusunu oynar (jokersiz).' }, tab: 'games' as const, available: () => !labServerHere() ? LOCAL_ONLY : !!state || { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' }, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, run: () => send({ t: 'lab', op: 'finale' }) },
       // QZ4 (card hook): the host's level moves on (Mixed → Easy → Medium → Hard → Mixed); the stars on each question show it.
       { id: 'quiz.level', title: { en: 'Quiz: next level', tr: 'Bilgi yarışması: sonraki seviye' }, help: { en: 'Sets the table’s level to the next one (Mixed, Easy, Medium, Hard); the next game asks only that level, shown as stars beside the topic.', tr: 'Masanın seviyesini bir sonrakine geçirir (Karışık, Kolay, Orta, Zor); sonraki oyun yalnızca o seviyeden sorar, konunun yanında yıldızlarla görünür.' }, tab: 'games' as const, where: { en: 'at a Quiz table', tr: 'Bilgi yarışması masasında' }, available: () => (!state ? { en: 'open a Quiz table first', tr: 'önce bir Bilgi yarışması masası aç' } : state.phase !== 'lobby' && state.phase !== 'over' ? { en: 'only between games', tr: 'sadece oyunlar arasında' } : state.host !== me ? { en: 'only the table’s host sets the level', tr: 'seviyeyi sadece masanın yöneticisi seçer' } : true), run: () => { const now = QUIZ_LEVELS.indexOf(state?.level ?? 'mix'); send({ t: 'settings', level: QUIZ_LEVELS[(now + 1) % QUIZ_LEVELS.length]! }); } },
       // QZ3 (card hook): ×2 on this question now (after my answer it doubles that answer's points if it is right).
