@@ -11,6 +11,11 @@ window only when the player picks it); in the video's place the game itself fill
 chat, menus) stays narrow and the board / play area is as large as it can be, centred and balanced when its shape
 leaves room; check at 1366, 1920 and a phone. Each card: Test Lab hook, harness / e2e, first look, EN + TR.
 
+### DG2. Draw & Guess: a big canvas, a small side, the results bug (owner, 21 Nov 2026; Game Studio "Draw")
+- Bug: when a drawing ends, the results view shrinks the play area to ~10 % (screenshot 21 Nov).
+- What: canvas large like draw.io, players list compact, chat readable below or beside; results fit without shrinking.
+- Done when: results keep the canvas size; layout at 3 sizes; e2e round with 3 players.
+
 ### SB2. Sea Battle: ship themes, drag to place, watch the attacker, a fun sinking (owner, 21 Nov 2026; Game Studio "Sea")
 - What: (1) pick a ship theme (2–3 drawn sets, not plain squares); (2) place ships by dragging them straight onto the
   board (snap to the nearest valid spot, rotate with a tap / R); (3) with 3+ players: my own sea big, plus a second
