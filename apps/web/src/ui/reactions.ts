@@ -1,4 +1,4 @@
-import { REACTION_PAGES, stickerId, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
+import { HANDS_PAGE, HAND_PAGES, REACTION_PAGES, SKIN_TONES, handInTone, stickerId, type ClientMessage, type Member, type Sticker } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t, type I18nKey } from '../i18n.ts';
 import { load, save } from '../storage.ts';
@@ -6,6 +6,7 @@ import { avatarNode } from './avatar.ts';
 import { confirmDialog } from './confirm.ts';
 import { flashHint } from './hint.ts';
 import { icon } from './icons.ts';
+import { debugHooks } from '../debug-lab.ts';
 
 /** Ekranda aynı anda en fazla bu kadar uçuşan tepki. */
 const MAX_FLOATS = 12;
@@ -25,6 +26,9 @@ const MIN_GAP_MS = 150;
 const MAX_COLLECTION = 12;
 /** Video altındaki tepsinin yanında hep duran son kullanılanlar. */
 const RECENT_KEY = 'recentReactions';
+/** Card EMO1: the skin tone my hands carry (an index into SKIN_TONES), kept in this browser. */
+const TONE_KEY = 'opt:handTone';
+const TONE_NAMES = ['reactTray.tone0', 'reactTray.tone1', 'reactTray.tone2', 'reactTray.tone3', 'reactTray.tone4', 'reactTray.tone5'] as const;
 const RECENT_COUNT = 3;
 
 type Item = { emoji: string } | { sticker: string } | { add: true };
@@ -66,8 +70,10 @@ export function createReactions(
   root.append(fileInput);
 
   /** Üç emoji sayfası, sonra (varsa) 8'erli özel emoji sayfaları. Ekleme 🖼️ düğmesiyle. */
+  const isHands = (i: number) => i >= HANDS_PAGE && i < HANDS_PAGE + HAND_PAGES.length;
+  let tone = Math.min(SKIN_TONES.length - 1, Math.max(0, Number(load(TONE_KEY) ?? '0') || 0));
   function pages(): Item[][] {
-    const list: Item[][] = REACTION_PAGES.map((p) => p.map((emoji) => ({ emoji })));
+    const list: Item[][] = REACTION_PAGES.map((p, i) => p.map((emoji) => ({ emoji: isHands(i) ? handInTone(emoji, SKIN_TONES[tone]!) : emoji })));
     const ids = [...stickers.keys()];
     for (let i = 0; i < ids.length; i += SLOTS) list.push(ids.slice(i, i + SLOTS).map((sticker) => ({ sticker })));
     return list;
@@ -169,6 +175,22 @@ export function createReactions(
     }
   }
 
+  /** Card EMO1: the hands page's skin tones, a ✋ in each; the pick is remembered in this browser. */
+  function toneRow(): HTMLElement {
+    const buttons = SKIN_TONES.map((mod, i) => {
+      const on = i === tone;
+      const b = el('button', { type: 'button', class: on ? 'tray-tone on' : 'tray-tone', 'aria-pressed': String(on), title: t(TONE_NAMES[i]!), 'aria-label': t(TONE_NAMES[i]!) }, `✋${mod}`);
+      b.addEventListener('click', () => {
+        tone = i;
+        save(TONE_KEY, String(i));
+        draw();
+      });
+      return b;
+    });
+    // First look: a label, so the row reads as "choose a tone", not as more emojis to send.
+    return el('div', { class: 'tray-tones', role: 'group', 'aria-label': t('reactTray.tone') }, el('span', { class: 'tray-tones-label', 'aria-hidden': 'true' }, t('reactTray.tone')), ...buttons);
+  }
+
   /** Video altı: "😀 Tepki" + tepsi (sayfanın 8 yuvası, Hazır/Benimkiler, ‹ 1/3 ›, 🖼️) + son kullanılan üçü. */
   function drawTrayBar(bar: HTMLElement, all: Item[][]): void {
     const slots: HTMLElement[] = all[page]!.map((item, i) => {
@@ -207,7 +229,8 @@ export function createReactions(
     const head = el(
       'div',
       { class: 'tray-head' },
-      kind(t('reactTray.ready'), 0, !collectionOpen && !roomEmptyOpen && page < ownFirst),
+      kind(t('reactTray.ready'), 0, !collectionOpen && !roomEmptyOpen && page < HANDS_PAGE),
+      kind(t('reactTray.hands'), HANDS_PAGE, !collectionOpen && !roomEmptyOpen && isHands(page)),
       kind(t('reactTray.mine'), ownFirst, !collectionOpen && (roomEmptyOpen || page >= ownFirst)),
       collectionChip,
     );
@@ -222,6 +245,7 @@ export function createReactions(
       : roomEmptyOpen
       ? [el('p', { class: 'tray-empty muted small' }, t('stickers.roomEmpty')), addFoot()]
       : [
+          ...(isHands(page) ? [toneRow()] : []),
           el('div', { class: 'tray-grid' }, ...slots),
           el('div', { class: 'tray-foot' }, prev, el('span', { class: 'tray-count' }, `${page + 1}/${all.length}`), next, el('span', { class: 'tray-gap' }), add),
         ];
@@ -362,6 +386,16 @@ export function createReactions(
     return data ? el('img', { class: 'r-sticker', src: data, alt: '' }) : null;
   }
 
+  // Card EMO1: Test Lab `react.hands`: the tone, the page shown and the hands as they send now.
+  debugHooks.register('react-hands', () => ({
+    commands: [
+      {
+        id: 'react.hands',
+        tab: 'status',
+        run: () => JSON.stringify({ tone, page, handsPage: isHands(page), hands: HAND_PAGES.flatMap((_, n) => pages()[HANDS_PAGE + n]!.map((item) => ('emoji' in item ? item.emoji : ''))) }),
+      },
+    ],
+  }));
   return {
     content,
     /** Gelen tepki: videonun altından rastgele bir yerden yükselir. */

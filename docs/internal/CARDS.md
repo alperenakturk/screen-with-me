@@ -94,11 +94,6 @@ Two sessions never edit the same lines; the Planner splits work by files.
   first look with the old and new screenshot.
 
 
-### EMO1. A hands emoji page (owner, 21 Nov 2026; lane A2)
-- Why: the owner wants hand / finger gestures (👍 👏 🙌 👋 🤞 🫶 …) as their own page in the reaction picker.
-- What: a new "Hands" tab in the reactions / emoji picker (👍 👏 🙌 👋 🤞 🫶 ✌️ 👌 🤙 🤘 👊 🙏 …), skin-tone choice if cheap;
-  EN + TR names. Owner's pick: "El işaretleri sayfası" (Planner chat, 21 Nov 2026).
-- Done when: the tab shows and sends; Test Lab hook; harness step.
 
 ### RC2. Session recap: quiet sound, cinema look, a button after 2 hours (owner, 21 Nov 2026; lane A2)
 - Why: the recap starts terribly loud; the owner wants a more cinema-like design; it should not appear by itself.

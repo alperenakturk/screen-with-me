@@ -3098,6 +3098,13 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
 
+### EMO1. A hands emoji page (owner, 21 Nov 2026; lane A2)
+- Why: the owner wants hand / finger gestures (👍 👏 🙌 👋 🤞 🫶 …) as their own page in the reaction picker.
+- What: a new "Hands" tab in the reactions / emoji picker (👍 👏 🙌 👋 🤞 🫶 ✌️ 👌 🤙 🤘 👊 🙏 …), skin-tone choice if cheap;
+  EN + TR names. Owner's pick: "El işaretleri sayfası" (Planner chat, 21 Nov 2026).
+- Done when: the tab shows and sends; Test Lab hook; harness step.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/578 (lane A2): two hand pages of 8, six skin tones.
+
 ### RAIL2. The rail beside the video stays put; hide it from the rail itself (owner, 21 Nov 2026; lane A2, first)
 - Why: the vertical control column that slides in at the video's right edge should be fixed by default; hiding it
   lives in the ⋯ menu today.
@@ -3106,6 +3113,7 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   YouTube keeps its own rules (nothing over the YouTube player).
 - Done when: fixed by default, toggle works and persists; Test Lab `rail.pin`; harness; first look.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/573
+
 ### GN1. A chat message when someone opens a game table (owner, 21 Nov 2026; lane A2)
 - Why: when a game is already open, a new table or a newcomer is easy to miss.
 - What: opening a shared table posts a system line in the chat: the game's cover, "Alex opened Sea Battle", a Join
