@@ -624,6 +624,8 @@ export function mountDuel(app: HTMLElement, gameId: string, name: string, avatar
     if (!s) return;
     const seat = mySeat();
     box.dataset.phase = s.phase;
+    // FW2: the Turkish tray has eleven columns; duel.css keeps it wider in a narrow box.
+    box.dataset.lang = s.lang;
     box.classList.toggle('watching', seat < 0);
     box.classList.toggle('many', many());
     const [a, b] = seated().map((i) => s.players[i]!);
