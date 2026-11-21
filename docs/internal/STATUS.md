@@ -17,6 +17,8 @@ One handoff per lane or role; each session updates only its own lines and delete
     owner's JSON, `node scripts/check-yt-audit.mjs https://sidelit.app` (pack: `docs/internal/youtube-audit/`).
   - CI note: `games-more` was flaky on several branches on 16 Nov afternoon (a different step each run; passes locally);
     `rail-speed` got a redraw wait in #488. Game Studio owns the state-matrix drag / hover flake.
+- [ ] Game Studio "Classics" (GFIT1, 21 Nov): stage part PR #571 (`claude/gfit1-stage`), Classics part
+  `claude/gfit1-classics` (rebase after #571, PR, merge, deploy check, report). Other games opt in with `data-fill`.
 
 ## Owner's hand tests (things only the owner can try; ask Claude "what should I test?" and it reads this list)
 One ordered list, most useful first. Tick here (or tell the Planner and it ticks); a ticked item leaves the list.
