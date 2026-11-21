@@ -2360,6 +2360,13 @@ bullet changed the behaviour. Trust the later bullet (and the code). From `docs/
     `#speed-pop`: the speed picker, below) · ⇥ · ⛶; icons only at ≤1180 px. Fullscreen and Shorts bars stay flat (8 slots +
     ▲▼). In the shell, popups opening over the hole (`[data-island]`: tray, speed, game menu) are islands; they have no
     opening animation (measurements shifted).
+    **Card EMO1 (21 Nov 2026): the Hands page.** `protocol.ts` `HAND_REACTIONS` (👍 👏 🙌 👋 🤞 🫶 👌 🤟) is the fourth
+    of `REACTION_PAGES` (`HANDS_PAGE` = 3, before the room's custom emoji pages); `isReaction` also takes each hand with
+    one `SKIN_TONES` modifier (no protocol bump: additive). The tray's chips: Emojis (pages 0–2) · Hands · In this room ·
+    My collection; on Hands a row of six ✋ tones (`.tray-tones`, `reactTray.tone0–5`, `opt:handTone`, per browser)
+    sits above the grid and every hand page (the flat rail / fullscreen / Shorts bars too, reached with ▲▼) carries
+    the tone. Test Lab `react.hands`. Harness `scripts/harness/hands` (CI `site`: phone EN / TR, a toned 🫶 received,
+    the tone after a reload, the rail's ▼). Unit test `packages/shared/src/reactions.test.ts`.
   - **Top bar** (`html.in-room`): "Bağlı" text, ⟳, 🎨 and TR/EN hidden in the room; the connection is the dot of the
     room name (`.room-title-dot` green/yellow/red, short text next to it when not connected, click reconnects; on
     phones only the dot). Language and ⟳ sit at the top of the profile menu (`.profile-actions`); ⚙️ is its own button

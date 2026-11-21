@@ -3097,3 +3097,10 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   tall phones; Quiz top bar, Five Frames picker in the head row; side-game notes off the art in a computer's window.
   Sideways phones dropped (PH4: phones are upright). Open leftovers: `design/games/phone-review-gph1.md` "Part 3a/3b".
   Hand tests 27ao, 27ap.
+
+### EMO1. A hands emoji page (owner, 21 Nov 2026; lane A2)
+- Why: the owner wants hand / finger gestures (👍 👏 🙌 👋 🤞 🫶 …) as their own page in the reaction picker.
+- What: a new "Hands" tab in the reactions / emoji picker (👍 👏 🙌 👋 🤞 🫶 ✌️ 👌 🤙 🤘 👊 🙏 …), skin-tone choice if cheap;
+  EN + TR names. Owner's pick: "El işaretleri sayfası" (Planner chat, 21 Nov 2026).
+- Done when: the tab shows and sends; Test Lab hook; harness step.
+- Done: PR claude/emo1-hands (lane A2).

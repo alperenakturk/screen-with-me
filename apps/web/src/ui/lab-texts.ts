@@ -41,6 +41,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
     title: { en: 'Home-screen app: installed, screen on, sharing', tr: 'Ana ekran uygulaması: kurulu mu, ekran açık mı, paylaşım' },
     help: { en: 'Writes whether this runs as the installed app, the screen wake lock and the share target into the log.', tr: 'Bunun kurulu uygulama olarak çalışıp çalışmadığını, ekran kilidini ve paylaşım hedefini kayda yazar.' },
   },
+  'react.hands': {
+    title: { en: 'Emojis: the hands page', tr: 'Emojiler: eller sayfası' },
+    help: { en: 'Writes the chosen skin tone, the page the emoji picker shows and the eight hands as they would be sent into the log.', tr: 'Seçili ten rengini, emoji seçicinin gösterdiği sayfayı ve gönderilecek sekiz eli kayda yazar.' },
+  },
   'rail.speed': {
     title: { en: 'Speed picker', tr: 'Hız seçici' },
     help: { en: 'Logs the speed, this video\'s speeds, the ⋯ picker and "Keep the controls open".', tr: 'Hızı, videonun hızlarını, ⋯ seçicisini ve "Kontroller hep açık"ı kayda yazar.' },
