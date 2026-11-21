@@ -10,7 +10,7 @@ import { OPEN, openSocket, type SwmSocket } from '@swm/shared/socket';
 import { gameHint } from './hint.ts';
 import { LOCAL_ONLY, labServerHere } from './lab-server.ts';
 import { debugHooks } from '../debug-lab.ts';
-import { flipIn } from './motion.ts';
+import { flipIn, reducedMotion } from './motion.ts';
 import { referee } from './referee.ts';
 import {
   MOVE_COST,
@@ -29,6 +29,7 @@ import type { Avatar } from '@swm/shared/protocol';
 import { el } from '../dom.ts';
 import { t } from '../i18n.ts';
 import { playSound } from '../sound.ts';
+import type { SoundId } from '@swm/shared/sound-policy';
 import { setGameLive } from './live.ts';
 import { clientId } from '../storage.ts';
 import { avatarNode } from '../ui/avatar.ts';
@@ -379,7 +380,120 @@ export function mountPoker(app: HTMLElement, gameId: string, name: string, avata
       renderActions(v.actions, s, myTurn, lang);
       renderMoves(v.moves, s, myPlayer!, myTurn, lang);
     }
+    motion(v, s);
     tick();
+  }
+
+  // ---- LH4: motion and sound. What changed since the last state moves: the cards are dealt from the middle, life
+  // flies from a seat into the flask, the middle flies to the winners; each has its sound. All of it is skipped under
+  // "reduce motion" (the sounds stay). Ghosts are absolutely placed in `.pk` in its own (unscaled) pixels. ----
+  const SFX = { deal: 'pokerDeal', chip: 'pokerChip', fold: 'pokerFold', street: 'pokerStreet', move: 'pokerMove' } as const satisfies Record<string, SoundId>;
+  let seen: { hand: number; board: number; phase: string; last: string; bets: Map<string, number>; folded: Set<string>; dealt: number; mine: number } = {
+    hand: -1, board: 0, phase: '', last: '', bets: new Map(), folded: new Set(), dealt: -1, mine: -1,
+  };
+  const moving = () => !reducedMotion() && typeof root.animate === 'function';
+  /** A node's box in `.pk`'s own pixels (the stage may scale the game). */
+  function boxOf(node: Element): { x: number; y: number; w: number; h: number } {
+    const r = node.getBoundingClientRect();
+    const o = root.getBoundingClientRect();
+    const k = root.offsetWidth ? o.width / root.offsetWidth : 1;
+    return { x: (r.left - o.left) / k + r.width / k / 2, y: (r.top - o.top) / k + r.height / k / 2, w: r.width / k, h: r.height / k };
+  }
+  /** A little "♥ 12" flying from one place to another. */
+  function fly(from: Element, to: Element, text: string, delay = 0, cls = ''): void {
+    if (!moving() || !from.isConnected || !to.isConnected) return;
+    const a = boxOf(from);
+    const b = boxOf(to);
+    const chip = el('span', { class: `pk-fly${cls ? ` ${cls}` : ''}`, 'aria-hidden': 'true' }, text);
+    chip.style.left = `${a.x}px`;
+    chip.style.top = `${a.y}px`;
+    root.append(chip);
+    const move = `translate(calc(-50% + ${(b.x - a.x).toFixed(1)}px), calc(-50% + ${(b.y - a.y).toFixed(1)}px))`;
+    const run = chip.animate(
+      [
+        { transform: 'translate(-50%, -50%) scale(0.5)', opacity: 0 },
+        { transform: 'translate(-50%, -50%) scale(1.1)', opacity: 1, offset: 0.18 },
+        { transform: `${move} scale(0.8)`, opacity: 0.95, offset: 0.9 },
+        { transform: `${move} scale(0.6)`, opacity: 0 },
+      ],
+      { duration: 640, delay, easing: 'cubic-bezier(.3,.6,.25,1)', fill: 'backwards' },
+    );
+    run.onfinish = () => chip.remove();
+    run.oncancel = () => chip.remove();
+  }
+  /** A card slides in from the middle, turning as it lands (a deal). */
+  function dealIn(card: Element, from: Element, delay: number): void {
+    if (!moving() || !(card instanceof HTMLElement)) return;
+    const a = boxOf(from);
+    const b = boxOf(card);
+    card.animate(
+      [
+        { transform: `translate(${(a.x - b.x).toFixed(1)}px, ${(a.y - b.y).toFixed(1)}px) rotate(-14deg) scale(0.5)`, opacity: 0 },
+        { transform: 'translate(0, 0) rotate(0) scale(1)', opacity: 1 },
+      ],
+      { duration: 380, delay, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'backwards' },
+    );
+  }
+  function shake(node: Element): void {
+    if (!moving() || !(node instanceof HTMLElement)) return;
+    node.animate([{ translate: '0 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '-3px 0' }, { translate: '0 0' }], { duration: 360, easing: 'ease-out' });
+  }
+
+  function motion(v: TableView, s: State): void {
+    const seatOf = (id: string): Element | null => (id === me ? v.myLife : (v.seat.get(id)?.life ?? null));
+    const sameHand = seen.hand === s.hand;
+    // The deal: rivals' backs, one seat after the other, from the flask.
+    if (s.phase === 'preflop' && seen.dealt !== s.hand) {
+      seen.dealt = s.hand;
+      let n = 0;
+      for (const p of s.players) {
+        if (p.id === me || !p.dealt) continue;
+        const cards = v.seat.get(p.id)?.cards.children ?? [];
+        for (const c of Array.from(cards)) dealIn(c, v.flask, 60 * n++);
+      }
+      playSound(SFX.deal);
+    }
+    // My two cards (they come in their own message, maybe after the state).
+    if (mine && mine.hand === s.hand && seen.mine !== s.hand && v.hand.children.length) {
+      seen.mine = s.hand;
+      Array.from(v.hand.children).forEach((c, i) => dealIn(c, v.flask, 120 + 110 * i));
+    }
+    // A new street: the board's cards flip on their own (`faceUp`); here its sound.
+    if (sameHand && s.board.length > seen.board && s.phase !== 'showdown') playSound(SFX.street);
+    // Life going into the middle: a call, a raise, the blinds.
+    const street = sameHand && s.board.length === seen.board;
+    let chips = 0;
+    for (const p of s.players) {
+      const before = street ? (seen.bets.get(p.id) ?? 0) : 0;
+      if (p.bet > before && !(sameHand && s.phase === 'showdown')) {
+        const from = seatOf(p.id);
+        if (from) fly(from, v.flask, `♥ ${p.bet - before}`, 70 * chips++);
+      }
+      if (sameHand && p.folded && !seen.folded.has(p.id)) playSound(SFX.fold);
+    }
+    if (chips) playSound(SFX.chip);
+    // A special move: its sound, the target shakes (disqualified) or is looked at (peek).
+    const lastKey = JSON.stringify(s.last);
+    if (s.last?.e === 'move' && lastKey !== seen.last) {
+      playSound(SFX.move);
+      if (s.last.target) shake(s.last.target === me ? v.me : (v.seat.get(s.last.target)?.root ?? v.me));
+    }
+    // The showdown: the middle flies to the winners.
+    if (s.phase === 'showdown' && seen.phase !== 'showdown') {
+      s.players.filter((p) => (p.won ?? 0) > 0).forEach((p, i) => {
+        const to = seatOf(p.id);
+        if (to) fly(v.flask, to, `♥ ${p.won}`, 250 + 120 * i, 'win');
+      });
+    }
+    seen = {
+      ...seen,
+      hand: s.hand,
+      board: s.board.length,
+      phase: s.phase,
+      last: lastKey,
+      bets: new Map(s.players.map((p) => [p.id, p.bet])),
+      folded: new Set(s.players.filter((p) => p.folded || p.dq).map((p) => p.id)),
+    };
   }
 
   /** The feed's last lines: what each player did, and each new street with its cards (LH4: a repeated "Sam checked"

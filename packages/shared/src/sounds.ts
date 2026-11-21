@@ -189,5 +189,11 @@ export function scheduleSound(ctx: Ctx, destination: AudioNode, id: SoundId, gai
     case 'snackScoop': [7, 12, 16, 19].forEach((n, i) => N(i * s * 0.4, n, 0.09, 0.4)); break;
     case 'snackArcade': [12, 16, 19, 24, 28].forEach((n, i) => N(i * 0.05, n, 0.05, 0.4)); N(0.3, 24, 0.25, 0.5); break;
     case 'snackCinema': [0, 7, 12, 16, 19].forEach((n, i) => N(i * s, n, 0.3, 0.7)); [12, 16, 19].forEach((n) => N(s * 5.2, n, 0.9, 0.4)); break;
+    // Last Heart: cards snapping down, a soft chime of life into the flask, a falling sigh, a turning card, a bright sting.
+    case 'pokerDeal': [0, 0.07, 0.14].forEach((dt, i) => C(dt, 0.5 - i * 0.08)); break;
+    case 'pokerChip': N(0, 19, 0.08, 0.45); N(0.05, 24, 0.14, 0.4); break;
+    case 'pokerFold': N(0, 7, 0.12, 0.4); N(s * 0.8, 2, 0.22, 0.35); break;
+    case 'pokerStreet': C(0, 0.45); N(0.01, 12, 0.18, 0.45); break;
+    case 'pokerMove': N(0, 4, 0.12, 0.6); N(s * 0.6, 11, 0.12, 0.6); N(s * 1.2, 16, 0.3, 0.65); break;
   }
 }

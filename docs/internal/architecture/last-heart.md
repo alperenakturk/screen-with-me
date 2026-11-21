@@ -21,6 +21,12 @@ LH3, GPH1, GFIT1) are still in `reference.md` under those card names.
   changes (`patch` with a key). A rival's move no longer ends a drag of the raise slider; life bars (`setLife`) and the
   flask's liquid (`setFlask`, a `scaleY` eased in poker.css) are the same nodes and move to their new value. The lobby
   and "how to play" replace the table (it is built again after).
+- **Motion and sound** (`motion()` in poker.ts, after each render, from what changed since the last state): the deal
+  (rivals' backs, then my two cards, slide in from the flask, `dealIn`), life flying from a seat's life bar into the
+  flask on a blind / call / raise and the middle flying to each winner at the showdown (`fly`, a `.pk-fly` "♥ 12"
+  absolutely placed in `.pk` in its own pixels, so a scaled stage is fine), a disqualified or peeked seat shakes. Sounds
+  (`SFX`, ids `pokerDeal` / `pokerChip` / `pokerFold` / `pokerStreet` / `pokerMove` in `sound-policy.ts`): the deal, life into the middle, a fold, a new street, a special move, plus the older my turn / last 5 s /
+  win or loss / game over. "Reduce motion": no flying or sliding, no eased bars; the sounds stay.
 - **Feed.** The last 4 lines of the hand: each event once (keyed by hand, board size and event, so "Sam checked" on two
   streets shows twice), each new street with its cards ("Flop: 7♦ K♥ 5♥"), a time-out with what it did.
 - **Card faces** scale with the card (`container-type: inline-size`; rank 40 cqw top-left, suit 48 cqw bottom-right).

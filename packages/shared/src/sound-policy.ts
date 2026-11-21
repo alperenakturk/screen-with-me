@@ -79,6 +79,12 @@ export const SOUNDS = {
   seaAim: { group: 'game', level: 0.35, gap: 80 },
   seaHit: { group: 'game', level: 0.8, gap: 150 },
   seaSunk: { group: 'game', level: 0.9, gap: 600 },
+  // ❤️ Last Heart (LH4): the deal, life into the middle, a fold, a new street, a special move.
+  pokerDeal: { group: 'game', level: 0.5, gap: 400 },
+  pokerChip: { group: 'game', level: 0.45, gap: 120 },
+  pokerFold: { group: 'game', level: 0.4, gap: 300 },
+  pokerStreet: { group: 'game', level: 0.5, gap: 400 },
+  pokerMove: { group: 'game', level: 0.75, gap: 500 },
 } as const satisfies Record<string, SoundSpec>;
 
 export type SoundId = keyof typeof SOUNDS;
