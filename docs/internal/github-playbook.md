@@ -18,7 +18,7 @@ owner's sessions; state as of 21 Nov 2026. Where the repo does not record a sett
 | Environment `production` | Settings → Environments | Deployment branches = `main` only. Holds the deploy secrets (cloud provider token + account id, API keys, feedback token, a lab code) and the variable `FEEDBACK_REPO`. The only repository-level secret is `TAG_TOKEN` (tag job). |
 | Dependabot | Settings → Code security + `.github/dependabot.yml` | Alerts, security updates (grouped) and malware alerts on. Config: weekly npm (max 5 open PRs, dev dependencies grouped as `dev-tools`) + weekly `github-actions`. Dependabot PRs go through CI like any other change. |
 | CodeQL | Settings → Code security → Code scanning | "Default setup" (JavaScript / TypeScript). Free on public repos. |
-| Secret scanning + push protection | Settings → Code security | Free on public repos; recorded as **still disabled** on 4 Nov 2026: check in Settings and turn both on. Scan the full history once before going public (security review 2). |
+| Secret Protection (secret scanning) + push protection | Settings → Advanced Security (formerly "Code security"; direct: `/settings/security_analysis`) | **On since 21 Nov 2026.** Free on public repos: push protection blocks a push that contains a key; scanning alerts on keys already in history. |
 | Private vulnerability reporting | Settings → Code security | On; `SECURITY.md` links "Report a vulnerability" plus a contact e-mail. |
 | Account | Your profile → Settings | 2FA with an authenticator app and recovery codes kept safe; "Keep my email addresses private" + "Block command line pushes that expose my email"; `git config user.email` = the `…@users.noreply.github.com` address. |
 | Templates | `.github/` | `pull_request_template.md` (What / Tests / Version), `ISSUE_TEMPLATE/bug_report.md` (label `bug`, points security reports to `SECURITY.md`, asks for version, browser, device) and `idea.md` (label `idea`). |
@@ -151,7 +151,7 @@ current); `timeout-minutes` on every job; `scripts/ci-workflow.test.mjs` checks 
 3. Settings → General: squash merge only, **Allow auto-merge on, Automatically delete head branches on**, description,
    website, social preview.
 4. Settings → Actions → General: read-only workflow token; approval for all external contributors.
-5. Settings → Code security: Dependabot alerts + security updates, secret scanning + push protection, CodeQL default
+5. Settings → Advanced Security (formerly "Code security"): Dependabot alerts + security updates, secret scanning + push protection, CodeQL default
    setup, private vulnerability reporting. Add `.github/dependabot.yml` (npm + github-actions, weekly).
 6. Add `.github/pull_request_template.md` and `ISSUE_TEMPLATE/` (bug, idea).
 7. Write `test.yml`: `permissions: contents: read`, SHA-pinned actions, a `changes` job (no `paths-ignore`), parallel

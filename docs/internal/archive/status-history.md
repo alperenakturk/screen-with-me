@@ -1805,3 +1805,7 @@ Side sessions started 28 Oct 2026 (results come as PRs from their branches; inte
 ## Owner's to-do replaced 21 Nov 2026 (Planner; the secrets move was done 17 Nov)
 - [ ] GitHub: the `production` environment holds the deploy secrets and `LAB_CODE`; private vulnerability reporting on;
   Dependabot alerts and security updates on (Settings → Code security). [0.9.97.49, .69, .3]
+
+## Owner's to-do done 21 Nov 2026 (Secret Protection + Push protection on, auto-merge and head-branch deletion on)
+- [x] GitHub (21 Nov): Code security → Secret scanning + Push protection on. Auto-merge and "Automatically delete head
+  branches" are on; `github-playbook.md` lists the rest.
