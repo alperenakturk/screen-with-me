@@ -3245,3 +3245,12 @@ Security and Research suggestions: `docs/internal/cards-proposed.md`.
   and sounds if missing; a nicer table design. Report findings to the Planner before big redesigns.
 - Done when: the review file `docs/internal/design/games/last-heart-review.md`, its fixes merged; e2e.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/592, https://github.com/alperenakturk/screen-with-me/pull/594, https://github.com/alperenakturk/screen-with-me/pull/596, https://github.com/alperenakturk/screen-with-me/pull/597, https://github.com/alperenakturk/screen-with-me/pull/601 (Game Studio "Last Heart", 21 Nov 2026; v0.9.97.193): review file (17 findings), out-of-turn moves keep the 30 s clock, "takes N from the middle" + per-seat net, deal / chip / pot motion + five sounds, `.pk` styles in poker.css, round table (pick A) in the video's place, harness `scripts/harness/last-heart/run.cjs` in the `games` job, area file `architecture/last-heart.md`.
+
+### CI4. Flaky CI steps that cost a re-run (Planner, 21 Nov 2026; lane A, after TG2)
+- Why: games-more "games-shorts: a Short opens the Shorts view" (a real YouTube Short via `via-youtube.cjs`, 15 s)
+  and Sea "a tap in another corner zooms" fail on the first attempt of many PRs and pass on the re-run: each costs a
+  full ~30 min CI run. cam-phone fails only inside cloud containers.
+- What: no required step depends on a third-party site's response time (stub the player or serve a local Short; keep
+  a real-YouTube check as a non-required step); find the Sea zoom race; document cam-phone's container limit.
+- Done when: 10 CI runs in a row without a first-attempt failure on these steps.
+- Done: https://github.com/alperenakturk/screen-with-me/pull/608 (lane A, 21 Nov 2026): `scripts/harness/fake-youtube.cjs` stands in for YouTube's player in every harness except yt-focus (continue-on-error, the one real-YouTube step); Sea zoom check waits for the zoom-out; cam-phone's container limit in `cloud-testing.md`. New harnesses use `fakeYouTube(ctx)` unless the test is about YouTube. The 10-run count starts at #608; the Planner watches it.
