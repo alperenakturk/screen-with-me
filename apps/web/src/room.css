@@ -3494,9 +3494,9 @@ html.shorts-view .footer {
 
 /* Kişi sınırı: "Seste 3/6 · 📷 1/4" (hep görünür; dolunca kırmızı, son yerde sarı) */
 .voice-ptt {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 10px;
   color: var(--chrome-text);
   cursor: pointer;
   user-select: none;
@@ -11701,7 +11701,7 @@ html:not(.phone) .together-card.compact .voice-on {
   flex-wrap: nowrap;
 }
 
-html:not(.phone) .together-card.compact :is(.together-name, .voice-ptt, .ptt-key, .talk-window-btn, .voice-hint) {
+html:not(.phone) .together-card.compact :is(.together-name, .voice-hint) {
   display: none;
 }
 
