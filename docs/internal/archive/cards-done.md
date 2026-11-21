@@ -3137,13 +3137,3 @@ Game Studio cards (GMP, GW2, GP1, GT1, QZ2, WG2): `docs/internal/cards-games.md`
   games), always open in the video's place; then Classics (chess, dama, backgammon, reversi, XOX, Four) fills it.
 - Done when: every table opens in the video's place; Classics' board is the biggest square that fits; sweep shots.
 - Done: https://github.com/alperenakturk/screen-with-me/pull/571 (stage) + https://github.com/alperenakturk/screen-with-me/pull/583 (Classics).
-
-### FW2. Five Frames Duel / co-op: timer, points, levels, more words (owner, 21 Nov 2026; Game Studio "Five Frames")
-- Bug: two players both showed "2nd" though one finished first.
-- What: (1) a time limit chosen when the table opens; time up = out; (2) points: first to solve +3, plus 7 → 1 by the
-  guess it took (1st guess 7 … 7th guess 1); (3) my own board big, the others smaller; (4) difficulty Easy / Medium
-  (recommended, default) / Hard / Mixed for daily, categories and Duel: odd words like a root form ("Fırat" refused,
-  odd roots asked) go to Hard or out; (5) research more word lists (names, cities …) and add only what the game
-  accepts; the "?" explains what kinds of words are not used.
-- Done when: ranking bug fixed with a test; timer and points server-checked; levels; e2e with 3 players.
-- Done: https://github.com/alperenakturk/screen-with-me/pull/574, https://github.com/alperenakturk/screen-with-me/pull/584, https://github.com/alperenakturk/screen-with-me/pull/588 (Game Studio "Five Frames"). Places from the server's finishing order; time limit 0 / 1 / 2 / 3 (default) / 5 min from the Duel's alarm; points 7 → 1 + 3 for the first; levels from frequency bands (only the band ships); 52 cities from GeoNames (CC BY 4.0).
