@@ -436,6 +436,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button id="dock-full" type="button" class="dock-btn" hidden></button>
                 <button id="dock-exit" type="button" class="dock-btn"></button>
               </div>
+              <button id="rail-pin" type="button" class="dock-btn rail-hide" aria-pressed="true"></button>
               <form id="dock-chat-form" class="dock-pop dock-chat" hidden><input id="dock-chat-input" autocomplete="off" data-i18n-placeholder="quickChatPlaceholder" /></form>
               <div id="dock-react-pop" class="dock-pop" hidden><div class="reaction-bar fs-reactions dock-reactions" role="group"></div></div>
               <div id="dock-vol-pop" class="dock-pop dock-vol" hidden><input id="dock-vol-range" type="range" min="0" max="100" step="1" value="100" /></div>
@@ -446,7 +447,6 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
                 <button type="button" class="dock-more-item" data-press="#skip"><span aria-hidden="true">⏭</span><span data-i18n="skip"></span></button>
                 <button type="button" class="dock-more-item" data-press="#side-toggle"><span aria-hidden="true">🎞</span><span id="dock-more-side"></span></button>
                 <button type="button" class="dock-more-item desk-only" data-press="#profile-keys"><span aria-hidden="true">⌨️</span><span data-i18n="keys.open"></span></button>
-                <button type="button" class="dock-more-item rail-pin-item" id="rail-pin" aria-pressed="false"><span class="rail-pin-box" aria-hidden="true"></span><span data-i18n="rail.pin"></span></button>
               </div>
               <div id="dock-speed-pop" class="dock-pop dock-speeds speed-picker" hidden>${speedPicker('dock-speed-opt')}</div>
             </div>
@@ -3315,7 +3315,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
           const menu = document.getElementById('dock-more-pop');
           let pin: string | null = null;
           try {
-            pin = localStorage.getItem('opt:railPin');
+            pin = localStorage.getItem('opt:railAuto');
           } catch {
             /* private mode */
           }
@@ -3327,7 +3327,7 @@ function startRoom(app: HTMLElement, roomId: string, myName: string, myAvatar: A
             down: stepRateFor(media, roomState?.rate ?? 1, -1),
             pickerOpen: !$('#dock-more-picker').hidden,
             menuHeight: menu && !menu.hidden ? Math.round(menu.getBoundingClientRect().height) : null,
-            railPin: pin ?? 'unset (off)',
+            railPin: pin === '1' ? 'off (waits for the edge)' : 'on (fixed)',
           });
         },
       },

@@ -50,7 +50,10 @@ const check = (ok, label, extra = '') => {
   const alex = await person('Alex', { viewport: { width: 1366, height: 768 } }, 'en');
   const sam = await person('Sam', { ...devices['iPhone 13'] }, 'tr');
   const fresh = await lab(alex);
-  check(fresh.railPin === 'unset (off)' && !(await alex.evaluate(() => document.querySelector('#theater').classList.contains('rail-pin'))), 'a fresh browser has "Keep the controls open" off', JSON.stringify(fresh));
+  // Card RAIL2: a fresh browser has the rail fixed; Test Lab `rail.pin` says so.
+  check(fresh.railPin === 'on (fixed)' && (await alex.evaluate(() => document.querySelector('#theater').classList.contains('rail-pin'))), 'a fresh browser has the rail fixed', JSON.stringify(fresh));
+  const pinLab = JSON.parse((await alex.evaluate(async () => (await window.__swmLab.run('rail.pin')).text)).replace(/^[^{]*/, ''));
+  check(pinLab.saved === 'unset (fixed)' && pinLab.fixed === true && pinLab.edgeMode === false, 'Test Lab rail.pin: fixed, not waiting for the edge', JSON.stringify(pinLab));
   await alex.evaluate((u) => {
     const i = document.getElementById('media-input');
     i.value = u;

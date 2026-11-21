@@ -194,6 +194,8 @@ const coverText = (l) => (l ? `başta:${l.atStart} eklendi:${fmt(l.added)} kalkt
 await a.navigate(`${SITE}/`);
 await a.sleep(1500);
 await a.evaluate(`localStorage.setItem('name','Sam'); localStorage.setItem('avatar','wizard'); localStorage.setItem('lang','tr'); 1`);
+// Card RAIL2: the rail is fixed by default; the film page checks below are about its edge (the rail's hide button).
+await a.evaluate(`localStorage.setItem('opt:railAuto','1'); 1`);
 // THEME=matinee (MATINEE2): the whole run in a theme, e.g. the light one whose framed screen must never paint over the
 // film page's hole (its room rules are scoped :not(.shell-film)).
 if (process.env.THEME) await a.evaluate(`localStorage.setItem('theme', ${JSON.stringify(process.env.THEME)}); 1`);

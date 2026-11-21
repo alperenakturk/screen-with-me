@@ -47,7 +47,7 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   },
   'rail.speed': {
     title: { en: 'Speed picker', tr: 'Hız seçici' },
-    help: { en: 'Logs the speed, this video\'s speeds, the ⋯ picker and "Keep the controls open".', tr: 'Hızı, videonun hızlarını, ⋯ seçicisini ve "Kontroller hep açık"ı kayda yazar.' },
+    help: { en: 'Logs the speed, this video\'s speeds, the ⋯ picker and whether the rail is fixed.', tr: 'Hızı, videonun hızlarını, ⋯ seçicisini ve rayın sabit olup olmadığını kayda yazar.' },
   },
   'safety.state': {
     title: { en: 'Safety: blocked people and the last report', tr: 'Güvenlik: engellenenler ve son bildirim' },
@@ -56,6 +56,10 @@ export const LAB_TEXTS: Record<string, { title: LabText; help: LabText; where?: 
   'voice.deafen': {
     title: { en: 'Voice: 🎧 deafen (on / off)', tr: 'Ses: 🎧 sesleri kapat (on / off)' },
     help: { en: 'With "on" or "off" deafens or undeafens me; then writes whether I am deafened, in voice, my mic, whether every voice is silent here and who else is deafened into the log.', tr: '"on" ya da "off" ile benim için sesleri kapatır ya da açar; sonra seslerimin kapalı olup olmadığını, seste olup olmadığımı, mikrofonumu, buradaki bütün seslerin kısık olup olmadığını ve başka kimin seslerini kapattığını kayda yazar.' },
+  },
+  'rail.pin': {
+    title: { en: 'Rail: fixed or waiting for the edge', tr: 'Ray: sabit mi, kenarı mı bekliyor' },
+    help: { en: 'Writes the saved choice of the rail\'s hide button, whether the rail is fixed now (fullscreen YouTube always waits for the edge) and whether it rests into the log.', tr: 'Rayın gizle düğmesinde kayıtlı seçimi, rayın şu an sabit olup olmadığını (tam ekran YouTube hep kenarı bekler) ve dinlenip dinlenmediğini kayda yazar.' },
   },
   'player.focus': {
     title: { en: 'Player: is the keyboard focus in it', tr: 'Oynatıcı: klavye odağı onda mı' },
