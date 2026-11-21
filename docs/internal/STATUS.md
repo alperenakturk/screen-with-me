@@ -6,9 +6,9 @@
 
 ## Task queue (continue from the first unchecked item; keep it in sync with the session's task list)
 One handoff per lane or role; each session updates only its own lines and deletes them when done.
-- [ ] Lane A (fresh session 21 Nov): PTT1 (#599) + TG2 (#604) merged; then CI4 (flaky steps). Tag `v0.9.97.113`
-  (8ce4385) missing. DM1 waits for the owner's Player ID; UI2 `rail-speed` flake: if it fails again, add a
-  `sync-engine.test.ts` scenario. FILM1 waits for the owner's pick.
+- [ ] Lane A: idle (PTT1, TG2, CI4 done 21 Nov). Tag `v0.9.97.113` (8ce4385) missing. DM1 waits for the owner's
+  Player ID, FILM1 for his pick. UI2 `rail-speed` flake: if it fails again, add a `sync-engine.test.ts` scenario.
+  CI4: count 10 PR runs from #608 with no first-attempt failure on games-shorts / Sea zoom / shorts-tidy / phone-sideways.
 - [ ] Game Studio: QZ5b (Quiz fill). LH4 done (v0.9.97.193).
 - [ ] B2 (handoff 16 Nov, 17:00; no unmerged B2 branch; nothing left in B2's lane until YTQ1):
   - [ ] YTQ1 day-of work, after `sidelit.app` is live: shots + screencast on the live domain, the usage table from the
@@ -232,7 +232,7 @@ of "C. Recent releases" with an ID; the Planner folds them into the board Artifa
 - [ ] 27vc. [VC4] With 5+ friends with cameras: 6 cameras fit, the 7th says it's full; the chat shows one note
   recommending 4 cameras / 6 people (once per room), even with room activity hidden.
 - [ ] 27pt. [PTT1] In voice, push-to-talk on, the key button, press B: holding B talks, V doesn't; M is refused with a
-  hint. Chrome on a computer: "🪟 Talk window" opens a small window; in another tab hold its button: friends hear you.
+  hint; the updated extension on a film page: the chosen key talks too. Chrome on a computer: "🪟 Talk window" opens a small window; in another tab hold its button: friends hear you.
 - [ ] 27tg. [TG2] Together card at 1366 and on a phone: no title or counter, icons in one row; 🔊 opens sound settings;
   the voices slider changes how loud friends are.
 - [ ] 27rc2. [RC2] After 2 h (or Test Lab `recap.button`) press ✨: the sign's lights chase, the first sign reads "Now
